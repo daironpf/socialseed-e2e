@@ -14,8 +14,8 @@ from functools import wraps
 
 from playwright.sync_api import APIRequestContext, Playwright, APIResponse
 
-from .headers import DEFAULT_JSON_HEADERS, DEFAULT_BROWSER_HEADERS
-from .models import ServiceConfig
+from socialseed_e2e.core.headers import DEFAULT_JSON_HEADERS, DEFAULT_BROWSER_HEADERS
+from socialseed_e2e.core.models import ServiceConfig
 
 # Configure logger
 logger = logging.getLogger(__name__)
