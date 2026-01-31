@@ -9,7 +9,7 @@ Características principales:
     - Configuración centralizada via YAML
     - Carga dinámica de módulos de test
     - Soporte para API Gateway o conexiones directas
-    - CLI intuitivo (próximamente)
+    - CLI completo con Rich y Click
 
 Uso básico:
     >>> from socialseed_e2e import BasePage, ApiConfigLoader
@@ -34,6 +34,7 @@ from socialseed_e2e.core.config_loader import ApiConfigLoader, get_config, get_s
 from socialseed_e2e.core.loaders import ModuleLoader
 from socialseed_e2e.core.test_orchestrator import TestOrchestrator
 from socialseed_e2e.core.models import ServiceConfig, TestContext
+from socialseed_e2e.cli import main
 
 __all__ = [
     "BasePage",
@@ -44,5 +45,6 @@ __all__ = [
     "TestOrchestrator",
     "ServiceConfig",
     "TestContext",
+    "main",
     "__version__",
 ]
