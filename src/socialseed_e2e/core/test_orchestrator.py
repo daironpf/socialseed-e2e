@@ -10,7 +10,7 @@ except ImportError:
     pytest = None
 
 
-from .loaders import ModuleLoader
+from socialseed_e2e.core.loaders import ModuleLoader
 
 class TestOrchestrator:
     """

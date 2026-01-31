@@ -18,8 +18,8 @@ Usage:
 import os
 from pathlib import Path
 from typing import Dict, Optional
-from .models import ServiceConfig as OldServiceConfig, TestContext
-from .config_loader import ApiConfigLoader, get_service_config as _get_service_config
+from socialseed_e2e.core.models import ServiceConfig as OldServiceConfig, TestContext
+from socialseed_e2e.core.config_loader import ApiConfigLoader, get_service_config as _get_service_config
 
 class ConfigLoader:
     """

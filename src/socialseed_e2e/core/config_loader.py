@@ -23,7 +23,7 @@ except ImportError:
     pass  # YAML not available, will use JSON
 
 # Import TemplateEngine for default config generation
-from ..utils import TemplateEngine
+from socialseed_e2e.utils import TemplateEngine
 
 
 @dataclass

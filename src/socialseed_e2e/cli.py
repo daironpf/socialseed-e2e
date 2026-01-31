@@ -17,9 +17,9 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from . import __version__
-from .core.config_loader import ApiConfigLoader, ConfigError
-from .utils import TemplateEngine, to_class_name, to_snake_case
+from socialseed_e2e import __version__
+from socialseed_e2e.core.config_loader import ApiConfigLoader, ConfigError
+from socialseed_e2e.utils import TemplateEngine, to_class_name, to_snake_case
 
 console = Console()
 
