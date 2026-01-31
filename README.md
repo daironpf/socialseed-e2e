@@ -250,6 +250,56 @@ services:
     base_url: ${API_BASE_URL:-http://localhost:8080}
 ```
 
+## 🧪 Testing
+
+The framework includes a comprehensive test suite with **300+ tests** organized for maintainability:
+
+### Test Organization
+
+```
+tests/
+├── unit/                      # Unit tests for core components
+│   ├── test_base_page.py     # HTTP client tests
+│   ├── test_config_loader.py # Configuration tests
+│   ├── test_loaders.py       # Module loader tests
+│   ├── test_orchestrator.py  # Test orchestration tests
+│   ├── test_template_engine.py # Template system tests
+│   ├── test_validators.py    # Validation helper tests
+│   └── test_imports_compatibility.py # Import system tests
+│
+└── integration/               # Integration tests
+    └── cli/                   # CLI command tests (organized by command)
+        ├── test_init.py       # 'e2e init' tests
+        ├── test_new_service.py # 'e2e new-service' tests
+        ├── test_new_test.py   # 'e2e new-test' tests
+        ├── test_run.py        # 'e2e run' tests
+        ├── test_doctor.py     # 'e2e doctor' tests
+        ├── test_config.py     # 'e2e config' tests
+        ├── test_error_handling.py # Error handling tests
+        └── test_workflows.py  # End-to-end workflows
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run unit tests only
+pytest tests/unit/
+
+# Run CLI integration tests
+pytest tests/integration/cli/
+
+# Run tests for specific command
+pytest tests/integration/cli/test_init.py
+
+# Run with coverage report
+pytest --cov=socialseed_e2e --cov-report=html
+```
+
+See [tests/integration/cli/README.md](tests/integration/cli/README.md) for detailed testing documentation.
+
 ## 🧪 Example: Complete CRUD Testing
 
 ```python
@@ -334,6 +384,7 @@ e2e run --output json
 - **[Writing Tests](docs/writing-tests.md)** - Test module guide
 - **[CLI Reference](docs/cli-reference.md)** - All commands documented
 - **[API Reference](docs/api-reference.md)** - Python API docs
+- **[Testing Guide](tests/integration/cli/README.md)** - Test organization and development
 
 ## 🛠️ CLI Commands
 
@@ -365,7 +416,7 @@ e2e config                       # Show configuration
 - ✅ **Test Orchestrator**: Auto-discovery working
 - 🚧 **CLI**: Basic commands implemented (v0.1.0)
 - 🚧 **Templates**: Initial templates created
-- 📋 **Tests**: Unit and integration tests planned
+- ✅ **Tests**: Comprehensive unit and integration test suite (300+ tests)
 - 📋 **Documentation**: Basic docs complete
 - 📋 **CI/CD**: GitHub Actions configured
 
@@ -381,8 +432,22 @@ pip install -e ".[dev]"
 pre-commit install
 playwright install chromium
 
-# Run tests
+# Run all tests
 pytest
+
+# Run only unit tests
+pytest tests/unit/
+
+# Run only integration tests
+pytest tests/integration/
+
+# Run CLI integration tests (organized by command)
+pytest tests/integration/cli/
+pytest tests/integration/cli/test_init.py
+pytest tests/integration/cli/test_new_service.py
+
+# Run with coverage
+pytest --cov=socialseed_e2e --cov-report=html
 
 # Run linting
 black src/ tests/
