@@ -1,0 +1,20 @@
+"""Configuration loader for ${service_name}.
+
+This module provides configuration loading specific to the ${service_name} service.
+"""
+
+from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
+
+
+def get_${snake_case_name}_config() -> ServiceConfig:
+    """Get configuration for ${service_name} service.
+    
+    Returns:
+        ServiceConfig: Configuration object for the service
+        
+    Raises:
+        ConfigError: If configuration cannot be loaded
+    """
+    loader = ApiConfigLoader()
+    config = loader.load()
+    return config.services["${service_name}"]
