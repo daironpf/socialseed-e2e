@@ -24,7 +24,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version=__version__.__version__, prog_name="socialseed-e2e")
+@click.version_option(version=__version__, prog_name="socialseed-e2e")
 def cli():
     """socialseed-e2e: Framework E2E para APIs REST.
     
@@ -439,7 +439,7 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     """
     from .core.test_orchestrator import TestOrchestrator
     
-    console.print(f"\n🚀 [bold green]socialseed-e2e v{__version__.__version__}[/bold green]")
+    console.print(f"\n🚀 [bold green]socialseed-e2e v{__version__}[/bold green]")
     console.print("═" * 50)
     console.print()
     
@@ -447,8 +447,8 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     try:
         loader = ApiConfigLoader()
         config = loader.load()
-        console.print(f"📋 [cyan]Configuración:[/cyan] {loader.config_path}")
-        console.print(f"🌍 [cyan]Environment:[/cyan] {config.general.environment}")
+        console.print(f"📋 [cyan]Configuración:[/cyan] {loader._config_path}")
+        console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
         console.print()
     except ConfigError as e:
         console.print(f"[red]❌ Error de configuración:[/red] {e}")
@@ -518,10 +518,10 @@ def doctor():
     
     # Verificar Playwright
     try:
-        import playwright
-        pw_version = playwright.__version__
+        from importlib.metadata import version
+        pw_version = version("playwright")
         checks.append(("Playwright", pw_version, True))
-    except ImportError:
+    except Exception:
         checks.append(("Playwright", "No instalado", False))
     
     # Verificar browsers de Playwright
@@ -603,10 +603,10 @@ def config():
         loader = ApiConfigLoader()
         config = loader.load()
         
-        console.print(f"[cyan]Archivo de configuración:[/cyan] {loader.config_path}")
-        console.print(f"[cyan]Environment:[/cyan] {config.general.environment}")
-        console.print(f"[cyan]Timeout:[/cyan] {config.general.timeout}ms")
-        console.print(f"[cyan]Verbose:[/cyan] {config.general.verbose}")
+        console.print(f"📋 [cyan]Configuración:[/cyan] {loader._config_path}")
+        console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
+        console.print(f"[cyan]Timeout:[/cyan] {config.timeout}ms")
+        console.print(f"[cyan]Verbose:[/cyan] {config.verbose}")
         console.print()
         
         if config.services:

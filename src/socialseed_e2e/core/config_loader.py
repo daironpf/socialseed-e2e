@@ -120,6 +120,11 @@ class AppConfig:
     reporting: ReportingConfig = field(default_factory=ReportingConfig)
 
 
+class ConfigError(Exception):
+    """Custom exception for configuration errors."""
+    pass
+
+
 class ApiConfigLoader:
     """
     Loads and manages API configuration from api.conf file.
@@ -233,13 +238,16 @@ class ApiConfigLoader:
         if e2e_config.exists():
             return str(e2e_config)
         
-        # 4. Current directory
+        # 4. Look for e2e.conf (new standard) or api.conf (legacy)
+        if Path("e2e.conf").exists():
+            return "e2e.conf"
+        
         if Path("api.conf").exists():
             return "api.conf"
         
         raise FileNotFoundError(
-            "Could not find api.conf. Please create it in verify_services/ "
-            "or set E2E_CONFIG_PATH environment variable."
+            "Could not find e2e.conf or api.conf. Please create one or set "
+            "E2E_CONFIG_PATH environment variable."
         )
     
     @classmethod
