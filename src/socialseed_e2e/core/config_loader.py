@@ -9,7 +9,7 @@ provides easy access to all service configurations.
 import os
 import re
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from dataclasses import dataclass, field
 
 # Try to import yaml, fallback to JSON if not available
@@ -21,6 +21,9 @@ try:
     HAS_YAML = True
 except ImportError:
     pass  # YAML not available, will use JSON
+
+# Import TemplateEngine for default config generation
+from ..utils import TemplateEngine
 
 
 @dataclass
@@ -215,40 +218,113 @@ class ApiConfigLoader:
     
     @classmethod
     def _find_config_file(cls) -> str:
-        """Find configuration file in common locations."""
-        # Priority order:
-        # 1. Environment variable
+        """Find configuration file in common locations.
+        
+        Search order (highest priority first):
+        1. E2E_CONFIG_PATH environment variable
+        2. ./e2e.conf (current directory)
+        3. ./config/e2e.conf
+        4. ./tests/e2e.conf
+        5. ~/.config/socialseed-e2e/default.conf
+        6. verify_services/api.conf (legacy, for backward compatibility)
+        7. ./api.conf (legacy, for backward compatibility)
+        
+        Returns:
+            str: Path to the configuration file
+            
+        Raises:
+            FileNotFoundError: If no configuration file is found
+        """
+        # Priority 1: Environment variable
         if env_path := os.getenv("E2E_CONFIG_PATH"):
-            return env_path
+            if Path(env_path).exists():
+                return env_path
+            raise FileNotFoundError(
+                f"Configuration file specified in E2E_CONFIG_PATH not found: {env_path}"
+            )
         
-        # 2. Relative to project structure (verify_services/api.conf)
-        # Try to find verify_services directory
-        current_dir = Path.cwd()
+        # Priority 2-4: Search in current directory and subdirectories
+        search_paths = [
+            Path("e2e.conf"),  # Current directory
+            Path("config") / "e2e.conf",  # config subdirectory
+            Path("tests") / "e2e.conf",  # tests subdirectory
+        ]
         
+        for path in search_paths:
+            if path.exists():
+                return str(path)
+        
+        # Priority 5: Global config in home directory
+        home_config = Path.home() / ".config" / "socialseed-e2e" / "default.conf"
+        if home_config.exists():
+            return str(home_config)
+        
+        # Priority 6-7: Legacy paths (for backward compatibility)
         # Search up the directory tree for verify_services/api.conf
+        current_dir = Path.cwd()
         for parent in [current_dir] + list(current_dir.parents):
             verify_services_dir = parent / "verify_services"
             if verify_services_dir.exists():
-                config_file = verify_services_dir / "api.conf"
-                if config_file.exists():
-                    return str(config_file)
+                legacy_config = verify_services_dir / "api.conf"
+                if legacy_config.exists():
+                    return str(legacy_config)
         
-        # 3. Try e2e directory
-        e2e_config = Path("verify_services/api.conf")
-        if e2e_config.exists():
-            return str(e2e_config)
-        
-        # 4. Look for e2e.conf (new standard) or api.conf (legacy)
-        if Path("e2e.conf").exists():
-            return "e2e.conf"
-        
+        # Legacy: api.conf in current directory
         if Path("api.conf").exists():
             return "api.conf"
         
+        # Configuration not found
         raise FileNotFoundError(
-            "Could not find e2e.conf or api.conf. Please create one or set "
-            "E2E_CONFIG_PATH environment variable."
+            "Could not find configuration file. Searched in:\n"
+            "  1. E2E_CONFIG_PATH environment variable\n"
+            "  2. ./e2e.conf\n"
+            "  3. ./config/e2e.conf\n"
+            "  4. ./tests/e2e.conf\n"
+            "  5. ~/.config/socialseed-e2e/default.conf\n"
+            "  6. verify_services/api.conf (legacy)\n"
+            "  7. ./api.conf (legacy)\n\n"
+            "To create a default configuration, run:\n"
+            "  e2e init\n\n"
+            "Or set the E2E_CONFIG_PATH environment variable:\n"
+            "  export E2E_CONFIG_PATH=/path/to/your/e2e.conf"
         )
+    
+    @classmethod
+    def create_default_config(cls, path: Union[str, Path], overwrite: bool = False) -> str:
+        """Create a default e2e.conf configuration file.
+        
+        Creates a default configuration file at the specified path using
+        the e2e.conf.template template. Parent directories are created
+        automatically if they don't exist.
+        
+        Args:
+            path: Path where to create the configuration file
+            overwrite: If True, overwrite existing file
+            
+        Returns:
+            str: Path to the created configuration file
+            
+        Raises:
+            FileExistsError: If file exists and overwrite=False
+            FileNotFoundError: If template file doesn't exist
+        """
+        path = Path(path)
+        engine = TemplateEngine()
+        
+        rendered_path = engine.render_to_file(
+            'e2e.conf',
+            variables={
+                'environment': 'dev',
+                'timeout': '30000',
+                'user_agent': 'SocialSeed-E2E-Agent/2.0',
+                'verbose': 'true',
+                'services_config': ''
+            },
+            output_path=path,
+            overwrite=overwrite
+        )
+        
+        return str(rendered_path)
     
     @classmethod
     def _substitute_env_vars(cls, content: str) -> str:
@@ -272,8 +348,88 @@ class ApiConfigLoader:
         return re.sub(pattern, replace_var, content)
     
     @classmethod
+    def validate_config(cls, data: Dict[str, Any], strict: bool = False) -> None:
+        """Validate minimum configuration requirements.
+        
+        Args:
+            data: Raw configuration dictionary
+            strict: If True, raises error for missing optional fields
+            
+        Raises:
+            ConfigError: If configuration is invalid or missing required fields
+        """
+        errors = []
+        warnings = []
+        
+        # Check for required 'general' section
+        if "general" not in data:
+            errors.append("Missing required 'general' section")
+        else:
+            general = data["general"]
+            
+            # Validate environment
+            if "environment" in general:
+                valid_envs = ["dev", "development", "staging", "prod", "production", "test"]
+                if general["environment"] not in valid_envs:
+                    warnings.append(
+                        f"Unusual environment value: {general['environment']}. "
+                        f"Recommended: {', '.join(valid_envs)}"
+                    )
+            
+            # Validate timeout is positive integer
+            if "timeout" in general:
+                try:
+                    timeout = int(general["timeout"])
+                    if timeout <= 0:
+                        errors.append("general.timeout must be a positive integer")
+                    elif timeout < 1000:
+                        warnings.append(f"general.timeout is very short ({timeout}ms)")
+                except (ValueError, TypeError):
+                    errors.append("general.timeout must be a valid integer")
+        
+        # Check for services section (at least one service recommended)
+        services = data.get("services", {})
+        if not services:
+            warnings.append("No services defined. Add at least one service to test.")
+        else:
+            # Validate each service has required fields
+            for service_name, service_data in services.items():
+                if not isinstance(service_data, dict):
+                    errors.append(f"Service '{service_name}' must be a dictionary")
+                    continue
+                    
+                if "base_url" not in service_data:
+                    errors.append(f"Service '{service_name}' missing required field: base_url")
+                elif not service_data.get("base_url"):
+                    warnings.append(f"Service '{service_name}' has empty base_url")
+                
+                # Validate port if provided
+                if "port" in service_data:
+                    try:
+                        port = int(service_data["port"])
+                        if port < 1 or port > 65535:
+                            errors.append(f"Service '{service_name}' port must be between 1 and 65535")
+                    except (ValueError, TypeError):
+                        errors.append(f"Service '{service_name}' port must be a valid integer")
+        
+        # Raise error if there are validation errors
+        if errors:
+            raise ConfigError(
+                "Configuration validation failed:\n  - " + "\n  - ".join(errors)
+            )
+        
+        # Print warnings if strict mode
+        if strict and warnings:
+            import warnings as warnings_module
+            for warning in warnings:
+                warnings_module.warn(f"Config warning: {warning}")
+    
+    @classmethod
     def _parse_config(cls, data: Dict[str, Any]) -> AppConfig:
         """Parse raw dictionary into AppConfig object."""
+        # Validate configuration before parsing
+        cls.validate_config(data)
+        
         # General configuration
         general = data.get("general", {})
         project = general.get("project", {})
