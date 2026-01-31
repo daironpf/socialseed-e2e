@@ -1,0 +1,20 @@
+# Configuración E2E para socialseed-e2e
+# Documentación: https://github.com/daironpf/socialseed-e2e
+
+general:
+  # Entorno de ejecución (dev, staging, production)
+  environment: ${environment}
+  
+  # Timeout global para requests en milisegundos
+  timeout: ${timeout}
+  
+  # User agent para requests HTTP
+  user_agent: "${user_agent}"
+  
+  # Modo verbose para debugging
+  verbose: ${verbose}
+
+# Configuración de servicios
+# Define cada servicio a testear
+services:
+${services_config}

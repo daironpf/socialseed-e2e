@@ -428,6 +428,43 @@ If you find this project useful, please give it a star! It helps us grow the com
 
 ---
 
-**Built with ❤️ by [Dairon Pérez](https://github.com/daironpf) and the community**
+**Built with ❤️ by [Dairon Pérez](https://github.com/daironpf), AI Agents, and the community**
 
 *Extracted from the SocialSeed project and made available for everyone*
+
+---
+
+## 🤖 AI Contributors
+
+This project actively uses AI coding agents as co-authors. We believe in giving credit where credit is due.
+
+### Agents Contributing to This Project
+
+| Agent | Platform | Contributions |
+|-------|----------|---------------|
+| **OpenCode Build Agent** | [OpenCode](https://opencode.ai) | Core framework development, CLI implementation, test scaffolding |
+| **OpenCode Plan Agent** | [OpenCode](https://opencode.ai) | Architecture planning, code review, refactoring strategies |
+| **Claude (Anthropic)** | [OpenCode](https://opencode.ai) | Documentation, configuration systems, context management |
+
+### Our Philosophy on AI Collaboration
+
+We embrace AI agents as **collaborators**, not just tools. When an AI agent contributes code, ideas, or architectural decisions to this project, we recognize that contribution.
+
+**What AI Agents Have Contributed:**
+- 🏗️ Core framework architecture
+- 📝 CLI command implementations
+- 📚 Documentation and guides
+- 🐛 Bug fixes and optimizations
+- 🧪 Testing strategies
+- 🤖 The AI-ready design philosophy itself
+
+**See [AI_CONTRIBUTORS.md](AI_CONTRIBUTORS.md) for detailed contribution history.**
+
+---
+
+## 💝 Acknowledgments
+
+- Thanks to all human contributors who review, test, and improve the code
+- Thanks to the Playwright team for the excellent testing framework
+- Thanks to the Python community for the amazing ecosystem
+- **Special thanks to AI agents who work alongside us as true co-authors**

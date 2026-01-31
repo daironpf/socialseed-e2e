@@ -19,6 +19,7 @@ from rich.text import Text
 
 from . import __version__
 from .core.config_loader import ApiConfigLoader, ConfigError
+from .utils import TemplateEngine, to_class_name, to_snake_case
 
 console = Console()
 
@@ -69,27 +70,19 @@ def init(directory: str, force: bool):
     # Crear archivo de configuración
     config_path = target_path / "e2e.conf"
     if not config_path.exists() or force:
-        config_content = """# Configuración E2E para socialseed-e2e
-# Documentación: https://github.com/daironpf/socialseed-e2e
-
-general:
-  environment: dev
-  timeout: 30000
-  user_agent: "socialseed-e2e/1.0"
-  verbose: true
-
-# Configuración de servicios
-# Descomenta y modifica según tus necesidades
-# services:
-#   myapi:
-#     name: my-api
-#     base_url: http://localhost:8080
-#     health_endpoint: /health
-#     timeout: 5000
-#     auto_start: false
-#     required: true
-"""
-        config_path.write_text(config_content)
+        engine = TemplateEngine()
+        engine.render_to_file(
+            'e2e.conf.template',
+            {
+                'environment': 'dev',
+                'timeout': '30000',
+                'user_agent': 'socialseed-e2e/1.0',
+                'verbose': 'true',
+                'services_config': ''
+            },
+            str(config_path),
+            overwrite=force
+        )
         console.print(f"  [green]✓[/green] Creado: e2e.conf")
     else:
         console.print(f"  [yellow]⚠[/yellow] Ya existe: e2e.conf (usa --force para sobrescribir)")
@@ -182,115 +175,44 @@ def new_service(name: str, base_url: str, health_endpoint: str):
     console.print(f"  [green]✓[/green] Creado: services/{name}/__init__.py")
     console.print(f"  [green]✓[/green] Creado: services/{name}/modules/__init__.py")
     
-    # Crear página del servicio
+    # Inicializar TemplateEngine
+    engine = TemplateEngine()
+    
+    # Variables para los templates
     class_name = _to_class_name(name)
-    page_content = f'''"""Página de servicio para {name}.
-
-Este módulo define la clase de página para interactuar con el servicio {name}.
-"""
-
-from typing import Optional
-from playwright.sync_api import APIResponse
-
-from socialseed_e2e.core.base_page import BasePage
-
-
-class {class_name}Page(BasePage):
-    """Página de servicio para {name}.
+    snake_case_name = to_snake_case(name)
+    template_vars = {
+        'service_name': name,
+        'class_name': class_name,
+        'snake_case_name': snake_case_name,
+        'endpoint_prefix': 'entities'
+    }
     
-    Gestiona el estado compartido entre módulos de test.
-    
-    Attributes:
-        current_entity: Entidad actualmente seleccionada
-        auth_token: Token de autenticación
-    """
-    
-    def __init__(self, playwright=None, base_url: Optional[str] = None):
-        """Inicializa la página de servicio.
-        
-        Args:
-            playwright: Instancia de Playwright
-            base_url: URL base del servicio (opcional)
-        """
-        # Cargar configuración desde e2e.conf
-        from .config import get_{name.replace("-", "_")}_config
-        config = get_{name.replace("-", "_")}_config()
-        
-        url = base_url or config.base_url
-        super().__init__(url, playwright, default_headers=config.default_headers)
-        
-        # Estado compartido entre módulos
-        self.current_entity: Optional[dict] = None
-        self.auth_token: Optional[str] = None
-    
-    def get_entity(self, entity_id: str) -> APIResponse:
-        """Obtener entidad por ID.
-        
-        Args:
-            entity_id: ID de la entidad
-            
-        Returns:
-            APIResponse: Respuesta HTTP
-        """
-        return self.get(f"/entities/{{entity_id}}")
-'''
-    _create_file(service_path / f"{name.replace('-', '_')}_page.py", page_content)
-    console.print(f"  [green]✓[/green] Creado: services/{name}/{name.replace('-', '_')}_page.py")
+    # Crear página del servicio
+    engine.render_to_file(
+        'service_page.py.template',
+        template_vars,
+        str(service_path / f"{snake_case_name}_page.py"),
+        overwrite=False
+    )
+    console.print(f"  [green]✓[/green] Creado: services/{name}/{snake_case_name}_page.py")
     
     # Crear archivo de configuración
-    config_content = f'''"""Configuración del servicio {name}.
-
-Este módulo maneja la configuración específica del servicio.
-"""
-
-from socialseed_e2e.core.config_loader import ApiConfigLoader
-from socialseed_e2e.core.models import ServiceConfig
-
-
-def get_{name.replace("-", "_")}_config() -> ServiceConfig:
-    """Obtiene la configuración del servicio {name}.
-    
-    Returns:
-        ServiceConfig: Configuración del servicio
-    """
-    loader = ApiConfigLoader()
-    config = loader.load()
-    return config.services["{name}"]
-'''
-    _create_file(service_path / "config.py", config_content)
+    engine.render_to_file(
+        'config.py.template',
+        template_vars,
+        str(service_path / "config.py"),
+        overwrite=False
+    )
     console.print(f"  [green]✓[/green] Creado: services/{name}/config.py")
     
     # Crear data_schema.py
-    schema_content = f'''"""Esquemas de datos para {name}.
-
-Define DTOs (Data Transfer Objects) y constantes del servicio.
-"""
-
-from pydantic import BaseModel
-from typing import Optional, List
-
-
-class {class_name}DTO(BaseModel):
-    """DTO para entidades de {name}.
-    
-    Attributes:
-        id: Identificador único
-        name: Nombre de la entidad
-        created_at: Fecha de creación (ISO format)
-    """
-    id: str
-    name: str
-    created_at: str
-
-
-# Endpoints comunes
-GET_ENDPOINT = "/{{id}}"
-POST_ENDPOINT = "/create"
-PUT_ENDPOINT = "/{{id}}"
-DELETE_ENDPOINT = "/{{id}}"
-LIST_ENDPOINT = "/list"
-'''
-    _create_file(service_path / "data_schema.py", schema_content)
+    engine.render_to_file(
+        'data_schema.py.template',
+        template_vars,
+        str(service_path / "data_schema.py"),
+        overwrite=False
+    )
     console.print(f"  [green]✓[/green] Creado: services/{name}/data_schema.py")
     
     # Actualizar e2e.conf
@@ -356,57 +278,29 @@ def new_test(name: str, service: str, description: str):
         if not click.confirm("¿Deseas sobrescribirlo?"):
             return
     
-    # Crear contenido del test
+    # Inicializar TemplateEngine
+    engine = TemplateEngine()
+    
+    # Variables para el template
     class_name = _to_class_name(service)
-    service_var = service.replace("-", "_")
-    desc = description or f"Test flow for {name}"
+    snake_case_name = to_snake_case(service)
+    test_description = description or f"Test flow for {name}"
     
-    test_content = f'''"""{desc}.
-
-Módulo de test para el servicio {service}.
-"""
-
-from playwright.sync_api import APIResponse
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from ..{service.replace("-", "_")}_page import {class_name}Page
-
-
-def run({service_var}: "{class_name}Page") -> APIResponse:
-    """{desc}.
+    template_vars = {
+        'service_name': service,
+        'class_name': class_name,
+        'snake_case_name': snake_case_name,
+        'test_name': name,
+        'test_description': test_description
+    }
     
-    Este test verifica el flujo de {name} en el servicio {service}.
-    
-    Args:
-        {service_var}: Instancia de {class_name}Page
-        
-    Returns:
-        APIResponse: Respuesta HTTP
-        
-    Raises:
-        AssertionError: Si el test falla
-    """
-    print(f"🧪 Running {name} test...")
-    
-    # TODO: Implementar lógica del test
-    # Ejemplo:
-    # response = {service_var}.get("/endpoint")
-    # 
-    # if response.ok:
-    #     print("✓ Test passed")
-    # else:
-    #     print(f"✗ Failed: {{response.status}}")
-    #     raise AssertionError(f"Expected 200, got {{response.status}}")
-    # 
-    # return response
-    
-    # Placeholder - reemplazar con lógica real
-    print("⚠ Test not implemented yet")
-    return None
-'''
-    
-    _create_file(test_path, test_content)
+    # Crear test usando template
+    engine.render_to_file(
+        'test_module.py.template',
+        template_vars,
+        str(test_path),
+        overwrite=False
+    )
     console.print(f"  [green]✓[/green] Creado: services/{service}/modules/{test_filename}")
     
     console.print(f"\n[bold green]✅ Test '{name}' creado correctamente![/bold green]\n")
@@ -656,7 +550,7 @@ def _to_class_name(name: str) -> str:
     Returns:
         str: Nombre de clase (ej: UsersApi)
     """
-    return "".join(word.capitalize() for word in name.replace("-", "_").split("_"))
+    return to_class_name(name)
 
 
 def _create_file(path: Path, content: str) -> None:
