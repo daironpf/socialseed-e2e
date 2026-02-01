@@ -5,6 +5,7 @@ when installed via pip, simulating an external project context.
 """
 
 import pytest
+pytestmark = pytest.mark.unit
 import importlib
 import sys
 from types import ModuleType

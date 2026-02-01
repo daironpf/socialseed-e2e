@@ -6,6 +6,7 @@ This module contains unit tests for all validation functions in the validators m
 import re
 
 import pytest
+pytestmark = pytest.mark.unit
 
 from socialseed_e2e.utils.validators import (
     ValidationError,

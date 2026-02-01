@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch, Mock
 
 import pytest
+pytestmark = pytest.mark.unit
 
 from socialseed_e2e.core.test_orchestrator import TestOrchestrator, pytest_configure, pytest_collection_modifyitems
 

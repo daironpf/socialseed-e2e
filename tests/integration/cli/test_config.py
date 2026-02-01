@@ -7,6 +7,7 @@ details including environment, timeout settings, and services.
 
 import os
 import pytest
+pytestmark = pytest.mark.integration
 from click.testing import CliRunner
 
 from socialseed_e2e.cli import cli

@@ -320,18 +320,42 @@ pytest
 
 # Run unit tests only
 pytest tests/unit/
+# Or using markers:
+pytest -m unit
+
+# Run integration tests
+pytest tests/integration/
+# Or using markers:
+pytest -m integration
 
 # Run CLI integration tests
 pytest tests/integration/cli/
+# Or using markers:
+pytest -m cli
 
 # Run tests for specific command
 pytest tests/integration/cli/test_init.py
 
-# Run with coverage report
+# Run with coverage report (minimum 80%)
 pytest --cov=socialseed_e2e --cov-report=html
+
+# Run excluding slow tests
+pytest -m "not slow"
+
+# Run specific marker combinations
+pytest -m "unit and not slow"
 ```
 
-See [tests/integration/cli/README.md](tests/integration/cli/README.md) for detailed testing documentation.
+**Available Test Markers:**
+- `@pytest.mark.unit` - Fast, isolated unit tests
+- `@pytest.mark.integration` - Integration tests
+- `@pytest.mark.slow` - Long-running tests
+- `@pytest.mark.cli` - CLI command tests
+- `@pytest.mark.mock_api` - Tests using the mock Flask API
+
+**Coverage Reports:** Automatically uploaded to [codecov.io](https://codecov.io/gh/daironpf/socialseed-e2e) on each CI run (minimum 80% coverage required).
+
+📚 **Detailed testing documentation:** [docs/testing-guide.md](docs/testing-guide.md)
 
 ### Mock API for Integration Testing
 

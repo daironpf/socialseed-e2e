@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+pytestmark = pytest.mark.unit
 
 from socialseed_e2e.core.loaders import ModuleLoader
 
