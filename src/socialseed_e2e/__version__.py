@@ -7,7 +7,7 @@ This module contains version information and metadata about the package.
 __version__ = "0.1.0"
 __version_info__ = (0, 1, 0)
 __author__ = "Dairon Pérez"
-__email__ = "tu-email@example.com"
+__email__ = "dairon.perezfrias@gmail.com"
 __license__ = "MIT"
 __copyright__ = "Copyright 2026 Dairon Pérez"
 __url__ = "https://github.com/daironpf/socialseed-e2e"
