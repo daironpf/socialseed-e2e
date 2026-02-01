@@ -52,19 +52,50 @@ The API will start on http://localhost:5000 with the following endpoints:
 - `DELETE /api/items/{id}` - Delete item
 - `GET /health` - Health check
 
-### 3. Run E2E Tests
+### 3. Verify Test Discovery
 
-In a new terminal:
+In a new terminal (from the example directory):
 
 ```bash
 e2e run
 ```
 
-Or with verbose output:
+You should see output showing that **5 tests** are detected and ready:
 
-```bash
-e2e run -v
 ```
+🚀 socialseed-e2e v0.1.0
+══════════════════════════════════════════════════
+
+📋 Configuración: e2e.conf
+🌍 Environment: dev
+
+    Servicios Encontrados     
+┏━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━┓
+┃ Servicio  ┃ Tests ┃ Estado ┃
+┡━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━┩
+│ items-api │ 5     │ Ready  │
+└───────────┴───────┴────────┘
+```
+
+### ⚠️ Important Note
+
+**Test execution is currently in placeholder mode** (v0.1.0). The test modules are fully implemented and detected, but the actual test runner will be implemented in v0.2.0.
+
+**What's working:**
+- ✅ Complete test module examples (5 tests)
+- ✅ Test discovery and listing
+- ✅ API with all CRUD endpoints
+- ✅ Service Page implementation
+- ✅ Data schemas with validation
+
+**Coming in v0.2.0:**
+- 🚧 Full test execution with `e2e run`
+- 🚧 Test results reporting
+- 🚧 HTML reports
+
+### Manual Testing
+
+You can test the API manually using curl commands (see below) or by importing the test modules into your own Python scripts.
 
 ## 📋 Step-by-Step Tutorial
 
@@ -122,36 +153,35 @@ Pydantic models in `data_schema.py` define the data structures:
 
 ## 🧪 Running Tests
 
-### Run All Tests
+### Current Status (v0.1.0)
+
+Test execution is currently in **placeholder mode**. While all 5 test modules are complete and will be detected:
 
 ```bash
+cd examples/01-basic-crud
 e2e run
+# Shows: items-api | 5 | Ready
 ```
 
-### Run Specific Test
+The actual test runner execution will be implemented in v0.2.0. Until then, you can:
+
+1. **Study the test examples** - Learn from the 5 complete test implementations
+2. **Test manually** - Use the curl examples below
+3. **Import into your code** - Use the test modules as reference
+
+### View Test Modules
+
+All test modules are functional and demonstrate best practices:
 
 ```bash
-e2e run -m 01_create_item
+# View test implementations
+ls -la services/items-api/modules/
+cat services/items-api/modules/01_create_item.py
 ```
 
-### Run with Verbose Output
+### Manual Testing
 
-```bash
-e2e run -v
-```
-
-### Run in Background Mode
-
-```bash
-# Start API in background
-python api.py &
-
-# Run tests
-e2e run
-
-# Stop API
-kill %1
-```
+You can verify the API works correctly using curl:
 
 ## 🔍 API Endpoints
 
