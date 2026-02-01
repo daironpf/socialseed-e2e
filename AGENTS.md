@@ -88,6 +88,31 @@ e2e --version                      # Versión
 
 ## Consideraciones para AI Agents
 
+### Mock API para Testing
+
+El proyecto incluye un **Mock API** completo para testing de integración. Como agente de IA, debes conocerlo:
+
+**Ubicación:** `tests/fixtures/mock_api.py`
+
+**Documentación específica para IA:** `docs/mock-api.md`
+   - Patrones de uso para tests
+- Mejores prácticas
+- Ejemplos de fixtures
+
+**Uso básico en tests:**
+```python
+def test_ejemplo(mock_api_url, mock_api_reset):
+    # mock_api_reset asegura datos limpios
+    response = requests.get(f"{mock_api_url}/health")
+    assert response.status_code == 200
+```
+
+**Fixtures disponibles:**
+- `mock_api_url` - URL base del servidor
+- `mock_api_reset` - Limpia datos antes de cada test
+- `sample_user_data` - Datos de usuario de ejemplo
+- `admin_credentials` / `user_credentials` - Credenciales pre-configuradas
+
 ### Cuando generes código:
 1. **Siempre verifica** la estructura existente antes de crear archivos
 2. **Usa los protocolos** definidos en `interfaces.py` (IServicePage, ITestModule)

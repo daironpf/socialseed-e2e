@@ -10,6 +10,7 @@ Welcome to the socialseed-e2e documentation!
 - [Writing Tests](writing-tests.md)
 - [CLI Reference](cli-reference.md)
 - [API Reference](api-reference.md)
+- [Mock API for Testing](mock-api.md) - Flask-based mock API for integration testing
 
 ## Getting Started
 

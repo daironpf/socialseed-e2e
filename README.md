@@ -333,6 +333,38 @@ pytest --cov=socialseed_e2e --cov-report=html
 
 See [tests/integration/cli/README.md](tests/integration/cli/README.md) for detailed testing documentation.
 
+### Mock API for Integration Testing
+
+The framework includes a built-in **Flask-based Mock API** for testing without external dependencies:
+
+```bash
+# Start the mock API server
+python tests/fixtures/mock_api.py
+```
+
+**Features:**
+- Health check endpoint (`GET /health`)
+- Complete user CRUD operations (`/api/users`)
+- Authentication system (`/api/auth/login`, `/api/auth/register`)
+- Pre-seeded test data (admin and user accounts)
+- Pytest fixtures for automated testing
+
+**Quick Test with Mock API:**
+```python
+def test_health(mock_api_url):
+    response = requests.get(f"{mock_api_url}/health")
+    assert response.status_code == 200
+```
+
+**Available Fixtures:**
+- `mock_api_url` - Base URL (http://localhost:8765)
+- `mock_api_reset` - Reset data before each test
+- `sample_user_data` - Sample user data
+- `admin_credentials` / `user_credentials` - Pre-configured accounts
+
+📚 **Full documentation:** [tests/fixtures/README.md](tests/fixtures/README.md)  
+📖 **For AI Agents:** [docs/mock-api.md](docs/mock-api.md) - Detailed guide with patterns and best practices
+
 ## 🧪 Example: Complete CRUD Testing
 
 ```python

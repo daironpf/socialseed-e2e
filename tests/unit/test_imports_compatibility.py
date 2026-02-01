@@ -299,7 +299,7 @@ class TestImportSideEffects:
         pkg_dir = os.path.dirname(socialseed_e2e.__file__)
 
         # List of expected files/directories
-        expected = {'core', 'utils', 'templates', 'services', '__init__.py', '__version__.py', 'cli.py'}
+        expected = {'core', 'utils', 'templates', 'services', '__init__.py', '__version__.py', 'cli.py', '__pycache__'}
         actual = set(os.listdir(pkg_dir))
 
         # Any unexpected files would indicate side effects
