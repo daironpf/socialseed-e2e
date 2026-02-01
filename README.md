@@ -7,6 +7,18 @@
 
 > **The ultimate E2E testing framework for REST APIs - Built for developers and AI agents**
 
+---
+
+## 🤖 Engineered for LLM Reasoning
+
+Traditional testing tools are "token-hungry" because they force AI to handle raw HTTP strings and boilerplate. **socialseed-e2e** introduces a high-level abstraction layer that:
+
+* **Minimizes Token Consumption**: By using structured `IServicePage` protocols, the agent only processes business logic, not implementation noise.
+* **Enhanced Contextual Awareness**: Models like **GPT-4o, Claude 3.5, or Mistral Large** can reason about complex API flows and state transitions.
+* **Self-Healing Capabilities**: The structured architecture allows the AI to identify and fix broken tests by understanding the underlying service contract.
+
+---
+
 **socialseed-e2e** is a powerful, service-agnostic End-to-End (E2E) testing framework designed to make API testing effortless, scalable, and maintainable. Whether you're a developer writing tests manually or an AI agent generating test suites automatically, this framework provides the perfect foundation for reliable API testing.
 
 ## 🚀 Why socialseed-e2e?
@@ -185,6 +197,27 @@ Running login test...
 ```
 
 ## 🏗️ Architecture
+
+### High-Level Flow
+
+```mermaid
+graph TD;
+    subgraph "AI Agent Layer"
+        A[AI Agent / LLM] -- "Generates/Heals" --> B[Test Modules]
+    end
+    
+    subgraph "SocialSeed E2E Framework"
+        B -- "Uses" --> C[Service Page Classes]
+        C -- "Extends" --> D[Core BasePage]
+        D -- "Orchestrates" --> E[Playwright Engine]
+    end
+    
+    subgraph "Target Infrastructure"
+        E -- "REST / JSON" --> F[Microservices]
+    end
+    
+    G[YAML/JSON Config] -.-> D
+```
 
 ```
 socialseed-e2e/
@@ -419,6 +452,19 @@ e2e config                       # Show configuration
 - ✅ **Tests**: Comprehensive unit and integration test suite (300+ tests)
 - 📋 **Documentation**: Basic docs complete
 - 📋 **CI/CD**: GitHub Actions configured
+
+---
+
+## ⚡ Seeking API Partnerships
+
+**socialseed-e2e** is currently in a high-growth phase, focusing on **Autonomous Self-Healing Tests**. Due to geographic and resource constraints, we are actively looking for **API Credits or Partnerships** (OpenAI, Anthropic, Google Cloud, Mistral) to stress-test our reasoning engine with large-scale microservice architectures.
+
+> [!TIP]
+> **If you represent an AI provider** and want to see your model as the default engine for AI-native E2E testing, we would love to collaborate. Let's push the boundaries of autonomous engineering together.
+> 
+> 📧 **Contact:** [dairon.perezfrias@gmail.com]
+
+---
 
 ## 🤝 Contributing
 
