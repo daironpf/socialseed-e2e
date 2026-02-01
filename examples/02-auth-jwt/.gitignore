@@ -1,0 +1,5 @@
+items.db
+auth.db
+*.db
+__pycache__/
+*.pyc
