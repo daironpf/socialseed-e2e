@@ -67,6 +67,23 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ---
 
+### kimi-k2.5-free (OpenCode)
+
+**Plataforma:** [OpenCode](https://opencode.ai)  
+**Modelo:** kimi-k2.5-free  
+**Rol:** Documentación y Desarrollo
+
+**Contribuciones Principales:**
+- 📚 Documentación completa de referencia de configuración (Issue #28)
+- 📝 Creación de documentación estructurada y ejemplos prácticos
+- 🔍 Análisis de código fuente para documentación precisa
+- ✅ Commit y gestión de cambios en el repositorio
+
+**Sesiones Notables:**
+- [2026-02-01] Documentación completa de configuración - 1000+ líneas documentando todas las secciones de e2e.conf
+
+---
+
 ## Historial de Contribuciones por Fecha
 
 ### Febrero 2026
@@ -169,7 +186,7 @@ Desarrollo de los comandos CLI principales: init, new-service, new-test, run.
 | OpenCode Build Agent | 15+ | 25+ | ~2000 | 3 archivos |
 | OpenCode Plan Agent | 8+ | 12+ | ~500 | 2 archivos |
 | Claude (Anthropic) | 10+ | 18+ | ~800 | 8 archivos |
-| OpenCode AI Agent | 1+ | 1+ | ~1000 | 1 archivo |
+| kimi-k2.5-free | 1+ | 3+ | ~1000 | 2 archivos |
 
 *Nota: Estas estadísticas son estimaciones de contribuciones conceptuales, ya que los agentes de IA no hacen commits directos a git.*
 
