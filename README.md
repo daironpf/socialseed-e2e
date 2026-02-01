@@ -466,6 +466,30 @@ def test_health(mock_api_url):
 
 ## 📚 API Documentation
 
+### Online Documentation
+
+- 📖 **Full Documentation**: https://socialseed-e2e.readthedocs.io/ (Hosted on ReadTheDocs)
+- 🔗 **API Reference**: https://socialseed-e2e.readthedocs.io/en/latest/api/core.html
+- 📚 **Guides**: https://socialseed-e2e.readthedocs.io/en/latest/
+
+### Local Documentation
+
+Build and view documentation locally:
+
+```bash
+# Install documentation dependencies
+pip install ".[docs]"
+
+# Build HTML documentation
+cd docs
+make html
+
+# View in browser
+open _build/html/index.html
+```
+
+### Documentation Files
+
 - **[Installation Guide](docs/installation.md)** - Detailed installation instructions
 - **[Quick Start](docs/quickstart.md)** - Get up and running in 15 minutes
 - **[Configuration](docs/configuration.md)** - e2e.conf options and examples
