@@ -15,7 +15,9 @@ Welcome to the socialseed-e2e documentation!
 
 ## Quick Links
 
+- **CLI Commands**: See [CLI Reference](cli-reference.md) for all commands, options, and examples
 - **Running Tests**: See [Testing Guide](testing-guide.md) for comprehensive test execution options
+- **Writing Tests**: See [Writing Tests](writing-tests.md) for test module structure and patterns
 - **Coverage Reports**: Automatic coverage reporting to codecov.io (minimum 80%)
 - **Test Markers**: Use markers like `@pytest.mark.unit`, `@pytest.mark.integration` to run selective tests
 
