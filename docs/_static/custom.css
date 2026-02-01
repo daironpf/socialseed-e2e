@@ -1,0 +1,44 @@
+/* Custom CSS for socialseed-e2e documentation */
+
+/* Improve code block appearance */
+div.highlight {
+    background-color: #f8f8f8;
+    border: 1px solid #e1e4e5;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+/* Style for API function signatures */
+.sig.sig-object.py {
+    background-color: #f0f7fb;
+    border-left: 4px solid #2980B9;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+/* Improve table appearance */
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal !important;
+}
+
+/* Custom admonitions */
+.admonition.note {
+    background-color: #e7f3fe;
+    border-left: 6px solid #2196F3;
+}
+
+.admonition.warning {
+    background-color: #fff3cd;
+    border-left: 6px solid #ffc107;
+}
+
+.admonition.tip {
+    background-color: #d4edda;
+    border-left: 6px solid #28a745;
+}
+
+.admonition.important {
+    background-color: #f8d7da;
+    border-left: 6px solid #dc3545;
+}
