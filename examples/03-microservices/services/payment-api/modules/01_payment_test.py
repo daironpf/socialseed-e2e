@@ -57,6 +57,7 @@ def run(payment_api: "PaymentApiPage") -> APIResponse:
     print(f"  ✓ User payments retrieved for alice")
 
     print("Test 4: Get payment details")
+    assert payment_api.test_payment_id is not None
     response = payment_api.get_payment(payment_api.test_payment_id)
     payment_api.assert_status(response, 200)
 
