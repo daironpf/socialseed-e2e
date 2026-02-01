@@ -3,7 +3,6 @@
 [![PyPI](https://img.shields.io/pypi/v/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 [![Python](https://img.shields.io/pypi/pyversions/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 [![CI](https://github.com/daironpf/socialseed-e2e/workflows/CI/badge.svg)](https://github.com/daironpf/socialseed-e2e/actions)
-[![Coverage](https://codecov.io/gh/daironpf/socialseed-e2e/branch/main/graph/badge.svg)](https://codecov.io/gh/daironpf/socialseed-e2e)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 
@@ -574,7 +573,6 @@ mypy src/socialseed_e2e
 
 - **GitHub Discussions**: [Join the conversation](https://github.com/daironpf/socialseed-e2e/discussions)
 - **Issues**: [Report bugs or request features](https://github.com/daironpf/socialseed-e2e/issues)
-- **Twitter**: [@daironpf](https://twitter.com/daironpf)
 
 ## ⭐ Star Us!
 
