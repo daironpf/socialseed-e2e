@@ -466,12 +466,6 @@ def test_health(mock_api_url):
 
 ## 📚 API Documentation
 
-### Online Documentation
-
-- 📖 **Full Documentation**: https://socialseed-e2e.readthedocs.io/ (Hosted on ReadTheDocs)
-- 🔗 **API Reference**: https://socialseed-e2e.readthedocs.io/en/latest/api/core.html
-- 📚 **Guides**: https://socialseed-e2e.readthedocs.io/en/latest/
-
 ### Local Documentation
 
 Build and view documentation locally:
@@ -486,6 +480,25 @@ make html
 
 # View in browser
 open _build/html/index.html
+```
+
+### Hosting Documentation Online
+
+To host the documentation on ReadTheDocs:
+
+1. Sign up at https://readthedocs.org/
+2. Import your GitHub repository
+3. The `.readthedocs.yaml` file is already configured
+4. Documentation will be available at: `https://socialseed-e2e.readthedocs.io/`
+
+To host on GitHub Pages:
+
+```bash
+# Build docs and copy to docs/_build/html
+cd docs && make html
+
+# The HTML files are in _build/html/
+# Follow GitHub Pages instructions to deploy this folder
 ```
 
 ### Documentation Files

@@ -61,7 +61,7 @@ socialseed-e2e = "socialseed_e2e.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/daironpf/socialseed-e2e"
-Documentation = "https://github.com/daironpf/socialseed-e2e#readme"
+Documentation = "https://github.com/daironpf/socialseed-e2e/tree/main/docs"
 Repository = "https://github.com/daironpf/socialseed-e2e"
 Issues = "https://github.com/daironpf/socialseed-e2e/issues"
 Changelog = "https://github.com/daironpf/socialseed-e2e/blob/main/CHANGELOG.md"
