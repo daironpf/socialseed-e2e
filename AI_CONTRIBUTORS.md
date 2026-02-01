@@ -75,12 +75,14 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 **Contribuciones Principales:**
 - 📚 Documentación completa de referencia de configuración (Issue #28)
+- 🧪 Guía de escritura de módulos de prueba (Issue #29)
 - 📝 Creación de documentación estructurada y ejemplos prácticos
 - 🔍 Análisis de código fuente para documentación precisa
 - ✅ Commit y gestión de cambios en el repositorio
 
 **Sesiones Notables:**
 - [2026-02-01] Documentación completa de configuración - 1000+ líneas documentando todas las secciones de e2e.conf
+- [2026-02-01] Guía de escritura de tests - 1300+ líneas con ejemplos y patrones de testing
 
 ---
 
@@ -118,6 +120,44 @@ Creación de documentación de referencia completa para la configuración del fr
 2. Inclusión de ejemplos copiar-y-pegar listos para usar
 3. Documentación de características avanzadas como hot reloading
 4. Guías de mejores prácticas para secrets y seguridad
+
+---
+
+#### 2026-02-01 - Guía de Escritura de Módulos de Prueba (Issue #29)
+**Agente:** kimi-k2.5-free (OpenCode)  
+**Tipo:** Documentación  
+**Impacto:** Alto
+
+**Descripción:**
+Creación de guía completa para escribir módulos de prueba en el framework socialseed-e2e. La documentación cubre desde la estructura básica hasta patrones avanzados de testing.
+
+**Archivos Creados/Modificados:**
+- `docs/writing-tests.md` - Guía completa (~1300 líneas)
+  - Estructura de módulos de prueba
+  - Documentación de función run()
+  - Uso de ServicePage y métodos HTTP
+  - Aserciones y manejo de errores
+  - Compartir estado entre tests
+  - Mejores prácticas
+  - 3 ejemplos completos (Auth, CRUD, Error Handling)
+  - 5 patrones comunes de testing
+
+**Contenido Documentado:**
+1. Estructura de módulos de prueba y convenciones de nombres
+2. Función run() con parámetros y tipos
+3. ServicePage: métodos HTTP (GET, POST, PUT, DELETE, PATCH)
+4. Métodos de aserción (assert_status, assert_ok, assert_json, assert_header)
+5. Manejo de errores y excepciones
+6. Patrones de compartir estado entre tests
+7. Mejores prácticas de testing
+8. Ejemplos: Autenticación, CRUD, Validación de errores
+9. Patrones: Setup/Teardown, Requests encadenados, Batch, Paginación, Async/Polling
+
+**Decisiones Importantes:**
+1. Documentar ejemplos reales basados en la estructura existente del proyecto
+2. Incluir patrones de código reutilizables
+3. Agregar sección de integración con Mock API
+4. Mantener consistencia con la guía de configuración existente
 
 ---
 
@@ -186,7 +226,7 @@ Desarrollo de los comandos CLI principales: init, new-service, new-test, run.
 | OpenCode Build Agent | 15+ | 25+ | ~2000 | 3 archivos |
 | OpenCode Plan Agent | 8+ | 12+ | ~500 | 2 archivos |
 | Claude (Anthropic) | 10+ | 18+ | ~800 | 8 archivos |
-| kimi-k2.5-free | 1+ | 3+ | ~1000 | 2 archivos |
+| kimi-k2.5-free | 2+ | 2+ | ~2300 | 2 archivos |
 
 *Nota: Estas estadísticas son estimaciones de contribuciones conceptuales, ya que los agentes de IA no hacen commits directos a git.*
 
