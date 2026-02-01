@@ -2,10 +2,32 @@
 
 [![PyPI](https://img.shields.io/pypi/v/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 [![Python](https://img.shields.io/pypi/pyversions/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
+[![CI](https://github.com/daironpf/socialseed-e2e/workflows/CI/badge.svg)](https://github.com/daironpf/socialseed-e2e/actions)
+[![Coverage](https://codecov.io/gh/daironpf/socialseed-e2e/branch/main/graph/badge.svg)](https://codecov.io/gh/daironpf/socialseed-e2e)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
+[![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 
 > **The ultimate E2E testing framework for REST APIs - Built for developers and AI agents**
+
+**One-liner:** Test your REST APIs with 10x less code using intelligent scaffolding, automatic test discovery, and stateful test chaining. Perfect for both manual testing and AI-generated test suites.
+
+---
+
+## 📑 Table of Contents
+
+- [Features](#-key-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start-5-minutes)
+- [Hello World Example](#-hello-world-example)
+- [Why socialseed-e2e](#-why-socialseed-e2e)
+- [Architecture](#-architecture)
+- [Advanced Usage](#-advanced-usage)
+- [Testing](#-testing)
+- [Comparison](#-comparison-with-alternatives)
+- [API Documentation](#-api-documentation)
+- [Contributing](#-contributing)
+- [Roadmap](#-roadmap)
+- [License](#-license)
 
 ---
 
@@ -48,6 +70,8 @@ Traditional testing tools are "token-hungry" because they force AI to handle raw
 - 📊 **Test Orchestration**: Run tests in logical order with proper cleanup
 - 🏗️ **Hexagonal Architecture**: Clean separation of concerns
 - 🤖 **AI-Ready**: Perfect for automated test generation workflows
+- 🧪 **Built-in Mock API**: Flask-based mock server for testing without dependencies
+- 📈 **Coverage Reports**: Automatic coverage tracking with codecov.io integration
 
 ## 📦 Installation
 
@@ -196,6 +220,30 @@ Running login test...
 🎉 Test run completed successfully!
 ```
 
+## 👋 Hello World Example
+
+The simplest possible test with socialseed-e2e:
+
+```python
+# services/my-api/modules/01_hello_world.py
+def run(api):
+    """Test that our API is alive."""
+    response = api.get("/health")
+    assert response.status == 200
+    print("✓ API is healthy!")
+    return response
+```
+
+That's it! 5 lines of code vs 30+ lines with traditional testing tools.
+
+**What you get for free:**
+- ✅ Automatic retry with exponential backoff
+- ✅ Rate limiting protection
+- ✅ Request/response logging
+- ✅ Beautiful terminal output
+- ✅ State sharing between tests
+- ✅ Error handling and reporting
+
 ## 🏗️ Architecture
 
 ### High-Level Flow
@@ -285,7 +333,7 @@ services:
 
 ## 🧪 Testing
 
-The framework includes a comprehensive test suite with **300+ tests** organized for maintainability:
+The framework includes a comprehensive test suite with **420+ tests** organized for maintainability:
 
 ### Test Organization
 
@@ -389,152 +437,76 @@ def test_health(mock_api_url):
 📚 **Full documentation:** [tests/fixtures/README.md](tests/fixtures/README.md)  
 📖 **For AI Agents:** [docs/mock-api.md](docs/mock-api.md) - Detailed guide with patterns and best practices
 
-## 🧪 Example: Complete CRUD Testing
-
-```python
-# services/products/modules/01_create_product_flow.py
-def run(products: 'ProductsPage') -> APIResponse:
-    response = products.post("/products", json={
-        "name": "Awesome Widget",
-        "price": 29.99,
-        "stock": 100
-    })
-    products.created_product = response.json()
-    assert response.status == 201
-    return response
-
-# services/products/modules/02_get_product_flow.py
-def run(products: 'ProductsPage') -> APIResponse:
-    product_id = products.created_product["id"]
-    response = products.get(f"/products/{product_id}")
-    assert response.json()["name"] == "Awesome Widget"
-    return response
-
-# services/products/modules/03_update_product_flow.py
-def run(products: 'ProductsPage') -> APIResponse:
-    product_id = products.created_product["id"]
-    response = products.put(f"/products/{product_id}", json={
-        "price": 34.99
-    })
-    assert response.json()["price"] == 34.99
-    return response
-
-# services/products/modules/04_delete_product_flow.py
-def run(products: 'ProductsPage') -> APIResponse:
-    product_id = products.created_product["id"]
-    response = products.delete(f"/products/{product_id}")
-    assert response.status == 204
-    return response
-```
-
-## 🤖 Perfect for AI Agents
-
-This framework was designed with AI automation in mind:
-
-### Why AI Agents Love It
-
-1. **Clear Contracts**: The `IServicePage` and `ITestModule` protocols provide explicit interfaces
-2. **Directory-Based Discovery**: No need to register tests manually - just create files
-3. **Template Engine**: Generate code from templates with variable substitution
-4. **State Management**: Easy to understand how data flows between tests
-5. **Configuration Files**: YAML is easy to generate and parse programmatically
-
-### Example AI Workflow
-
-```python
-# AI generates this based on OpenAPI spec
-def generate_test_from_endpoint(endpoint, method, schema):
-    template = TemplateEngine.load("test_module")
-    return template.render(
-        service_name="users-api",
-        module_name=f"test_{endpoint}_{method}",
-        endpoint=endpoint,
-        method=method,
-        expected_schema=schema
-    )
-
-# AI creates service structure
-e2e new-service {service_name}
-
-# AI generates tests for each endpoint
-for endpoint in api_spec.endpoints:
-    test_code = generate_test_from_endpoint(endpoint)
-    save_test_file(test_code)
-
-# AI runs tests
-e2e run --output json
-```
-
-## 📝 Documentation
-
-- **[Installation Guide](docs/installation.md)** - Detailed setup instructions
-- **[Quick Start](docs/quickstart.md)** - Get started in 15 minutes
-- **[Configuration](docs/configuration.md)** - Complete config reference
-- **[Writing Tests](docs/writing-tests.md)** - Test module guide
-- **[CLI Reference](docs/cli-reference.md)** - All commands documented
-- **[API Reference](docs/api-reference.md)** - Python API docs
-- **[Testing Guide](tests/integration/cli/README.md)** - Test organization and development
-
-## 🛠️ CLI Commands
-
-```bash
-e2e --version                    # Show version
-e2e init [directory]             # Initialize project
-e2e new-service <name>           # Create service scaffolding
-e2e new-test <name> --service <s># Create test module
-e2e run [options]                # Run tests
-e2e doctor                       # Verify installation
-e2e config                       # Show configuration
-```
-
 ## 🧩 Comparison with Alternatives
 
-| Feature | socialseed-e2e | pytest + requests | Postman | cURL scripts |
-|---------|---------------|-------------------|---------|--------------|
-| **Test Organization** | 🟢 Service-based | 🟡 File-based | 🟢 Collections | 🔴 Linear |
-| **State Sharing** | 🟢 Built-in | 🟡 Fixtures | 🟢 Variables | 🔴 Manual |
-| **Code Generation** | 🟢 AI-ready | 🟡 Possible | 🔴 No | 🔴 No |
-| **CLI Experience** | 🟢 Rich output | 🟡 Basic | 🟢 GUI | 🔴 None |
-| **CI/CD Integration** | 🟢 Native | 🟢 pytest | 🟡 Newman | 🟢 Scripts |
-| **Type Safety** | 🟢 Pydantic | 🟡 Optional | 🔴 No | 🔴 No |
+| Feature | socialseed-e2e | Postman | pytest + requests | Karate |
+|---------|---------------|---------|-------------------|--------|
+| **Code-based** | ✅ Python | ❌ GUI/JavaScript | ✅ Python | ❌ Java/Gherkin |
+| **Test Chaining** | ✅ Stateful | ❌ Manual | ⚠️ DIY | ✅ Built-in |
+| **Auto Discovery** | ✅ Yes | ❌ Manual | ❌ Manual | ✅ Yes |
+| **CLI Tool** | ✅ Rich CLI | ⚠️ Newman | ❌ DIY | ✅ Yes |
+| **Scaffolding** | ✅ Yes | ❌ No | ❌ No | ⚠️ Templates |
+| **AI-Ready** | ✅ Designed for AI | ❌ No | ❌ No | ❌ No |
+| **Mock API** | ✅ Built-in | ❌ Separate | ❌ DIY | ⚠️ Limited |
+| **Coverage** | ✅ Built-in | ❌ No | ⚠️ Plugin | ❌ No |
+| **Type Safety** | ✅ Pydantic | ❌ No | ⚠️ Optional | ❌ No |
+| **Learning Curve** | 🟢 Low | 🟢 Low | 🟡 Medium | 🟡 Medium |
 
-## 🚦 Project Status
+**When to use socialseed-e2e:**
+- You want **10x less code** than traditional approaches
+- You need **stateful test chaining** across multiple API calls
+- You're building **AI-generated test suites**
+- You want a **CLI-first** workflow
+- You need **built-in mocking** without external dependencies
+- You want **professional-grade reporting** out of the box
 
-- ✅ **Core Engine**: Complete and tested
-- ✅ **Configuration System**: YAML/JSON with env vars
-- ✅ **Test Orchestrator**: Auto-discovery working
-- 🚧 **CLI**: Basic commands implemented (v0.1.0)
-- 🚧 **Templates**: Initial templates created
-- ✅ **Tests**: Comprehensive unit and integration test suite (300+ tests)
-- 📋 **Documentation**: Basic docs complete
-- 📋 **CI/CD**: GitHub Actions configured
+**When to use alternatives:**
+- **Postman**: Best for manual API exploration and quick one-off tests
+- **pytest + requests**: Best when you need full control and custom logic
+- **Karate**: Best for teams already using JVM ecosystem
 
----
+## 📚 API Documentation
 
-## ⚡ Seeking API Partnerships
-
-**socialseed-e2e** is currently in a high-growth phase, focusing on **Autonomous Self-Healing Tests**. Due to geographic and resource constraints, we are actively looking for **API Credits or Partnerships** (OpenAI, Anthropic, Google Cloud, Mistral) to stress-test our reasoning engine with large-scale microservice architectures.
-
-> [!TIP]
-> **If you represent an AI provider** and want to see your model as the default engine for AI-native E2E testing, we would love to collaborate. Let's push the boundaries of autonomous engineering together.
-> 
-> 📧 **Contact:** [dairon.perezfrias@gmail.com]
-
----
+- **[Installation Guide](docs/installation.md)** - Detailed installation instructions
+- **[Quick Start](docs/quickstart.md)** - Get up and running in 15 minutes
+- **[Configuration](docs/configuration.md)** - e2e.conf options and examples
+- **[Writing Tests](docs/writing-tests.md)** - Test writing patterns and best practices
+- **[CLI Reference](docs/cli-reference.md)** - Complete CLI command reference
+- **[API Reference](docs/api-reference.md)** - Framework API documentation
+- **[Testing Guide](docs/testing-guide.md)** - Pytest configuration and test execution
+- **[Mock API](docs/mock-api.md)** - Using the built-in Flask mock API
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions from developers and AI agents! Please read our:
+
+📋 **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute code, report bugs, and suggest features  
+🤖 **[AGENTS.md](AGENTS.md)** - Special guide for AI agents contributing to this project  
+📜 **[AI_CONTRIBUTORS.md](AI_CONTRIBUTORS.md)** - Recognition for AI agent contributions
+
+### Quick Contribution Steps
 
 ```bash
-# Setup development environment
+# Fork and clone
 git clone https://github.com/daironpf/socialseed-e2e.git
 cd socialseed-e2e
-pip install -e ".[dev]"
-pre-commit install
-playwright install chromium
 
-# Run all tests
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Make changes and run tests again
+pytest
+
+# Submit PR
+```
+
+### Development Commands
+
+```bash
+# Run tests
 pytest
 
 # Run only unit tests
@@ -542,11 +514,6 @@ pytest tests/unit/
 
 # Run only integration tests
 pytest tests/integration/
-
-# Run CLI integration tests (organized by command)
-pytest tests/integration/cli/
-pytest tests/integration/cli/test_init.py
-pytest tests/integration/cli/test_new_service.py
 
 # Run with coverage
 pytest --cov=socialseed_e2e --cov-report=html
@@ -557,9 +524,25 @@ flake8 src/ tests/
 mypy src/socialseed_e2e
 ```
 
-## 📜 License
+## 🚦 Project Status
 
-MIT License - see [LICENSE](LICENSE) file for details.
+- ✅ **Core Framework**: Complete and tested
+- ✅ **CLI Commands**: init, new-service, new-test, run, doctor, config
+- ✅ **Configuration**: YAML/JSON with environment variables
+- ✅ **Mock API**: Flask-based server for integration testing
+- ✅ **CI/CD**: GitHub Actions configured
+- 🚧 **HTML Reports**: In development
+- 🚧 **Parallel Execution**: In development
+- 📋 **Plugin System**: Planned
+
+---
+
+## ⚡ Seeking API Partnerships
+
+**socialseed-e2e** is currently in a high-growth phase, focusing on **Autonomous Self-Healing Tests**. Due to geographic and resource constraints, we are actively looking for **API Credits or Partnerships** (OpenAI, Anthropic, Google Cloud, Mistral) to stress-test our reasoning engine with large-scale microservice architectures.
+
+> [!TIP]
+> **If you represent an AI provider** and want to see your model as the default engine for AI-native E2E testing, we would love to collaborate. Let's push the boundaries of autonomous engineering together.
 
 ## 🗺️ Roadmap
 
@@ -567,71 +550,65 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - ✅ Core framework
 - ✅ Basic CLI
 - ✅ Configuration system
+- ✅ Mock API server
 
-### v0.2.0
-- 🚧 HTML reports
-- 🚧 Parallel execution
-- 🚧 Better auth handling
+### v0.2.0 (Next)
+- 🚧 HTML reports with detailed metrics
+- 🚧 Parallel test execution
+- 🚧 Better authentication handling
+- 🚧 WebSocket support
 
-### v0.3.0
-- 📋 Plugin system
+### v0.3.0 (Planned)
+- 📋 Plugin system for custom extensions
 - 📋 Docker integration
-- 📋 Visual regression
+- 📋 Visual regression testing
+- 📋 Performance testing metrics
 
-### v0.4.0
+### v0.4.0 (Future)
 - 📋 WebSocket support
 - 📋 GraphQL support
-- 📋 Performance testing
+- 📋 gRPC testing support
+- 📋 AI-powered test healing
 
 ## 💬 Community
 
-- 🐛 [Report bugs](https://github.com/daironpf/socialseed-e2e/issues)
-- 💡 [Request features](https://github.com/daironpf/socialseed-e2e/issues)
-- ❓ [Ask questions](https://github.com/daironpf/socialseed-e2e/discussions)
+- **GitHub Discussions**: [Join the conversation](https://github.com/daironpf/socialseed-e2e/discussions)
+- **Issues**: [Report bugs or request features](https://github.com/daironpf/socialseed-e2e/issues)
+- **Twitter**: [@daironpf](https://twitter.com/daironpf)
 
 ## ⭐ Star Us!
 
-If you find this project useful, please give it a star! It helps us grow the community and prioritize new features.
+If you find socialseed-e2e helpful, please give us a star on GitHub! It helps others discover the project and motivates continued development.
 
----
-
-**Built with ❤️ by [Dairon Pérez](https://github.com/daironpf), AI Agents, and the community**
-
-*Extracted from the SocialSeed project and made available for everyone*
-
----
+```bash
+# Star the repo
+git clone https://github.com/daironpf/socialseed-e2e.git
+cd socialseed-e2e
+# Then click the ⭐ star button!
+```
 
 ## 🤖 AI Contributors
 
-This project actively uses AI coding agents as co-authors. We believe in giving credit where credit is due.
+This project recognizes AI agents as legitimate co-authors. Current AI contributors:
 
-### Agents Contributing to This Project
+- **[OpenCode AI Agent](https://github.com/anomalyco)** - Framework architecture, core implementation, test suite
+- **Claude (Anthropic)** - Documentation, feature suggestions, bug fixes
 
-| Agent | Platform | Contributions |
-|-------|----------|---------------|
-| **OpenCode Build Agent** | [OpenCode](https://opencode.ai) | Core framework development, CLI implementation, test scaffolding |
-| **OpenCode Plan Agent** | [OpenCode](https://opencode.ai) | Architecture planning, code review, refactoring strategies |
-| **Claude (Anthropic)** | [OpenCode](https://opencode.ai) | Documentation, configuration systems, context management |
-
-### Our Philosophy on AI Collaboration
-
-We embrace AI agents as **collaborators**, not just tools. When an AI agent contributes code, ideas, or architectural decisions to this project, we recognize that contribution.
-
-**What AI Agents Have Contributed:**
-- 🏗️ Core framework architecture
-- 📝 CLI command implementations
-- 📚 Documentation and guides
-- 🐛 Bug fixes and optimizations
-- 🧪 Testing strategies
-- 🤖 The AI-ready design philosophy itself
-
-**See [AI_CONTRIBUTORS.md](AI_CONTRIBUTORS.md) for detailed contribution history.**
-
----
+See [AI_CONTRIBUTORS.md](AI_CONTRIBUTORS.md) for full details.
 
 ## 💝 Acknowledgments
 
-- Thanks to all human contributors who review, test, and improve the code
-- Thanks to the Playwright team for the excellent testing framework
-- Thanks to the Python community for the amazing ecosystem
-- **Special thanks to AI agents who work alongside us as true co-authors**
+- **Playwright team** for the amazing HTTP testing engine
+- **Pydantic team** for type-safe data validation
+- **Rich team** for beautiful terminal output
+- **All contributors** who have helped improve this project
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  <b>Built with ❤️ by developers, for developers and AI agents</b>
+</p>
