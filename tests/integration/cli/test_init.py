@@ -7,6 +7,7 @@ with the correct directory structure and configuration files.
 
 import os
 import pytest
+pytestmark = pytest.mark.integration
 from click.testing import CliRunner
 
 from socialseed_e2e.cli import cli

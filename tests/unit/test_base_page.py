@@ -9,6 +9,7 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+pytestmark = pytest.mark.unit
 
 from socialseed_e2e.core.base_page import (
     BasePage,

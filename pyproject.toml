@@ -96,11 +96,45 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: Unit tests - fast, isolated tests for individual functions/classes",
+    "integration: Integration tests - test component interactions and workflows",
+    "slow: Slow tests - tests that take significant time to run",
+    "cli: CLI command tests",
+    "core: Core framework tests",
+    "e2e: End-to-end tests",
+    "mock_api: Tests using the mock Flask API",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
 
-# Coverage
+# Coverage configuration
 [tool.coverage.run]
 source = ["src/socialseed_e2e"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/conftest.py",
+    "*/__pycache__/*",
+    "*/templates/*",
+]
+branch = true
 
 [tool.coverage.report]
 show_missing = true
 fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "pass",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+title = "socialseed-e2e Coverage Report"

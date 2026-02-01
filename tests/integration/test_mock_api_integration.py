@@ -4,7 +4,10 @@ These tests demonstrate how to use the mock Flask API for integration testing.
 They serve as both tests and documentation for using the mock API fixtures.
 """
 
+import pytest
 import requests
+
+pytestmark = [pytest.mark.integration, pytest.mark.mock_api]
 
 
 class TestMockAPIHealth:
