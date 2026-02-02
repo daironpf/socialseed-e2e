@@ -31,12 +31,10 @@ class TestLoadRunnableFromFile:
         """Test loading a valid runnable function from a file."""
         # Create a test module file
         test_file = tmp_path / "test_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def run():
     return "Hello from test module"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -48,12 +46,10 @@ def run():
     def test_load_with_custom_function_name(self, tmp_path):
         """Test loading a function with custom name."""
         test_file = tmp_path / "custom_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def custom_func():
     return "Custom function"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file, function_name="custom_func")
@@ -81,12 +77,10 @@ def custom_func():
     def test_load_file_without_function_returns_none(self, tmp_path):
         """Test that loading a file without the target function returns None."""
         test_file = tmp_path / "no_run_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def other_func():
     return "Not the run function"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file, function_name="run")
@@ -96,11 +90,9 @@ def other_func():
     def test_load_file_with_non_callable_run_returns_none(self, tmp_path):
         """Test that loading a file where 'run' is not callable returns None."""
         test_file = tmp_path / "non_callable_run.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 run = "This is a string, not a function"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -110,14 +102,12 @@ run = "This is a string, not a function"
     def test_load_module_with_imports(self, tmp_path):
         """Test loading a module that imports other modules."""
         test_file = tmp_path / "import_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 import os
 
 def run():
     return f"Current directory: {os.getcwd()}"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -130,8 +120,7 @@ def run():
     def test_load_module_with_multiple_functions(self, tmp_path):
         """Test loading a module with multiple functions."""
         test_file = tmp_path / "multi_func_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def helper():
     return "helper"
 
@@ -140,8 +129,7 @@ def run():
 
 def another():
     return "another"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -152,8 +140,7 @@ def another():
     def test_load_module_with_classes(self, tmp_path):
         """Test loading a module that contains classes."""
         test_file = tmp_path / "class_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 class MyClass:
     def __init__(self):
         self.value = 42
@@ -164,8 +151,7 @@ class MyClass:
 def run():
     obj = MyClass()
     return obj.get_value()
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -180,13 +166,11 @@ class TestLoadRunnableErrorHandling:
     def test_load_corrupted_python_file(self, tmp_path, capsys):
         """Test handling of corrupted Python file with syntax errors."""
         test_file = tmp_path / "corrupted.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def run(
     # Missing closing parenthesis and colon
     print("Broken")
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -199,15 +183,13 @@ def run(
     def test_load_file_with_runtime_error_in_module(self, tmp_path, capsys):
         """Test handling of file with runtime errors during import."""
         test_file = tmp_path / "runtime_error.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 # This will raise an error during import
 x = 1 / 0
 
 def run():
     return "never reached"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -229,13 +211,11 @@ def run():
     def test_load_file_with_only_comments(self, tmp_path):
         """Test loading a file with only comments."""
         test_file = tmp_path / "comments_only.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 # This is a comment
 # Another comment
 # No actual code here
-"""
-        )
+""")
 
         loader = ModuleLoader()
         func = loader.load_runnable_from_file(test_file)
@@ -249,12 +229,10 @@ class TestDiscoverRunnables:
     def test_discover_single_runnable(self, tmp_path):
         """Test discovering a single runnable in a directory."""
         test_file = tmp_path / "01_test.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def run():
     return "test"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path)
@@ -264,24 +242,18 @@ def run():
 
     def test_discover_multiple_runnables(self, tmp_path):
         """Test discovering multiple runnables in a directory."""
-        (tmp_path / "01_first.py").write_text(
-            """
+        (tmp_path / "01_first.py").write_text("""
 def run():
     return "first"
-"""
-        )
-        (tmp_path / "02_second.py").write_text(
-            """
+""")
+        (tmp_path / "02_second.py").write_text("""
 def run():
     return "second"
-"""
-        )
-        (tmp_path / "03_third.py").write_text(
-            """
+""")
+        (tmp_path / "03_third.py").write_text("""
 def run():
     return "third"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path)
@@ -294,24 +266,18 @@ def run():
     def test_discover_runnables_alphabetical_order(self, tmp_path):
         """Test that runnables are discovered in alphabetical order."""
         # Create files in non-alphabetical order
-        (tmp_path / "z_last.py").write_text(
-            """
+        (tmp_path / "z_last.py").write_text("""
 def run():
     return "z"
-"""
-        )
-        (tmp_path / "a_first.py").write_text(
-            """
+""")
+        (tmp_path / "a_first.py").write_text("""
 def run():
     return "a"
-"""
-        )
-        (tmp_path / "m_middle.py").write_text(
-            """
+""")
+        (tmp_path / "m_middle.py").write_text("""
 def run():
     return "m"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path)
@@ -323,18 +289,14 @@ def run():
 
     def test_discover_skips_init_files(self, tmp_path):
         """Test that __init__.py files are skipped during discovery."""
-        (tmp_path / "__init__.py").write_text(
-            """
+        (tmp_path / "__init__.py").write_text("""
 def run():
     return "init"
-"""
-        )
-        (tmp_path / "01_module.py").write_text(
-            """
+""")
+        (tmp_path / "01_module.py").write_text("""
 def run():
     return "module"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path)
@@ -344,24 +306,18 @@ def run():
 
     def test_discover_ignores_non_runnable_files(self, tmp_path):
         """Test that files without run function are ignored."""
-        (tmp_path / "01_runnable.py").write_text(
-            """
+        (tmp_path / "01_runnable.py").write_text("""
 def run():
     return "runnable"
-"""
-        )
-        (tmp_path / "02_no_run.py").write_text(
-            """
+""")
+        (tmp_path / "02_no_run.py").write_text("""
 def other():
     return "other"
-"""
-        )
-        (tmp_path / "03_runnable.py").write_text(
-            """
+""")
+        (tmp_path / "03_runnable.py").write_text("""
 def run():
     return "another"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path)
@@ -370,18 +326,14 @@ def run():
 
     def test_discover_with_custom_pattern(self, tmp_path):
         """Test discovering with custom file pattern."""
-        (tmp_path / "test_01.py").write_text(
-            """
+        (tmp_path / "test_01.py").write_text("""
 def run():
     return "test1"
-"""
-        )
-        (tmp_path / "other_01.py").write_text(
-            """
+""")
+        (tmp_path / "other_01.py").write_text("""
 def run():
     return "other"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path, pattern="test_*.py")
@@ -408,12 +360,10 @@ def run():
     def test_discover_file_instead_of_directory(self, tmp_path):
         """Test discovering when path is a file instead of directory."""
         test_file = tmp_path / "not_a_directory.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 def run():
     return "test"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(test_file)
@@ -422,30 +372,22 @@ def run():
 
     def test_discover_mixed_valid_invalid_files(self, tmp_path, capsys):
         """Test discovering with mix of valid, invalid, and corrupted files."""
-        (tmp_path / "01_valid.py").write_text(
-            """
+        (tmp_path / "01_valid.py").write_text("""
 def run():
     return "valid"
-"""
-        )
-        (tmp_path / "02_no_run.py").write_text(
-            """
+""")
+        (tmp_path / "02_no_run.py").write_text("""
 def other():
     return "no run"
-"""
-        )
-        (tmp_path / "03_corrupted.py").write_text(
-            """
+""")
+        (tmp_path / "03_corrupted.py").write_text("""
 def run(
     # Syntax error
-"""
-        )
-        (tmp_path / "04_valid.py").write_text(
-            """
+""")
+        (tmp_path / "04_valid.py").write_text("""
 def run():
     return "also valid"
-"""
-        )
+""")
 
         loader = ModuleLoader()
         runnables = loader.discover_runnables(tmp_path)
@@ -500,8 +442,7 @@ class TestModuleLoaderIntegration:
         """Test complete workflow with a single module."""
         # Create a realistic test module
         test_file = tmp_path / "01_login_test.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 # Simulates a login test module
 
 def setup():
@@ -513,8 +454,7 @@ def run():
 
 def teardown():
     return "teardown done"
-"""
-        )
+""")
 
         # Load the module
         loader = ModuleLoader()
@@ -554,16 +494,14 @@ def teardown():
     def test_reload_same_module_different_instance(self, tmp_path):
         """Test that loading the same file creates a fresh module instance."""
         test_file = tmp_path / "stateful.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 counter = 0
 
 def run():
     global counter
     counter += 1
     return counter
-"""
-        )
+""")
 
         loader = ModuleLoader()
 
