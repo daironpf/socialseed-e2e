@@ -2,7 +2,6 @@
 
 [![PyPI](https://img.shields.io/pypi/v/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 [![Python](https://img.shields.io/pypi/pyversions/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
-[![CI](https://github.com/daironpf/socialseed-e2e/workflows/CI/badge.svg)](https://github.com/daironpf/socialseed-e2e/actions)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://daironpf.github.io/socialseed-e2e/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
