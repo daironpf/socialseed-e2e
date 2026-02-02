@@ -12,6 +12,7 @@ Welcome to the socialseed-e2e documentation!
 - [API Reference](api-reference.md)
 - [Mock API for Testing](mock-api.md) - Flask-based mock API for integration testing
 - [Testing Guide](testing-guide.md) - Pytest configuration, markers, and coverage
+- [GitHub Pages Setup](github-pages-setup.md) - Automated documentation deployment configuration
 
 ## Quick Links
 
