@@ -5,7 +5,7 @@ This module provides the command-line interface for the E2E testing framework,
 enabling developers and AI agents to create, manage, and run API tests.
 """
 
-import os
+
 import subprocess
 import sys
 from pathlib import Path
@@ -15,7 +15,6 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 from socialseed_e2e import __version__
 from socialseed_e2e.core.config_loader import ApiConfigLoader, ConfigError
@@ -25,7 +24,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="socialseed-e2e")
+@click.version_option(version=str(__version__), prog_name="socialseed-e2e")
 def cli():
     """socialseed-e2e: Framework E2E para APIs REST.
 
@@ -87,9 +86,9 @@ def init(directory: str, force: bool):
             str(config_path),
             overwrite=force,
         )
-        console.print(f"  [green]✓[/green] Creado: e2e.conf")
+        console.print("  [green]✓[/green] Creado: e2e.conf")
     else:
-        console.print(f"  [yellow]⚠[/yellow] Ya existe: e2e.conf (usa --force para sobrescribir)")
+        console.print("  [yellow]⚠[/yellow] Ya existe: e2e.conf (usa --force para sobrescribir)")
 
     # Crear .gitignore
     gitignore_path = target_path / ".gitignore"
@@ -121,20 +120,46 @@ test-results/
 htmlcov/
 """
         gitignore_path.write_text(gitignore_content)
-        console.print(f"  [green]✓[/green] Creado: .gitignore")
+        console.print("  [green]✓[/green] Creado: .gitignore")
     else:
-        console.print(f"  [yellow]⚠[/yellow] Ya existe: .gitignore")
+        console.print("  [yellow]⚠[/yellow] Ya existe: .gitignore")
 
     # Mostrar mensaje de éxito
-    console.print(f"\n[bold green]✅ Proyecto inicializado correctamente![/bold green]\n")
+    console.print("\n[bold green]✅ Proyecto inicializado correctamente![/bold green]\n")
+
+    # Crear carpeta .agent para documentación de IA
+    agent_docs_path = target_path / ".agent"
+    if not agent_docs_path.exists() or force:
+        if not agent_docs_path.exists():
+            agent_docs_path.mkdir()
+
+        # Instanciar engine si no existe
+        engine = TemplateEngine()
+
+        # Lista de templates de documentación para el agente
+        agent_templates = [
+            ("agent_docs/FRAMEWORK_CONTEXT.md.template", "FRAMEWORK_CONTEXT.md"),
+            ("agent_docs/WORKFLOW_GENERATION.md.template", "WORKFLOW_GENERATION.md"),
+            ("agent_docs/EXAMPLE_TEST.md.template", "EXAMPLE_TEST.md"),
+        ]
+
+        for template_name, output_name in agent_templates:
+            engine.render_to_file(
+                template_name,
+                {},  # No hay variables que reemplazar en estos MD
+                str(agent_docs_path / output_name),
+                overwrite=force,
+            )
+
+        console.print("  [green]✓[/green] Creado: .agent/ (Documentación para IA)")
 
     console.print(
         Panel(
             "[bold]Próximos pasos:[/bold]\n\n"
             "1. Edita [cyan]e2e.conf[/cyan] para configurar tu API\n"
-            "2. Ejecuta: [cyan]e2e new-service <nombre>[/cyan]\n"
-            "3. Ejecuta: [cyan]e2e new-test <nombre> --service <svc>[/cyan]\n"
-            "4. Ejecuta: [cyan]e2e run[/cyan] para correr tests",
+            '2. Pide a tu Agente de IA: [italic]"Lee la carpeta .agent y '
+            'genera tests para mi API"[/italic]\n'
+            "3. O hazlo manualmente: [cyan]e2e new-service <nombre>[/cyan]",
             title="🚀 Empezar",
             border_style="green",
         )
@@ -335,7 +360,7 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
         verbose: Si es True, muestra información detallada
         output: Formato de salida (text o json)
     """
-    from .core.test_orchestrator import TestOrchestrator
+    # from .core.test_orchestrator import TestOrchestrator
 
     console.print(f"\n🚀 [bold green]socialseed-e2e v{__version__}[/bold green]")
     console.print("═" * 50)
@@ -361,7 +386,7 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     if module:
         console.print(f"🔍 [yellow]Filtrando por módulo:[/yellow] {module}")
     if verbose:
-        console.print(f"📢 [yellow]Modo verbose activado[/yellow]")
+        console.print("📢 [yellow]Modo verbose activado[/yellow]")
 
     console.print()
     console.print("[yellow]⚠ Nota:[/yellow] La ejecución de tests aún no está implementada")
@@ -599,7 +624,7 @@ def _update_e2e_conf(service_name: str, base_url: str, health_endpoint: str) -> 
 
     content += service_config
     config_path.write_text(content)
-    console.print(f"  [green]✓[/green] Actualizado: e2e.conf")
+    console.print("  [green]✓[/green] Actualizado: e2e.conf")
 
 
 def main():

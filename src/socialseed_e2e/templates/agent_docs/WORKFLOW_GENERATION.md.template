@@ -1,0 +1,105 @@
+# Guía de Generación de Tests para Agentes de IA
+
+Sigue este flujo de trabajo cuando el usuario te pida generar tests a partir de su código fuente (Controladores, Routers, etc.).
+
+## Paso 1: Entender el Servicio
+
+1. Pide al usuario el path de sus controladores (si no te lo ha dado).
+2. Lee los archivos para identificar:
+   - Rutas base (ej. `/api/v1/users`).
+   - Endpoints específicos (`POST /register`, `POST /login`).
+   - Modelos de datos (User, Token, etc.).
+
+## Paso 2: Crear/Actualizar Data Schema (`data_schema.py`)
+
+Define los modelos Pydantic necesarios para interactuar con la API.
+
+```python
+# services/users_api/data_schema.py
+from pydantic import BaseModel
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    username: str
+
+# Define constantes para los endpoints
+REGISTER_ENDPOINT = "/auth/register"
+LOGIN_ENDPOINT = "/auth/login"
+```
+
+## Paso 3: Implementar Service Page (`*_page.py`)
+
+Agrega métodos a la clase Page que encapsulen las llamadas a la API. Usa los modelos definidos en el paso anterior.
+
+```python
+# services/users_api/users_api_page.py
+from socialseed_e2e.core.base_page import BasePage
+from playwright.sync_api import APIResponse
+from .data_schema import REGISTER_ENDPOINT, RegisterRequest
+
+class UsersApiPage(BasePage):
+    # ... init ...
+
+    def register(self, data: RegisterRequest) -> APIResponse:
+        """Registra un nuevo usuario."""
+        # self.post maneja la URL base y headers automáticamente
+        return self.post(REGISTER_ENDPOINT, data=data.model_dump())
+
+    def login(self, username, password) -> APIResponse:
+        # Implementar login y guardar token
+        resp = self.post("/auth/login", data={"u": username, "p": password})
+        if resp.ok:
+            token = resp.json().get("token")
+            # GUARDAR ESTADO para siguientes tests
+            self.auth_token = token
+            self.update_headers({"Authorization": f"Bearer {token}"})
+        return resp
+```
+
+## Paso 4: Generar Módulos de Test (`modules/`)
+
+Crea archivos numerados para probar flujos completos. **Es crítico que sean secuenciales.**
+
+### Ejemplo: 01_register_flow.py
+```python
+from ..data_schema import RegisterRequest
+
+def run(page: 'UsersApiPage'):
+    print("Testing Registration...")
+
+    user_data = RegisterRequest(
+        email="test@example.com",
+        password="Password123!",
+        username="testuser"
+    )
+
+    response = page.register(user_data)
+
+    assert response.ok, f"Registration failed: {response.status} - {response.text()}"
+    print("✓ Registration successful")
+
+    # Guardar datos necesarios para siguientes tests en la instancia de page
+    page.current_user_email = user_data.email
+```
+
+### Ejemplo: 02_login_flow.py
+```python
+def run(page: 'UsersApiPage'):
+    print("Testing Login...")
+
+    # Usar datos del paso anterior si es necesario
+    email = getattr(page, 'current_user_email', "default@test.com")
+
+    response = page.login(email, "Password123!")
+
+    assert response.ok
+    assert page.auth_token is not None
+    print("✓ Login successful and token stored")
+```
+
+## Reglas de Oro
+1. **No hardcodees URLs** en los tests; úsales en `data_schema.py` o en la Page class.
+2. **Reutiliza la instancia `page`**: Es el vehículo para compartir estado (tokens, IDs creados) entre tests.
+3. **Usa Type Hints**: Ayuda a la legibilidad y previene errores.
+4. **Validaciones**: Siempre valida `response.ok` o el status code específico.

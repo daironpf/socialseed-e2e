@@ -21,6 +21,7 @@
 ### Key Differentiators
 
 - **🤖 AI-Native Architecture**: Structured protocols (`IServicePage`, `ITestModule`) designed for automated test generation
+- **🧠 .agent Awareness**: Automatically generates AI documentation (`.agent/`) for self-guided test generation by LLMs
 - **⚡ 10x Less Code**: Stateful test chaining and automatic discovery eliminate boilerplate
 - **🧪 Built-in Mocking**: Flask-based mock API for testing without external dependencies
 - **🔧 Zero Configuration**: Sensible defaults with YAML/JSON override support
@@ -208,6 +209,24 @@ This project recognizes AI agents as legitimate co-authors:
 - **Claude (Anthropic)** - Documentation, feature suggestions, bug fixes
 
 See [AI_CONTRIBUTORS.md](AI_CONTRIBUTORS.md) for full details and contribution philosophy.
+
+---
+
+## 🤖 Workflow with AI Agents
+
+socialseed-e2e is designed to be the first **AI-Native Testing Framework**. When you initialize a project with `e2e init`, a `.agent/` folder is created with specific instructions for LLMs (Claude, GPT-4, etc.).
+
+### How to use it:
+
+1. **Initialize**: Run `e2e init` in your project root.
+2. **Prompt your Agent**:
+   > "Read the documentation in the `.agent/` folder to understand the testing framework. Then, scan my API controllers in `src/controllers/` and generate the corresponding E2E tests following the framework patterns."
+3. **Execute**: Run `e2e run` to verify the generated tests.
+
+The `.agent` folder contains:
+- `FRAMEWORK_CONTEXT.md`: Architecture and core concepts.
+- `WORKFLOW_GENERATION.md`: Step-by-step guide for generating tests.
+- `EXAMPLE_TEST.md`: Gold standard code examples.
 
 ---
 

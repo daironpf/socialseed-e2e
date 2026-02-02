@@ -1,0 +1,96 @@
+# Ejemplo Completo de Test Generado
+
+Este archivo sirve como referencia "Gold Standard" de lo que se espera generar.
+
+Supongamos una API de Tareas (TODOs).
+
+## 1. services/todo_app/data_schema.py
+
+```python
+from pydantic import BaseModel
+from typing import Optional
+
+class TodoItem(BaseModel):
+    id: Optional[str] = None
+    title: str
+    completed: bool = False
+
+ENDPOINTS = {
+    "list": "/todos",
+    "create": "/todos",
+    "get": "/todos/{id}",
+    "update": "/todos/{id}",
+    "delete": "/todos/{id}"
+}
+```
+
+## 2. services/todo_app/todo_app_page.py
+
+```python
+from socialseed_e2e.core.base_page import BasePage
+from playwright.sync_api import APIResponse
+from .data_schema import TodoItem, ENDPOINTS
+
+class TodoAppPage(BasePage):
+    def __init__(self, base_url, **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
+        self.created_todo_id = None  # Estado compartido
+
+    def create_todo(self, item: TodoItem) -> APIResponse:
+        return self.post(ENDPOINTS["create"], data=item.model_dump(exclude={"id"}))
+
+    def get_todo(self, todo_id: str) -> APIResponse:
+        path = ENDPOINTS["get"].format(id=todo_id)
+        return self.get(path)
+
+    def delete_todo(self, todo_id: str) -> APIResponse:
+        path = ENDPOINTS["delete"].format(id=todo_id)
+        return self.delete(path)
+```
+
+## 3. services/todo_app/modules/01_create_todo.py
+
+```python
+from ..data_schema import TodoItem
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..todo_app_page import TodoAppPage
+
+def run(page: 'TodoAppPage'):
+    print("STEP: Create Todo")
+
+    new_todo = TodoItem(title="Learn SocialSeed E2E", completed=False)
+
+    response = page.create_todo(new_todo)
+    assert response.ok
+
+    data = response.json()
+    assert data["title"] == new_todo.title
+    assert "id" in data
+
+    # Guardar ID para el siguiente paso
+    page.created_todo_id = data["id"]
+    print(f"✓ Created Todo with ID: {page.created_todo_id}")
+```
+
+## 4. services/todo_app/modules/02_get_todo.py
+
+```python
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..todo_app_page import TodoAppPage
+
+def run(page: 'TodoAppPage'):
+    print("STEP: Get Todo")
+
+    # Recuperar ID del paso anterior
+    todo_id = page.created_todo_id
+    assert todo_id, "No created_todo_id found from previous step"
+
+    response = page.get_todo(todo_id)
+    assert response.ok
+
+    data = response.json()
+    assert data["id"] == todo_id
+    print("✓ Todo retrieved successfully")
+```
