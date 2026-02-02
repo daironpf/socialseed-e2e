@@ -12,17 +12,12 @@ Usage:
         assert response.status_code == 200
 """
 
-import sys
 import threading
 import time
-from pathlib import Path
 from typing import Generator
 
 import pytest
 import requests
-
-# Add project root to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from tests.fixtures.mock_api import MockAPIServer
 
@@ -46,7 +41,9 @@ def mock_api_server() -> Generator[MockAPIServer, None, None]:
     server = MockAPIServer(port=8765)
 
     # Start server in background thread
-    server_thread = threading.Thread(target=server.run, kwargs={"debug": False}, daemon=True)
+    server_thread = threading.Thread(
+        target=server.run, kwargs={"debug": False}, daemon=True
+    )
     server_thread.start()
 
     # Wait for server to be ready
