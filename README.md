@@ -276,6 +276,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 <p align="center">
-  <b>Built with ❤️ by Dairon Pérez (@daironpf) and AI co-authors</b><br>
+  <b>Built with ❤️ by Dairon Pérez Frías (@daironpf) and AI co-authors</b><br>
   <sub>For developers and AI agents who believe in better testing</sub>
 </p>
