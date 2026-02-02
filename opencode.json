@@ -4,6 +4,14 @@
     "AGENTS.md",
     ".opencode/chat_history/README.md"
   ],
+  "commands": {
+    "load history": {
+      "description": "Carga manualmente el historial de chat del proyecto",
+      "prompt": "Ejecuta el script de Python para cargar el contexto del proyecto: python3 .opencode/load_context.py",
+      "mode": "bash",
+      "temperature": 0.1
+    }
+  },
   "agent": {
     "context": {
       "description": "Carga el contexto del proyecto desde AGENTS.md y chat_history",

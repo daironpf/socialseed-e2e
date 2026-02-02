@@ -493,6 +493,17 @@ To host the documentation on ReadTheDocs:
 
 To host on GitHub Pages:
 
+**Option 1: Automated Deployment (Recommended)**
+
+Documentation is automatically deployed to GitHub Pages on every push to `main` that affects the `docs/` directory:
+
+1. Go to **Settings** → **Pages** in your GitHub repository
+2. Under "Source", select **GitHub Actions**
+3. The workflow `.github/workflows/docs.yml` will handle the rest
+4. Documentation will be available at: `https://daironpf.github.io/socialseed-e2e/`
+
+**Option 2: Manual Deployment**
+
 ```bash
 # Build docs and copy to docs/_build/html
 cd docs && make html
@@ -511,6 +522,7 @@ cd docs && make html
 - **[API Reference](docs/api-reference.md)** - Framework API documentation
 - **[Testing Guide](docs/testing-guide.md)** - Pytest configuration and test execution
 - **[Mock API](docs/mock-api.md)** - Using the built-in Flask mock API
+- **[GitHub Pages Setup](docs/github-pages-setup.md)** - Configure automated documentation deployment
 
 ## 🤝 Contributing
 

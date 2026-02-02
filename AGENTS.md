@@ -86,6 +86,32 @@ e2e --version                      # Versión
 5. **Crear tests**: `e2e new-test login --service users-api`
 6. **Ejecutar**: `e2e run`
 
+## Sistema de Contexto Persistente (IMPORTANTE)
+
+### Problema Conocido
+El subagente `@context` tiene una limitación técnica donde no ejecuta las herramientas de lectura de archivos. Como workaround, usamos un script de Python que carga el contexto manualmente.
+
+### Uso del Context Loader
+```bash
+# Desde la raíz del proyecto:
+python3 .opencode/load_context.py
+
+# O hacerlo ejecutable primero:
+chmod +x .opencode/load_context.py
+./.opencode/load_context.py
+```
+
+### Archivos de Contexto
+- **AGENTS.md** (este archivo) - Guía general del proyecto
+- **.opencode/chat_history/consolidated_context.md** - Historial de sesiones
+- **.opencode/chat_history/*.md** - Sesiones individuales
+
+### Guardar una Sesión
+El subagente `@save-chat` también puede tener problemas similares. Para guardar manualmente:
+1. Crear archivo en `.opencode/chat_history/YYYYMMDD_descripcion.md`
+2. Seguir el formato de `template.md`
+3. Actualizar `consolidated_context.md` agregando la sesión al timeline
+
 ## Consideraciones para AI Agents
 
 ### Mock API para Testing
