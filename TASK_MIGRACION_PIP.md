@@ -152,7 +152,7 @@ build-backend = "setuptools.build_meta"
 name = "socialseed-e2e"
 version = "0.1.0"
 authors = [
-    {name = "Dairon Pérez", email = "tu-email@example.com"},
+    {name = "Dairon Pérez Frías", email = "dairon.perezfrias@gmail.com"},
 ]
 description = "Framework E2E para testing de APIs REST con Playwright"
 readme = "README.md"

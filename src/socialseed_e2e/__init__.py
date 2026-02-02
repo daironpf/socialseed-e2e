@@ -25,7 +25,7 @@ __version_info__ = (0, 1, 0)
 __author__ = "Dairon Pérez Frías"
 __email__ = "dairon.perezfrias@gmail.com"
 __license__ = "MIT"
-__copyright__ = "Copyright 2026 Dairon Pérez"
+__copyright__ = "Copyright 2026 Dairon Pérez Frías"
 __url__ = "https://github.com/daironpf/socialseed-e2e"
 
 # Hacer disponibles las clases principales

@@ -14,8 +14,8 @@ sys.path.insert(0, str(src_path))
 # -- Project information -----------------------------------------------------
 
 project = "socialseed-e2e"
-copyright = "2026, Dairon Pérez"
-author = "Dairon Pérez"
+copyright = "2026, Dairon Pérez Frías"
+author = "Dairon Pérez Frías"
 
 # The full version, including alpha/beta/rc tags
 from socialseed_e2e import __version__
