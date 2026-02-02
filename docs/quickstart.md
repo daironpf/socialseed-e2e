@@ -2,7 +2,7 @@
 
 Get started with socialseed-e2e in 15 minutes! This guide will walk you through creating your first API testing project from scratch.
 
-**⏱️ Time Required:** 15 minutes  
+**⏱️ Time Required:** 15 minutes
 **📋 Prerequisites:** socialseed-e2e installed (see [Installation Guide](installation.md))
 
 ## Table of Contents
@@ -278,18 +278,18 @@ if TYPE_CHECKING:
 
 class UsersApiPage(BasePage):
     """Service page for Users API testing.
-    
+
     This class provides methods for interacting with the Users API,
     including authentication, user management, and profile operations.
-    
+
     Usage:
         page = UsersApiPage(config)
         response = page.post("/auth/login", json=credentials)
     """
-    
+
     def __init__(self, config: dict):
         """Initialize the Users API page.
-        
+
         Args:
             config: Service configuration from e2e.conf
         """
@@ -355,27 +355,27 @@ if TYPE_CHECKING:
 
 def run(users_api: 'UsersApiPage') -> 'APIResponse':
     """Test that the Users API health endpoint returns 200.
-    
+
     This test checks if the API is running and responding correctly.
-    
+
     Args:
         users_api: Instance of UsersApiPage with service configuration
-        
+
     Returns:
         APIResponse: The HTTP response from the health endpoint
     """
     print("🔍 Checking API health...")
-    
+
     # Make the HTTP request
     response = users_api.get("/health")
-    
+
     # Assert the response is successful
     if response.status == 200:
         print("✅ API is healthy!")
     else:
         print(f"❌ API health check failed: {response.status}")
         raise AssertionError(f"Expected 200, got {response.status}")
-    
+
     return response
 ```
 
@@ -409,18 +409,18 @@ if TYPE_CHECKING:
 
 def run(users_api: 'UsersApiPage') -> 'APIResponse':
     """Test that the Users API health endpoint returns 200.
-    
+
     Args:
         users_api: Instance of UsersApiPage
-        
+
     Returns:
         APIResponse: The HTTP response
     """
     print("🏥 Checking Users API health...")
-    
+
     # Test the health endpoint
     response = users_api.get("/health")
-    
+
     # Verify response
     if response.status == 200:
         data = response.json()
@@ -431,7 +431,7 @@ def run(users_api: 'UsersApiPage') -> 'APIResponse':
         print(f"❌ Health check failed with status: {response.status}")
         print(f"Response: {response.text()}")
         raise AssertionError(f"Health check failed: {response.status}")
-    
+
     return response
 ```
 
@@ -568,35 +568,35 @@ if TYPE_CHECKING:
 
 def run(users_api: 'UsersApiPage') -> 'APIResponse':
     """Test user login and store authentication token.
-    
+
     This test:
     1. Sends login credentials to /auth/login
     2. Extracts the auth token from response
     3. Stores token in users_api for other tests to use
-    
+
     Args:
         users_api: Instance of UsersApiPage
-        
+
     Returns:
         APIResponse: The login response
     """
     print("🔐 Attempting user login...")
-    
+
     # Prepare credentials
     credentials = {
         "email": "test@example.com",
         "password": "secret123"
     }
-    
+
     # Make login request
     response = users_api.post("/auth/login", json=credentials)
-    
+
     # Verify and extract token
     if response.status == 200:
         data = response.json()
         users_api.auth_token = data["token"]
         users_api.current_user = data["user"]
-        
+
         print(f"✅ Login successful!")
         print(f"   Token: {users_api.auth_token[:20]}...")
         print(f"   User: {users_api.current_user['email']}")
@@ -604,7 +604,7 @@ def run(users_api: 'UsersApiPage') -> 'APIResponse':
         print(f"❌ Login failed: {response.status}")
         print(f"   Response: {response.text()}")
         raise AssertionError(f"Login failed: {response.status}")
-    
+
     return response
 ```
 
@@ -632,30 +632,30 @@ if TYPE_CHECKING:
 
 def run(users_api: 'UsersApiPage') -> 'APIResponse':
     """Test retrieving user profile with authentication.
-    
+
     This test uses the auth_token stored by the login test to
     make an authenticated request to /users/me.
-    
+
     Args:
         users_api: Instance of UsersApiPage (with auth_token from login)
-        
+
     Returns:
         APIResponse: The profile response
     """
     print("👤 Retrieving user profile...")
-    
+
     # Check if we have auth token from previous test
     if not users_api.auth_token:
         raise AssertionError("No auth token found. Run login test first.")
-    
+
     # Set authorization header
     headers = {
         "Authorization": f"Bearer {users_api.auth_token}"
     }
-    
+
     # Make authenticated request
     response = users_api.get("/users/me", headers=headers)
-    
+
     # Verify response
     if response.status == 200:
         profile = response.json()
@@ -666,7 +666,7 @@ def run(users_api: 'UsersApiPage') -> 'APIResponse':
     else:
         print(f"❌ Failed to get profile: {response.status}")
         raise AssertionError(f"Profile retrieval failed: {response.status}")
-    
+
     return response
 ```
 
@@ -758,19 +758,19 @@ e2e new-test login_error --service users-api
 def run(users_api: 'UsersApiPage') -> 'APIResponse':
     """Test login with invalid credentials."""
     print("🔐 Testing login with invalid credentials...")
-    
+
     credentials = {
         "email": "invalid@example.com",
         "password": "wrongpassword"
     }
-    
+
     response = users_api.post("/auth/login", json=credentials)
-    
+
     if response.status == 401:
         print("✅ Correctly rejected invalid credentials")
     else:
         raise AssertionError(f"Expected 401, got {response.status}")
-    
+
     return response
 ```
 </details>
@@ -859,7 +859,7 @@ e2e doctor                  # Verify installation
 </p>
 
 <p align="center">
-  Next: <a href="writing-tests.md">Writing Tests</a> → 
-  <a href="configuration.md">Configuration</a> → 
+  Next: <a href="writing-tests.md">Writing Tests</a> →
+  <a href="configuration.md">Configuration</a> →
   <a href="cli-reference.md">CLI Reference</a>
 </p>

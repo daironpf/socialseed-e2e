@@ -14,8 +14,8 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### OpenCode Build Agent
 
-**Plataforma:** [OpenCode](https://opencode.ai)  
-**Modelo Base:** Claude (Anthropic)  
+**Plataforma:** [OpenCode](https://opencode.ai)
+**Modelo Base:** Claude (Anthropic)
 **Rol:** Desarrollo de Features y Implementación
 
 **Contribuciones Principales:**
@@ -33,8 +33,8 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### OpenCode Plan Agent
 
-**Plataforma:** [OpenCode](https://opencode.ai)  
-**Modelo Base:** Claude (Anthropic)  
+**Plataforma:** [OpenCode](https://opencode.ai)
+**Modelo Base:** Claude (Anthropic)
 **Rol:** Arquitectura y Planificación
 
 **Contribuciones Principales:**
@@ -51,8 +51,8 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Claude (Anthropic)
 
-**Plataforma:** [OpenCode](https://opencode.ai) / API Directa  
-**Modelo:** Claude-3.5-Sonnet / Claude-3.5-Haiku  
+**Plataforma:** [OpenCode](https://opencode.ai) / API Directa
+**Modelo:** Claude-3.5-Sonnet / Claude-3.5-Haiku
 **Rol:** Documentación, Análisis y Soporte
 
 **Contribuciones Principales:**
@@ -69,8 +69,8 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### kimi-k2.5-free (OpenCode)
 
-**Plataforma:** [OpenCode](https://opencode.ai)  
-**Modelo:** kimi-k2.5-free  
+**Plataforma:** [OpenCode](https://opencode.ai)
+**Modelo:** kimi-k2.5-free
 **Rol:** Documentación y Desarrollo
 
 **Contribuciones Principales:**
@@ -91,8 +91,8 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 ### Febrero 2026
 
 #### 2026-02-01 - Documentación de Configuración Completa (Issue #28)
-**Agente:** OpenCode AI Agent (kimi-k2.5-free)  
-**Tipo:** Documentación  
+**Agente:** OpenCode AI Agent (kimi-k2.5-free)
+**Tipo:** Documentación
 **Impacto:** Alto
 
 **Descripción:**
@@ -124,8 +124,8 @@ Creación de documentación de referencia completa para la configuración del fr
 ---
 
 #### 2026-02-01 - Guía de Escritura de Módulos de Prueba (Issue #29)
-**Agente:** kimi-k2.5-free (OpenCode)  
-**Tipo:** Documentación  
+**Agente:** kimi-k2.5-free (OpenCode)
+**Tipo:** Documentación
 **Impacto:** Alto
 
 **Descripción:**
@@ -164,8 +164,8 @@ Creación de guía completa para escribir módulos de prueba en el framework soc
 ### Enero 2025
 
 #### 2025-01-31 - Sistema de Contexto Persistente
-**Agente:** OpenCode Build Agent  
-**Tipo:** Feature / DX (Developer Experience)  
+**Agente:** OpenCode Build Agent
+**Tipo:** Feature / DX (Developer Experience)
 **Impacto:** Alto
 
 **Descripción:**
@@ -189,8 +189,8 @@ Implementación de un sistema completo para que los agentes de OpenCode mantenga
 ---
 
 #### 2025-01-30 - Arquitectura Hexagonal
-**Agente:** OpenCode Plan Agent  
-**Tipo:** Arquitectura / Refactoring  
+**Agente:** OpenCode Plan Agent
+**Tipo:** Arquitectura / Refactoring
 **Impacto:** Crítico
 
 **Descripción:**
@@ -205,8 +205,8 @@ Diseño de la arquitectura hexagonal que separa el core del framework de la lóg
 ---
 
 #### 2025-01-29 - Implementación CLI Base
-**Agente:** OpenCode Build Agent  
-**Tipo:** Feature / CLI  
+**Agente:** OpenCode Build Agent
+**Tipo:** Feature / CLI
 **Impacto:** Alto
 
 **Descripción:**
@@ -292,8 +292,8 @@ Si eres un desarrollador humano contribuyendo a este proyecto, te pedimos:
 
 ```markdown
 #### YYYY-MM-DD - Título de la Contribución
-**Agente:** [Nombre del Agente]  
-**Tipo:** [Feature/Bugfix/Arquitectura/Documentación]  
+**Agente:** [Nombre del Agente]
+**Tipo:** [Feature/Bugfix/Arquitectura/Documentación]
 **Impacto:** [Bajo/Medio/Alto/Crítico]
 
 **Descripción:**
@@ -322,8 +322,8 @@ Las contribuciones de agentes de IA a este proyecto están cubiertas bajo la mis
 
 ---
 
-**Última actualización:** 2026-02-01  
-**Mantenedor:** Dairon Pérez (@daironpf)  
+**Última actualización:** 2026-02-01
+**Mantenedor:** Dairon Pérez (@daironpf)
 **Contacto:** Para agregar contribuciones de IA, crear un PR actualizando este archivo.
 
 ---

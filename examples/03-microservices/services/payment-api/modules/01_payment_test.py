@@ -3,8 +3,9 @@
 Tests payment processing across multiple services.
 """
 
-from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..payment_api_page import PaymentApiPage

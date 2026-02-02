@@ -156,7 +156,13 @@ Add any other context or screenshots about the feature request.
    playwright install chromium
    ```
 
-4. **Verify your setup:**
+4. **Install pre-commit hooks:**
+   ```bash
+   pre-commit install
+   ```
+   This will automatically run code quality checks on each commit.
+
+5. **Verify your setup:**
    ```bash
    e2e doctor
    pytest
@@ -183,7 +189,27 @@ pytest tests/unit/test_base_page.py
 
 ### Code Quality Tools
 
-We use several tools to maintain code quality:
+We use several tools to maintain code quality. These are automatically run as **pre-commit hooks** on every commit, ensuring code quality before changes are submitted.
+
+#### Pre-commit Hooks (Automatic)
+
+Once you run `pre-commit install`, the following checks run automatically on each commit:
+
+- **trailing-whitespace**: Removes trailing whitespace
+- **end-of-file-fixer**: Ensures files end with a newline
+- **check-yaml**: Validates YAML syntax
+- **check-json**: Validates JSON syntax
+- **check-toml**: Validates TOML syntax
+- **check-merge-conflict**: Prevents merge conflict markers from being committed
+- **check-added-large-files**: Prevents large files from being committed
+- **black**: Formats Python code
+- **isort**: Sorts Python imports
+- **flake8**: Checks Python style and syntax
+- **mypy**: Performs static type checking
+
+#### Manual Quality Checks
+
+You can also run these tools manually:
 
 ```bash
 # Format code with black
@@ -198,8 +224,11 @@ flake8 src/ tests/
 # Type checking
 mypy src/socialseed_e2e
 
-# Run all quality checks (requires pre-commit)
+# Run all quality checks on all files
 pre-commit run --all-files
+
+# Run specific hook
+pre-commit run black --all-files
 ```
 
 ## Code Style Guide
@@ -231,34 +260,34 @@ from socialseed_e2e.core.base_page import BasePage
 
 class UserServicePage(BasePage):
     """Page object for user service API.
-    
+
     Provides methods for interacting with user endpoints
     including CRUD operations and authentication.
-    
+
     Attributes:
         base_url: The base URL for the user service
         auth_token: Authentication token for protected endpoints
     """
-    
+
     def __init__(self, base_url: str) -> None:
         """Initialize the UserServicePage.
-        
+
         Args:
             base_url: The base URL for the user service API
         """
         super().__init__(base_url)
         self.auth_token: Optional[str] = None
-    
+
     def login(self, email: str, password: str) -> APIResponse:
         """Authenticate user and store token.
-        
+
         Args:
             email: User's email address
             password: User's password
-            
+
         Returns:
             APIResponse: The login response containing auth token
-            
+
         Raises:
             AssertionError: If login fails (non-2xx status)
         """
@@ -266,11 +295,11 @@ class UserServicePage(BasePage):
             "/auth/login",
             json={"email": email, "password": password}
         )
-        
+
         if response.ok:
             data = response.json()
             self.auth_token = data.get("token")
-        
+
         return response
 ```
 
@@ -306,11 +335,16 @@ class UserServicePage(BasePage):
    mypy src/socialseed_e2e
    ```
 
-3. **Update documentation** as needed
+3. **Verify pre-commit hooks are passing:**
+   ```bash
+   pre-commit run --all-files
+   ```
 
-4. **Add/update tests** for your changes
+4. **Update documentation** as needed
 
-5. **Update CHANGELOG.md** with your changes under [Unreleased]
+5. **Add/update tests** for your changes
+
+6. **Update CHANGELOG.md** with your changes under [Unreleased]
 
 ### Creating a Pull Request
 

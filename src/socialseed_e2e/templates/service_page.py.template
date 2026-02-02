@@ -11,17 +11,17 @@ from socialseed_e2e.core.base_page import BasePage
 
 class ${class_name}Page(BasePage):
     """Página de servicio para ${service_name}.
-    
+
     Gestiona el estado compartido entre módulos de test.
-    
+
     Attributes:
         current_entity: Entidad actualmente seleccionada
         auth_token: Token de autenticación
     """
-    
+
     def __init__(self, playwright=None, base_url: Optional[str] = None):
         """Inicializa la página de servicio.
-        
+
         Args:
             playwright: Instancia de Playwright
             base_url: URL base del servicio (opcional)
@@ -29,54 +29,54 @@ class ${class_name}Page(BasePage):
         # Cargar configuración desde e2e.conf
         from .config import get_${snake_case_name}_config
         config = get_${snake_case_name}_config()
-        
+
         url = base_url or config.base_url
         super().__init__(url, playwright, default_headers=config.default_headers)
-        
+
         # Estado compartido entre módulos
         self.current_entity: Optional[dict] = None
         self.auth_token: Optional[str] = None
-    
+
     def get_entity(self, entity_id: str) -> APIResponse:
         """Obtener entidad por ID.
-        
+
         Args:
             entity_id: ID de la entidad
-            
+
         Returns:
             APIResponse: Respuesta HTTP
         """
         return self.get(f"/${endpoint_prefix}/{entity_id}")
-    
+
     def create_entity(self, data: dict) -> APIResponse:
         """Crear nueva entidad.
-        
+
         Args:
             data: Datos de la entidad a crear
-            
+
         Returns:
             APIResponse: Respuesta HTTP
         """
         return self.post("/${endpoint_prefix}", json=data)
-    
+
     def update_entity(self, entity_id: str, data: dict) -> APIResponse:
         """Actualizar entidad existente.
-        
+
         Args:
             entity_id: ID de la entidad
             data: Datos a actualizar
-            
+
         Returns:
             APIResponse: Respuesta HTTP
         """
         return self.put(f"/${endpoint_prefix}/{entity_id}", json=data)
-    
+
     def delete_entity(self, entity_id: str) -> APIResponse:
         """Eliminar entidad.
-        
+
         Args:
             entity_id: ID de la entidad
-            
+
         Returns:
             APIResponse: Respuesta HTTP
         """

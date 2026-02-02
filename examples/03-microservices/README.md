@@ -228,11 +228,11 @@ services:
   users-service:
     base_url: http://localhost:5002
     required: true
-  
+
   orders-service:
     base_url: http://localhost:5003
     required: true
-  
+
   payment-service:
     base_url: http://localhost:5004
     required: true
@@ -301,14 +301,14 @@ services:
     build: ./users-service
     ports:
       - "5002:5002"
-  
+
   orders-service:
     build: ./orders-service
     ports:
       - "5003:5003"
     depends_on:
       - users-service
-  
+
   payment-service:
     build: ./payment-service
     ports:

@@ -252,10 +252,10 @@ if TYPE_CHECKING:
 
 def run(page: '<Service>Page') -> APIResponse:
     """Execute <name> test flow.
-    
+
     Args:
         page: Service page instance
-        
+
     Returns:
         APIResponse: Response from the test
     """

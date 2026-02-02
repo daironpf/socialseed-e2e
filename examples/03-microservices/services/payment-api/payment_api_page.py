@@ -4,6 +4,7 @@ This module provides the PaymentApiPage class for testing the Payment Service.
 """
 
 from typing import Any, Dict, Optional
+
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.core.base_page import BasePage
@@ -40,9 +41,7 @@ class PaymentApiPage(BasePage):
             order_id: Order ID
             user_id: User ID
         """
-        return self.post(
-            "/api/payments", json={"order_id": order_id, "user_id": user_id}
-        )
+        return self.post("/api/payments", json={"order_id": order_id, "user_id": user_id})
 
     def list_payments(self, user_id: Optional[int] = None) -> APIResponse:
         """List all payments or filter by user."""

@@ -12,35 +12,35 @@ if TYPE_CHECKING:
 
 def run(${snake_case_service}: '${class_name}Page') -> APIResponse:
     """Execute ${test_name} test flow.
-    
+
     This test validates the ${test_description} functionality.
-    
+
     Args:
         ${snake_case_service}: Instance of ${class_name}Page
-        
+
     Returns:
         APIResponse: HTTP response from the API
-        
+
     Raises:
         AssertionError: If test assertions fail
     """
     print(f"Running ${test_name} test...")
-    
+
     # Arrange: Setup test data and preconditions
     # TODO: Add test data setup here
-    
+
     # Act: Execute the operation being tested
     # TODO: Add API call here
     # response = ${snake_case_service}.get("/${endpoint}")
-    
+
     # Assert: Verify the results
     # TODO: Add assertions here
     # assert response.ok, f"Expected success, got {response.status}"
     # data = response.json()
     # assert "expected_field" in data
-    
+
     # Store state for subsequent tests (optional)
     # ${snake_case_service}.current_entity = data
-    
+
     print(f"✓ ${test_name} test completed successfully")
     return response

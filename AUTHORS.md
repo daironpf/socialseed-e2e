@@ -2,8 +2,8 @@
 
 ## Project Maintainer
 
-**Name:** Dairon Pérez Frías  
-**Email:** dairon.perezfrias@gmail.com  
+**Name:** Dairon Pérez Frías
+**Email:** dairon.perezfrias@gmail.com
 **GitHub:** [@daironpf](https://github.com/daironpf)
 
 This is the primary contact for the project. Please use this information when:

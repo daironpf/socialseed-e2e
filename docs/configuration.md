@@ -343,11 +343,11 @@ test_data:
     email_domain: "test.myapp.com"
     password: "TestPass123!"
     username_prefix: "e2euser"
-  
+
   timing:
     step_delay: 200
     async_timeout: 15000
-  
+
   retries:
     max_attempts: 5
     backoff_ms: 2000

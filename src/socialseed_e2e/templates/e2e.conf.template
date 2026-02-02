@@ -4,13 +4,13 @@
 general:
   # Entorno de ejecución (dev, staging, production)
   environment: ${environment}
-  
+
   # Timeout global para requests en milisegundos
   timeout: ${timeout}
-  
+
   # User agent para requests HTTP
   user_agent: "${user_agent}"
-  
+
   # Modo verbose para debugging
   verbose: ${verbose}
 

@@ -3,9 +3,10 @@
 Tests POST /api/auth/login endpoint and token handling.
 """
 
-from playwright.sync_api import APIResponse
-from typing import TYPE_CHECKING
 import uuid
+from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..auth_api_page import AuthApiPage
@@ -40,9 +41,7 @@ def run(auth_api: "AuthApiPage") -> APIResponse:
     )
 
     if not register_response.ok:
-        print(
-            f"  ⚠ Registration failed, but continuing with test: {register_response.status}"
-        )
+        print(f"  ⚠ Registration failed, but continuing with test: {register_response.status}")
     else:
         print(f"  ✓ Test user registered")
 
@@ -94,9 +93,7 @@ def run(auth_api: "AuthApiPage") -> APIResponse:
     print("  ✓ Invalid password correctly rejected")
 
     print("Test 4: Login with non-existent user")
-    response = auth_api.login(
-        username="nonexistent_user_12345", password="somepassword"
-    )
+    response = auth_api.login(username="nonexistent_user_12345", password="somepassword")
 
     auth_api.assert_status(response, 401)
 

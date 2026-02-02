@@ -4,6 +4,7 @@ This module provides the AuthApiPage class for JWT authentication testing.
 """
 
 from typing import Any, Dict, Optional
+
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.core.base_page import BasePage

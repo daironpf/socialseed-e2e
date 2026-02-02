@@ -28,17 +28,14 @@ __license__ = "MIT"
 __copyright__ = "Copyright 2026 Dairon Pérez Frías"
 __url__ = "https://github.com/daironpf/socialseed-e2e"
 
+from socialseed_e2e.cli import main
+
 # Hacer disponibles las clases principales
 from socialseed_e2e.core.base_page import BasePage
-from socialseed_e2e.core.config_loader import (
-    ApiConfigLoader,
-    get_config,
-    get_service_config,
-)
+from socialseed_e2e.core.config_loader import ApiConfigLoader, get_config, get_service_config
 from socialseed_e2e.core.loaders import ModuleLoader
-from socialseed_e2e.core.test_orchestrator import TestOrchestrator
 from socialseed_e2e.core.models import ServiceConfig, TestContext
-from socialseed_e2e.cli import main
+from socialseed_e2e.core.test_orchestrator import TestOrchestrator
 
 __all__ = [
     "BasePage",

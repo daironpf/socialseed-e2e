@@ -25,7 +25,7 @@ def temp_dir(tmp_path):
 @pytest.fixture
 def isolated_cli_runner(cli_runner, tmp_path):
     """Provide a CliRunner that runs in an isolated temp directory.
-    
+
     This fixture changes the current working directory to the temp directory
     before the test and restores it after.
     """
@@ -38,20 +38,22 @@ def isolated_cli_runner(cli_runner, tmp_path):
 @pytest.fixture
 def initialized_project(isolated_cli_runner):
     """Provide a CLI runner with an already initialized project.
-    
+
     Creates a project with 'e2e init' already executed.
     """
     from socialseed_e2e.cli import cli
-    isolated_cli_runner.invoke(cli, ['init'])
+
+    isolated_cli_runner.invoke(cli, ["init"])
     return isolated_cli_runner
 
 
 @pytest.fixture
 def project_with_service(initialized_project):
     """Provide a CLI runner with a project that has one service.
-    
+
     Creates a project with 'users-api' service already created.
     """
     from socialseed_e2e.cli import cli
-    initialized_project.invoke(cli, ['new-service', 'users-api'])
+
+    initialized_project.invoke(cli, ["new-service", "users-api"])
     return initialized_project

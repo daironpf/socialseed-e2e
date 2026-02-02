@@ -3,9 +3,10 @@
 Tests POST /api/auth/register endpoint.
 """
 
-from playwright.sync_api import APIResponse
-from typing import TYPE_CHECKING
 import uuid
+from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..auth_api_page import AuthApiPage
@@ -33,9 +34,7 @@ def run(auth_api: "AuthApiPage") -> APIResponse:
     test_email = f"test_{unique_id}@example.com"
 
     print(f"Test 1: Register new user: {test_username}")
-    response = auth_api.register(
-        username=test_username, email=test_email, password="securepass123"
-    )
+    response = auth_api.register(username=test_username, email=test_email, password="securepass123")
 
     auth_api.assert_status(response, 201)
 
@@ -62,10 +61,7 @@ def run(auth_api: "AuthApiPage") -> APIResponse:
     auth_api.assert_status(response, 409)
     error_data = auth_api.assert_json(response)
     assert "error" in error_data
-    assert (
-        "username" in error_data["message"].lower()
-        or "exists" in error_data["message"].lower()
-    )
+    assert "username" in error_data["message"].lower() or "exists" in error_data["message"].lower()
 
     print("  ✓ Duplicate username correctly rejected")
 

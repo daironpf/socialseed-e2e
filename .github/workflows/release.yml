@@ -17,38 +17,38 @@ jobs:
   test:
     name: Run Tests Before Release
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: '**/pyproject.toml'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      
+
       - name: Install Playwright
         run: |
           playwright install chromium
           playwright install-deps chromium
-      
+
       - name: Run tests with coverage
         run: |
           pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=80 -v
         env:
           PYTHONPATH: ${{ github.workspace }}/src
-      
+
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -68,71 +68,71 @@ jobs:
     permissions:
       id-token: write  # For OIDC publishing
       contents: write  # For creating GitHub releases
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for changelog
-      
+
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build twine check-wheel-contents
-      
+
       - name: Verify tag matches version
         run: |
           # Extract version from tag (remove 'v' prefix)
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
           echo "Tag version: $TAG_VERSION"
-          
+
           # Extract version from package
           PACKAGE_VERSION=$(python -c "import socialseed_e2e; print(socialseed_e2e.__version__)")
           echo "Package version: $PACKAGE_VERSION"
-          
+
           if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
             echo "::error::Version mismatch! Tag: $TAG_VERSION, Package: $PACKAGE_VERSION"
             exit 1
           fi
-          
+
           echo "✅ Version match verified: $TAG_VERSION"
-      
+
       - name: Build package
         run: |
           echo "Building package..."
           python -m build
-          
+
           echo "Built files:"
           ls -lh dist/
-      
+
       - name: Check distribution
         run: |
           echo "Checking wheel contents..."
           check-wheel-contents dist/*.whl
-          
+
           echo "Checking with twine..."
           twine check dist/*
-      
+
       - name: Test installation from built package
         run: |
           echo "Testing installation..."
           pip install dist/*.whl
           python -c "import socialseed_e2e; print(f'Version: {socialseed_e2e.__version__}')"
           e2e --version
-      
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
           print-hash: true
           attestations: true
-      
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -147,25 +147,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
-      
+
       - name: Generate release notes
         id: release_notes
         run: |
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-          
+
           # Generate changelog
           if [ -n "$PREVIOUS_TAG" ]; then
             echo "## Changes since $PREVIOUS_TAG" >> release_notes.md
@@ -176,17 +176,17 @@ jobs:
             echo "" >> release_notes.md
             git log --pretty=format:"- %s (%h)" >> release_notes.md
           fi
-          
+
           echo "" >> release_notes.md
           echo "## Installation" >> release_notes.md
           echo "\`\`\`bash" >> release_notes.md
           echo "pip install socialseed-e2e==${GITHUB_REF#refs/tags/v}" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
-          
+
           echo "release_notes<<EOF" >> $GITHUB_OUTPUT
           cat release_notes.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -198,7 +198,7 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Post to Slack
         if: success()
         uses: slackapi/slack-github-action@v1.24.0
@@ -216,16 +216,16 @@ jobs:
     name: Verify PyPI Release
     needs: build-and-publish
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Wait for PyPI
         run: sleep 60
-      
+
       - name: Verify package on PyPI
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}

@@ -1,8 +1,8 @@
 import importlib.util
 import os
 import sys
-from typing import List, Dict, Any, Callable, Optional
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 try:
     import pytest
@@ -12,15 +12,15 @@ except ImportError:
 
 from socialseed_e2e.core.loaders import ModuleLoader
 
+
 class TestOrchestrator:
     """
     Orchestrates dynamic loading and execution of test modules.
     Auto-discovers modules in services/*/modules/ and runs them.
     """
+
     def __init__(
-        self, 
-        root_dir: Optional[str] = None,
-        services_path: str = "verify_services/e2e/services"
+        self, root_dir: Optional[str] = None, services_path: str = "verify_services/e2e/services"
     ):
         # Default to the directory containing the 'verify_services' folder or current working directory
         self.root_dir = Path(root_dir) if root_dir else Path(os.getcwd())
@@ -41,11 +41,12 @@ class TestOrchestrator:
                     service_name = service_dir.name
                     self.modules[service_name] = self.loader.discover_runnables(modules_dir)
 
-
     def run_service_tests(self, service_name: str, context: Any):
         """Run all modules for a specific service."""
         if service_name not in self.modules:
-            raise ValueError(f"Service {service_name} not found or has no modules discovered at {self.services_dir}")
+            raise ValueError(
+                f"Service {service_name} not found or has no modules discovered at {self.services_dir}"
+            )
         for run_func in self.modules[service_name]:
             run_func(context)
 
@@ -61,7 +62,7 @@ class TestOrchestrator:
                 print(f"✗ {service_name} tests failed: {e}")
                 raise
             finally:
-                if hasattr(context, 'teardown'):
+                if hasattr(context, "teardown"):
                     context.teardown()
 
 
@@ -74,9 +75,10 @@ def pytest_configure(config):
         spath = os.getenv("E2E_SERVICES_PATH", "verify_services/e2e/services")
         config.orchestrator = TestOrchestrator(root_dir=root, services_path=spath)
 
+
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to include dynamic modules."""
     if pytest:
-        orchestrator = getattr(config, 'orchestrator', None)
+        orchestrator = getattr(config, "orchestrator", None)
         if orchestrator:
             orchestrator.discover_modules()

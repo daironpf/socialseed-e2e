@@ -68,8 +68,8 @@ Si quieres intentar el subagente original:
 
 ```markdown
 # Título de la conversación
-**Fecha:** YYYY-MM-DD  
-**Tema:** Breve descripción  
+**Fecha:** YYYY-MM-DD
+**Tema:** Breve descripción
 **Estado:** [completado|en_progreso|pendiente]
 
 ## Resumen

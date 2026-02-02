@@ -49,16 +49,16 @@ if TYPE_CHECKING:
 
 def run(users: 'UsersPage') -> APIResponse:
     """Execute user login test.
-    
+
     This test validates that users can successfully log in
     with valid credentials.
-    
+
     Args:
         users: Instance of UsersPage for API interactions
-        
+
     Returns:
         APIResponse: HTTP response from the login endpoint
-        
+
     Raises:
         AssertionError: If login fails or response is invalid
     """
@@ -90,14 +90,14 @@ if TYPE_CHECKING:
 def run(myapi: 'MyapiPage') -> APIResponse:
     """Test health endpoint returns 200 OK."""
     response = myapi.get("/health")
-    
+
     # Assert response is successful
     assert response.ok, f"Health check failed: {response.status}"
-    
+
     # Verify response body
     data = response.json()
     assert data.get("status") == "healthy", "Service not healthy"
-    
+
     return response
 ```
 
@@ -220,26 +220,26 @@ def run(users: 'UsersPage') -> APIResponse:
         "email": "test@example.com"
     })
     users.assert_status(create_response, 201)
-    
+
     user_id = users.assert_json(create_response, key="data.id")
-    
+
     # Read user
     get_response = users.get(f"/users/{user_id}")
     users.assert_ok(get_response)
-    
+
     user_data = users.assert_json(get_response)
     assert user_data["name"] == "Test User"
-    
+
     # Update user
     update_response = users.put(f"/users/{user_id}", json={
         "name": "Updated Name"
     })
     users.assert_ok(update_response)
-    
+
     # Delete user
     delete_response = users.delete(f"/users/{user_id}")
     users.assert_status(delete_response, 204)
-    
+
     return create_response
 ```
 
@@ -286,23 +286,23 @@ users.assert_header(response, "content-type", "application/json")
 def run(users: 'UsersPage') -> APIResponse:
     """Test with cleanup on failure."""
     created_id = None
-    
+
     try:
         # Create resource
         response = users.post("/users", json={"name": "Test"})
         users.assert_status(response, 201)
-        
+
         created_id = users.assert_json(response, key="data.id")
-        
+
         # Test operations...
-        
+
         return response
-        
+
     except AssertionError as e:
         # Log failure details
         print(f"Test failed: {e}")
         raise
-        
+
     finally:
         # Cleanup: delete created resource
         if created_id:
@@ -317,14 +317,14 @@ def run(users: 'UsersPage') -> APIResponse:
     response = users.post("/users", json={
         "email": "invalid-email"  # Missing required 'name' field
     })
-    
+
     # Should return 400 Bad Request
     users.assert_status(response, 400)
-    
+
     error_data = users.assert_json(response)
     assert "error" in error_data, "Should have error message"
     assert error_data["code"] == "VALIDATION_ERROR"
-    
+
     return response
 ```
 
@@ -335,13 +335,13 @@ def run(users: 'UsersPage') -> APIResponse:
     """Test with automatic retry configuration."""
     # Configure retry for this test
     from socialseed_e2e.core.base_page import RetryConfig
-    
+
     users.retry_config = RetryConfig(
         max_retries=3,
         backoff_factor=1.0,
         retry_on=[502, 503, 504, 429]
     )
-    
+
     try:
         response = users.get("/slow-endpoint")
         users.assert_ok(response)
@@ -366,12 +366,12 @@ def run(users: 'UsersPage') -> APIResponse:
         "password": "password123"
     })
     users.assert_ok(response)
-    
+
     # Store token in service page
     data = response.json()
     users.auth_token = data["token"]
     users.current_user = data["user"]
-    
+
     return response
 ```
 
@@ -381,10 +381,10 @@ def run(users: 'UsersPage') -> APIResponse:
     """Get profile using token from login."""
     # Use token stored in previous test
     headers = {"Authorization": f"Bearer {users.auth_token}"}
-    
+
     user_id = users.current_user["id"]
     response = users.get(f"/users/{user_id}/profile", headers=headers)
-    
+
     users.assert_ok(response)
     return response
 ```
@@ -406,23 +406,23 @@ def run(api: 'ApiPage') -> APIResponse:
     # Initialize state if not exists
     if not hasattr(api, 'test_data'):
         api.test_data = {}
-    
+
     if not hasattr(api, 'created_resources'):
         api.created_resources = []
-    
+
     try:
         # Create test resource
         response = api.post("/items", json={"name": "Test Item"})
         users.assert_status(response, 201)
-        
+
         item_id = response.json()["id"]
         api.test_data["item_id"] = item_id
         api.created_resources.append(item_id)
-        
+
         # Test operations...
-        
+
         return response
-        
+
     except Exception:
         # Mark test as failed for cleanup
         api.test_failed = True
@@ -441,14 +441,14 @@ def run(users: 'UsersPage') -> APIResponse:
     create_resp = users.post("/users", json={"name": "Test"})
     users.assert_status(create_resp, 201)
     user_id = create_resp.json()["id"]
-    
+
     # Verify user exists
     get_resp = users.get(f"/users/{user_id}")
     users.assert_ok(get_resp)
-    
+
     # Cleanup
     users.delete(f"/users/{user_id}")
-    
+
     return create_resp
 ```
 
@@ -465,7 +465,7 @@ This module validates:
 
 def run(auth: 'AuthPage') -> APIResponse:
     """Execute login flow with valid credentials.
-    
+
     Steps:
         1. Send login request with valid credentials
         2. Verify 200 OK response
@@ -482,16 +482,16 @@ def run(auth: 'AuthPage') -> APIResponse:
 def run(api: 'ApiPage') -> APIResponse:
     """Test with resource cleanup."""
     resource_id = None
-    
+
     try:
         # Create resource
         response = api.post("/resources", json={"name": "Test"})
         resource_id = response.json()["id"]
-        
+
         # Test operations...
-        
+
         return response
-        
+
     finally:
         # Always cleanup
         if resource_id:
@@ -514,7 +514,7 @@ def run(users: 'UsersPage') -> APIResponse:
         "name": "Test User",
         "email": "test@example.com"
     }
-    
+
     response: APIResponse = users.post("/users", json=user_data)
     return response
 ```
@@ -524,7 +524,7 @@ def run(users: 'UsersPage') -> APIResponse:
 ```python
 def run(users: 'UsersPage') -> APIResponse:
     """Test rate limiting behavior.
-    
+
     Expected Behavior:
     - First 10 requests should succeed (within burst limit)
     - 11th request should return 429 Too Many Requests
@@ -544,15 +544,15 @@ def run(users: 'UsersPage') -> APIResponse:
     """Test with unique test data."""
     # Use UUID for unique identifiers
     unique_email = f"test_{uuid.uuid4().hex[:8]}@example.com"
-    
+
     # Use timestamp for time-based data
     timestamp = datetime.now().isoformat()
-    
+
     response = users.post("/users", json={
         "name": f"Test User {timestamp}",
         "email": unique_email
     })
-    
+
     return response
 ```
 
@@ -581,32 +581,32 @@ def run(auth: 'AuthPage') -> APIResponse:
         "password": "password123"
     })
     auth.assert_ok(login_response)
-    
+
     # Extract and store auth token
     login_data = auth.assert_json(login_response)
     auth_token = login_data["token"]
     user_id = login_data["user"]["id"]
-    
+
     # Store for potential use in other tests
     auth.auth_token = auth_token
     auth.current_user_id = user_id
-    
+
     print("Step 2: Access protected endpoint")
     headers = {"Authorization": f"Bearer {auth_token}"}
     profile_response = auth.get("/auth/profile", headers=headers)
     auth.assert_ok(profile_response)
-    
+
     profile_data = auth.assert_json(profile_response)
     assert profile_data["email"] == "user@example.com"
-    
+
     print("Step 3: Logout")
     logout_response = auth.post("/auth/logout", headers=headers)
     auth.assert_ok(logout_response)
-    
+
     print("Step 4: Verify token is invalidated")
     invalid_response = auth.get("/auth/profile", headers=headers)
     auth.assert_status(invalid_response, 401)
-    
+
     print("✓ Authentication flow completed successfully")
     return login_response
 ```
@@ -626,7 +626,7 @@ if TYPE_CHECKING:
 def run(resources: 'ResourcesPage') -> APIResponse:
     """Test Create, Read, Update, Delete operations."""
     created_ids = []
-    
+
     try:
         print("Step 1: Create resource")
         create_data: Dict[str, Any] = {
@@ -634,55 +634,55 @@ def run(resources: 'ResourcesPage') -> APIResponse:
             "description": "A test resource",
             "tags": ["test", "example"]
         }
-        
+
         create_resp = resources.post("/resources", json=create_data)
         resources.assert_status(create_resp, 201)
-        
+
         created_data = resources.assert_json(create_resp)
         resource_id = created_data["id"]
         created_ids.append(resource_id)
-        
+
         print(f"  Created resource with ID: {resource_id}")
-        
+
         print("Step 2: Read resource")
         get_resp = resources.get(f"/resources/{resource_id}")
         resources.assert_ok(get_resp)
-        
+
         retrieved_data = resources.assert_json(get_resp)
         assert retrieved_data["name"] == create_data["name"]
         assert retrieved_data["description"] == create_data["description"]
-        
+
         print("Step 3: Update resource")
         update_data = {"name": "Updated Resource Name"}
         update_resp = resources.put(f"/resources/{resource_id}", json=update_data)
         resources.assert_ok(update_resp)
-        
+
         # Verify update
         verify_resp = resources.get(f"/resources/{resource_id}")
         verify_data = resources.assert_json(verify_resp)
         assert verify_data["name"] == update_data["name"]
         assert verify_data["description"] == create_data["description"]  # Unchanged
-        
+
         print("Step 4: List resources")
         list_resp = resources.get("/resources")
         resources.assert_ok(list_resp)
-        
+
         list_data = resources.assert_json(list_resp)
         assert any(r["id"] == resource_id for r in list_data["items"])
-        
+
         print("Step 5: Delete resource")
         delete_resp = resources.delete(f"/resources/{resource_id}")
         resources.assert_status(delete_resp, 204)
-        
+
         print("Step 6: Verify deletion")
         not_found_resp = resources.get(f"/resources/{resource_id}")
         resources.assert_status(not_found_resp, 404)
-        
+
         created_ids.remove(resource_id)  # Mark as cleaned up
-        
+
         print("✓ CRUD operations completed successfully")
         return create_resp
-        
+
     finally:
         # Cleanup any remaining resources
         for resource_id in created_ids:
@@ -712,32 +712,32 @@ def run(users: 'UsersPage') -> APIResponse:
         # Missing 'name' field
     })
     users.assert_status(response, 400)
-    
+
     error_data = users.assert_json(response)
     assert error_data["code"] == "VALIDATION_ERROR"
     assert "name" in error_data["details"]["missing_fields"]
-    
+
     print("Test 2: Invalid email format")
     response = users.post("/users", json={
         "name": "Test User",
         "email": "not-an-email"
     })
     users.assert_status(response, 400)
-    
+
     print("Test 3: Duplicate email")
     # Create first user
     users.post("/users", json={
         "name": "First User",
         "email": "duplicate@example.com"
     })
-    
+
     # Try to create second user with same email
     response = users.post("/users", json={
         "name": "Second User",
         "email": "duplicate@example.com"
     })
     users.assert_status(response, 409)  # Conflict
-    
+
     print("Test 4: Invalid field types")
     response = users.post("/users", json={
         "name": "Test",
@@ -745,16 +745,16 @@ def run(users: 'UsersPage') -> APIResponse:
         "age": "not-a-number"  # Should be integer
     })
     users.assert_status(response, 400)
-    
+
     print("Test 5: Request too large")
     large_data = {"name": "x" * 10000}  # Exceeds limit
     response = users.post("/users", json=large_data)
     users.assert_status(response, 413)  # Payload Too Large
-    
+
     print("Test 6: Not found")
     response = users.get("/users/999999")
     users.assert_status(response, 404)
-    
+
     print("✓ All error scenarios handled correctly")
     return response
 ```
@@ -770,20 +770,20 @@ def run(api: 'ApiPage') -> APIResponse:
     """Test with proper lifecycle management."""
     # Setup
     test_resources = []
-    
+
     try:
         # Create test data
         for i in range(3):
             resp = api.post("/items", json={"name": f"Item {i}"})
             test_resources.append(resp.json()["id"])
-        
+
         # Run test
         response = api.get("/items")
         data = response.json()
         assert len(data["items"]) >= 3
-        
+
         return response
-        
+
     finally:
         # Teardown
         for resource_id in test_resources:
@@ -802,24 +802,24 @@ def run(api: 'ApiPage') -> APIResponse:
         "items": [{"product_id": "123", "quantity": 2}]
     })
     order_id = order_resp.json()["id"]
-    
+
     # Step 2: Process payment
     payment_resp = api.post(f"/orders/{order_id}/payment", json={
         "method": "credit_card",
         "amount": 100.00
     })
-    
+
     # Step 3: Verify order status
     order = api.get(f"/orders/{order_id}").json()
     assert order["status"] == "paid"
-    
+
     # Step 4: Trigger fulfillment
     api.post(f"/orders/{order_id}/fulfill")
-    
+
     # Step 5: Verify fulfillment
     order = api.get(f"/orders/{order_id}").json()
     assert order["status"] == "fulfilled"
-    
+
     return order_resp
 ```
 
@@ -832,17 +832,17 @@ def run(api: 'ApiPage') -> APIResponse:
     """Test batch processing."""
     # Create multiple items
     items = [
-        {"name": f"Item {i}"} 
+        {"name": f"Item {i}"}
         for i in range(100)
     ]
-    
+
     response = api.post("/items/batch", json={"items": items})
     api.assert_status(response, 201)
-    
+
     result = response.json()
     assert result["created"] == 100
     assert result["failed"] == 0
-    
+
     return response
 ```
 
@@ -856,23 +856,23 @@ def run(api: 'ApiPage') -> APIResponse:
     # Get first page
     page1 = api.get("/items", params={"page": 1, "limit": 10})
     data1 = page1.json()
-    
+
     assert len(data1["items"]) == 10
     assert data1["page"] == 1
     assert data1["has_next"] is True
-    
+
     # Get second page
     page2 = api.get("/items", params={"page": 2, "limit": 10})
     data2 = page2.json()
-    
+
     assert len(data2["items"]) == 10
     assert data2["page"] == 2
-    
+
     # Verify no overlap
     page1_ids = {item["id"] for item in data1["items"]}
     page2_ids = {item["id"] for item in data2["items"]}
     assert not page1_ids.intersection(page2_ids)
-    
+
     return page1
 ```
 
@@ -888,26 +888,26 @@ def run(api: 'ApiPage') -> APIResponse:
     # Start async job
     job_resp = api.post("/jobs", json={"type": "data_export"})
     job_id = job_resp.json()["id"]
-    
+
     # Poll until complete
     max_attempts = 30
     for attempt in range(max_attempts):
         status_resp = api.get(f"/jobs/{job_id}")
         status_data = status_resp.json()
-        
+
         if status_data["status"] == "completed":
             break
         elif status_data["status"] == "failed":
             raise AssertionError(f"Job failed: {status_data['error']}")
-        
+
         time.sleep(1)  # Wait before next poll
     else:
         raise AssertionError("Job did not complete in time")
-    
+
     # Verify result
     result = api.get(f"/jobs/{job_id}/result")
     api.assert_ok(result)
-    
+
     return job_resp
 ```
 
@@ -930,19 +930,19 @@ def run(users: 'UsersPage') -> APIResponse:
     # The mock API has pre-configured test users:
     # - admin/admin123 (role: admin)
     # - user/user123 (role: user)
-    
+
     # Test login with mock credentials
     response = users.post("/auth/login", json={
         "username": "admin",
         "password": "admin123"
     })
-    
+
     users.assert_ok(response)
-    
+
     data = users.assert_json(response)
     assert data["role"] == "admin"
     assert "token" in data
-    
+
     return response
 ```
 

@@ -6,7 +6,7 @@ This module defines Pydantic models for authentication data.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserRegistration(BaseModel):
