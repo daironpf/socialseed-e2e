@@ -3,9 +3,10 @@
 Tests protected endpoints with JWT authentication.
 """
 
-from playwright.sync_api import APIResponse
-from typing import TYPE_CHECKING
 import uuid
+from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..auth_api_page import AuthApiPage
@@ -97,9 +98,7 @@ def run(auth_api: "AuthApiPage") -> APIResponse:
         auth_api.access_token = valid_token
 
     print("Test 5: Access with malformed Authorization header")
-    response = auth_api.get(
-        "/api/protected", headers={"Authorization": "NotBearer token123"}
-    )
+    response = auth_api.get("/api/protected", headers={"Authorization": "NotBearer token123"})
     auth_api.assert_status(response, 401)
 
     print("  ✓ Malformed header correctly rejected")

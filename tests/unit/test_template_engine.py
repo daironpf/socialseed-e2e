@@ -8,13 +8,14 @@ import tempfile
 from pathlib import Path
 
 import pytest
+
 pytestmark = pytest.mark.unit
 
 from socialseed_e2e.utils.template_engine import (
     TemplateEngine,
+    to_camel_case,
     to_class_name,
     to_snake_case,
-    to_camel_case,
 )
 
 
@@ -37,7 +38,7 @@ class TestTemplateEngine:
         """Test listing available templates."""
         engine = TemplateEngine()
         templates = engine.list_templates()
-        
+
         # Should find all template files
         assert "e2e.conf.template" in templates
         assert "service_page.py.template" in templates
@@ -49,31 +50,34 @@ class TestTemplateEngine:
         """Test loading an existing template."""
         engine = TemplateEngine()
         template = engine.load_template("e2e.conf")
-        
+
         assert template is not None
         assert "${environment}" in template.template
 
     def test_load_template_not_found(self):
         """Test loading a non-existent template raises FileNotFoundError."""
         engine = TemplateEngine()
-        
+
         with pytest.raises(FileNotFoundError) as exc_info:
             engine.load_template("nonexistent")
-        
+
         assert "Template not found" in str(exc_info.value)
 
     def test_render_with_variables(self):
         """Test rendering a template with variables."""
         engine = TemplateEngine()
-        
-        result = engine.render("e2e.conf", {
-            "environment": "test",
-            "timeout": "5000",
-            "user_agent": "test-agent",
-            "verbose": "false",
-            "services_config": "# no services"
-        })
-        
+
+        result = engine.render(
+            "e2e.conf",
+            {
+                "environment": "test",
+                "timeout": "5000",
+                "user_agent": "test-agent",
+                "verbose": "false",
+                "services_config": "# no services",
+            },
+        )
+
         assert "environment: test" in result
         assert "timeout: 5000" in result
         assert "test-agent" in result
@@ -82,12 +86,15 @@ class TestTemplateEngine:
     def test_render_missing_variables_uses_placeholder(self):
         """Test that missing variables are left as placeholders."""
         engine = TemplateEngine()
-        
-        result = engine.render("e2e.conf", {
-            "environment": "test"
-            # Other variables missing
-        })
-        
+
+        result = engine.render(
+            "e2e.conf",
+            {
+                "environment": "test"
+                # Other variables missing
+            },
+        )
+
         # Missing variables should remain as ${variable}
         assert "environment: test" in result
         assert "${timeout}" in result  # Should remain as placeholder
@@ -95,17 +102,22 @@ class TestTemplateEngine:
     def test_render_to_file_success(self):
         """Test rendering and writing to file."""
         engine = TemplateEngine()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "output.conf"
-            
+
             result_path = engine.render_to_file(
                 "e2e.conf",
-                {"environment": "dev", "timeout": "30000", 
-                 "user_agent": "agent", "verbose": "true", "services_config": ""},
-                output_path
+                {
+                    "environment": "dev",
+                    "timeout": "30000",
+                    "user_agent": "agent",
+                    "verbose": "true",
+                    "services_config": "",
+                },
+                output_path,
             )
-            
+
             assert result_path.exists()
             content = result_path.read_text()
             assert "environment: dev" in content
@@ -113,38 +125,48 @@ class TestTemplateEngine:
     def test_render_to_file_overwrite(self):
         """Test overwrite behavior in render_to_file."""
         engine = TemplateEngine()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "output.conf"
             output_path.write_text("original content")
-            
+
             # Should raise FileExistsError without overwrite=True
             with pytest.raises(FileExistsError):
                 engine.render_to_file(
                     "e2e.conf",
-                    {"environment": "dev", "timeout": "30000",
-                     "user_agent": "agent", "verbose": "true", "services_config": ""},
-                    output_path
+                    {
+                        "environment": "dev",
+                        "timeout": "30000",
+                        "user_agent": "agent",
+                        "verbose": "true",
+                        "services_config": "",
+                    },
+                    output_path,
                 )
-            
+
             # Should succeed with overwrite=True
             engine.render_to_file(
                 "e2e.conf",
-                {"environment": "prod", "timeout": "10000",
-                 "user_agent": "agent2", "verbose": "false", "services_config": ""},
+                {
+                    "environment": "prod",
+                    "timeout": "10000",
+                    "user_agent": "agent2",
+                    "verbose": "false",
+                    "services_config": "",
+                },
                 output_path,
-                overwrite=True
+                overwrite=True,
             )
-            
+
             content = output_path.read_text()
             assert "environment: prod" in content
 
     def test_get_template_variables(self):
         """Test extracting variable names from template."""
         engine = TemplateEngine()
-        
+
         variables = engine.get_template_variables("e2e.conf")
-        
+
         assert "environment" in variables
         assert "timeout" in variables
         assert "user_agent" in variables
@@ -154,18 +176,16 @@ class TestTemplateEngine:
     def test_validate_variables(self):
         """Test variable validation."""
         engine = TemplateEngine()
-        
-        missing, extra = engine.validate_variables("e2e.conf", {
-            "environment": "test",
-            "timeout": "5000",
-            "extra_var": "value"
-        })
-        
+
+        missing, extra = engine.validate_variables(
+            "e2e.conf", {"environment": "test", "timeout": "5000", "extra_var": "value"}
+        )
+
         # Should report missing variables
         assert "user_agent" in missing
         assert "verbose" in missing
         assert "services_config" in missing
-        
+
         # Should report extra variables
         assert "extra_var" in extra
 
@@ -213,14 +233,17 @@ class TestServicePageTemplate:
     def test_service_page_template_rendering(self):
         """Test rendering service_page.py.template with variables."""
         engine = TemplateEngine()
-        
-        result = engine.render("service_page.py", {
-            "service_name": "users-api",
-            "class_name": "UsersApi",
-            "snake_case_name": "users_api",
-            "endpoint_prefix": "users"
-        })
-        
+
+        result = engine.render(
+            "service_page.py",
+            {
+                "service_name": "users-api",
+                "class_name": "UsersApi",
+                "snake_case_name": "users_api",
+                "endpoint_prefix": "users",
+            },
+        )
+
         assert "class UsersApiPage(BasePage):" in result
         assert "users-api" in result
         assert "get_users_api_config" in result
@@ -233,15 +256,18 @@ class TestTestModuleTemplate:
     def test_test_module_template_rendering(self):
         """Test rendering test_module.py.template with variables."""
         engine = TemplateEngine()
-        
-        result = engine.render("test_module.py", {
-            "service_name": "users-api",
-            "class_name": "UsersApi",
-            "snake_case_service": "users_api",
-            "test_name": "login",
-            "test_description": "User login flow"
-        })
-        
+
+        result = engine.render(
+            "test_module.py",
+            {
+                "service_name": "users-api",
+                "class_name": "UsersApi",
+                "snake_case_service": "users_api",
+                "test_name": "login",
+                "test_description": "User login flow",
+            },
+        )
+
         assert "def run(users_api" in result
         assert "UsersApiPage" in result
         assert "login" in result
@@ -254,13 +280,16 @@ class TestDataSchemaTemplate:
     def test_data_schema_template_rendering(self):
         """Test rendering data_schema.py.template with variables."""
         engine = TemplateEngine()
-        
-        result = engine.render("data_schema.py", {
-            "service_name": "users-api",
-            "class_name": "UsersApi",
-            "constants": "# Custom constants here"
-        })
-        
+
+        result = engine.render(
+            "data_schema.py",
+            {
+                "service_name": "users-api",
+                "class_name": "UsersApi",
+                "constants": "# Custom constants here",
+            },
+        )
+
         assert "class UsersApiDTO(BaseModel):" in result
         assert "UsersApiCreateDTO" in result
         assert "UsersApiUpdateDTO" in result
@@ -273,11 +302,10 @@ class TestConfigTemplate:
     def test_config_template_rendering(self):
         """Test rendering config.py.template with variables."""
         engine = TemplateEngine()
-        
-        result = engine.render("config.py", {
-            "service_name": "users-api",
-            "snake_case_name": "users_api"
-        })
-        
+
+        result = engine.render(
+            "config.py", {"service_name": "users-api", "snake_case_name": "users_api"}
+        )
+
         assert "get_users_api_config" in result
         assert 'config.services["users-api"]' in result

@@ -3,8 +3,9 @@
 Tests order creation and service communication.
 """
 
-from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..orders_api_page import OrdersApiPage
@@ -26,9 +27,7 @@ def run(orders_api: "OrdersApiPage") -> APIResponse:
         APIResponse: Last response
     """
     print("Test 1: Create order for valid user (ID: 1)")
-    response = orders_api.create_order(
-        user_id=1, items=["Laptop", "Mouse"], total_amount=299.99
-    )
+    response = orders_api.create_order(user_id=1, items=["Laptop", "Mouse"], total_amount=299.99)
     orders_api.assert_status(response, 201)
 
     order_data = orders_api.assert_json(response)
@@ -46,9 +45,7 @@ def run(orders_api: "OrdersApiPage") -> APIResponse:
     print(f"  ✓ Order has user data from Users Service")
 
     print("Test 3: Create order for invalid user (should fail)")
-    response = orders_api.create_order(
-        user_id=999, items=["Phone"], total_amount=199.99
-    )
+    response = orders_api.create_order(user_id=999, items=["Phone"], total_amount=199.99)
     orders_api.assert_status(response, 404)
     print(f"  ✓ Invalid user correctly rejected")
 

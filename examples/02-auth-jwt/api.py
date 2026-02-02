@@ -15,9 +15,9 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Optional
 
-from flask import Flask, request, jsonify, g
-from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
+from flask import Flask, g, jsonify, request
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 
@@ -41,9 +41,7 @@ def generate_tokens(user_id: int, username: str) -> dict:
         "exp": now + app.config["JWT_ACCESS_TOKEN_EXPIRES"],
         "iat": now,
     }
-    access_token = jwt.encode(
-        access_payload, app.config["SECRET_KEY"], algorithm="HS256"
-    )
+    access_token = jwt.encode(access_payload, app.config["SECRET_KEY"], algorithm="HS256")
 
     # Refresh token (long-lived)
     refresh_payload = {
@@ -53,9 +51,7 @@ def generate_tokens(user_id: int, username: str) -> dict:
         "exp": now + app.config["JWT_REFRESH_TOKEN_EXPIRES"],
         "iat": now,
     }
-    refresh_token = jwt.encode(
-        refresh_payload, app.config["SECRET_KEY"], algorithm="HS256"
-    )
+    refresh_token = jwt.encode(refresh_payload, app.config["SECRET_KEY"], algorithm="HS256")
 
     return {
         "access_token": access_token,
@@ -102,7 +98,8 @@ def init_db():
     """Initialize the database with users table."""
     with app.app_context():
         db = get_db()
-        db.execute("""
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
@@ -110,7 +107,8 @@ def init_db():
                 password_hash TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
         db.commit()
 
 
@@ -122,27 +120,29 @@ def require_auth(f):
         auth_header = request.headers.get("Authorization")
 
         if not auth_header:
-            return jsonify(
-                {"error": "Unauthorized", "message": "Authorization header is required"}
-            ), 401
+            return (
+                jsonify({"error": "Unauthorized", "message": "Authorization header is required"}),
+                401,
+            )
 
         # Extract token from "Bearer <token>"
         parts = auth_header.split()
         if len(parts) != 2 or parts[0].lower() != "bearer":
-            return jsonify(
-                {
-                    "error": "Unauthorized",
-                    "message": "Invalid authorization header format. Use: Bearer <token>",
-                }
-            ), 401
+            return (
+                jsonify(
+                    {
+                        "error": "Unauthorized",
+                        "message": "Invalid authorization header format. Use: Bearer <token>",
+                    }
+                ),
+                401,
+            )
 
         token = parts[1]
         payload = decode_token(token, "access")
 
         if not payload:
-            return jsonify(
-                {"error": "Unauthorized", "message": "Invalid or expired token"}
-            ), 401
+            return jsonify({"error": "Unauthorized", "message": "Invalid or expired token"}), 401
 
         # Store user info in flask g for use in the endpoint
         g.user_id = payload["user_id"]
@@ -166,9 +166,7 @@ def register():
 
     # Validate required fields
     if not data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Request body is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Request body is required"}), 400
 
     username = data.get("username", "").strip()
     email = data.get("email", "").strip()
@@ -184,13 +182,16 @@ def register():
         errors.append("Password must be at least 6 characters")
 
     if errors:
-        return jsonify(
-            {
-                "error": "Validation Error",
-                "message": "Invalid input data",
-                "details": errors,
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Validation Error",
+                    "message": "Invalid input data",
+                    "details": errors,
+                }
+            ),
+            400,
+        )
 
     # Hash password
     password_hash = generate_password_hash(password)
@@ -206,22 +207,21 @@ def register():
 
         user_id = cursor.lastrowid
 
-        return jsonify(
-            {
-                "message": "User registered successfully",
-                "user": {"id": user_id, "username": username, "email": email},
-            }
-        ), 201
+        return (
+            jsonify(
+                {
+                    "message": "User registered successfully",
+                    "user": {"id": user_id, "username": username, "email": email},
+                }
+            ),
+            201,
+        )
 
     except sqlite3.IntegrityError as e:
         if "username" in str(e).lower():
-            return jsonify(
-                {"error": "Conflict", "message": "Username already exists"}
-            ), 409
+            return jsonify({"error": "Conflict", "message": "Username already exists"}), 409
         elif "email" in str(e).lower():
-            return jsonify(
-                {"error": "Conflict", "message": "Email already exists"}
-            ), 409
+            return jsonify({"error": "Conflict", "message": "Email already exists"}), 409
         else:
             return jsonify({"error": "Conflict", "message": "User already exists"}), 409
 
@@ -232,17 +232,16 @@ def login():
     data = request.get_json()
 
     if not data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Request body is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Request body is required"}), 400
 
     username = data.get("username", "").strip()
     password = data.get("password", "")
 
     if not username or not password:
-        return jsonify(
-            {"error": "Bad Request", "message": "Username and password are required"}
-        ), 400
+        return (
+            jsonify({"error": "Bad Request", "message": "Username and password are required"}),
+            400,
+        )
 
     # Find user
     db = get_db()
@@ -250,9 +249,7 @@ def login():
     user = cursor.fetchone()
 
     if not user or not check_password_hash(user["password_hash"], password):
-        return jsonify(
-            {"error": "Unauthorized", "message": "Invalid username or password"}
-        ), 401
+        return jsonify({"error": "Unauthorized", "message": "Invalid username or password"}), 401
 
     # Generate tokens
     tokens = generate_tokens(user["id"], user["username"])
@@ -276,17 +273,16 @@ def refresh():
     data = request.get_json()
 
     if not data or "refresh_token" not in data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Refresh token is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Refresh token is required"}), 400
 
     refresh_token = data["refresh_token"]
     payload = decode_token(refresh_token, "refresh")
 
     if not payload:
-        return jsonify(
-            {"error": "Unauthorized", "message": "Invalid or expired refresh token"}
-        ), 401
+        return (
+            jsonify({"error": "Unauthorized", "message": "Invalid or expired refresh token"}),
+            401,
+        )
 
     # Verify user still exists
     db = get_db()
@@ -294,9 +290,7 @@ def refresh():
     user = cursor.fetchone()
 
     if not user:
-        return jsonify(
-            {"error": "Unauthorized", "message": "User no longer exists"}
-        ), 401
+        return jsonify({"error": "Unauthorized", "message": "User no longer exists"}), 401
 
     # Generate new tokens
     tokens = generate_tokens(user["id"], user["username"])

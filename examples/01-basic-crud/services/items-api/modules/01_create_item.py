@@ -3,8 +3,9 @@
 Tests POST /api/items endpoint for creating new items.
 """
 
-from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..items_api_page import ItemsApiPage
@@ -58,9 +59,7 @@ def run(items_api: "ItemsApiPage") -> APIResponse:
     print(f"  ✓ Created minimal item with ID: {data['id']}")
 
     print("Test 3: Verify validation - missing required fields")
-    response = items_api.post(
-        "/api/items", json={"description": "Missing name and price"}
-    )
+    response = items_api.post("/api/items", json={"description": "Missing name and price"})
 
     items_api.assert_status(response, 400)
     error_data = items_api.assert_json(response)

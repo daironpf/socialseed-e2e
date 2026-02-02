@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, validator
 
 class ${class_name}DTO(BaseModel):
     """Data Transfer Object for ${service_name} entities.
-    
+
     Attributes:
         id: Unique identifier
         name: Entity name
@@ -18,20 +18,20 @@ class ${class_name}DTO(BaseModel):
         created_at: Creation timestamp
         updated_at: Last update timestamp
     """
-    
+
     id: Optional[str] = Field(None, description="Unique identifier")
     name: str = Field(..., description="Entity name", min_length=1, max_length=100)
     description: Optional[str] = Field(None, description="Entity description", max_length=500)
     created_at: Optional[str] = Field(None, description="Creation timestamp (ISO format)")
     updated_at: Optional[str] = Field(None, description="Last update timestamp (ISO format)")
-    
+
     @validator('name')
     def name_must_not_be_empty(cls, v):
         """Validate that name is not empty or whitespace."""
         if not v or not v.strip():
             raise ValueError('Name cannot be empty')
         return v.strip()
-    
+
     class Config:
         """Pydantic configuration."""
         json_schema_extra = {
@@ -47,15 +47,15 @@ class ${class_name}DTO(BaseModel):
 
 class ${class_name}CreateDTO(BaseModel):
     """DTO for creating new ${service_name} entities.
-    
+
     Attributes:
         name: Entity name (required)
         description: Entity description (optional)
     """
-    
+
     name: str = Field(..., description="Entity name", min_length=1, max_length=100)
     description: Optional[str] = Field(None, description="Entity description", max_length=500)
-    
+
     @validator('name')
     def name_must_not_be_empty(cls, v):
         """Validate that name is not empty or whitespace."""
@@ -66,15 +66,15 @@ class ${class_name}CreateDTO(BaseModel):
 
 class ${class_name}UpdateDTO(BaseModel):
     """DTO for updating existing ${service_name} entities.
-    
+
     Attributes:
         name: Entity name (optional)
         description: Entity description (optional)
     """
-    
+
     name: Optional[str] = Field(None, description="Entity name", min_length=1, max_length=100)
     description: Optional[str] = Field(None, description="Entity description", max_length=500)
-    
+
     @validator('name')
     def name_must_not_be_empty_if_provided(cls, v):
         """Validate that name is not empty if provided."""
@@ -85,14 +85,14 @@ class ${class_name}UpdateDTO(BaseModel):
 
 class ${class_name}ListResponse(BaseModel):
     """DTO for paginated list response.
-    
+
     Attributes:
         items: List of entities
         total: Total number of entities
         page: Current page number
         page_size: Number of items per page
     """
-    
+
     items: List[${class_name}DTO] = Field(default_factory=list)
     total: int = Field(0, ge=0)
     page: int = Field(1, ge=1)

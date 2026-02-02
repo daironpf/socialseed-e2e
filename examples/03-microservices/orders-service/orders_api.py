@@ -7,8 +7,9 @@ Port: 5003
 
 import sqlite3
 from datetime import datetime
+
 import requests
-from flask import Flask, request, jsonify, g
+from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
 DATABASE = "orders.db"
@@ -38,7 +39,8 @@ def init_db():
     """Initialize database with orders table."""
     with app.app_context():
         db = get_db()
-        db.execute("""
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -47,7 +49,8 @@ def init_db():
                 status TEXT DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
         db.commit()
 
 
@@ -93,28 +96,27 @@ def create_order():
     data = request.get_json()
 
     if not data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Request body is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Request body is required"}), 400
 
     user_id = data.get("user_id")
     items = data.get("items")
     total_amount = data.get("total_amount")
 
     if not user_id or not items or total_amount is None:
-        return jsonify(
-            {
-                "error": "Bad Request",
-                "message": "user_id, items, and total_amount are required",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "user_id, items, and total_amount are required",
+                }
+            ),
+            400,
+        )
 
     # Validate user exists (call Users Service)
     user = validate_user(user_id)
     if not user:
-        return jsonify(
-            {"error": "Not Found", "message": f"User with id {user_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"User with id {user_id} not found"}), 404
 
     # Create order
     db = get_db()
@@ -124,19 +126,22 @@ def create_order():
     )
     db.commit()
 
-    return jsonify(
-        {
-            "message": "Order created successfully",
-            "order": {
-                "id": cursor.lastrowid,
-                "user_id": user_id,
-                "user_name": user.get("username"),
-                "items": items,
-                "total_amount": float(total_amount),
-                "status": "pending",
-            },
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "message": "Order created successfully",
+                "order": {
+                    "id": cursor.lastrowid,
+                    "user_id": user_id,
+                    "user_name": user.get("username"),
+                    "items": items,
+                    "total_amount": float(total_amount),
+                    "status": "pending",
+                },
+            }
+        ),
+        201,
+    )
 
 
 @app.route("/api/orders", methods=["GET"])
@@ -180,9 +185,10 @@ def get_order(order_id):
     order = cursor.fetchone()
 
     if not order:
-        return jsonify(
-            {"error": "Not Found", "message": f"Order with id {order_id} not found"}
-        ), 404
+        return (
+            jsonify({"error": "Not Found", "message": f"Order with id {order_id} not found"}),
+            404,
+        )
 
     order_dict = dict(order)
 
@@ -212,21 +218,25 @@ def update_order_status(order_id):
     valid_statuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"]
 
     if new_status not in valid_statuses:
-        return jsonify(
-            {
-                "error": "Bad Request",
-                "message": f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
+                }
+            ),
+            400,
+        )
 
     db = get_db()
 
     # Check order exists
     cursor = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
     if not cursor.fetchone():
-        return jsonify(
-            {"error": "Not Found", "message": f"Order with id {order_id} not found"}
-        ), 404
+        return (
+            jsonify({"error": "Not Found", "message": f"Order with id {order_id} not found"}),
+            404,
+        )
 
     # Update status
     db.execute("UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id))
@@ -247,9 +257,7 @@ def get_user_orders(user_id):
     # Validate user exists
     user = validate_user(user_id)
     if not user:
-        return jsonify(
-            {"error": "Not Found", "message": f"User with id {user_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"User with id {user_id} not found"}), 404
 
     db = get_db()
     cursor = db.execute(
@@ -257,9 +265,7 @@ def get_user_orders(user_id):
     )
     orders = [dict(row) for row in cursor.fetchall()]
 
-    return jsonify(
-        {"user_id": user_id, "user_name": user.get("username"), "orders": orders}
-    )
+    return jsonify({"user_id": user_id, "user_name": user.get("username"), "orders": orders})
 
 
 if __name__ == "__main__":

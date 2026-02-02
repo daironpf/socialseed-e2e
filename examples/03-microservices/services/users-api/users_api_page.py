@@ -4,6 +4,7 @@ This module provides the UsersApiPage class for testing the Users Service.
 """
 
 from typing import Any, Dict, Optional
+
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.core.base_page import BasePage
@@ -48,9 +49,7 @@ class UsersApiPage(BasePage):
         """
         return self.post(f"/api/users/{user_id}/balance", json={"amount": amount})
 
-    def create_user(
-        self, username: str, email: str, balance: float = 100.0
-    ) -> APIResponse:
+    def create_user(self, username: str, email: str, balance: float = 100.0) -> APIResponse:
         """Create a new user."""
         return self.post(
             "/api/users",

@@ -58,17 +58,17 @@ graph TD;
     subgraph "AI Agent Layer"
         A[AI Agent / LLM] -- "Generates/Heals" --> B[Test Modules]
     end
-    
+
     subgraph "SocialSeed E2E Framework"
         B -- "Uses" --> C[Service Page Classes]
         C -- "Extends" --> D[Core BasePage]
         D -- "Orchestrates" --> E[Playwright Engine]
     end
-    
+
     subgraph "Target Infrastructure"
         E -- "REST / JSON" --> F[Microservices]
     end
-    
+
     G[YAML/JSON Config] -.-> D
 ```
 

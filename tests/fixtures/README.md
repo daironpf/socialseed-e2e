@@ -335,7 +335,7 @@ jobs:
         run: |
           python tests/fixtures/mock_api.py &
           sleep 2
-      
+
       - name: Run Tests
         run: pytest tests/integration/
 ```

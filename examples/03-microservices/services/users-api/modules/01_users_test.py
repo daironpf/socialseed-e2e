@@ -3,8 +3,9 @@
 Tests user management and balance operations.
 """
 
-from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..users_api_page import UsersApiPage

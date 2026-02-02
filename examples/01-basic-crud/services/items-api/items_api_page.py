@@ -4,6 +4,7 @@ This module provides the ItemsApiPage class for testing the Items API.
 """
 
 from typing import Any, Dict, Optional
+
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.core.base_page import BasePage
@@ -56,9 +57,7 @@ class ItemsApiPage(BasePage):
         }
         return self.post("/api/items", json=data)
 
-    def list_items(
-        self, page: int = 1, limit: int = 10, search: str = ""
-    ) -> APIResponse:
+    def list_items(self, page: int = 1, limit: int = 10, search: str = "") -> APIResponse:
         """List all items with pagination.
 
         Args:

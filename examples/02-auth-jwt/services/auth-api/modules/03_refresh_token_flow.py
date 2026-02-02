@@ -3,10 +3,11 @@
 Tests POST /api/auth/refresh endpoint.
 """
 
-from playwright.sync_api import APIResponse
-from typing import TYPE_CHECKING
-import uuid
 import time
+import uuid
+from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..auth_api_page import AuthApiPage
@@ -73,9 +74,7 @@ def run(auth_api: "AuthApiPage") -> APIResponse:
     print(f"  ✓ New refresh token received")
 
     print("Test 2: Verify new tokens are different from old ones")
-    assert new_tokens["access_token"] != old_access_token, (
-        "Access token should be different"
-    )
+    assert new_tokens["access_token"] != old_access_token, "Access token should be different"
     # Note: Refresh token might or might not be rotated depending on implementation
 
     print("  ✓ New access token is different from old one")

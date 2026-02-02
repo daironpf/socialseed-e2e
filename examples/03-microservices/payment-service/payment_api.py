@@ -7,8 +7,9 @@ Port: 5004
 
 import sqlite3
 from datetime import datetime
+
 import requests
-from flask import Flask, request, jsonify, g
+from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
 DATABASE = "payments.db"
@@ -39,7 +40,8 @@ def init_db():
     """Initialize database with payments table."""
     with app.app_context():
         db = get_db()
-        db.execute("""
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS payments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 order_id INTEGER NOT NULL,
@@ -49,16 +51,15 @@ def init_db():
                 transaction_id TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
         db.commit()
 
 
 def get_user_balance(user_id):
     """Get user balance from Users Service."""
     try:
-        response = requests.get(
-            f"{USERS_SERVICE_URL}/api/users/{user_id}/balance", timeout=5
-        )
+        response = requests.get(f"{USERS_SERVICE_URL}/api/users/{user_id}/balance", timeout=5)
         if response.status_code == 200:
             return response.json()
         return None
@@ -85,9 +86,7 @@ def update_user_balance(user_id, amount):
 def get_order(order_id):
     """Get order from Orders Service."""
     try:
-        response = requests.get(
-            f"{ORDERS_SERVICE_URL}/api/orders/{order_id}", timeout=5
-        )
+        response = requests.get(f"{ORDERS_SERVICE_URL}/api/orders/{order_id}", timeout=5)
         if response.status_code == 200:
             return response.json()
         return None
@@ -153,30 +152,28 @@ def process_payment():
     data = request.get_json()
 
     if not data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Request body is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Request body is required"}), 400
 
     order_id = data.get("order_id")
     user_id = data.get("user_id")
 
     if not order_id or not user_id:
-        return jsonify(
-            {"error": "Bad Request", "message": "order_id and user_id are required"}
-        ), 400
+        return (
+            jsonify({"error": "Bad Request", "message": "order_id and user_id are required"}),
+            400,
+        )
 
     # Get order details
     order = get_order(order_id)
     if not order:
-        return jsonify(
-            {"error": "Not Found", "message": f"Order with id {order_id} not found"}
-        ), 404
+        return (
+            jsonify({"error": "Not Found", "message": f"Order with id {order_id} not found"}),
+            404,
+        )
 
     # Verify order belongs to user
     if order.get("user_id") != user_id:
-        return jsonify(
-            {"error": "Forbidden", "message": "Order does not belong to this user"}
-        ), 403
+        return jsonify({"error": "Forbidden", "message": "Order does not belong to this user"}), 403
 
     # Get amount from order
     amount = order.get("total_amount", 0)
@@ -184,27 +181,31 @@ def process_payment():
     # Check user balance
     user_balance = get_user_balance(user_id)
     if not user_balance:
-        return jsonify(
-            {"error": "Not Found", "message": f"User with id {user_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"User with id {user_id} not found"}), 404
 
     if user_balance["balance"] < amount:
-        return jsonify(
-            {
-                "error": "Insufficient Funds",
-                "message": f"Insufficient balance. Current: ${user_balance['balance']:.2f}, Required: ${amount:.2f}",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Insufficient Funds",
+                    "message": f"Insufficient balance. Current: ${user_balance['balance']:.2f}, Required: ${amount:.2f}",
+                }
+            ),
+            400,
+        )
 
     # Deduct balance from user
     success, balance_response = update_user_balance(user_id, -amount)
     if not success:
-        return jsonify(
-            {
-                "error": "Payment Failed",
-                "message": "Failed to deduct balance from user account",
-            }
-        ), 500
+        return (
+            jsonify(
+                {
+                    "error": "Payment Failed",
+                    "message": "Failed to deduct balance from user account",
+                }
+            ),
+            500,
+        )
 
     # Create payment record
     db = get_db()
@@ -220,22 +221,25 @@ def process_payment():
     # Update order status to confirmed
     update_order_status(order_id, "confirmed")
 
-    return jsonify(
-        {
-            "message": "Payment processed successfully",
-            "payment": {
-                "id": payment_id,
-                "order_id": order_id,
-                "user_id": user_id,
-                "amount": amount,
-                "status": "completed",
-                "previous_balance": user_balance["balance"],
-                "new_balance": balance_response.get(
-                    "new_balance", user_balance["balance"] - amount
-                ),
-            },
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "message": "Payment processed successfully",
+                "payment": {
+                    "id": payment_id,
+                    "order_id": order_id,
+                    "user_id": user_id,
+                    "amount": amount,
+                    "status": "completed",
+                    "previous_balance": user_balance["balance"],
+                    "new_balance": balance_response.get(
+                        "new_balance", user_balance["balance"] - amount
+                    ),
+                },
+            }
+        ),
+        201,
+    )
 
 
 @app.route("/api/payments", methods=["GET"])
@@ -265,9 +269,10 @@ def get_payment(payment_id):
     payment = cursor.fetchone()
 
     if not payment:
-        return jsonify(
-            {"error": "Not Found", "message": f"Payment with id {payment_id} not found"}
-        ), 404
+        return (
+            jsonify({"error": "Not Found", "message": f"Payment with id {payment_id} not found"}),
+            404,
+        )
 
     return jsonify(dict(payment))
 
@@ -297,9 +302,7 @@ def refund_payment():
     data = request.get_json()
 
     if not data or "payment_id" not in data:
-        return jsonify(
-            {"error": "Bad Request", "message": "payment_id is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "payment_id is required"}), 400
 
     payment_id = data["payment_id"]
 
@@ -310,26 +313,31 @@ def refund_payment():
     payment = cursor.fetchone()
 
     if not payment:
-        return jsonify(
-            {"error": "Not Found", "message": f"Payment with id {payment_id} not found"}
-        ), 404
+        return (
+            jsonify({"error": "Not Found", "message": f"Payment with id {payment_id} not found"}),
+            404,
+        )
 
     payment_dict = dict(payment)
 
     if payment_dict["status"] != "completed":
-        return jsonify(
-            {
-                "error": "Bad Request",
-                "message": f"Cannot refund payment with status: {payment_dict['status']}",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Cannot refund payment with status: {payment_dict['status']}",
+                }
+            ),
+            400,
+        )
 
     # Refund to user balance
     success, _ = update_user_balance(payment_dict["user_id"], payment_dict["amount"])
     if not success:
-        return jsonify(
-            {"error": "Refund Failed", "message": "Failed to refund to user account"}
-        ), 500
+        return (
+            jsonify({"error": "Refund Failed", "message": "Failed to refund to user account"}),
+            500,
+        )
 
     # Update payment status
     db.execute("UPDATE payments SET status = 'refunded' WHERE id = ?", (payment_id,))

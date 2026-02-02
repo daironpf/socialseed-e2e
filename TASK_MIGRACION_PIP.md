@@ -10,8 +10,8 @@
 
 Convertir el framework E2E actual de SocialSeed en un paquete pip independiente y reutilizable llamado `socialseed-e2e` que cualquier desarrollador pueda usar para testear sus APIs REST.
 
-**Repositorio**: https://github.com/daironpf/socialseed-e2e  
-**Paquete Pip**: socialseed-e2e  
+**Repositorio**: https://github.com/daironpf/socialseed-e2e
+**Paquete Pip**: socialseed-e2e
 **Versión Inicial**: 0.1.0
 
 ---
@@ -441,7 +441,7 @@ services:
   ✓ Created e2e.conf
   ✓ Created services/
   ✓ Created tests/
-  
+
   Next steps:
   1. Edit e2e.conf to configure your API
   2. Run: e2e new-service myapi
@@ -544,16 +544,16 @@ class {{ ServiceName }}Page(BasePage):
     Hub para {{ service_name }} service.
     Gestiona estado y orquesta módulos de test.
     """
-    
+
     def __init__(self, playwright=None, base_url=None):
         config = get_{{ service_name }}_config()
         url = base_url or config.base_url
         super().__init__(url, playwright, default_headers=config.default_headers)
-        
+
         # Estado compartido entre módulos
         self.current_entity: Optional[{{ ServiceName }}DTO] = None
         self.auth_token: Optional[str] = None
-    
+
     def get_entity(self, entity_id: str) -> APIResponse:
         """Obtener entidad por ID."""
         return self.get(f"/entities/{entity_id}")
@@ -570,24 +570,24 @@ if TYPE_CHECKING:
 def run({{ service_var }}: '{{ ServiceName }}Page') -> APIResponse:
     """
     {{ description }}
-    
+
     Args:
         {{ service_var }}: Instancia de {{ ServiceName }}Page
-    
+
     Returns:
         APIResponse: Respuesta HTTP
     """
     print("Running {{ module_name }}...")
-    
+
     # TODO: Implementar lógica de test
     response = {{ service_var }}.get("/endpoint")
-    
+
     if response.ok:
         print("✓ {{ success_message }}")
     else:
         print(f"✗ Failed: {response.status}")
         raise AssertionError("{{ failure_message }}")
-    
+
     return response
 ```
 
@@ -614,10 +614,10 @@ from string import Template
 
 class TemplateEngine:
     """Renderiza templates con variables."""
-    
+
     def __init__(self, template_dir: Path):
         self.template_dir = template_dir
-    
+
     def render(self, template_name: str, variables: dict) -> str:
         template_path = self.template_dir / f"{template_name}.template"
         template_content = template_path.read_text()
@@ -884,33 +884,33 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           playwright install chromium
-      
+
       - name: Lint with black
         run: black --check src/ tests/
-      
+
       - name: Lint with flake8
         run: flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
-      
+
       - name: Type check with mypy
         run: mypy src/socialseed_e2e
-      
+
       - name: Test with pytest
         run: pytest --cov=socialseed_e2e --cov-report=xml
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -936,33 +936,33 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build twine
-      
+
       - name: Run tests
         run: |
           pip install -e ".[dev]"
           pytest
-      
+
       - name: Build package
         run: python -m build
-      
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -986,24 +986,24 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           pip install -e ".[docs]"
-      
+
       - name: Build docs
         run: |
           cd docs
           make html
-      
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

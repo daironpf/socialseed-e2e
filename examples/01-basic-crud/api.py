@@ -7,7 +7,8 @@ Run with: python api.py
 
 import sqlite3
 from datetime import datetime
-from flask import Flask, request, jsonify, g
+
+from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
 DATABASE = "items.db"
@@ -34,7 +35,8 @@ def init_db():
     """Initialize the database with items table."""
     with app.app_context():
         db = get_db()
-        db.execute("""
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -44,7 +46,8 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
         db.commit()
 
 
@@ -61,9 +64,10 @@ def create_item():
 
     # Validate required fields
     if not data or "name" not in data or "price" not in data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Name and price are required fields"}
-        ), 400
+        return (
+            jsonify({"error": "Bad Request", "message": "Name and price are required fields"}),
+            400,
+        )
 
     name = data.get("name")
     description = data.get("description", "")
@@ -80,16 +84,19 @@ def create_item():
 
     item_id = cursor.lastrowid
 
-    return jsonify(
-        {
-            "id": item_id,
-            "name": name,
-            "description": description,
-            "price": price,
-            "quantity": quantity,
-            "message": "Item created successfully",
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "id": item_id,
+                "name": name,
+                "description": description,
+                "price": price,
+                "quantity": quantity,
+                "message": "Item created successfully",
+            }
+        ),
+        201,
+    )
 
 
 @app.route("/api/items", methods=["GET"])
@@ -108,7 +115,7 @@ def list_items():
 
     # Build query
     if search:
-        query = """SELECT * FROM items 
+        query = """SELECT * FROM items
                    WHERE name LIKE ? OR description LIKE ?
                    ORDER BY created_at DESC
                    LIMIT ? OFFSET ?"""
@@ -117,12 +124,12 @@ def list_items():
 
         # Get total count for pagination
         count_cursor = db.execute(
-            """SELECT COUNT(*) as total FROM items 
+            """SELECT COUNT(*) as total FROM items
                WHERE name LIKE ? OR description LIKE ?""",
             (search_pattern, search_pattern),
         )
     else:
-        query = """SELECT * FROM items 
+        query = """SELECT * FROM items
                    ORDER BY created_at DESC
                    LIMIT ? OFFSET ?"""
         cursor = db.execute(query, (limit, offset))
@@ -154,9 +161,7 @@ def get_item(item_id):
     row = cursor.fetchone()
 
     if row is None:
-        return jsonify(
-            {"error": "Not Found", "message": f"Item with id {item_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"Item with id {item_id} not found"}), 404
 
     return jsonify(dict(row))
 
@@ -167,18 +172,14 @@ def update_item(item_id):
     data = request.get_json()
 
     if not data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Request body is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Request body is required"}), 400
 
     db = get_db()
 
     # Check if item exists
     cursor = db.execute("SELECT * FROM items WHERE id = ?", (item_id,))
     if cursor.fetchone() is None:
-        return jsonify(
-            {"error": "Not Found", "message": f"Item with id {item_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"Item with id {item_id} not found"}), 404
 
     # Build update query dynamically
     fields = []
@@ -201,9 +202,7 @@ def update_item(item_id):
         values.append(int(data["quantity"]))
 
     if not fields:
-        return jsonify(
-            {"error": "Bad Request", "message": "No valid fields to update"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "No valid fields to update"}), 400
 
     # Add updated_at and item_id
     fields.append("updated_at = CURRENT_TIMESTAMP")
@@ -215,9 +214,7 @@ def update_item(item_id):
 
     # Return updated item
     cursor = db.execute("SELECT * FROM items WHERE id = ?", (item_id,))
-    return jsonify(
-        {"message": "Item updated successfully", "item": dict(cursor.fetchone())}
-    )
+    return jsonify({"message": "Item updated successfully", "item": dict(cursor.fetchone())})
 
 
 @app.route("/api/items/<int:item_id>", methods=["DELETE"])
@@ -228,9 +225,7 @@ def delete_item(item_id):
     # Check if item exists
     cursor = db.execute("SELECT * FROM items WHERE id = ?", (item_id,))
     if cursor.fetchone() is None:
-        return jsonify(
-            {"error": "Not Found", "message": f"Item with id {item_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"Item with id {item_id} not found"}), 404
 
     db.execute("DELETE FROM items WHERE id = ?", (item_id,))
     db.commit()

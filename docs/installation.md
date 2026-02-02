@@ -22,7 +22,7 @@ Complete guide for installing and setting up socialseed-e2e on your system.
 
 - **Python**: 3.9 or higher (3.9, 3.10, 3.11, 3.12 supported)
 - **pip**: 21.0 or higher
-- **Operating System**: 
+- **Operating System**:
   - Linux (Ubuntu 20.04+, CentOS 8+, Debian 10+)
   - macOS (10.15 Catalina or higher)
   - Windows (Windows 10 or higher)
@@ -814,6 +814,6 @@ e2e run
 
 ---
 
-**Still having issues?** 
+**Still having issues?**
 
 Run `e2e doctor` and share the output when [opening an issue](https://github.com/daironpf/socialseed-e2e/issues/new).

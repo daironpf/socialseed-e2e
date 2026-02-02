@@ -3,8 +3,9 @@
 Tests DELETE /api/items/{id} endpoint for removing items.
 """
 
-from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
+
+from playwright.sync_api import APIResponse
 
 if TYPE_CHECKING:
     from ..items_api_page import ItemsApiPage

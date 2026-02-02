@@ -232,7 +232,7 @@ pytestmark = pytest.mark.unit
 def test_validate_url():
     """Test URL validation."""
     from socialseed_e2e.utils.validators import validate_url
-    
+
     result = validate_url("https://api.example.com")
     assert result == "https://api.example.com"
 ```
@@ -247,7 +247,7 @@ pytestmark = pytest.mark.integration
 def test_cli_init(cli_runner, temp_dir):
     """Test CLI init command."""
     from socialseed_e2e.cli import cli
-    
+
     result = cli_runner.invoke(cli, ['init', str(temp_dir)])
     assert result.exit_code == 0
     assert (temp_dir / "services").exists()

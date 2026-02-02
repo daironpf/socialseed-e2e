@@ -6,6 +6,7 @@ This module contains unit tests for all validation functions in the validators m
 import re
 
 import pytest
+
 pytestmark = pytest.mark.unit
 
 from socialseed_e2e.utils.validators import (
@@ -101,10 +102,7 @@ class TestValidateUrl:
 
     def test_url_with_custom_allowed_schemes(self):
         """Test URL with custom allowed schemes."""
-        result = validate_url(
-            "ftp://files.example.com",
-            allowed_schemes=["ftp", "sftp"]
-        )
+        result = validate_url("ftp://files.example.com", allowed_schemes=["ftp", "sftp"])
         assert result == "ftp://files.example.com"
 
     def test_invalid_domain_format(self):
@@ -252,13 +250,13 @@ class TestValidateString:
 
     def test_string_pattern(self):
         """Test string pattern validation."""
-        result = validate_string("abc123", pattern=r'^[a-z0-9]+$')
+        result = validate_string("abc123", pattern=r"^[a-z0-9]+$")
         assert result == "abc123"
 
     def test_string_pattern_failure(self):
         """Test string pattern validation failure."""
         with pytest.raises(ValidationError) as exc_info:
-            validate_string("ABC", pattern=r'^[a-z]+$')
+            validate_string("ABC", pattern=r"^[a-z]+$")
         assert "pattern" in str(exc_info.value)
 
     def test_string_not_blank(self):
@@ -422,10 +420,7 @@ class TestValidateJsonResponse:
     def test_field_types(self):
         """Test field type validation."""
         data = {"id": 1, "name": "Test"}
-        result = validate_json_response(
-            data,
-            field_types={"id": int, "name": str}
-        )
+        result = validate_json_response(data, field_types={"id": int, "name": str})
         assert result == data
 
     def test_field_type_mismatch_raises_error(self):
@@ -447,11 +442,7 @@ class TestValidatePaginationResponse:
 
     def test_valid_pagination(self):
         """Test valid pagination response."""
-        data = {
-            "items": [{"id": 1}, {"id": 2}],
-            "total": 2,
-            "page": 1
-        }
+        data = {"items": [{"id": 1}, {"id": 2}], "total": 2, "page": 1}
         result = validate_pagination_response(data)
         assert result == data
 
@@ -506,19 +497,13 @@ class TestValidateList:
 
     def test_list_item_validator(self):
         """Test list with item validator."""
-        result = validate_list(
-            ["hello", "world"],
-            item_validator=lambda x: validate_string(x)
-        )
+        result = validate_list(["hello", "world"], item_validator=lambda x: validate_string(x))
         assert result == ["hello", "world"]
 
     def test_list_item_validator_failure(self):
         """Test list with item validator failure."""
         with pytest.raises(ValidationError) as exc_info:
-            validate_list(
-                ["hello", 123],
-                item_validator=lambda x: validate_string(x)
-            )
+            validate_list(["hello", 123], item_validator=lambda x: validate_string(x))
         assert "Invalid item at index 1" in str(exc_info.value)
 
     def test_non_list_raises_error(self):
@@ -553,10 +538,7 @@ class TestValidateDict:
     def test_value_types(self):
         """Test value types validation."""
         data = {"count": 10, "active": True}
-        result = validate_dict(
-            data,
-            value_types={"count": int, "active": bool}
-        )
+        result = validate_dict(data, value_types={"count": int, "active": bool})
         assert result == data
 
     def test_value_type_mismatch_raises_error(self):

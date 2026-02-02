@@ -69,7 +69,7 @@ You should see output showing that **5 tests** are detected and ready:
 📋 Configuración: e2e.conf
 🌍 Environment: dev
 
-    Servicios Encontrados     
+    Servicios Encontrados
 ┏━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━┓
 ┃ Servicio  ┃ Tests ┃ Estado ┃
 ┡━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━┩
@@ -245,11 +245,11 @@ if TYPE_CHECKING:
 def run(items_api: 'ItemsApiPage') -> APIResponse:
     """Your test description."""
     print("Starting my test...")
-    
+
     # Your test code here
     response = items_api.create_item(name="Test", price=10.00)
     items_api.assert_status(response, 201)
-    
+
     print("✅ Test passed!")
     return response
 ```

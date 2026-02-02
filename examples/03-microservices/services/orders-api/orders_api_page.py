@@ -4,6 +4,7 @@ This module provides the OrdersApiPage class for testing the Orders Service.
 """
 
 from typing import Any, Dict, List, Optional
+
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.core.base_page import BasePage
@@ -34,9 +35,7 @@ class OrdersApiPage(BasePage):
             params["user_id"] = user_id
         return self.get("/api/orders", params=params)
 
-    def create_order(
-        self, user_id: int, items: List[str], total_amount: float
-    ) -> APIResponse:
+    def create_order(self, user_id: int, items: List[str], total_amount: float) -> APIResponse:
         """Create a new order (validates user via Users Service).
 
         Args:

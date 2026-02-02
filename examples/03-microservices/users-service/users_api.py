@@ -7,7 +7,8 @@ Port: 5002
 
 import sqlite3
 from datetime import datetime
-from flask import Flask, request, jsonify, g
+
+from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
 DATABASE = "users.db"
@@ -34,7 +35,8 @@ def init_db():
     """Initialize database with users table."""
     with app.app_context():
         db = get_db()
-        db.execute("""
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
@@ -42,7 +44,8 @@ def init_db():
                 balance REAL DEFAULT 100.00,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
         db.commit()
 
         # Add sample users if table is empty
@@ -80,15 +83,11 @@ def list_users():
 def get_user(user_id):
     """Get user by ID."""
     db = get_db()
-    cursor = db.execute(
-        "SELECT id, username, email, balance FROM users WHERE id = ?", (user_id,)
-    )
+    cursor = db.execute("SELECT id, username, email, balance FROM users WHERE id = ?", (user_id,))
     user = cursor.fetchone()
 
     if not user:
-        return jsonify(
-            {"error": "Not Found", "message": f"User with id {user_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"User with id {user_id} not found"}), 404
 
     return jsonify(dict(user))
 
@@ -97,15 +96,11 @@ def get_user(user_id):
 def get_balance(user_id):
     """Get user balance (used by other services)."""
     db = get_db()
-    cursor = db.execute(
-        "SELECT id, username, balance FROM users WHERE id = ?", (user_id,)
-    )
+    cursor = db.execute("SELECT id, username, balance FROM users WHERE id = ?", (user_id,))
     user = cursor.fetchone()
 
     if not user:
-        return jsonify(
-            {"error": "Not Found", "message": f"User with id {user_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"User with id {user_id} not found"}), 404
 
     return jsonify(
         {
@@ -136,20 +131,21 @@ def update_balance(user_id):
     user = cursor.fetchone()
 
     if not user:
-        return jsonify(
-            {"error": "Not Found", "message": f"User with id {user_id} not found"}
-        ), 404
+        return jsonify({"error": "Not Found", "message": f"User with id {user_id} not found"}), 404
 
     current_balance = user["balance"]
     new_balance = current_balance + amount
 
     if new_balance < 0:
-        return jsonify(
-            {
-                "error": "Insufficient Funds",
-                "message": f"User has insufficient balance. Current: {current_balance}, Required: {abs(amount)}",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Insufficient Funds",
+                    "message": f"User has insufficient balance. Current: {current_balance}, Required: {abs(amount)}",
+                }
+            ),
+            400,
+        )
 
     # Update balance
     db.execute("UPDATE users SET balance = ? WHERE id = ?", (new_balance, user_id))
@@ -172,18 +168,14 @@ def create_user():
     data = request.get_json()
 
     if not data:
-        return jsonify(
-            {"error": "Bad Request", "message": "Request body is required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "Request body is required"}), 400
 
     username = data.get("username", "").strip()
     email = data.get("email", "").strip()
     balance = float(data.get("balance", 100.00))
 
     if not username or not email:
-        return jsonify(
-            {"error": "Bad Request", "message": "username and email are required"}
-        ), 400
+        return jsonify({"error": "Bad Request", "message": "username and email are required"}), 400
 
     db = get_db()
     try:
@@ -193,22 +185,23 @@ def create_user():
         )
         db.commit()
 
-        return jsonify(
-            {
-                "message": "User created successfully",
-                "user": {
-                    "id": cursor.lastrowid,
-                    "username": username,
-                    "email": email,
-                    "balance": balance,
-                },
-            }
-        ), 201
+        return (
+            jsonify(
+                {
+                    "message": "User created successfully",
+                    "user": {
+                        "id": cursor.lastrowid,
+                        "username": username,
+                        "email": email,
+                        "balance": balance,
+                    },
+                }
+            ),
+            201,
+        )
 
     except sqlite3.IntegrityError:
-        return jsonify(
-            {"error": "Conflict", "message": "Username or email already exists"}
-        ), 409
+        return jsonify({"error": "Conflict", "message": "Username or email already exists"}), 409
 
 
 if __name__ == "__main__":

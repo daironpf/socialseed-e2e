@@ -1,8 +1,8 @@
 # Inicio de Sesión - Contexto del Proyecto
 
-**Fecha:** 2026-01-31  
-**Tema:** Inicialización de sesión con OpenCode y revisión de contexto  
-**Estado:** en_progreso  
+**Fecha:** 2026-01-31
+**Tema:** Inicialización de sesión con OpenCode y revisión de contexto
+**Estado:** en_progreso
 **Agente:** OpenCode/kimi-k2.5-free
 
 ## Resumen

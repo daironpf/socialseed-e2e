@@ -16,7 +16,7 @@ Usage:
 
 Example:
     from socialseed_e2e.utils import TemplateEngine
-    
+
     engine = TemplateEngine()
     content = engine.render('service_page.py', {
         'service_name': 'users-api',

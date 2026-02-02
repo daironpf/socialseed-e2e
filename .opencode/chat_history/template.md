@@ -10,9 +10,9 @@ cp template.md 20250131_nombre_descriptivo.md
 
 # [Título de la conversación]
 
-**Fecha:** YYYY-MM-DD  
-**Tema:** [Breve descripción del tema tratado]  
-**Estado:** [completado|en_progreso|pendiente]  
+**Fecha:** YYYY-MM-DD
+**Tema:** [Breve descripción del tema tratado]
+**Estado:** [completado|en_progreso|pendiente]
 **Agente:** [Tu nombre o identificador]
 
 ## Resumen
@@ -53,7 +53,7 @@ cp template.md 20250131_nombre_descriptivo.md
 
 ## Notas Adicionales
 
-[Cualquier información extra que pueda ser útil en el futuro: 
+[Cualquier información extra que pueda ser útil en el futuro:
 - Alternativas consideradas
 - Deuda técnica introducida
 - Dependencias nuevas

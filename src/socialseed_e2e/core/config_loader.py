@@ -6,18 +6,18 @@ from the api.conf file. It supports environment variable substitution and
 provides easy access to all service configurations.
 """
 
-import os
-import re
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
-from dataclasses import dataclass, field
-
 # Try to import yaml, fallback to JSON if not available
 import json
+import os
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 HAS_YAML = False
 try:
     import yaml  # type: ignore
+
     HAS_YAML = True
 except ImportError:
     pass  # YAML not available, will use JSON
@@ -29,6 +29,7 @@ from socialseed_e2e.utils import TemplateEngine
 @dataclass
 class ServiceEndpoint:
     """Represents a single API endpoint configuration."""
+
     name: str
     path: str
     method: str = "POST"
@@ -38,6 +39,7 @@ class ServiceEndpoint:
 @dataclass
 class ServiceConfig:
     """Complete configuration for a microservice."""
+
     name: str
     base_url: str
     health_endpoint: str = "/actuator/health"
@@ -53,6 +55,7 @@ class ServiceConfig:
 @dataclass
 class ApiGatewayConfig:
     """API Gateway configuration."""
+
     enabled: bool = False
     url: str = ""
     prefix: str = ""
@@ -65,6 +68,7 @@ class ApiGatewayConfig:
 @dataclass
 class DatabaseConfig:
     """Database connection configuration."""
+
     host: str = "localhost"
     port: int = 5432
     database: str = ""
@@ -76,6 +80,7 @@ class DatabaseConfig:
 @dataclass
 class TestDataConfig:
     """Test data generation configuration."""
+
     email_domain: str = "test.socialseed.com"
     password: str = "StrongPass123!"
     username_prefix: str = "testuser"
@@ -88,6 +93,7 @@ class TestDataConfig:
 @dataclass
 class SecurityConfig:
     """Security and SSL configuration."""
+
     verify_ssl: bool = True
     ssl_cert: Optional[str] = None
     ssl_key: Optional[str] = None
@@ -98,6 +104,7 @@ class SecurityConfig:
 @dataclass
 class ReportingConfig:
     """Test reporting configuration."""
+
     format: str = "console"
     save_logs: bool = True
     log_dir: str = "./logs"
@@ -108,6 +115,7 @@ class ReportingConfig:
 @dataclass
 class AppConfig:
     """Main application configuration container."""
+
     environment: str = "dev"
     timeout: int = 30000
     user_agent: str = "SocialSeed-E2E-Agent/2.0"
@@ -125,84 +133,87 @@ class AppConfig:
 
 class ConfigError(Exception):
     """Custom exception for configuration errors."""
+
     pass
 
 
 class ApiConfigLoader:
     """
     Loads and manages API configuration from api.conf file.
-    
+
     Supports:
     - Environment variable substitution: ${VAR_NAME} or ${VAR_NAME:-default}
     - YAML or JSON format
     - Hot-reloading (reload config without restarting)
     - Singleton pattern for global access
-    
+
     Usage:
         # Load default configuration
         config = ApiConfigLoader.load()
-        
+
         # Get specific service configuration
         auth_config = config.services.get("auth")
-        
+
         # Check if using API Gateway
         if config.api_gateway.enabled:
             base_url = config.api_gateway.url
     """
-    
+
     _instance: Optional[AppConfig] = None
     _config_path: Optional[Path] = None
-    
+
     @classmethod
     def load(cls, config_path: Optional[str] = None) -> AppConfig:
         """
         Load configuration from api.conf file.
-        
+
         Args:
             config_path: Path to configuration file. If None, searches in:
                 1. Environment variable E2E_CONFIG_PATH
                 2. verify_services/api.conf (relative to project root)
                 3. Current working directory ./api.conf
-        
+
         Returns:
             AppConfig: Parsed configuration object
-            
+
         Raises:
             FileNotFoundError: If configuration file not found
             ValueError: If configuration file is invalid
         """
         if cls._instance is not None and config_path is None:
             return cls._instance
-        
+
         # Determine config file path
         if config_path is None:
             config_path = cls._find_config_file()
-        
+
         config_file = Path(config_path)
         if not config_file.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
-        
+
         # Read and parse file
         content = config_file.read_text()
-        
+
         # Substitute environment variables
         content = cls._substitute_env_vars(content)
-        
+
         # Parse YAML or JSON
         if HAS_YAML:
             import yaml as yaml_module
+
             data = yaml_module.safe_load(content)
         else:
             import json as json_module
+
             data = json_module.loads(content)
-        
+
         # Build configuration object
         config = cls._parse_config(data)
         cls._instance = config
         cls._config_path = config_file
-        
+
         return config
-    
+
     @classmethod
     def reload(cls) -> AppConfig:
         """Reload configuration from file (useful for hot-reloading)."""
@@ -210,16 +221,16 @@ class ApiConfigLoader:
         if cls._config_path is not None:
             return cls.load(str(cls._config_path))
         return cls.load()
-    
+
     @classmethod
     def get_config_path(cls) -> Optional[Path]:
         """Get the path of the currently loaded configuration file."""
         return cls._config_path
-    
+
     @classmethod
     def _find_config_file(cls) -> str:
         """Find configuration file in common locations.
-        
+
         Search order (highest priority first):
         1. E2E_CONFIG_PATH environment variable
         2. ./e2e.conf (current directory)
@@ -228,10 +239,10 @@ class ApiConfigLoader:
         5. ~/.config/socialseed-e2e/default.conf
         6. verify_services/api.conf (legacy, for backward compatibility)
         7. ./api.conf (legacy, for backward compatibility)
-        
+
         Returns:
             str: Path to the configuration file
-            
+
         Raises:
             FileNotFoundError: If no configuration file is found
         """
@@ -242,23 +253,23 @@ class ApiConfigLoader:
             raise FileNotFoundError(
                 f"Configuration file specified in E2E_CONFIG_PATH not found: {env_path}"
             )
-        
+
         # Priority 2-4: Search in current directory and subdirectories
         search_paths = [
             Path("e2e.conf"),  # Current directory
             Path("config") / "e2e.conf",  # config subdirectory
             Path("tests") / "e2e.conf",  # tests subdirectory
         ]
-        
+
         for path in search_paths:
             if path.exists():
                 return str(path)
-        
+
         # Priority 5: Global config in home directory
         home_config = Path.home() / ".config" / "socialseed-e2e" / "default.conf"
         if home_config.exists():
             return str(home_config)
-        
+
         # Priority 6-7: Legacy paths (for backward compatibility)
         # Search up the directory tree for verify_services/api.conf
         current_dir = Path.cwd()
@@ -268,11 +279,11 @@ class ApiConfigLoader:
                 legacy_config = verify_services_dir / "api.conf"
                 if legacy_config.exists():
                     return str(legacy_config)
-        
+
         # Legacy: api.conf in current directory
         if Path("api.conf").exists():
             return "api.conf"
-        
+
         # Configuration not found
         raise FileNotFoundError(
             "Could not find configuration file. Searched in:\n"
@@ -288,54 +299,54 @@ class ApiConfigLoader:
             "Or set the E2E_CONFIG_PATH environment variable:\n"
             "  export E2E_CONFIG_PATH=/path/to/your/e2e.conf"
         )
-    
+
     @classmethod
     def create_default_config(cls, path: Union[str, Path], overwrite: bool = False) -> str:
         """Create a default e2e.conf configuration file.
-        
+
         Creates a default configuration file at the specified path using
         the e2e.conf.template template. Parent directories are created
         automatically if they don't exist.
-        
+
         Args:
             path: Path where to create the configuration file
             overwrite: If True, overwrite existing file
-            
+
         Returns:
             str: Path to the created configuration file
-            
+
         Raises:
             FileExistsError: If file exists and overwrite=False
             FileNotFoundError: If template file doesn't exist
         """
         path = Path(path)
         engine = TemplateEngine()
-        
+
         rendered_path = engine.render_to_file(
-            'e2e.conf',
+            "e2e.conf",
             variables={
-                'environment': 'dev',
-                'timeout': '30000',
-                'user_agent': 'SocialSeed-E2E-Agent/2.0',
-                'verbose': 'true',
-                'services_config': ''
+                "environment": "dev",
+                "timeout": "30000",
+                "user_agent": "SocialSeed-E2E-Agent/2.0",
+                "verbose": "true",
+                "services_config": "",
             },
             output_path=path,
-            overwrite=overwrite
+            overwrite=overwrite,
         )
-        
+
         return str(rendered_path)
-    
+
     @classmethod
     def _substitute_env_vars(cls, content: str) -> str:
         """Substitute environment variables in configuration content."""
         # Pattern: ${VAR_NAME} or ${VAR_NAME:-default_value}
-        pattern = r'\$\{(\w+)(?::-([^}]*))?\}'
-        
+        pattern = r"\$\{(\w+)(?::-([^}]*))?\}"
+
         def replace_var(match):
             var_name = match.group(1)
             default_value = match.group(2)
-            
+
             env_value = os.getenv(var_name)
             if env_value is not None:
                 return env_value
@@ -344,29 +355,29 @@ class ApiConfigLoader:
             else:
                 # Keep original if no value found
                 return match.group(0)
-        
+
         return re.sub(pattern, replace_var, content)
-    
+
     @classmethod
     def validate_config(cls, data: Dict[str, Any], strict: bool = False) -> None:
         """Validate minimum configuration requirements.
-        
+
         Args:
             data: Raw configuration dictionary
             strict: If True, raises error for missing optional fields
-            
+
         Raises:
             ConfigError: If configuration is invalid or missing required fields
         """
         errors = []
         warnings = []
-        
+
         # Check for required 'general' section
         if "general" not in data:
             errors.append("Missing required 'general' section")
         else:
             general = data["general"]
-            
+
             # Validate environment
             if "environment" in general:
                 valid_envs = ["dev", "development", "staging", "prod", "production", "test"]
@@ -375,7 +386,7 @@ class ApiConfigLoader:
                         f"Unusual environment value: {general['environment']}. "
                         f"Recommended: {', '.join(valid_envs)}"
                     )
-            
+
             # Validate timeout is positive integer
             if "timeout" in general:
                 try:
@@ -386,7 +397,7 @@ class ApiConfigLoader:
                         warnings.append(f"general.timeout is very short ({timeout}ms)")
                 except (ValueError, TypeError):
                     errors.append("general.timeout must be a valid integer")
-        
+
         # Check for services section (at least one service recommended)
         services = data.get("services", {})
         if not services:
@@ -397,43 +408,44 @@ class ApiConfigLoader:
                 if not isinstance(service_data, dict):
                     errors.append(f"Service '{service_name}' must be a dictionary")
                     continue
-                    
+
                 if "base_url" not in service_data:
                     errors.append(f"Service '{service_name}' missing required field: base_url")
                 elif not service_data.get("base_url"):
                     warnings.append(f"Service '{service_name}' has empty base_url")
-                
+
                 # Validate port if provided
                 if "port" in service_data:
                     try:
                         port = int(service_data["port"])
                         if port < 1 or port > 65535:
-                            errors.append(f"Service '{service_name}' port must be between 1 and 65535")
+                            errors.append(
+                                f"Service '{service_name}' port must be between 1 and 65535"
+                            )
                     except (ValueError, TypeError):
                         errors.append(f"Service '{service_name}' port must be a valid integer")
-        
+
         # Raise error if there are validation errors
         if errors:
-            raise ConfigError(
-                "Configuration validation failed:\n  - " + "\n  - ".join(errors)
-            )
-        
+            raise ConfigError("Configuration validation failed:\n  - " + "\n  - ".join(errors))
+
         # Print warnings if strict mode
         if strict and warnings:
             import warnings as warnings_module
+
             for warning in warnings:
                 warnings_module.warn(f"Config warning: {warning}")
-    
+
     @classmethod
     def _parse_config(cls, data: Dict[str, Any]) -> AppConfig:
         """Parse raw dictionary into AppConfig object."""
         # Validate configuration before parsing
         cls.validate_config(data)
-        
+
         # General configuration
         general = data.get("general", {})
         project = general.get("project", {})
-        
+
         config = AppConfig(
             environment=general.get("environment", "dev"),
             timeout=general.get("timeout", 30000),
@@ -443,7 +455,7 @@ class ApiConfigLoader:
             project_name=project.get("name", "SocialSeed"),
             project_version=project.get("version", "0.0.0"),
         )
-        
+
         # API Gateway
         gateway_data = data.get("api_gateway", {})
         auth_data = gateway_data.get("auth", {})
@@ -456,7 +468,7 @@ class ApiConfigLoader:
             api_key_header=auth_data.get("api_key_header"),
             api_key_value=auth_data.get("api_key_value"),
         )
-        
+
         # Services
         services_data = data.get("services", {})
         for service_name, service_data in services_data.items():
@@ -472,7 +484,7 @@ class ApiConfigLoader:
                 required=service_data.get("required", True),
                 endpoints=service_data.get("endpoints", {}),
             )
-        
+
         # Databases
         databases_data = data.get("databases", {})
         for db_name, db_data in databases_data.items():
@@ -484,7 +496,7 @@ class ApiConfigLoader:
                 password=db_data.get("password", ""),
                 enabled=db_data.get("enabled", False),
             )
-        
+
         # Test data
         test_data = data.get("test_data", {})
         user_data = test_data.get("user", {})
@@ -499,7 +511,7 @@ class ApiConfigLoader:
             max_retries=retries_data.get("max_attempts", 3),
             retry_backoff_ms=retries_data.get("backoff_ms", 1000),
         )
-        
+
         # Security
         security_data = data.get("security", {})
         config.security = SecurityConfig(
@@ -509,7 +521,7 @@ class ApiConfigLoader:
             ssl_ca=security_data.get("ssl_ca"),
             test_tokens=security_data.get("test_tokens", {}),
         )
-        
+
         # Reporting
         reporting_data = data.get("reporting", {})
         config.reporting = ReportingConfig(
@@ -519,58 +531,52 @@ class ApiConfigLoader:
             include_payloads=reporting_data.get("include_payloads", False),
             screenshot_on_failure=reporting_data.get("screenshot_on_failure", False),
         )
-        
+
         return config
-    
+
     @classmethod
     def get_service_url(cls, service_name: str, use_gateway: Optional[bool] = None) -> str:
         """
         Get the effective URL for a service.
-        
+
         If API Gateway is enabled, returns gateway URL + service path.
         Otherwise, returns the service's base_url.
-        
+
         Args:
             service_name: Name of the service
             use_gateway: Force gateway mode (None = use config setting)
-        
+
         Returns:
             str: Full URL for the service
         """
         config = cls.load()
         service = config.services.get(service_name)
-        
+
         if not service:
             raise ValueError(f"Service '{service_name}' not found in configuration")
-        
+
         # Determine if we should use gateway
         should_use_gateway = use_gateway if use_gateway is not None else config.api_gateway.enabled
-        
+
         if should_use_gateway and config.api_gateway.url:
             gateway_url = config.api_gateway.url.rstrip("/")
             prefix = config.api_gateway.prefix.rstrip("/")
             return f"{gateway_url}{prefix}/{service_name}"
-        
+
         return service.base_url
-    
+
     @classmethod
     def get_all_required_services(cls) -> List[str]:
         """Get list of services marked as required."""
         config = cls.load()
-        return [
-            name for name, service in config.services.items()
-            if service.required
-        ]
-    
+        return [name for name, service in config.services.items() if service.required]
+
     @classmethod
     def get_auto_start_services(cls) -> List[str]:
         """Get list of services configured for auto-start."""
         config = cls.load()
-        return [
-            name for name, service in config.services.items()
-            if service.auto_start
-        ]
-    
+        return [name for name, service in config.services.items() if service.auto_start]
+
     @classmethod
     def get_service_by_maven_module(cls, maven_module: str) -> Optional[ServiceConfig]:
         """Find service configuration by Maven module name."""

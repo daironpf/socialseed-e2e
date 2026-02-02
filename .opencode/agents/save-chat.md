@@ -31,9 +31,9 @@ El archivo debe incluir estas secciones obligatorias:
 ```markdown
 # [Título descriptivo de la sesión]
 
-**Fecha:** YYYY-MM-DD  
-**Tema:** [Breve descripción]  
-**Estado:** [completado|en_progreso|pendiente]  
+**Fecha:** YYYY-MM-DD
+**Tema:** [Breve descripción]
+**Estado:** [completado|en_progreso|pendiente]
 **Agente:** [OpenCode/kimi-k2.5-free u otro]
 
 ## Resumen
@@ -76,7 +76,7 @@ Si existe, usa la herramienta `edit` para agregar la nueva sesión al timeline.
 
 ```markdown
 ### N. YYYY-MM-DD - [Título breve]
-**Estado:** [✅|🔄|📋] [completado|en_progreso|pendiente]  
+**Estado:** [✅|🔄|📋] [completado|en_progreso|pendiente]
 **Tema:** [Descripción corta]
 
 **Decisiones clave:**

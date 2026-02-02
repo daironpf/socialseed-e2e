@@ -333,18 +333,18 @@ def test_user_lifecycle(mock_api_url, mock_api_reset):
     )
     assert create_resp.status_code == 201
     user_id = create_resp.json()['id']
-    
+
     # Read
     get_resp = requests.get(f"{mock_api_url}/api/users/{user_id}")
     assert get_resp.status_code == 200
-    
+
     # Update
     update_resp = requests.put(
         f"{mock_api_url}/api/users/{user_id}",
         json={"name": "Updated"}
     )
     assert update_resp.json()['name'] == "Updated"
-    
+
     # Delete
     delete_resp = requests.delete(f"{mock_api_url}/api/users/{user_id}")
     assert delete_resp.status_code == 204
@@ -362,7 +362,7 @@ def test_auth_flow(mock_api_url, mock_api_reset):
     )
     assert register_resp.status_code == 201
     token = register_resp.json()['token']
-    
+
     # Login with same credentials
     login_resp = requests.post(
         f"{mock_api_url}/api/auth/login",
@@ -401,20 +401,20 @@ import pytest
 
 class TestUserAPI:
     """Comprehensive tests for user endpoints."""
-    
+
     def test_list_users_pagination(self, mock_api_url):
         """Test pagination works correctly."""
         resp = requests.get(f"{mock_api_url}/api/users?limit=1")
         data = resp.json()
         assert len(data['items']) == 1
         assert data['total_pages'] >= 2
-    
+
     def test_search_users(self, mock_api_url):
         """Test search functionality."""
         resp = requests.get(f"{mock_api_url}/api/users?search=admin")
         data = resp.json()
         assert all('admin' in u['email'] for u in data['items'])
-    
+
     def test_create_duplicate_fails(self, mock_api_url):
         """Test duplicate email returns 409."""
         resp = requests.post(
@@ -491,7 +491,7 @@ Extend the MockAPIServer class:
 class CustomMockAPI(MockAPIServer):
     def _register_routes(self):
         super()._register_routes()
-        
+
         @self.app.route('/api/custom', methods=['GET'])
         def custom_endpoint():
             return jsonify({"custom": "data"})
