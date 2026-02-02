@@ -7,13 +7,16 @@ class IServicePage(Protocol):
 
     base_url: str
 
-    def setup(self) -> None: ...
+    def setup(self) -> None:
+        ...
 
-    def teardown(self) -> None: ...
+    def teardown(self) -> None:
+        ...
 
 
 @runtime_checkable
 class ITestModule(Protocol):
     """Protocol for test modules."""
 
-    def run(self, context: Any) -> None: ...
+    def run(self, context: Any) -> None:
+        ...

@@ -313,7 +313,8 @@ class TestLoad:
     def test_load_valid_config(self, tmp_path, monkeypatch):
         """Test loading a valid configuration file."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
   timeout: 5000
@@ -321,7 +322,8 @@ services:
   test-api:
     name: test-service
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         # Reset singleton
@@ -337,10 +339,12 @@ services:
     def test_load_invalid_config_raises_error(self, tmp_path, monkeypatch):
         """Test that loading invalid config raises ConfigError."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   timeout: invalid_value
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -351,13 +355,15 @@ general:
     def test_singleton_pattern(self, tmp_path, monkeypatch):
         """Test that load() returns same instance on subsequent calls."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         # Reset singleton
@@ -371,13 +377,15 @@ services:
     def test_reload_creates_new_instance(self, tmp_path, monkeypatch):
         """Test that reload() creates a new instance."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -462,13 +470,15 @@ class TestBackwardCompatibility:
     def test_legacy_api_conf_supported(self, tmp_path, monkeypatch):
         """Test that legacy api.conf format is still supported."""
         config_file = tmp_path / "api.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: dev
 services:
   legacy-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -481,13 +491,15 @@ services:
         verify_dir = tmp_path / "verify_services"
         verify_dir.mkdir()
         config_file = verify_dir / "api.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: dev
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -502,13 +514,15 @@ class TestReloadScenarios:
     def test_reload_without_prior_load(self, tmp_path, monkeypatch):
         """Test that reload() works even without prior load() call."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -522,13 +536,15 @@ services:
     def test_reload_with_explicit_path(self, tmp_path, monkeypatch):
         """Test reload() uses stored config path."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: initial
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -538,13 +554,15 @@ services:
         assert config1.environment == "initial"
 
         # Modify file
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: modified
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         # Reload should pick up changes
         config2 = ApiConfigLoader.reload()
@@ -553,13 +571,15 @@ services:
     def test_reload_resets_singleton(self, tmp_path, monkeypatch):
         """Test that reload() properly resets singleton state."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -648,7 +668,8 @@ class TestJsonConfiguration:
     def test_load_valid_json_config(self, tmp_path, monkeypatch):
         """Test loading a valid JSON configuration file."""
         config_file = tmp_path / "e2e.json"
-        config_file.write_text("""{
+        config_file.write_text(
+            """{
   "general": {
     "environment": "test",
     "timeout": 5000
@@ -659,7 +680,8 @@ class TestJsonConfiguration:
       "base_url": "http://localhost:8080"
     }
   }
-}""")
+}"""
+        )
 
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("E2E_CONFIG_PATH", str(config_file))
@@ -677,7 +699,8 @@ class TestJsonConfiguration:
         monkeypatch.setenv("TEST_HOST", "api.example.com")
 
         config_file = tmp_path / "e2e.json"
-        config_file.write_text("""{
+        config_file.write_text(
+            """{
   "general": {
     "environment": "test"
   },
@@ -686,7 +709,8 @@ class TestJsonConfiguration:
       "base_url": "http://${TEST_HOST}:8080"
     }
   }
-}""")
+}"""
+        )
 
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("E2E_CONFIG_PATH", str(config_file))
@@ -699,7 +723,8 @@ class TestJsonConfiguration:
     def test_json_invalid_syntax_raises_error(self, tmp_path, monkeypatch):
         """Test that invalid JSON syntax raises appropriate error."""
         config_file = tmp_path / "e2e.json"
-        config_file.write_text("""{
+        config_file.write_text(
+            """{
   "general": {
     "environment": "test"
   },
@@ -709,7 +734,8 @@ class TestJsonConfiguration:
     }
   }
   invalid json here
-}""")
+}"""
+        )
 
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("E2E_CONFIG_PATH", str(config_file))
@@ -726,10 +752,12 @@ class TestPartialAndInvalidConfigurations:
     def test_minimal_config_with_only_general(self, tmp_path, monkeypatch):
         """Test loading minimal config with only general section."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -742,13 +770,15 @@ general:
     def test_service_with_only_required_fields(self, tmp_path, monkeypatch):
         """Test service configuration with only required base_url."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   minimal-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -764,13 +794,15 @@ services:
     def test_invalid_yaml_raises_error(self, tmp_path, monkeypatch):
         """Test that invalid YAML raises appropriate error."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   - this is not valid: service
     structure: should be dict not list
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -782,12 +814,14 @@ services:
     def test_service_not_a_dict_raises_error(self, tmp_path, monkeypatch):
         """Test that service defined as non-dict raises validation error."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   invalid-service: "just a string"
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -812,14 +846,16 @@ services:
     def test_config_with_null_values_raises_error(self, tmp_path, monkeypatch):
         """Test that null values raise validation error."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
   timeout: null
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -838,7 +874,8 @@ class TestConfigurationWithAllOptionalFields:
     def test_full_general_configuration(self, tmp_path, monkeypatch):
         """Test general section with all optional fields."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: production
   timeout: 60000
@@ -851,7 +888,8 @@ general:
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -869,7 +907,8 @@ services:
     def test_full_service_configuration(self, tmp_path, monkeypatch):
         """Test service with all optional fields populated."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
@@ -888,7 +927,8 @@ services:
     endpoints:
       login: /auth/login
       logout: /auth/logout
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -913,7 +953,8 @@ services:
     def test_full_api_gateway_configuration(self, tmp_path, monkeypatch):
         """Test API gateway with all optional fields."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 api_gateway:
@@ -928,7 +969,8 @@ api_gateway:
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -947,7 +989,8 @@ services:
     def test_full_database_configuration(self, tmp_path, monkeypatch):
         """Test database configuration with all optional fields."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 databases:
@@ -961,7 +1004,8 @@ databases:
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -979,7 +1023,8 @@ services:
     def test_full_test_data_configuration(self, tmp_path, monkeypatch):
         """Test test data configuration with all optional fields."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 test_data:
@@ -996,7 +1041,8 @@ test_data:
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -1015,7 +1061,8 @@ services:
     def test_full_security_configuration(self, tmp_path, monkeypatch):
         """Test security configuration with all optional fields."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 security:
@@ -1029,7 +1076,8 @@ security:
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -1046,7 +1094,8 @@ services:
     def test_full_reporting_configuration(self, tmp_path, monkeypatch):
         """Test reporting configuration with all optional fields."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 reporting:
@@ -1058,7 +1107,8 @@ reporting:
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None
@@ -1087,13 +1137,15 @@ class TestConfigLoaderUtilities:
     def test_get_config_path_after_load(self, tmp_path, monkeypatch):
         """Test get_config_path returns correct path after load."""
         config_file = tmp_path / "e2e.conf"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 general:
   environment: test
 services:
   test-api:
     base_url: http://localhost:8080
-""")
+"""
+        )
 
         monkeypatch.chdir(tmp_path)
         ApiConfigLoader._instance = None

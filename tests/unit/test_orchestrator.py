@@ -65,10 +65,12 @@ class TestDiscoverModules:
         modules_dir.mkdir(parents=True)
 
         # Create a test module
-        (modules_dir / "01_test.py").write_text("""
+        (modules_dir / "01_test.py").write_text(
+            """
 def run(context):
     return "test executed"
-""")
+"""
+        )
 
         orchestrator = TestOrchestrator(root_dir=str(tmp_path), services_path="services")
         orchestrator.discover_modules()
@@ -494,15 +496,19 @@ class TestTestOrchestratorIntegration:
         modules_dir = services_dir / "test-service" / "modules"
         modules_dir.mkdir(parents=True)
 
-        (modules_dir / "01_setup.py").write_text("""
+        (modules_dir / "01_setup.py").write_text(
+            """
 def run(ctx):
     ctx.state = 'setup'
-""")
-        (modules_dir / "02_test.py").write_text("""
+"""
+        )
+        (modules_dir / "02_test.py").write_text(
+            """
 def run(ctx):
     assert ctx.state == 'setup'
     ctx.state = 'tested'
-""")
+"""
+        )
 
         # Execute
         orchestrator = TestOrchestrator(root_dir=str(tmp_path), services_path="services")
@@ -557,14 +563,18 @@ def run(ctx):
         modules_dir = services_dir / "test-service" / "modules"
         modules_dir.mkdir(parents=True)
 
-        (modules_dir / "01_set.py").write_text("""
+        (modules_dir / "01_set.py").write_text(
+            """
 def run(ctx):
     ctx.shared_value = 42
-""")
-        (modules_dir / "02_get.py").write_text("""
+"""
+        )
+        (modules_dir / "02_get.py").write_text(
+            """
 def run(ctx):
     ctx.retrieved = ctx.shared_value
-""")
+"""
+        )
 
         orchestrator = TestOrchestrator(root_dir=str(tmp_path), services_path="services")
         orchestrator.discover_modules()
