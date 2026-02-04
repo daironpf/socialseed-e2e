@@ -5,10 +5,11 @@ production-ready features including structured logging, automatic retries,
 rate limiting, and comprehensive request/response logging.
 """
 
+import json
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type, Union
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from playwright.sync_api import APIRequestContext, APIResponse, Playwright
 
@@ -27,7 +28,7 @@ class RetryConfig:
         max_retries: Maximum number of retry attempts (default: 3)
         backoff_factor: Exponential backoff multiplier (default: 1.0)
         max_backoff: Maximum backoff time in seconds (default: 60)
-        retry_on: List of HTTP status codes to retry on (default: [502, 503, 504])
+        retry_on: List of HTTP status codes to retry on (default: [502, 503, 504, 429])
         retry_exceptions: List of exception types to retry on
     """
 
@@ -70,7 +71,7 @@ class RequestLog:
         method: HTTP method
         url: Full request URL
         headers: Request headers (may be filtered)
-        body: Request body
+        body: Request body (JSON string)
         timestamp: When the request was made
         duration_ms: Request duration in milliseconds
         status: Response status code
@@ -89,6 +90,25 @@ class RequestLog:
     response_headers: Optional[Dict[str, str]] = None
     response_body: Optional[str] = None
     error: Optional[str] = None
+
+
+@dataclass
+class ServiceHealth:
+    """Service health status.
+
+    Attributes:
+        healthy: Whether the service is healthy
+        status_code: HTTP status code from health check
+        response_time_ms: Response time in milliseconds
+        message: Health check message
+        timestamp: When the check was performed
+    """
+
+    healthy: bool
+    status_code: Optional[int] = None
+    response_time_ms: float = 0.0
+    message: str = ""
+    timestamp: float = field(default_factory=time.time)
 
 
 class BasePageError(Exception):
@@ -138,6 +158,7 @@ class BasePage:
     - Request timing and performance metrics
     - Enhanced error messages with full context
     - Helper methods for common assertions
+    - Service health checking
 
     Example:
         >>> page = BasePage("https://api.example.com")
@@ -180,6 +201,7 @@ class BasePage:
         rate_limit_config: Optional[RateLimitConfig] = None,
         enable_request_logging: bool = True,
         max_log_body_size: int = 10000,
+        health_endpoint: str = "/actuator/health",
     ) -> None:
         """Initialize the BasePage.
 
@@ -191,6 +213,7 @@ class BasePage:
             rate_limit_config: Configuration for rate limiting (default: disabled)
             enable_request_logging: Whether to log requests and responses
             max_log_body_size: Maximum size for logged bodies (truncated if larger)
+            health_endpoint: Endpoint for health checks (default: /actuator/health)
         """
         self.base_url: str = base_url.rstrip("/")
         self.playwright_manager: Optional[Any] = None
@@ -200,6 +223,7 @@ class BasePage:
             if default_headers is not None
             else {**DEFAULT_JSON_HEADERS, **DEFAULT_BROWSER_HEADERS}
         )
+        self.health_endpoint = health_endpoint
 
         # Initialize Playwright
         if playwright:
@@ -211,7 +235,7 @@ class BasePage:
         self.api_context: Optional[APIRequestContext] = None
 
         # Configuration
-        self.retry_config = retry_config or RetryConfig(max_retries=0)  # Disabled by default
+        self.retry_config = retry_config or RetryConfig(max_retries=0)
         self.rate_limit_config = rate_limit_config or RateLimitConfig(enabled=False)
         self.enable_request_logging = enable_request_logging
         self.max_log_body_size = max_log_body_size
@@ -223,6 +247,9 @@ class BasePage:
         # Request history (last 100 requests)
         self.request_history: List[RequestLog] = []
         self._max_history_size = 100
+
+        # Response interceptors
+        self._response_interceptors: List[Callable[[APIResponse], None]] = []
 
         logger.info(f"BasePage initialized for {self.base_url}")
 
@@ -243,7 +270,8 @@ class BasePage:
         return cls(
             base_url=config.base_url,
             playwright=playwright,
-            default_headers=config.default_headers or None,
+            default_headers=getattr(config, "headers", None),
+            health_endpoint=getattr(config, "health_endpoint", "/actuator/health"),
             **kwargs,
         )
 
@@ -358,18 +386,15 @@ class BasePage:
         if self.retry_config.max_retries <= 0:
             return False
 
-        # Ensure types are valid
-        assert self.retry_config.retry_exceptions is not None
-        assert self.retry_config.retry_on is not None
-
         # Check if exception type is in retry list
         if exception:
             return any(
-                isinstance(exception, exc_type) for exc_type in self.retry_config.retry_exceptions
+                isinstance(exception, exc_type)
+                for exc_type in (self.retry_config.retry_exceptions or [])
             )
 
         # Check if status code is in retry list
-        if response and response.status in self.retry_config.retry_on:
+        if response and response.status in (self.retry_config.retry_on or []):
             return True
 
         return False
@@ -415,6 +440,24 @@ class BasePage:
             )
         return body
 
+    def _serialize_body(self, data: Any) -> Optional[str]:
+        """Serialize request body for logging.
+
+        Args:
+            data: The data to serialize (dict, list, or string)
+
+        Returns:
+            JSON string representation or None
+        """
+        if data is None:
+            return None
+        if isinstance(data, str):
+            return data
+        try:
+            return json.dumps(data, indent=2)
+        except (TypeError, ValueError):
+            return str(data)
+
     def _make_request(self, method: str, endpoint: str, **kwargs) -> APIResponse:
         """Make an HTTP request with retry logic and logging.
 
@@ -428,6 +471,10 @@ class BasePage:
             method: HTTP method (GET, POST, PUT, DELETE, PATCH)
             endpoint: API endpoint (e.g., "/users/123")
             **kwargs: Additional arguments for the Playwright request
+                - data: Form data or dict to send
+                - json: JSON payload (alternative to data)
+                - headers: Request-specific headers
+                - params: Query parameters (GET only)
 
         Returns:
             APIResponse object
@@ -442,12 +489,15 @@ class BasePage:
         full_url = f"{self.base_url}{endpoint}"
         last_response: Optional[APIResponse] = None
 
+        # Prepare body - handle both 'data' and 'json' parameters
+        request_body = kwargs.get("json") or kwargs.get("data")
+
         # Prepare request log
         request_log = RequestLog(
             method=method,
             url=full_url,
             headers=self._prepare_headers(kwargs.get("headers")),
-            body=self._truncate_body(str(kwargs.get("data") or kwargs.get("json"))),
+            body=self._truncate_body(self._serialize_body(request_body)),
             timestamp=time.time(),
         )
 
@@ -464,20 +514,41 @@ class BasePage:
                     )
                 elif method == "POST":
                     last_response = self.api_context.post(
-                        full_url, data=kwargs.get("data"), headers=request_log.headers
+                        full_url, data=request_body, headers=request_log.headers
                     )
                 elif method == "PUT":
                     last_response = self.api_context.put(
-                        full_url, data=kwargs.get("data"), headers=request_log.headers
+                        full_url, data=request_body, headers=request_log.headers
                     )
                 elif method == "DELETE":
-                    last_response = self.api_context.delete(full_url, headers=request_log.headers)
+                    # DELETE with body support
+                    if request_body:
+                        # Use fetch with DELETE method for body support
+                        last_response = self.api_context.fetch(
+                            full_url,
+                            method="DELETE",
+                            data=request_body
+                            if isinstance(request_body, str)
+                            else json.dumps(request_body),
+                            headers=request_log.headers,
+                        )
+                    else:
+                        last_response = self.api_context.delete(
+                            full_url, headers=request_log.headers
+                        )
                 elif method == "PATCH":
                     last_response = self.api_context.patch(
-                        full_url, data=kwargs.get("data"), headers=request_log.headers
+                        full_url, data=request_body, headers=request_log.headers
                     )
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
+
+                # Apply response interceptors
+                for interceptor in self._response_interceptors:
+                    try:
+                        interceptor(last_response)
+                    except Exception as e:
+                        logger.warning(f"Response interceptor failed: {e}")
 
                 # Update log with response info
                 request_log.duration_ms = (time.time() - start_time) * 1000
@@ -563,7 +634,7 @@ class BasePage:
     def post(
         self,
         endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[Union[Dict[str, Any], str]] = None,
         json: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> APIResponse:
@@ -571,21 +642,20 @@ class BasePage:
 
         Args:
             endpoint: API endpoint (e.g., "/users")
-            data: Form data (use either data or json, not both)
+            data: Form data or dict (use either data or json, not both)
             json: JSON payload (use either data or json, not both)
             headers: Optional request-specific headers
 
         Returns:
             APIResponse object
         """
-        if json:
-            return self._make_request("POST", endpoint, json=json, headers=headers)
-        return self._make_request("POST", endpoint, data=data, headers=headers)
+        body = json if json is not None else data
+        return self._make_request("POST", endpoint, data=body, headers=headers)
 
     def put(
         self,
         endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[Union[Dict[str, Any], str]] = None,
         json: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> APIResponse:
@@ -593,33 +663,41 @@ class BasePage:
 
         Args:
             endpoint: API endpoint (e.g., "/users/123")
-            data: Form data (use either data or json, not both)
+            data: Form data or dict (use either data or json, not both)
             json: JSON payload (use either data or json, not both)
             headers: Optional request-specific headers
 
         Returns:
             APIResponse object
         """
-        if json:
-            return self._make_request("PUT", endpoint, json=json, headers=headers)
-        return self._make_request("PUT", endpoint, data=data, headers=headers)
+        body = json if json is not None else data
+        return self._make_request("PUT", endpoint, data=body, headers=headers)
 
-    def delete(self, endpoint: str, headers: Optional[Dict[str, str]] = None) -> APIResponse:
+    def delete(
+        self,
+        endpoint: str,
+        data: Optional[Union[Dict[str, Any], str]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> APIResponse:
         """Perform a DELETE request.
 
         Args:
             endpoint: API endpoint (e.g., "/users/123")
+            data: Request body as dict or string (for non-standard REST APIs)
+            json: JSON payload (alternative to data)
             headers: Optional request-specific headers
 
         Returns:
             APIResponse object
         """
-        return self._make_request("DELETE", endpoint, headers=headers)
+        body = json if json is not None else data
+        return self._make_request("DELETE", endpoint, data=body, headers=headers)
 
     def patch(
         self,
         endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[Union[Dict[str, Any], str]] = None,
         json: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> APIResponse:
@@ -627,18 +705,17 @@ class BasePage:
 
         Args:
             endpoint: API endpoint (e.g., "/users/123")
-            data: Form data (use either data or json, not both)
+            data: Form data or dict (use either data or json, not both)
             json: JSON payload (use either data or json, not both)
             headers: Optional request-specific headers
 
         Returns:
             APIResponse object
         """
-        if json:
-            return self._make_request("PATCH", endpoint, json=json, headers=headers)
-        return self._make_request("PATCH", endpoint, data=data, headers=headers)
+        body = json if json is not None else data
+        return self._make_request("PATCH", endpoint, data=body, headers=headers)
 
-    # Helper methods for assertions
+    # Assertion helpers
 
     def assert_status(
         self,
@@ -789,6 +866,95 @@ class BasePage:
 
         return str(value)
 
+    def assert_schema(
+        self,
+        response: APIResponse,
+        schema: Union[Dict[str, Any], type],
+        message: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Assert that response matches a JSON schema or Pydantic model.
+
+        Args:
+            response: The API response to validate
+            schema: JSON schema dict or Pydantic model class
+            message: Optional custom error message
+
+        Returns:
+            The parsed JSON data
+
+        Raises:
+            BasePageError: If validation fails
+        """
+        try:
+            data = response.json()
+        except Exception as e:
+            raise BasePageError(
+                message=f"Failed to parse JSON response: {e}",
+                url=response.url,
+                status=response.status,
+            ) from e
+
+        # Check if schema is a Pydantic model
+        if isinstance(schema, type) and hasattr(schema, "model_validate"):
+            try:
+                schema.model_validate(data)
+            except Exception as e:
+                raise BasePageError(
+                    message=message or f"Response does not match schema: {e}",
+                    url=response.url,
+                    status=response.status,
+                    response_text=str(data)[:200],
+                )
+        else:
+            # JSON schema validation (basic implementation)
+            if isinstance(schema, dict) and "properties" in schema:
+                required = schema.get("required", [])
+                properties = schema.get("properties", {})
+
+                for key in required:
+                    if key not in data:
+                        raise BasePageError(
+                            message=message or f"Required field '{key}' missing from response",
+                            url=response.url,
+                            status=response.status,
+                        )
+
+                for key, prop_schema in properties.items():
+                    if key in data:
+                        expected_type = prop_schema.get("type")
+                        if expected_type and not self._check_type(data[key], expected_type):
+                            raise BasePageError(
+                                message=message
+                                or f"Field '{key}' has wrong type. Expected {expected_type}",
+                                url=response.url,
+                                status=response.status,
+                            )
+
+        return data
+
+    def _check_type(self, value: Any, expected_type: str) -> bool:
+        """Check if a value matches an expected JSON schema type.
+
+        Args:
+            value: The value to check
+            expected_type: Expected type (string, integer, number, boolean, array, object)
+
+        Returns:
+            True if types match
+        """
+        type_map = {
+            "string": str,
+            "integer": int,
+            "number": (int, float),
+            "boolean": bool,
+            "array": list,
+            "object": dict,
+        }
+
+        if expected_type in type_map:
+            return isinstance(value, type_map[expected_type])
+        return True
+
     # Utility methods
 
     def get_response_text(self, response: APIResponse) -> str:
@@ -800,7 +966,7 @@ class BasePage:
         Returns:
             Response body as string
         """
-        return str(response.text())
+        return response.text()
 
     def get_last_request(self) -> Optional[RequestLog]:
         """Get the most recent request log entry.
@@ -855,3 +1021,138 @@ class BasePage:
             "average_duration_ms": total_duration / len(self.request_history),
             "status_distribution": status_counts,
         }
+
+    def add_response_interceptor(self, interceptor: Callable[[APIResponse], None]) -> None:
+        """Add a response interceptor.
+
+        Interceptors are called after each successful response.
+        They receive the APIResponse object and can be used for:
+        - Logging
+        - Token extraction
+        - Response transformation
+        - Metrics collection
+
+        Args:
+            interceptor: Callable that receives APIResponse
+        """
+        self._response_interceptors.append(interceptor)
+
+    def clear_response_interceptors(self) -> None:
+        """Remove all response interceptors."""
+        self._response_interceptors.clear()
+
+    def check_health(self, timeout: Optional[int] = None) -> ServiceHealth:
+        """Check if the service is healthy.
+
+        Makes a request to the health endpoint and returns status.
+
+        Args:
+            timeout: Request timeout in milliseconds (uses default if not specified)
+
+        Returns:
+            ServiceHealth object with health status
+        """
+        start_time = time.time()
+        try:
+            old_timeout = None
+            if timeout and self.api_context:
+                # Note: Playwright doesn't support per-request timeout easily
+                # This is a simplified implementation
+                pass
+
+            response = self.get(self.health_endpoint)
+            response_time = (time.time() - start_time) * 1000
+
+            is_healthy = 200 <= response.status < 300
+
+            try:
+                body = response.json()
+                message = body.get("status", "OK") if isinstance(body, dict) else "OK"
+            except:
+                message = "OK" if is_healthy else "Unhealthy"
+
+            return ServiceHealth(
+                healthy=is_healthy,
+                status_code=response.status,
+                response_time_ms=response_time,
+                message=message,
+            )
+        except Exception as e:
+            response_time = (time.time() - start_time) * 1000
+            return ServiceHealth(
+                healthy=False,
+                status_code=None,
+                response_time_ms=response_time,
+                message=str(e),
+            )
+
+    def wait_for_healthy(
+        self, timeout: int = 30, interval: float = 1.0, raise_on_timeout: bool = True
+    ) -> bool:
+        """Wait for the service to become healthy.
+
+        Polls the health endpoint until it returns healthy or timeout is reached.
+
+        Args:
+            timeout: Maximum time to wait in seconds
+            interval: Polling interval in seconds
+            raise_on_timeout: Whether to raise exception on timeout
+
+        Returns:
+            True if service became healthy, False if timed out
+
+        Raises:
+            BasePageError: If raise_on_timeout is True and service doesn't become healthy
+        """
+        start_time = time.time()
+        attempts = 0
+
+        while time.time() - start_time < timeout:
+            attempts += 1
+            health = self.check_health()
+
+            if health.healthy:
+                logger.info(f"Service became healthy after {attempts} attempt(s)")
+                return True
+
+            logger.debug(f"Health check failed (attempt {attempts}): {health.message}")
+            time.sleep(interval)
+
+        if raise_on_timeout:
+            raise BasePageError(
+                message=f"Service did not become healthy within {timeout}s",
+                url=f"{self.base_url}{self.health_endpoint}",
+            )
+
+        return False
+
+    @classmethod
+    def wait_for_service(
+        cls,
+        url: str,
+        health_endpoint: str = "/actuator/health",
+        timeout: int = 30,
+        interval: float = 1.0,
+    ) -> bool:
+        """Wait for a service to become healthy without creating a persistent instance.
+
+        This is a class method that creates a temporary instance just for health checking.
+
+        Args:
+            url: Service base URL
+            health_endpoint: Health check endpoint
+            timeout: Maximum wait time in seconds
+            interval: Polling interval
+
+        Returns:
+            True if service became healthy
+
+        Example:
+            >>> BasePage.wait_for_service("http://localhost:8081", timeout=60)
+        """
+        page = cls(base_url=url, health_endpoint=health_endpoint)
+        try:
+            page.setup()
+            return page.wait_for_healthy(timeout=timeout, interval=interval)
+        finally:
+            page.teardown()

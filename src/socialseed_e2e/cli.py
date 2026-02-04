@@ -497,8 +497,8 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
         console.print("   Run: [cyan]e2e init[/cyan] to create a project")
         sys.exit(1)
 
-    # TODO: Implement real test execution
-    # For now, show discovery information
+    # Import test runner
+    from .core.test_runner import print_summary, run_all_tests
 
     if service:
         console.print(f"🔍 [yellow]Filtering by service:[/yellow] {service}")
@@ -508,42 +508,29 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
         console.print("📢 [yellow]Verbose mode activated[/yellow]")
 
     console.print()
-    console.print("[yellow]⚠ Note:[/yellow] Test execution is not yet implemented")
-    console.print("   This is a placeholder for version 0.1.0")
-    console.print()
 
-    # Show table of found services
-    services_path = Path("services")
-    if services_path.exists():
-        services = [
-            d.name for d in services_path.iterdir() if d.is_dir() and not d.name.startswith("__")
-        ]
+    # Execute tests
+    try:
+        results = run_all_tests(
+            services_path=Path("services"),
+            specific_service=service,
+            specific_module=module,
+            verbose=verbose,
+        )
 
-        if services:
-            table = Table(title="Found Services")
-            table.add_column("Service", style="cyan")
-            table.add_column("Tests", style="green")
-            table.add_column("Status", style="yellow")
+        # Print summary
+        all_passed = print_summary(results)
 
-            for svc in services:
-                modules_path = services_path / svc / "modules"
-                if modules_path.exists():
-                    test_count = len(list(modules_path.glob("[0-9][0-9]_*.py")))
-                    table.add_row(svc, str(test_count), "Ready" if test_count > 0 else "Empty")
-                else:
-                    table.add_row(svc, "0", "No modules")
+        # Exit with appropriate code
+        sys.exit(0 if all_passed else 1)
 
-            console.print(table)
-        else:
-            console.print("[yellow]⚠ No services found[/yellow]")
-            console.print("   Create one with: [cyan]e2e new-service <name>[/cyan]")
-    else:
-        console.print("[red]❌ 'services/' directory not found[/red]")
+    except Exception as e:
+        console.print(f"[red]❌ Error executing tests:[/red] {e}")
+        if verbose:
+            import traceback
 
-    console.print()
-    console.print("═" * 50)
-    console.print("[bold]To implement real execution, contribute at:[/bold]")
-    console.print("[cyan]https://github.com/daironpf/socialseed-e2e[/cyan]")
+            console.print(traceback.format_exc())
+        sys.exit(1)
 
 
 @cli.command()
