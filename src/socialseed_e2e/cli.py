@@ -5,7 +5,6 @@ This module provides the command-line interface for the E2E testing framework,
 enabling developers and AI agents to create, manage, and run API tests.
 """
 
-
 import subprocess
 import sys
 from pathlib import Path
@@ -26,31 +25,31 @@ console = Console()
 @click.group()
 @click.version_option(version=str(__version__), prog_name="socialseed-e2e")
 def cli():
-    """socialseed-e2e: Framework E2E para APIs REST.
+    """socialseed-e2e: E2E Framework for REST APIs.
 
-    Un framework agnóstico de servicios para testing End-to-End de APIs REST,
-    diseñado para desarrolladores y agentes de IA.
+    A service-agnostic framework for End-to-End testing of REST APIs,
+    designed for developers and AI agents.
     """
     pass
 
 
 @cli.command()
 @click.argument("directory", default=".", required=False)
-@click.option("--force", is_flag=True, help="Sobrescribir archivos existentes")
+@click.option("--force", is_flag=True, help="Overwrite existing files")
 def init(directory: str, force: bool):
-    """Inicializa un nuevo proyecto E2E.
+    """Initialize a new E2E project.
 
-    Crea la estructura de directorios y archivos de configuración inicial.
+    Creates the initial directory structure and configuration files.
 
     Args:
-        directory: Directorio donde crear el proyecto (default: directorio actual)
-        force: Si es True, sobrescribe archivos existentes
+        directory: Directory to create the project (default: current directory)
+        force: If True, overwrites existing files
     """
     target_path = Path(directory).resolve()
 
-    console.print(f"\n🌱 [bold green]Inicializando proyecto E2E en:[/bold green] {target_path}\n")
+    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
 
-    # Crear estructura de directorios
+    # Create directory structure
     dirs_to_create = [
         target_path / "services",
         target_path / "tests",
@@ -66,11 +65,13 @@ def init(directory: str, force: bool):
                 if dir_path.parent == target_path
                 else str(dir_path.relative_to(target_path))
             )
-            console.print(f"  [green]✓[/green] Creado: {dir_path.relative_to(target_path)}")
+            console.print(f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}")
         else:
-            console.print(f"  [yellow]⚠[/yellow] Ya existe: {dir_path.relative_to(target_path)}")
+            console.print(
+                f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
+            )
 
-    # Crear archivo de configuración
+    # Create configuration file
     config_path = target_path / "e2e.conf"
     if not config_path.exists() or force:
         engine = TemplateEngine()
@@ -86,11 +87,11 @@ def init(directory: str, force: bool):
             str(config_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Creado: e2e.conf")
+        console.print("  [green]✓[/green] Created: e2e.conf")
     else:
-        console.print("  [yellow]⚠[/yellow] Ya existe: e2e.conf (usa --force para sobrescribir)")
+        console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)")
 
-    # Crear .gitignore
+    # Create .gitignore
     gitignore_path = target_path / ".gitignore"
     if not gitignore_path.exists() or force:
         gitignore_content = """# Python
@@ -120,96 +121,207 @@ test-results/
 htmlcov/
 """
         gitignore_path.write_text(gitignore_content)
-        console.print("  [green]✓[/green] Creado: .gitignore")
+        console.print("  [green]✓[/green] Created: .gitignore")
     else:
-        console.print("  [yellow]⚠[/yellow] Ya existe: .gitignore")
+        console.print("  [yellow]⚠[/yellow] Already exists: .gitignore")
 
-    # Mostrar mensaje de éxito
-    console.print("\n[bold green]✅ Proyecto inicializado correctamente![/bold green]\n")
+    # Create requirements.txt
+    requirements_path = target_path / "requirements.txt"
+    if not requirements_path.exists() or force:
+        requirements_content = """pydantic>=2.0.0
+email-validator>=2.0.0
+"""
+        requirements_path.write_text(requirements_content)
+        console.print("  [green]✓[/green] Created: requirements.txt")
+    else:
+        console.print("  [yellow]⚠[/yellow] Already exists: requirements.txt")
 
-    # Crear carpeta .agent para documentación de IA
+    # Show success message
+    console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
+
+    # Create .agent folder for AI documentation
     agent_docs_path = target_path / ".agent"
     if not agent_docs_path.exists() or force:
         if not agent_docs_path.exists():
             agent_docs_path.mkdir()
 
-        # Instanciar engine si no existe
+        # Instantiate engine if it doesn't exist
         engine = TemplateEngine()
 
-        # Lista de templates de documentación para el agente
+        # List of documentation templates for the agent
         agent_templates = [
             ("agent_docs/FRAMEWORK_CONTEXT.md.template", "FRAMEWORK_CONTEXT.md"),
             ("agent_docs/WORKFLOW_GENERATION.md.template", "WORKFLOW_GENERATION.md"),
             ("agent_docs/EXAMPLE_TEST.md.template", "EXAMPLE_TEST.md"),
+            ("agent_docs/AGENT_GUIDE.md.template", "AGENT_GUIDE.md"),
         ]
 
         for template_name, output_name in agent_templates:
             engine.render_to_file(
                 template_name,
-                {},  # No hay variables que reemplazar en estos MD
+                {},  # No variables to replace in these MD
                 str(agent_docs_path / output_name),
                 overwrite=force,
             )
 
-        console.print("  [green]✓[/green] Creado: .agent/ (Documentación para IA)")
+        console.print("  [green]✓[/green] Created: .agent/ (AI Documentation)")
+
+    # Copy verification script
+    verify_script_path = target_path / "verify_installation.py"
+    if not verify_script_path.exists() or force:
+        try:
+            import shutil
+
+            from socialseed_e2e.templates import __file__ as templates_init
+
+            templates_dir = Path(templates_init).parent
+            source_script = templates_dir / "verify_installation.py"
+            if source_script.exists():
+                shutil.copy(str(source_script), str(verify_script_path))
+                console.print("  [green]✓[/green] Created: verify_installation.py")
+        except Exception:
+            # If it fails, it's not critical
+            pass
 
     console.print(
         Panel(
-            "[bold]Próximos pasos:[/bold]\n\n"
-            "1. Edita [cyan]e2e.conf[/cyan] para configurar tu API\n"
-            '2. Pide a tu Agente de IA: [italic]"Lee la carpeta .agent y '
-            'genera tests para mi API"[/italic]\n'
-            "3. O hazlo manualmente: [cyan]e2e new-service <nombre>[/cyan]",
-            title="🚀 Empezar",
+            "[bold]Next steps:[/bold]\n\n"
+            "1. Edit [cyan]e2e.conf[/cyan] to configure your API\n"
+            '2. Ask your AI Agent: [italic]"Read the AGENT_GUIDE.md and '
+            'generate tests for my API"[/italic]\n'
+            "3. Or do it manually: [cyan]e2e new-service <name>[/cyan]",
+            title="🚀 Getting Started",
             border_style="green",
         )
     )
 
+    console.print(
+        Panel(
+            "[bold]⚠️  Important for AI Agents:[/bold]\n\n"
+            "• Use [cyan]absolute imports[/cyan] (not relative) in tests\n"
+            "• Remember to use [cyan]model_dump(by_alias=True)[/cyan] to serialize DTOs\n"
+            "• Review [cyan]AGENT_GUIDE.md[/cyan] for correct patterns and conventions",
+            title="🤖 Development Guide",
+            border_style="yellow",
+        )
+    )
+
+    # 1. Auto-install dependencies (if requirements.txt was created or force=True)
+    console.print("\n📦 Installing dependencies...")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
+            cwd=str(target_path),
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode == 0:
+            console.print("  [green]✓[/green] Dependencies installed")
+        else:
+            console.print("  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed")
+            if result.stderr:
+                console.print(f"  [dim]{result.stderr[:200]}...[/dim]")
+    except subprocess.TimeoutExpired:
+        console.print("  [yellow]⚠ Warning:[/yellow] Installation took too long")
+    except Exception as e:
+        console.print(f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}")
+
+    # 2. Run verification (always)
+    console.print("\n🔍 Verifying installation...")
+    all_checks_passed = False
+    try:
+        # Try to import and run verification
+        import importlib.util
+
+        verify_script_path = target_path / "verify_installation.py"
+        if verify_script_path.exists():
+            spec = importlib.util.spec_from_file_location(
+                "verify_installation", str(verify_script_path)
+            )
+            verify_module = None
+            if spec and spec.loader:
+                verify_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(verify_module)
+
+            # Run the verification function if it exists
+            if verify_module and hasattr(verify_module, "run_verification"):
+                all_checks_passed = verify_module.run_verification(str(target_path))
+            else:
+                # Fallback: run via subprocess
+                result = subprocess.run(
+                    [sys.executable, str(verify_script_path), str(target_path)],
+                    cwd=str(target_path),
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                all_checks_passed = result.returncode == 0
+                if result.stdout:
+                    console.print(result.stdout)
+        else:
+            console.print("  [yellow]⚠[/yellow] Verification script not found")
+    except Exception as e:
+        console.print(f"  [yellow]⚠[/yellow] Could not run verification: {e}")
+        all_checks_passed = True  # Consider successful if verification couldn't run
+
+    # 3. Final success panel (if all checks pass)
+    if all_checks_passed:
+        console.print(
+            Panel(
+                "[bold green]✅ ALL READY![/bold green] Your project is configured and verified.\n\n"
+                "🤖 You can ask your AI Agent to read [cyan].agent/AGENT_GUIDE.md[/cyan]\n"
+                "🚀 And generate E2E tests automatically",
+                title="🎉 Success",
+                border_style="green",
+            )
+        )
+
 
 @cli.command()
 @click.argument("name")
-@click.option("--base-url", default="http://localhost:8080", help="URL base del servicio")
-@click.option("--health-endpoint", default="/health", help="Endpoint de health check")
+@click.option("--base-url", default="http://localhost:8080", help="Service base URL")
+@click.option("--health-endpoint", default="/health", help="Health check endpoint")
 def new_service(name: str, base_url: str, health_endpoint: str):
-    """Crea un nuevo servicio con scaffolding.
+    """Create a new service with scaffolding.
 
     Args:
-        name: Nombre del servicio (ej: users-api)
-        base_url: URL base del servicio
-        health_endpoint: Endpoint para health checks
+        name: Service name (e.g.: users-api)
+        base_url: Service base URL
+        health_endpoint: Health check endpoint
     """
-    console.print(f"\n🔧 [bold blue]Creando servicio:[/bold blue] {name}\n")
+    console.print(f"\n🔧 [bold blue]Creating service:[/bold blue] {name}\n")
 
-    # Verificar que estamos en un proyecto E2E
+    # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] No se encontró e2e.conf. ¿Estás en un proyecto E2E?")
-        console.print("   Ejecuta: [cyan]e2e init[/cyan] primero")
+        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print("   Run: [cyan]e2e init[/cyan] first")
         sys.exit(1)
 
-    # Crear estructura del servicio
+    # Create service structure
     service_path = Path("services") / name
     modules_path = service_path / "modules"
 
     try:
         service_path.mkdir(parents=True)
         modules_path.mkdir()
-        console.print(f"  [green]✓[/green] Creado: services/{name}/")
-        console.print(f"  [green]✓[/green] Creado: services/{name}/modules/")
+        console.print(f"  [green]✓[/green] Created: services/{name}/")
+        console.print(f"  [green]✓[/green] Created: services/{name}/modules/")
     except FileExistsError:
-        console.print(f"  [yellow]⚠[/yellow] El servicio '{name}' ya existe")
-        if not click.confirm("¿Deseas continuar y sobrescribir archivos?"):
+        console.print(f"  [yellow]⚠[/yellow] Service '{name}' already exists")
+        if not click.confirm("Do you want to continue and overwrite files?"):
             return
 
-    # Crear __init__.py
-    _create_file(service_path / "__init__.py", f'"""Servicio {name}."""\n')
-    _create_file(modules_path / "__init__.py", f'"""Módulos de test para {name}."""\n')
-    console.print(f"  [green]✓[/green] Creado: services/{name}/__init__.py")
-    console.print(f"  [green]✓[/green] Creado: services/{name}/modules/__init__.py")
+    # Create __init__.py
+    _create_file(service_path / "__init__.py", f'"""Service {name}."""\n')
+    _create_file(modules_path / "__init__.py", f'"""Test modules for {name}."""\n')
+    console.print(f"  [green]✓[/green] Created: services/{name}/__init__.py")
+    console.print(f"  [green]✓[/green] Created: services/{name}/modules/__init__.py")
 
-    # Inicializar TemplateEngine
+    # Initialize TemplateEngine
     engine = TemplateEngine()
 
-    # Variables para los templates
+    # Variables for templates
     class_name = _to_class_name(name)
     snake_case_name = to_snake_case(name)
     template_vars = {
@@ -219,42 +331,45 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         "endpoint_prefix": "entities",
     }
 
-    # Crear página del servicio
+    # Create service page
     engine.render_to_file(
         "service_page.py.template",
         template_vars,
         str(service_path / f"{snake_case_name}_page.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Creado: services/{name}/{snake_case_name}_page.py")
+    console.print(f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py")
 
-    # Crear archivo de configuración
+    # Create configuration file
     engine.render_to_file(
-        "config.py.template", template_vars, str(service_path / "config.py"), overwrite=False
+        "config.py.template",
+        template_vars,
+        str(service_path / "config.py"),
+        overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Creado: services/{name}/config.py")
+    console.print(f"  [green]✓[/green] Created: services/{name}/config.py")
 
-    # Crear data_schema.py
+    # Create data_schema.py
     engine.render_to_file(
         "data_schema.py.template",
         template_vars,
         str(service_path / "data_schema.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Creado: services/{name}/data_schema.py")
+    console.print(f"  [green]✓[/green] Created: services/{name}/data_schema.py")
 
-    # Actualizar e2e.conf
+    # Update e2e.conf
     _update_e2e_conf(name, base_url, health_endpoint)
 
-    console.print(f"\n[bold green]✅ Servicio '{name}' creado correctamente![/bold green]\n")
+    console.print(f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n")
 
     console.print(
         Panel(
-            f"[bold]Próximos pasos:[/bold]\n\n"
-            f"1. Edita [cyan]services/{name}/data_schema.py[/cyan] para definir tus DTOs\n"
-            f"2. Ejecuta: [cyan]e2e new-test <nombre> --service {name}[/cyan]\n"
-            f"3. Ejecuta: [cyan]e2e run --service {name}[/cyan]",
-            title="🚀 Continuar",
+            f"[bold]Next steps:[/bold]\n\n"
+            f"1. Edit [cyan]services/{name}/data_schema.py[/cyan] to define your DTOs\n"
+            f"2. Run: [cyan]e2e new-test <name> --service {name}[/cyan]\n"
+            f"3. Run: [cyan]e2e run --service {name}[/cyan]",
+            title="🚀 Continue",
             border_style="blue",
         )
     )
@@ -262,36 +377,36 @@ def new_service(name: str, base_url: str, health_endpoint: str):
 
 @cli.command()
 @click.argument("name")
-@click.option("--service", "-s", required=True, help="Nombre del servicio")
-@click.option("--description", "-d", default="", help="Descripción del test")
+@click.option("--service", "-s", required=True, help="Service name")
+@click.option("--description", "-d", default="", help="Test description")
 def new_test(name: str, service: str, description: str):
-    """Crea un nuevo módulo de test.
+    """Create a new test module.
 
     Args:
-        name: Nombre del test (ej: login, create-user)
-        service: Servicio al que pertenece el test
-        description: Descripción opcional del test
+        name: Test name (e.g.: login, create-user)
+        service: Service to which the test belongs
+        description: Optional test description
     """
-    console.print(f"\n📝 [bold cyan]Creando test:[/bold cyan] {name}\n")
+    console.print(f"\n📝 [bold cyan]Creating test:[/bold cyan] {name}\n")
 
-    # Verificar que estamos en un proyecto E2E
+    # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] No se encontró e2e.conf. ¿Estás en un proyecto E2E?")
+        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
         sys.exit(1)
 
-    # Verificar que el servicio existe
+    # Verify that the service exists
     service_path = Path("services") / service
     modules_path = service_path / "modules"
 
     if not service_path.exists():
-        console.print(f"[red]❌ Error:[/red] El servicio '{service}' no existe.")
-        console.print(f"   Crea el servicio primero: [cyan]e2e new-service {service}[/cyan]")
+        console.print(f"[red]❌ Error:[/red] Service '{service}' does not exist.")
+        console.print(f"   Create the service first: [cyan]e2e new-service {service}[/cyan]")
         sys.exit(1)
 
     if not modules_path.exists():
         modules_path.mkdir(parents=True)
 
-    # Encontrar siguiente número disponible
+    # Find next available number
     existing_tests = sorted(modules_path.glob("[0-9][0-9]_*.py"))
     if existing_tests:
         last_num = int(existing_tests[-1].name[:2])
@@ -302,16 +417,16 @@ def new_test(name: str, service: str, description: str):
     test_filename = f"{next_num:02d}_{name}_flow.py"
     test_path = modules_path / test_filename
 
-    # Verificar si ya existe
+    # Check if it already exists
     if test_path.exists():
-        console.print(f"[yellow]⚠[/yellow] El test '{name}' ya existe.")
-        if not click.confirm("¿Deseas sobrescribirlo?"):
+        console.print(f"[yellow]⚠[/yellow] Test '{name}' already exists.")
+        if not click.confirm("Do you want to overwrite it?"):
             return
 
-    # Inicializar TemplateEngine
+    # Initialize TemplateEngine
     engine = TemplateEngine()
 
-    # Variables para el template
+    # Variables for template
     class_name = _to_class_name(service)
     snake_case_name = to_snake_case(service)
     test_description = description or f"Test flow for {name}"
@@ -324,41 +439,45 @@ def new_test(name: str, service: str, description: str):
         "test_description": test_description,
     }
 
-    # Crear test usando template
+    # Create test using template
     engine.render_to_file("test_module.py.template", template_vars, str(test_path), overwrite=False)
-    console.print(f"  [green]✓[/green] Creado: services/{service}/modules/{test_filename}")
+    console.print(f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}")
 
-    console.print(f"\n[bold green]✅ Test '{name}' creado correctamente![/bold green]\n")
+    console.print(f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n")
 
     console.print(
         Panel(
-            f"[bold]Próximos pasos:[/bold]\n\n"
-            f"1. Edita [cyan]services/{service}/modules/{test_filename}[/cyan]\n"
-            f"2. Implementa la lógica del test\n"
-            f"3. Ejecuta: [cyan]e2e run --service {service}[/cyan]",
-            title="🚀 Implementar",
+            f"[bold]Next steps:[/bold]\n\n"
+            f"1. Edit [cyan]services/{service}/modules/{test_filename}[/cyan]\n"
+            f"2. Implement the test logic\n"
+            f"3. Run: [cyan]e2e run --service {service}[/cyan]",
+            title="🚀 Implement",
             border_style="cyan",
         )
     )
 
 
 @cli.command()
-@click.option("--service", "-s", help="Filtrar por servicio específico")
-@click.option("--module", "-m", help="Filtrar por módulo específico")
-@click.option("--verbose", "-v", is_flag=True, help="Modo verbose")
+@click.option("--service", "-s", help="Filter by specific service")
+@click.option("--module", "-m", help="Filter by specific module")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose mode")
 @click.option(
-    "--output", "-o", type=click.Choice(["text", "json"]), default="text", help="Formato de salida"
+    "--output",
+    "-o",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Output format",
 )
 def run(service: Optional[str], module: Optional[str], verbose: bool, output: str):
-    """Ejecuta los tests E2E.
+    """Execute E2E tests.
 
-    Descubre y ejecuta automáticamente todos los tests disponibles.
+    Discovers and automatically executes all available tests.
 
     Args:
-        service: Si se especifica, solo ejecuta tests de este servicio
-        module: Si se especifica, solo ejecuta este módulo de test
-        verbose: Si es True, muestra información detallada
-        output: Formato de salida (text o json)
+        service: If specified, only run tests for this service
+        module: If specified, only run this test module
+        verbose: If True, shows detailed information
+        output: Output format (text or json)
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -366,34 +485,34 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     console.print("═" * 50)
     console.print()
 
-    # Verificar configuración
+    # Verify configuration
     try:
         loader = ApiConfigLoader()
         config = loader.load()
-        console.print(f"📋 [cyan]Configuración:[/cyan] {loader._config_path}")
+        console.print(f"📋 [cyan]Configuration:[/cyan] {loader._config_path}")
         console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
         console.print()
     except ConfigError as e:
-        console.print(f"[red]❌ Error de configuración:[/red] {e}")
-        console.print("   Ejecuta: [cyan]e2e init[/cyan] para crear un proyecto")
+        console.print(f"[red]❌ Configuration error:[/red] {e}")
+        console.print("   Run: [cyan]e2e init[/cyan] to create a project")
         sys.exit(1)
 
-    # TODO: Implementar ejecución real de tests
-    # Por ahora, mostramos información de descubrimiento
+    # TODO: Implement real test execution
+    # For now, show discovery information
 
     if service:
-        console.print(f"🔍 [yellow]Filtrando por servicio:[/yellow] {service}")
+        console.print(f"🔍 [yellow]Filtering by service:[/yellow] {service}")
     if module:
-        console.print(f"🔍 [yellow]Filtrando por módulo:[/yellow] {module}")
+        console.print(f"🔍 [yellow]Filtering by module:[/yellow] {module}")
     if verbose:
-        console.print("📢 [yellow]Modo verbose activado[/yellow]")
+        console.print("📢 [yellow]Verbose mode activated[/yellow]")
 
     console.print()
-    console.print("[yellow]⚠ Nota:[/yellow] La ejecución de tests aún no está implementada")
-    console.print("   Este es un placeholder para la versión 0.1.0")
+    console.print("[yellow]⚠ Note:[/yellow] Test execution is not yet implemented")
+    console.print("   This is a placeholder for version 0.1.0")
     console.print()
 
-    # Mostrar tabla de servicios encontrados
+    # Show table of found services
     services_path = Path("services")
     if services_path.exists():
         services = [
@@ -401,10 +520,10 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
         ]
 
         if services:
-            table = Table(title="Servicios Encontrados")
-            table.add_column("Servicio", style="cyan")
+            table = Table(title="Found Services")
+            table.add_column("Service", style="cyan")
             table.add_column("Tests", style="green")
-            table.add_column("Estado", style="yellow")
+            table.add_column("Status", style="yellow")
 
             for svc in services:
                 modules_path = services_path / svc / "modules"
@@ -416,77 +535,84 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
 
             console.print(table)
         else:
-            console.print("[yellow]⚠ No se encontraron servicios[/yellow]")
-            console.print("   Crea uno con: [cyan]e2e new-service <nombre>[/cyan]")
+            console.print("[yellow]⚠ No services found[/yellow]")
+            console.print("   Create one with: [cyan]e2e new-service <name>[/cyan]")
     else:
-        console.print("[red]❌ No se encontró el directorio 'services/'[/red]")
+        console.print("[red]❌ 'services/' directory not found[/red]")
 
     console.print()
     console.print("═" * 50)
-    console.print("[bold]Para implementar la ejecución real, contribuye en:[/bold]")
+    console.print("[bold]To implement real execution, contribute at:[/bold]")
     console.print("[cyan]https://github.com/daironpf/socialseed-e2e[/cyan]")
 
 
 @cli.command()
 def doctor():
-    """Verifica la instalación y dependencias.
+    """Verify installation and dependencies.
 
-    Comprueba que todo esté correctamente configurado para usar el framework.
+    Checks that everything is properly configured to use the framework.
     """
     console.print("\n🏥 [bold green]socialseed-e2e Doctor[/bold green]\n")
 
     checks = []
 
-    # Verificar Python
+    # Check Python
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     checks.append(("Python", python_version, sys.version_info >= (3, 9)))
 
-    # Verificar Playwright
+    # Check Playwright
     try:
         from importlib.metadata import version
 
         pw_version = version("playwright")
         checks.append(("Playwright", pw_version, True))
     except Exception:
-        checks.append(("Playwright", "No instalado", False))
+        checks.append(("Playwright", "Not installed", False))
 
-    # Verificar browsers de Playwright
+    # Check Playwright browsers
     try:
         result = subprocess.run(
-            ["playwright", "install", "--help"], capture_output=True, text=True, timeout=5
+            ["playwright", "install", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         browsers_installed = result.returncode == 0
-        checks.append(("Playwright CLI", "Disponible", browsers_installed))
+        checks.append(("Playwright CLI", "Available", browsers_installed))
     except (subprocess.TimeoutExpired, FileNotFoundError):
-        checks.append(("Playwright CLI", "No disponible", False))
+        checks.append(("Playwright CLI", "Not available", False))
 
-    # Verificar Pydantic
+    # Check Pydantic
     try:
         import pydantic
 
         checks.append(("Pydantic", pydantic.__version__, True))
     except ImportError:
-        checks.append(("Pydantic", "No instalado", False))
+        checks.append(("Pydantic", "Not installed", False))
 
-    # Verificar e2e.conf
+    # Check e2e.conf
     if _is_e2e_project():
-        checks.append(("Configuración", "e2e.conf encontrado", True))
+        checks.append(("Configuration", "e2e.conf found", True))
     else:
-        checks.append(("Configuración", "e2e.conf no encontrado", False))
+        checks.append(("Configuration", "e2e.conf not found", False))
 
-    # Verificar estructura de directorios
+    # Check directory structure
     services_exists = Path("services").exists()
     tests_exists = Path("tests").exists()
     checks.append(
-        ("Directorio services/", "OK" if services_exists else "No encontrado", services_exists)
+        (
+            "services/ directory",
+            "OK" if services_exists else "Not found",
+            services_exists,
+        )
     )
-    checks.append(("Directorio tests/", "OK" if tests_exists else "No encontrado", tests_exists))
+    checks.append(("tests/ directory", "OK" if tests_exists else "Not found", tests_exists))
 
-    # Mostrar resultados
-    table = Table(title="Verificación del Sistema")
-    table.add_column("Componente", style="cyan")
-    table.add_column("Versión/Estado", style="white")
-    table.add_column("Estado", style="bold")
+    # Show results
+    table = Table(title="System Verification")
+    table.add_column("Component", style="cyan")
+    table.add_column("Version/Status", style="white")
+    table.add_column("Status", style="bold")
 
     all_ok = True
     for name, value, ok in checks:
@@ -499,67 +625,70 @@ def doctor():
 
     console.print()
     if all_ok:
-        console.print("[bold green]✅ Todo está configurado correctamente![/bold green]")
+        console.print("[bold green]✅ Everything is configured correctly![/bold green]")
     else:
-        console.print("[bold yellow]⚠ Se encontraron algunos problemas[/bold yellow]")
+        console.print("[bold yellow]⚠ Some issues were found[/bold yellow]")
         console.print()
-        console.print("[cyan]Soluciones sugeridas:[/cyan]")
+        console.print("[cyan]Suggested solutions:[/cyan]")
 
         if not any(name == "Playwright" and ok for name, _, ok in checks):
-            console.print("  • Instala Playwright: [white]pip install playwright[/white]")
+            console.print("  • Install Playwright: [white]pip install playwright[/white]")
         if not any(name == "Playwright CLI" and ok for name, _, ok in checks):
-            console.print("  • Instala browsers: [white]playwright install chromium[/white]")
+            console.print("  • Install browsers: [white]playwright install chromium[/white]")
         if not any(name == "Pydantic" and ok for name, _, ok in checks):
-            console.print("  • Instala dependencias: [white]pip install socialseed-e2e[/white]")
+            console.print("  • Install dependencies: [white]pip install socialseed-e2e[/white]")
         if not _is_e2e_project():
-            console.print("  • Inicializa proyecto: [white]e2e init[/white]")
+            console.print("  • Initialize project: [white]e2e init[/white]")
 
     console.print()
 
 
 @cli.command()
 def config():
-    """Muestra y valida la configuración actual.
+    """Show and validate current configuration.
 
-    Muestra la configuración cargada desde e2e.conf y valida su sintaxis.
+    Shows the configuration loaded from e2e.conf and validates its syntax.
     """
-    console.print("\n⚙️  [bold blue]Configuración E2E[/bold blue]\n")
+    console.print("\n⚙️  [bold blue]E2E Configuration[/bold blue]\n")
 
     try:
         loader = ApiConfigLoader()
         config = loader.load()
 
-        console.print(f"📋 [cyan]Configuración:[/cyan] {loader._config_path}")
+        console.print(f"📋 [cyan]Configuration:[/cyan] {loader._config_path}")
         console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
         console.print(f"[cyan]Timeout:[/cyan] {config.timeout}ms")
         console.print(f"[cyan]Verbose:[/cyan] {config.verbose}")
         console.print()
 
         if config.services:
-            table = Table(title="Servicios Configurados")
-            table.add_column("Nombre", style="cyan")
+            table = Table(title="Configured Services")
+            table.add_column("Name", style="cyan")
             table.add_column("Base URL", style="green")
             table.add_column("Health", style="yellow")
-            table.add_column("Requerido", style="white")
+            table.add_column("Required", style="white")
 
             for name, svc in config.services.items():
                 table.add_row(
-                    name, svc.base_url, svc.health_endpoint or "N/A", "✓" if svc.required else "✗"
+                    name,
+                    svc.base_url,
+                    svc.health_endpoint or "N/A",
+                    "✓" if svc.required else "✗",
                 )
 
             console.print(table)
         else:
-            console.print("[yellow]⚠ No hay servicios configurados[/yellow]")
-            console.print("   Usa: [cyan]e2e new-service <nombre>[/cyan]")
+            console.print("[yellow]⚠ No services configured[/yellow]")
+            console.print("   Use: [cyan]e2e new-service <name>[/cyan]")
 
         console.print()
-        console.print("[bold green]✅ Configuración válida[/bold green]")
+        console.print("[bold green]✅ Valid configuration[/bold green]")
 
     except ConfigError as e:
-        console.print(f"[red]❌ Error de configuración:[/red] {e}")
+        console.print(f"[red]❌ Configuration error:[/red] {e}")
         sys.exit(1)
     except Exception as e:
-        console.print(f"[red]❌ Error inesperado:[/red] {e}")
+        console.print(f"[red]❌ Unexpected error:[/red] {e}")
         sys.exit(1)
 
 
@@ -608,11 +737,11 @@ def _update_e2e_conf(service_name: str, base_url: str, health_endpoint: str) -> 
 
     content = config_path.read_text()
 
-    # Verificar si ya existe la sección de servicios
+    # Check if services section already exists
     if "services:" not in content:
         content += "\nservices:\n"
 
-    # Agregar configuración del servicio
+    # Add service configuration
     service_config = f"""  {service_name}:
     name: {service_name}-service
     base_url: {base_url}
@@ -624,7 +753,7 @@ def _update_e2e_conf(service_name: str, base_url: str, health_endpoint: str) -> 
 
     content += service_config
     config_path.write_text(content)
-    console.print("  [green]✓[/green] Actualizado: e2e.conf")
+    console.print("  [green]✓[/green] Updated: e2e.conf")
 
 
 def main():

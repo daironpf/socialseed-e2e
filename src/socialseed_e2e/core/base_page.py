@@ -5,12 +5,10 @@ production-ready features including structured logging, automatic retries,
 rate limiting, and comprehensive request/response logging.
 """
 
-import json
 import logging
 import time
 from dataclasses import dataclass
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from playwright.sync_api import APIRequestContext, APIResponse, Playwright
 
@@ -36,10 +34,11 @@ class RetryConfig:
     max_retries: int = 3
     backoff_factor: float = 1.0
     max_backoff: float = 60.0
-    retry_on: List[int] = None
-    retry_exceptions: List[Type[Exception]] = None
+    retry_on: Optional[List[int]] = None
+    retry_exceptions: Optional[List[Type[Exception]]] = None
 
     def __post_init__(self):
+        """Initialize default retry configuration values."""
         if self.retry_on is None:
             self.retry_on = [502, 503, 504, 429]  # Include 429 (rate limit)
         if self.retry_exceptions is None:
@@ -104,6 +103,7 @@ class BasePageError(Exception):
         response_text: Optional[str] = None,
         request_log: Optional[RequestLog] = None,
     ):
+        """Initialize exception with request context."""
         super().__init__(message)
         self.url = url
         self.method = method
@@ -112,6 +112,7 @@ class BasePageError(Exception):
         self.request_log = request_log
 
     def __str__(self) -> str:
+        """Return formatted error message with context."""
         parts = [super().__str__()]
         if self.method and self.url:
             parts.append(f"Request: {self.method} {self.url}")
@@ -229,7 +230,7 @@ class BasePage:
     def from_config(
         cls, config: ServiceConfig, playwright: Optional[Playwright] = None, **kwargs
     ) -> "BasePage":
-        """Factory method to create a BasePage from a ServiceConfig object.
+        """Create a BasePage from a ServiceConfig object.
 
         Args:
             config: Service configuration object
@@ -253,6 +254,7 @@ class BasePage:
         automatically before making requests if not already set up.
         """
         if not self.api_context:
+            assert self.playwright is not None
             self.api_context = self.playwright.request.new_context()
             logger.debug("API context initialized")
 
@@ -339,7 +341,7 @@ class BasePage:
             Sleep time in seconds
         """
         backoff = self.retry_config.backoff_factor * (2**attempt)
-        return min(backoff, self.retry_config.max_backoff)
+        return float(min(backoff, self.retry_config.max_backoff))
 
     def _should_retry(
         self, response: Optional[APIResponse], exception: Optional[Exception]
@@ -355,6 +357,10 @@ class BasePage:
         """
         if self.retry_config.max_retries <= 0:
             return False
+
+        # Ensure types are valid
+        assert self.retry_config.retry_exceptions is not None
+        assert self.retry_config.retry_on is not None
 
         # Check if exception type is in retry list
         if exception:
@@ -430,10 +436,10 @@ class BasePage:
             BasePageError: If the request fails after all retries
         """
         self._ensure_setup()
+        assert self.api_context is not None
         self._apply_rate_limit()
 
         full_url = f"{self.base_url}{endpoint}"
-        last_exception: Optional[Exception] = None
         last_response: Optional[APIResponse] = None
 
         # Prepare request log
@@ -452,7 +458,9 @@ class BasePage:
                 # Make the request
                 if method == "GET":
                     last_response = self.api_context.get(
-                        full_url, headers=request_log.headers, params=kwargs.get("params")
+                        full_url,
+                        headers=request_log.headers,
+                        params=kwargs.get("params"),
                     )
                 elif method == "POST":
                     last_response = self.api_context.post(
@@ -491,7 +499,8 @@ class BasePage:
                 ):
                     backoff = self._calculate_backoff(attempt)
                     logger.warning(
-                        f"Retry {attempt + 1}/{self.retry_config.max_retries} for {method} {endpoint} "
+                        f"Retry {attempt + 1}/{self.retry_config.max_retries} "
+                        f"for {method} {endpoint} "
                         f"(status: {last_response.status}, backoff: {backoff:.2f}s)"
                     )
                     time.sleep(backoff)
@@ -502,14 +511,14 @@ class BasePage:
                 return last_response
 
             except Exception as e:
-                last_exception = e
                 request_log.duration_ms = (time.time() - start_time) * 1000
 
                 # Check if we should retry on exception
                 if attempt < self.retry_config.max_retries and self._should_retry(None, e):
                     backoff = self._calculate_backoff(attempt)
                     logger.warning(
-                        f"Retry {attempt + 1}/{self.retry_config.max_retries} for {method} {endpoint} "
+                        f"Retry {attempt + 1}/{self.retry_config.max_retries} "
+                        f"for {method} {endpoint} "
                         f"(error: {e}, backoff: {backoff:.2f}s)"
                     )
                     time.sleep(backoff)
@@ -725,8 +734,11 @@ class BasePage:
                 if isinstance(value, dict) and k in value:
                     value = value[k]
                 else:
+                    keys_display = list(value.keys()) if isinstance(value, dict) else "N/A"
                     raise BasePageError(
-                        message=f"Key '{key}' not found in response. Available keys: {list(value.keys()) if isinstance(value, dict) else 'N/A'}",
+                        message=(
+                            f"Key '{key}' not found in response. " f"Available keys: {keys_display}"
+                        ),
                         url=response.url,
                         status=response.status,
                     )
@@ -735,7 +747,10 @@ class BasePage:
         return data
 
     def assert_header(
-        self, response: APIResponse, header_name: str, expected_value: Optional[str] = None
+        self,
+        response: APIResponse,
+        header_name: str,
+        expected_value: Optional[str] = None,
     ) -> str:
         """Assert that response contains a specific header.
 
@@ -754,8 +769,9 @@ class BasePage:
         header_lower = header_name.lower()
 
         if header_lower not in headers:
+            available = list(response.headers.keys())
             raise BasePageError(
-                message=f"Header '{header_name}' not found in response. Available headers: {list(response.headers.keys())}",
+                message=f"Header '{header_name}' not found. Available: {available}",
                 url=response.url,
                 status=response.status,
             )
@@ -764,12 +780,14 @@ class BasePage:
 
         if expected_value and value != expected_value:
             raise BasePageError(
-                message=f"Header '{header_name}' has value '{value}', expected '{expected_value}'",
+                message=(
+                    f"Header '{header_name}' has value '{value}', " f"expected '{expected_value}'"
+                ),
                 url=response.url,
                 status=response.status,
             )
 
-        return value
+        return str(value)
 
     # Utility methods
 
@@ -782,7 +800,7 @@ class BasePage:
         Returns:
             Response body as string
         """
-        return response.text()
+        return str(response.text())
 
     def get_last_request(self) -> Optional[RequestLog]:
         """Get the most recent request log entry.
@@ -817,7 +835,7 @@ class BasePage:
             }
 
         total_duration = sum(r.duration_ms for r in self.request_history)
-        status_counts = {}
+        status_counts: Dict[int, int] = {}
         successful = 0
         failed = 0
 

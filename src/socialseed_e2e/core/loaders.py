@@ -1,7 +1,9 @@
+"""Module loaders for dynamic test discovery."""
+
 import importlib.util
 import sys
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, cast
 
 
 class ModuleLoader:
@@ -9,7 +11,7 @@ class ModuleLoader:
 
     @staticmethod
     def load_runnable_from_file(file_path: Path, function_name: str = "run") -> Optional[Callable]:
-        """Loads a specific function from a python file."""
+        """Load a specific function from a python file."""
         if not file_path.exists() or file_path.suffix != ".py":
             return None
 
@@ -25,7 +27,7 @@ class ModuleLoader:
 
                 func = getattr(module, function_name, None)
                 if callable(func):
-                    return func
+                    return cast(Callable, func)
         except Exception as e:
             print(f"Error loading {file_path}: {e}")
 
@@ -33,7 +35,7 @@ class ModuleLoader:
 
     def discover_runnables(self, root_path: Path, pattern: str = "*.py") -> List[Callable]:
         """Discovers all runnable modules in a directory matching a pattern."""
-        runnables = []
+        runnables: List[Callable] = []
         if not root_path.exists() or not root_path.is_dir():
             return runnables
 

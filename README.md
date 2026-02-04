@@ -7,6 +7,8 @@
 [![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 
 > **The ultimate E2E testing framework for REST APIs - Built for developers and AI agents**
+>
+> ⚡️ **NEW v2.0**: AI-First design with automatic error prevention, camelCase serialization support, and zero-config setup for Java backends
 
 **One-liner:** Test your REST APIs with 10x less code using intelligent scaffolding, automatic test discovery, and stateful test chaining. Perfect for both manual testing and AI-generated test suites.
 
@@ -224,9 +226,23 @@ socialseed-e2e is designed to be the first **AI-Native Testing Framework**. When
 3. **Execute**: Run `e2e run` to verify the generated tests.
 
 The `.agent` folder contains:
+- **`AGENT_GUIDE.md`**: ⭐ **START HERE** - Complete guide with error prevention patterns, camelCase serialization, and common pitfalls to avoid
 - `FRAMEWORK_CONTEXT.md`: Architecture and core concepts.
 - `WORKFLOW_GENERATION.md`: Step-by-step guide for generating tests.
 - `EXAMPLE_TEST.md`: Gold standard code examples.
+
+### 🛡️ AI-First Error Prevention (v2.0)
+
+The framework now includes automatic safeguards for AI-generated code:
+
+- ✅ **Absolute imports only** - No more `ImportError` from relative imports
+- ✅ **CamelCase serialization** - Automatic Pydantic aliases for Java backends
+- ✅ **Dependency management** - `requirements.txt` includes email-validator
+- ✅ **Method naming** - `do_*` prefix prevents attribute/method conflicts
+- ✅ **Header handling** - Manual authentication management (no missing methods)
+- ✅ **Verification script** - Run `python verify_installation.py` to check setup
+
+**Result:** AI agents can generate working E2E tests with minimal or no human intervention.
 
 ---
 

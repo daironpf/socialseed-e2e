@@ -6,8 +6,11 @@ This module implements the test flow for ${test_description}.
 from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
 
+# ABSOLUTE imports - always use absolute paths from project root
+# Example: from services.${snake_case_service}.data_schema import ${SchemaClass}, ENDPOINTS
+
 if TYPE_CHECKING:
-    from ..${snake_case_service}_page import ${class_name}Page
+    from services.${snake_case_service}.${snake_case_service}_page import ${class_name}Page
 
 
 def run(${snake_case_service}: '${class_name}Page') -> APIResponse:
@@ -28,19 +31,30 @@ def run(${snake_case_service}: '${class_name}Page') -> APIResponse:
 
     # Arrange: Setup test data and preconditions
     # TODO: Add test data setup here
+    # Example using data_schema:
+    # from services.${snake_case_service}.data_schema import CreateRequest
+    # request_data = CreateRequest(name="Test Name", value=123)
 
     # Act: Execute the operation being tested
     # TODO: Add API call here
-    # response = ${snake_case_service}.get("/${endpoint}")
+    # response = ${snake_case_service}.post("/${endpoint}", data=request_data.model_dump(by_alias=True))
 
-    # Assert: Verify the results
+    # Assert: Verify the results with error handling
     # TODO: Add assertions here
-    # assert response.ok, f"Expected success, got {response.status}"
+    # assert response.ok, f"Expected success, got {response.status}: {response.text()}"
     # data = response.json()
-    # assert "expected_field" in data
+    # assert "expected_field" in data, f"Expected 'expected_field' in response, got {data}"
+    # assert data["expected_field"] == "expected_value", f"Expected 'expected_value', got {data['expected_field']}"
 
     # Store state for subsequent tests (optional)
-    # ${snake_case_service}.current_entity = data
+    # ${snake_case_service}.current_entity_id = data["id"]
+
+    # Return a response or raise an error if test failed
+    # Example:
+    # response = ${snake_case_service}.get("/${endpoint}/status")
+    # assert response.ok, f"Test failed with status {response.status}: {response.text()}"
+    # return response
 
     print(f"✓ ${test_name} test completed successfully")
-    return response
+    # TODO: Replace with actual response from your test
+    raise NotImplementedError("Test implementation incomplete - replace with actual test logic")

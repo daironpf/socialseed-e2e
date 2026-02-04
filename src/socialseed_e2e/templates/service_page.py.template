@@ -1,41 +1,75 @@
-"""Página de servicio para ${service_name}.
+"""Service page for ${service_name}.
 
-Este módulo define la clase de página para interactuar con el servicio ${service_name}.
+This module defines the page class to interact with the ${service_name} service.
+
+⚠️  IMPORTANT:
+- Use ABSOLUTE imports, never relative
+- To serialize Pydantic models, ALWAYS use: request.model_dump(by_alias=True)
+- Handle headers manually (update_headers does not exist in BasePage)
 """
 
-from typing import Optional
+from typing import Optional, Dict, Any
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.core.base_page import BasePage
 
+from .data_schema import (
+    ENDPOINTS,
+    ${class_name}DTO,
+    ${class_name}CreateDTO,
+    ${class_name}UpdateDTO,
+)
+
 
 class ${class_name}Page(BasePage):
-    """Página de servicio para ${service_name}.
+    """Service page for ${service_name}.
 
-    Gestiona el estado compartido entre módulos de test.
+    Manages shared state between test modules.
 
     Attributes:
-        current_entity: Entidad actualmente seleccionada
-        auth_token: Token de autenticación
+        current_entity: Currently selected entity
+        access_token: Access token for authentication
     """
 
-    def __init__(self, playwright=None, base_url: Optional[str] = None):
-        """Inicializa la página de servicio.
+    def __init__(self, base_url: str, **kwargs):
+        """Initializes the service page.
 
         Args:
-            playwright: Instancia de Playwright
-            base_url: URL base del servicio (opcional)
+            base_url: Service base URL (e.g., http://localhost:8085)
+            **kwargs: Additional arguments for BasePage
         """
-        # Cargar configuración desde e2e.conf
-        from .config import get_${snake_case_name}_config
-        config = get_${snake_case_name}_config()
+        super().__init__(base_url=base_url, **kwargs)
 
-        url = base_url or config.base_url
-        super().__init__(url, playwright, default_headers=config.default_headers)
-
-        # Estado compartido entre módulos
+        # Shared state between modules
         self.current_entity: Optional[dict] = None
-        self.auth_token: Optional[str] = None
+        self.access_token: Optional[str] = None
+        self.entity_id: Optional[str] = None
+
+    def _get_headers(self, extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Gets headers including authentication token if available.
+
+        ⚠️  This method handles headers manually since BasePage does not have update_headers().
+
+        Returns:
+            Dict with HTTP headers
+        """
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
+
+    def list_entities(self) -> APIResponse:
+        """Listar todas las entidades.
+
+        Returns:
+            APIResponse: Respuesta HTTP con lista de entidades
+        """
+        return self.get(ENDPOINTS["list"])
 
     def get_entity(self, entity_id: str) -> APIResponse:
         """Obtener entidad por ID.
@@ -46,30 +80,42 @@ class ${class_name}Page(BasePage):
         Returns:
             APIResponse: Respuesta HTTP
         """
-        return self.get(f"/${endpoint_prefix}/{entity_id}")
+        path = ENDPOINTS["get"].format(id=entity_id)
+        return self.get(path)
 
-    def create_entity(self, data: dict) -> APIResponse:
+    def create_entity(self, data: ${class_name}CreateDTO) -> APIResponse:
         """Crear nueva entidad.
 
         Args:
-            data: Datos de la entidad a crear
+            data: Datos de la entidad a crear (DTO)
 
         Returns:
             APIResponse: Respuesta HTTP
-        """
-        return self.post("/${endpoint_prefix}", json=data)
 
-    def update_entity(self, entity_id: str, data: dict) -> APIResponse:
+        ⚠️  IMPORTANTE: Usa model_dump(by_alias=True) para serializar correctamente
+        """
+        return self.post(
+            ENDPOINTS["create"],
+            data=data.model_dump(by_alias=True)  # ✅ Serialización correcta
+        )
+
+    def update_entity(self, entity_id: str, data: ${class_name}UpdateDTO) -> APIResponse:
         """Actualizar entidad existente.
 
         Args:
             entity_id: ID de la entidad
-            data: Datos a actualizar
+            data: Datos a actualizar (DTO)
 
         Returns:
             APIResponse: Respuesta HTTP
+
+        ⚠️  IMPORTANTE: Usa model_dump(by_alias=True) para serializar correctamente
         """
-        return self.put(f"/${endpoint_prefix}/{entity_id}", json=data)
+        path = ENDPOINTS["update"].format(id=entity_id)
+        return self.put(
+            path,
+            data=data.model_dump(by_alias=True)  # ✅ Serialización correcta
+        )
 
     def delete_entity(self, entity_id: str) -> APIResponse:
         """Eliminar entidad.
@@ -80,4 +126,13 @@ class ${class_name}Page(BasePage):
         Returns:
             APIResponse: Respuesta HTTP
         """
-        return self.delete(f"/${endpoint_prefix}/{entity_id}")
+        path = ENDPOINTS["delete"].format(id=entity_id)
+        return self.delete(path)
+
+    def is_authenticated(self) -> bool:
+        """Verificar si hay un token de acceso disponible.
+
+        Returns:
+            bool: True si hay token, False si no
+        """
+        return self.access_token is not None

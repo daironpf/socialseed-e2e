@@ -1,97 +1,113 @@
 """Data schema and DTOs for ${service_name}.
 
-This module defines data transfer objects, validators, and constants
-for the ${service_name} service.
+⚠️  IMPORTANT: This file uses camelCase aliases for compatibility with Java backends.
+All fields with compound names must use alias="camelCaseName".
+
+Example:
+    refresh_token: str = Field(
+        ...,
+        alias="refreshToken",
+        serialization_alias="refreshToken"
+    )
 """
 
 from typing import Optional, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, EmailStr
 
+
+# =============================================================================
+# Endpoint Constants
+# =============================================================================
+
+ENDPOINTS = {
+    # TODO: Add your endpoints here
+    "list": "/${endpoint_prefix}",
+    "create": "/${endpoint_prefix}",
+    "get": "/${endpoint_prefix}/{id}",
+    "update": "/${endpoint_prefix}/{id}",
+    "delete": "/${endpoint_prefix}/{id}",
+}
+
+
+# =============================================================================
+# Request Models - ALL use camelCase aliases for Java backend compatibility
+# =============================================================================
 
 class ${class_name}DTO(BaseModel):
     """Data Transfer Object for ${service_name} entities.
 
-    Attributes:
-        id: Unique identifier
-        name: Entity name
-        description: Entity description
-        created_at: Creation timestamp
-        updated_at: Last update timestamp
+    ⚠️  IMPORTANT: model_config = {"populate_by_name": True} allows using
+    both the field name (refresh_token) and the alias (refreshToken).
     """
 
+    model_config = {"populate_by_name": True}
+
     id: Optional[str] = Field(None, description="Unique identifier")
-    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
-    description: Optional[str] = Field(None, description="Entity description", max_length=500)
-    created_at: Optional[str] = Field(None, description="Creation timestamp (ISO format)")
-    updated_at: Optional[str] = Field(None, description="Last update timestamp (ISO format)")
-
-    @validator('name')
-    def name_must_not_be_empty(cls, v):
-        """Validate that name is not empty or whitespace."""
-        if not v or not v.strip():
-            raise ValueError('Name cannot be empty')
-        return v.strip()
-
-    class Config:
-        """Pydantic configuration."""
-        json_schema_extra = {
-            "example": {
-                "id": "123e4567-e89b-12d3-a456-426614174000",
-                "name": "Example Entity",
-                "description": "This is an example entity",
-                "created_at": "2025-01-31T12:00:00Z",
-                "updated_at": "2025-01-31T12:00:00Z"
-            }
-        }
+    name: str = Field(
+        ...,
+        description="Entity name",
+        min_length=1,
+        max_length=100
+    )
+    description: Optional[str] = Field(
+        None,
+        description="Entity description",
+        max_length=500
+    )
+    created_at: Optional[str] = Field(
+        None,
+        alias="createdAt",
+        serialization_alias="createdAt",
+        description="Creation timestamp (ISO format)"
+    )
+    updated_at: Optional[str] = Field(
+        None,
+        alias="updatedAt",
+        serialization_alias="updatedAt",
+        description="Last update timestamp (ISO format)"
+    )
 
 
 class ${class_name}CreateDTO(BaseModel):
-    """DTO for creating new ${service_name} entities.
+    """DTO for creating new ${service_name} entities."""
 
-    Attributes:
-        name: Entity name (required)
-        description: Entity description (optional)
-    """
+    model_config = {"populate_by_name": True}
 
-    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
-    description: Optional[str] = Field(None, description="Entity description", max_length=500)
-
-    @validator('name')
-    def name_must_not_be_empty(cls, v):
-        """Validate that name is not empty or whitespace."""
-        if not v or not v.strip():
-            raise ValueError('Name cannot be empty')
-        return v.strip()
+    name: str = Field(
+        ...,
+        description="Entity name",
+        min_length=1,
+        max_length=100
+    )
+    description: Optional[str] = Field(
+        None,
+        description="Entity description",
+        max_length=500
+    )
 
 
 class ${class_name}UpdateDTO(BaseModel):
-    """DTO for updating existing ${service_name} entities.
+    """DTO for updating existing ${service_name} entities."""
 
-    Attributes:
-        name: Entity name (optional)
-        description: Entity description (optional)
-    """
+    model_config = {"populate_by_name": True}
 
-    name: Optional[str] = Field(None, description="Entity name", min_length=1, max_length=100)
-    description: Optional[str] = Field(None, description="Entity description", max_length=500)
-
-    @validator('name')
-    def name_must_not_be_empty_if_provided(cls, v):
-        """Validate that name is not empty if provided."""
-        if v is not None and not v.strip():
-            raise ValueError('Name cannot be empty')
-        return v.strip() if v else v
+    name: Optional[str] = Field(
+        None,
+        description="Entity name",
+        min_length=1,
+        max_length=100
+    )
+    description: Optional[str] = Field(
+        None,
+        description="Entity description",
+        max_length=500
+    )
 
 
 class ${class_name}ListResponse(BaseModel):
-    """DTO for paginated list response.
+    """DTO for paginated list response."""
 
-    Attributes:
-        items: List of entities
-        total: Total number of entities
-        page: Current page number
-        page_size: Number of items per page
-    """
+    model_config = {"populate_by_name": True}
 
     items: List[${class_name}DTO] = Field(default_factory=list)
     total: int = Field(0, ge=0)
@@ -99,10 +115,35 @@ class ${class_name}ListResponse(BaseModel):
     page_size: int = Field(10, ge=1, le=100)
 
 
-# Constants for ${service_name} service
-${constants}
+# =============================================================================
+# Response Models
+# =============================================================================
 
-# Validation patterns
+class ApiResponseWrapper(BaseModel):
+    """Wrapper for API responses from backend."""
+
+    model_config = {"populate_by_name": True}
+
+    status: int
+    message: str
+    data: Optional[dict] = None
+    timestamp: Optional[str] = Field(None, alias="timestamp")
+
+
+# =============================================================================
+# Test Data Constants
+# =============================================================================
+
+TEST_ENTITY = {
+    "name": "Test Entity",
+    "description": "A test entity for E2E testing"
+}
+
+
+# =============================================================================
+# Validation Patterns
+# =============================================================================
+
 VALIDATION_PATTERNS = {
     "uuid": r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
     "iso_timestamp": r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$',

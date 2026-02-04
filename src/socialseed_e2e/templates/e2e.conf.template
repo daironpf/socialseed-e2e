@@ -1,6 +1,11 @@
 # Configuración E2E para socialseed-e2e
 # Documentación: https://github.com/daironpf/socialseed-e2e
 
+# IMPORTANT: Dependencies required
+# This project requires email-validator to be installed
+# Install with: pip install email-validator>=2.0.0
+# Or if installing from requirements: pip install -r requirements.txt
+
 general:
   # Entorno de ejecución (dev, staging, production)
   environment: ${environment}
@@ -18,3 +23,17 @@ general:
 # Define cada servicio a testear
 services:
 ${services_config}
+
+# Dependencies Configuration
+# ==========================
+# Required Python packages:
+# - pydantic>=2.0.0
+# - email-validator>=2.0.0 (required for Pydantic email validation)
+# - playwright>=1.40.0
+# - pyyaml>=6.0
+#
+# Install all dependencies:
+#   pip install -r requirements.txt
+#
+# Or manually:
+#   pip install pydantic email-validator playwright pyyaml
