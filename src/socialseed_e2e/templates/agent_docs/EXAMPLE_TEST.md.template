@@ -41,8 +41,8 @@ from playwright.sync_api import APIResponse, APIRequestContext
 from services.todo_app.data_schema import TodoItem, ENDPOINTS
 
 class TodoAppPage(BasePage):
-    def __init__(self, base_url: str, request_context: APIRequestContext, **kwargs):
-        super().__init__(base_url=base_url, request_context=request_context, **kwargs)
+    def __init__(self, base_url: str, **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
         self.created_todo_id = None  # Estado compartido
         self.auth_token = None
 

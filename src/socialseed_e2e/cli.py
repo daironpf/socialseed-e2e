@@ -460,6 +460,7 @@ def new_test(name: str, service: str, description: str):
 @cli.command()
 @click.option("--service", "-s", help="Filter by specific service")
 @click.option("--module", "-m", help="Filter by specific module")
+@click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose mode")
 @click.option(
     "--output",
@@ -468,7 +469,13 @@ def new_test(name: str, service: str, description: str):
     default="text",
     help="Output format",
 )
-def run(service: Optional[str], module: Optional[str], verbose: bool, output: str):
+def run(
+    service: Optional[str],
+    module: Optional[str],
+    config: Optional[str],
+    verbose: bool,
+    output: str,
+):
     """Execute E2E tests.
 
     Discovers and automatically executes all available tests.
@@ -476,6 +483,7 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     Args:
         service: If specified, only run tests for this service
         module: If specified, only run this test module
+        config: Path to the e2e.conf file
         verbose: If True, shows detailed information
         output: Output format (text or json)
     """
@@ -488,17 +496,31 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     # Verify configuration
     try:
         loader = ApiConfigLoader()
-        config = loader.load()
+        app_config = loader.load(config)  # Pass the config path if provided
         console.print(f"📋 [cyan]Configuration:[/cyan] {loader._config_path}")
-        console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
+        console.print(f"🌍 [cyan]Environment:[/cyan] {app_config.environment}")
         console.print()
     except ConfigError as e:
         console.print(f"[red]❌ Configuration error:[/red] {e}")
         console.print("   Run: [cyan]e2e init[/cyan] to create a project")
         sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]❌ Unexpected error:[/red] {e}")
+        sys.exit(1)
 
     # Import test runner
     from .core.test_runner import print_summary, run_all_tests
+
+    # Determine services path
+    # If a config file was explicitly provided, we prioritize the 'services' folder next to it.
+    services_path = Path("services")
+    if loader._config_path:
+        alt_path = loader._config_path.parent / "services"
+        if alt_path.exists():
+            services_path = alt_path
+        elif not services_path.exists():
+            # Fallback if neither works
+            pass
 
     if service:
         console.print(f"🔍 [yellow]Filtering by service:[/yellow] {service}")
@@ -512,7 +534,7 @@ def run(service: Optional[str], module: Optional[str], verbose: bool, output: st
     # Execute tests
     try:
         results = run_all_tests(
-            services_path=Path("services"),
+            services_path=services_path,
             specific_service=service,
             specific_module=module,
             verbose=verbose,

@@ -384,6 +384,13 @@ Antes de decir "terminado", verifica:
    - Guarda en `page` (ej: `page.user_id = data["id"]`)
    - Recupera en siguiente test
 
+5. **Ejecución Flexible:**
+   Si ejecutas desde el root del proyecto y el config está en una subcarpeta:
+   ```bash
+   e2e run -c otrotest/e2e.conf
+   ```
+   El framework encontrará los servicios automáticamente.
+
 ---
 
 ## 🚀 Resultado Esperado

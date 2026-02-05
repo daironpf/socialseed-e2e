@@ -265,6 +265,16 @@ class ApiConfigLoader:
             if path.exists():
                 return str(path)
 
+        # Priority 4.5: Search in any immediate subdirectory (useful for monorepos)
+        try:
+            for sub_item in Path.cwd().iterdir():
+                if sub_item.is_dir() and not sub_item.name.startswith("."):
+                    sub_config = sub_item / "e2e.conf"
+                    if sub_config.exists():
+                        return str(sub_config)
+        except Exception:
+            pass  # Avoid crashes during directory iteration
+
         # Priority 5: Global config in home directory
         home_config = Path.home() / ".config" / "socialseed-e2e" / "default.conf"
         if home_config.exists():
@@ -291,9 +301,11 @@ class ApiConfigLoader:
             "  2. ./e2e.conf\n"
             "  3. ./config/e2e.conf\n"
             "  4. ./tests/e2e.conf\n"
-            "  5. ~/.config/socialseed-e2e/default.conf\n"
-            "  6. verify_services/api.conf (legacy)\n"
-            "  7. ./api.conf (legacy)\n\n"
+            "  5. Immediate subdirectories (e.g., ./otrotest/e2e.conf)\n"
+            "  6. ~/.config/socialseed-e2e/default.conf\n"
+            "  7. verify_services/api.conf (legacy)\n"
+            "  8. ./api.conf (legacy)\n\n"
+            f"Current directory: {os.getcwd()}\n\n"
             "To create a default configuration, run:\n"
             "  e2e init\n\n"
             "Or set the E2E_CONFIG_PATH environment variable:\n"

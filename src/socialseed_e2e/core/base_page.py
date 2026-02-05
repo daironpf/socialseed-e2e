@@ -223,6 +223,7 @@ class BasePage:
             if default_headers is not None
             else {**DEFAULT_JSON_HEADERS, **DEFAULT_BROWSER_HEADERS}
         )
+        self.headers = self.default_headers  # Alias for easier access in tests
         self.health_endpoint = health_endpoint
 
         # Initialize Playwright
@@ -310,7 +311,7 @@ class BasePage:
             self.setup()
 
     def _prepare_headers(self, headers: Optional[Dict[str, str]]) -> Dict[str, str]:
-        """Combine default headers with request-specific headers.
+        """Combine active headers with request-specific headers.
 
         Args:
             headers: Request-specific headers to merge with defaults
@@ -318,7 +319,7 @@ class BasePage:
         Returns:
             Merged headers dictionary
         """
-        request_headers = self.default_headers.copy()
+        request_headers = self.headers.copy()
         if headers:
             request_headers.update(headers)
         return request_headers
