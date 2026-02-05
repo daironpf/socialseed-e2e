@@ -1,10 +1,13 @@
 """
-socialseed-e2e: Framework E2E para testing de APIs REST con Playwright.
+socialseed-e2e: Universal Framework E2E para testing de APIs REST con Playwright.
 
-Este paquete proporciona un framework completo para testing end-to-end
-de APIs REST, extraído y generalizado desde el proyecto SocialSeed.
+Este framework proporciona una solución completa para testing end-to-end
+de APIs REST escritas en CUALQUIER lenguaje: Java, C#, Python, Node.js, Go, C++, etc.
 
 Características principales:
+    - Soporte multi-lenguaje (Java, C#, Python, Node.js, Go, C++, etc.)
+    - Detección automática de naming conventions (camelCase, PascalCase, snake_case)
+    - Modelos Pydantic universales (APIModel) con serialización automática
     - Arquitectura hexagonal (core agnóstico)
     - Configuración centralizada via YAML
     - Carga dinámica de módulos de test
@@ -13,17 +16,28 @@ Características principales:
     - Validación de esquemas JSON y Pydantic
     - Health checks y service waiting
     - Interceptores de request/response
+    - Prevención automática de errores comunes
+    - Manejo de estado entre tests (DynamicStateMixin)
 
 Uso básico:
-    >>> from socialseed_e2e import BasePage
+    >>> from socialseed_e2e import BasePage, APIModel, api_field
+    >>>
+    >>> # Crear modelo para API Java (camelCase)
+    >>> class LoginRequest(APIModel):
+    ...     refresh_token: str = api_field("refreshToken")
+    ...     user_name: str = api_field("userName")
+    >>>
     >>> page = BasePage("https://api.example.com")
     >>> page.setup()
-    >>> response = page.get("/endpoint")
+    >>>
+    >>> request = LoginRequest(refresh_token="abc", user_name="john")
+    >>> data = request.to_dict()  # {'refreshToken': 'abc', 'userName': 'john'}
+    >>> response = page.post("/login", data=data)
+    >>>
     >>> page.assert_ok(response)
-    >>> data = page.assert_json(response)
     >>> page.teardown()
 
-Para más información, visita: https://github.com/daironpf/socialseed-e2e
+Para más información: https://github.com/daironpf/socialseed-e2e
 """
 
 __version__ = "0.2.0"
@@ -73,11 +87,31 @@ from socialseed_e2e.core.test_runner import (
     run_service_tests,
 )
 
-# Utils - Pydantic helpers
-from socialseed_e2e.utils.pydantic_helpers import (
+# Utils - Pydantic helpers (universal for all languages)
+from socialseed_e2e.utils.pydantic_helpers import (  # New universal model; Field creators for different conventions; Naming conversion utilities; Serialization utilities; Convenience field aliases; Backwards compatibility
+    APIModel,
     JavaCompatibleModel,
+    NamingConvention,
+    access_token_field,
+    api_field,
     camel_field,
+    created_at_field,
+    current_password_field,
+    detect_naming_convention,
+    new_password_field,
+    pascal_field,
+    refresh_token_field,
+    snake_field,
+    to_api_dict,
+    to_camel_case,
     to_camel_dict,
+    to_kebab_case,
+    to_pascal_case,
+    to_snake_case,
+    updated_at_field,
+    user_id_field,
+    user_name_field,
+    validate_api_model,
     validate_camelcase_model,
 )
 
@@ -85,12 +119,10 @@ from socialseed_e2e.utils.pydantic_helpers import (
 from socialseed_e2e.utils.state_management import AuthStateMixin, DynamicStateMixin
 
 # Utils - Template engine
-from socialseed_e2e.utils.template_engine import (
-    TemplateEngine,
-    to_camel_case,
-    to_class_name,
-    to_snake_case,
-)
+from socialseed_e2e.utils.template_engine import TemplateEngine
+from socialseed_e2e.utils.template_engine import to_camel_case as template_to_camel_case
+from socialseed_e2e.utils.template_engine import to_class_name
+from socialseed_e2e.utils.template_engine import to_snake_case as template_to_snake_case
 
 # Utils - Validators
 from socialseed_e2e.utils.validators import (
@@ -141,9 +173,30 @@ __all__ = [
     # Utils - State Management
     "DynamicStateMixin",
     "AuthStateMixin",
-    # Utils - Pydantic
-    "JavaCompatibleModel",
+    # Utils - Pydantic (Universal)
+    "APIModel",
+    "api_field",
+    "NamingConvention",
+    "detect_naming_convention",
     "camel_field",
+    "pascal_field",
+    "snake_field",
+    "to_camel_case",
+    "to_pascal_case",
+    "to_snake_case",
+    "to_kebab_case",
+    "to_api_dict",
+    "validate_api_model",
+    "refresh_token_field",
+    "access_token_field",
+    "user_name_field",
+    "user_id_field",
+    "created_at_field",
+    "updated_at_field",
+    "new_password_field",
+    "current_password_field",
+    # Utils - Pydantic (Backwards compatibility)
+    "JavaCompatibleModel",
     "to_camel_dict",
     "validate_camelcase_model",
     # Utils - Validators
@@ -155,6 +208,6 @@ __all__ = [
     # Utils - Templates
     "TemplateEngine",
     "to_class_name",
-    "to_snake_case",
-    "to_camel_case",
+    "template_to_snake_case",
+    "template_to_camel_case",
 ]
