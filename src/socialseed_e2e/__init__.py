@@ -89,8 +89,23 @@ from socialseed_e2e.core.test_runner import (
     run_service_tests,
 )
 
+# Core - gRPC Support
+try:
+    from socialseed_e2e.core.base_grpc_page import (
+        BaseGrpcPage,
+        GrpcCallLog,
+        GrpcRetryConfig,
+    )
+
+    GRPC_AVAILABLE = True
+except ImportError:
+    GRPC_AVAILABLE = False
+
 # Utils - Pydantic helpers (universal for all languages)
-from socialseed_e2e.utils.pydantic_helpers import (  # New universal model; Field creators for different conventions; Naming conversion utilities; Serialization utilities; Convenience field aliases; Backwards compatibility
+# New universal model; Field creators for different conventions
+# Naming conversion utilities; Serialization utilities
+# Convenience field aliases; Backwards compatibility
+from socialseed_e2e.utils.pydantic_helpers import (
     APIModel,
     JavaCompatibleModel,
     NamingConvention,
@@ -135,6 +150,12 @@ from socialseed_e2e.utils.validators import (
     validate_uuid,
 )
 
+# Utils - Proto Schema Handler (gRPC support)
+try:
+    from socialseed_e2e.utils.proto_schema import ProtoRegistry, ProtoSchemaHandler
+except ImportError:
+    pass
+
 __all__ = [
     # Version
     "__version__",
@@ -163,6 +184,10 @@ __all__ = [
     "TestSuiteResult",
     "TestDiscoveryError",
     "TestExecutionError",
+    # Core - gRPC Support
+    "BaseGrpcPage",
+    "GrpcRetryConfig",
+    "GrpcCallLog",
     # Core - Models
     "ServiceConfig",
     "TestContext",
@@ -207,6 +232,9 @@ __all__ = [
     "validate_base_url",
     "validate_email",
     "validate_uuid",
+    # Utils - Proto Schema (gRPC)
+    "ProtoSchemaHandler",
+    "ProtoRegistry",
     # Utils - Templates
     "TemplateEngine",
     "to_class_name",

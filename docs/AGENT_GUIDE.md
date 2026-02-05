@@ -1,8 +1,8 @@
 # 🤖 Guía Definitiva para Agentes de IA - SocialSeed E2E Framework
 
-> **Versión 2.0 - Framework Refactorizado**
+> **Versión 2.1 - Soporte REST y gRPC**
 >
-> Esta guía permite a los agentes de IA generar tests E2E perfectos sin necesidad de ver el código fuente del framework.
+> Esta guía permite a los agentes de IA generar tests E2E perfectos para APIs REST y gRPC sin necesidad de ver el código fuente del framework.
 
 ## 📋 Índice
 
@@ -12,8 +12,9 @@
 4. [API del Framework](#api-del-framework)
 5. [Flujo de Trabajo](#flujo-de-trabajo)
 6. [Ejemplos Completos](#ejemplos-completos)
-7. [Errores Comunes y Soluciones](#errores-comunes-y-soluciones)
-8. [Checklist Pre-Entrega](#checklist-pre-entrega)
+7. [Testing de APIs gRPC](#testing-de-apis-grpc)
+8. [Errores Comunes y Soluciones](#errores-comunes-y-soluciones)
+9. [Checklist Pre-Entrega](#checklist-pre-entrega)
 
 ---
 
@@ -21,11 +22,12 @@
 
 ### Principios Fundamentales
 
-1. **Page Object Model**: Cada servicio tiene una clase Page que hereda de `BasePage`
+1. **Page Object Model**: Cada servicio tiene una clase Page que hereda de `BasePage` (REST) o `BaseGrpcPage` (gRPC)
 2. **Tests Secuenciales**: Los tests se ejecutan en orden numérico y comparten estado
 3. **Aserciones Explícitas**: Cada test debe validar el resultado
 4. **Sin Importaciones Relativas**: Solo imports absolutos permitidos
-5. **Java-Compatible**: Serialización camelCase para backends Spring Boot
+5. **Java-Compatible**: Serialización camelCase para backends Spring Boot (REST)
+6. **Proto-First** (gRPC): Definir siempre primero el archivo .proto antes de implementar
 
 ---
 
@@ -527,6 +529,168 @@ def run(page: "AuthServicePage"):
 
 ---
 
+## 🚀 Testing de APIs gRPC
+
+El framework también soporta testing de servicios gRPC. Las diferencias principales con REST son:
+
+### 1. Estructura para gRPC
+
+```
+services/
+└── user_service/
+    ├── protos/
+    │   ├── user.proto              # Definición del servicio
+    │   ├── user_pb2.py            # Generado (no editar)
+    │   └── user_pb2_grpc.py       # Generado (no editar)
+    ├── user_page.py               # Hereda de BaseGrpcPage
+    └── modules/
+        ├── _01_create_user.py
+        └── _02_get_user.py
+```
+
+### 2. Definir Servicio (.proto)
+
+```protobuf
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  rpc GetUser (GetUserRequest) returns (User);
+  rpc CreateUser (CreateUserRequest) returns (User);
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+}
+```
+
+### 3. Compilar Protos
+
+```bash
+python -m grpc_tools.protoc \
+  --proto_path=. \
+  --python_out=./protos \
+  --grpc_python_out=./protos \
+  user.proto
+```
+
+### 4. Crear Service Page (gRPC)
+
+```python
+"""Page for User gRPC service."""
+
+from socialseed_e2e.core.base_grpc_page import BaseGrpcPage
+from services.user_service.protos import user_pb2, user_pb2_grpc
+
+
+class UserServicePage(BaseGrpcPage):
+    """Page for testing User gRPC service."""
+
+    def setup(self) -> "UserServicePage":
+        """Setup page and register stubs."""
+        super().setup()
+        # Registrar el stub gRPC
+        self.register_stub("user", user_pb2_grpc.UserServiceStub)
+        return self
+
+    def do_get_user(self, user_id: str) -> user_pb2.User:
+        """Call GetUser method."""
+        # Crear mensaje protobuf
+        request = user_pb2.GetUserRequest(id=user_id)
+        # Llamar al método gRPC
+        return self.call("user", "GetUser", request)
+
+    def do_create_user(self, name: str, email: str) -> user_pb2.User:
+        """Call CreateUser method."""
+        request = user_pb2.CreateUserRequest(name=name, email=email)
+        return self.call("user", "CreateUser", request)
+```
+
+### 5. Escribir Tests gRPC
+
+```python
+"""Test module: Create user via gRPC."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.user_service.user_page import UserServicePage
+
+
+def run(page: "UserServicePage"):
+    """Execute create user test."""
+    print("STEP: Create User via gRPC")
+
+    # Llamar al método gRPC
+    response = page.do_create_user("John Doe", "john@example.com")
+
+    # Assert - acceder a atributos del mensaje protobuf
+    assert response.id, "User ID should not be empty"
+    assert response.name == "John Doe"
+    assert response.email == "john@example.com"
+
+    # Guardar ID para siguientes tests
+    page.set_state("user_id", response.id)
+    print(f"✓ Created user: {response.name} (ID: {response.id})")
+```
+
+### 6. Diferencias Clave: REST vs gRPC
+
+| Aspecto | REST | gRPC |
+|---------|------|------|
+| Base Class | `BasePage` | `BaseGrpcPage` |
+| Configuración | Endpoints HTTP | Stubs gRPC |
+| Requests | Pydantic models | Protobuf messages |
+| Response | `APIResponse` | Protobuf message |
+| Serialización | `model_dump(by_alias=True)` | No necesaria (protobuf) |
+| Headers | `headers` dict | `metadata` en call |
+
+### 7. Manejo de Errores gRPC
+
+```python
+import grpc
+
+def run(page):
+    try:
+        response = page.do_get_user("nonexistent-id")
+    except grpc.RpcError as e:
+        # Verificar código de error
+        assert e.code() == grpc.StatusCode.NOT_FOUND
+        print(f"✓ Got expected error: {e.details()}")
+```
+
+### 8. Autenticación con Metadata
+
+```python
+def do_create_user_with_auth(self, name: str, email: str, token: str):
+    """Create user with auth token."""
+    request = user_pb2.CreateUserRequest(name=name, email=email)
+
+    # Pasar metadata (headers) en la llamada
+    metadata = {"authorization": f"Bearer {token}"}
+
+    return self.call(
+        "user",
+        "CreateUser",
+        request,
+        metadata=metadata
+    )
+```
+
+---
+
 ## 🐛 Errores Comunes y Soluciones
 
 ### Error 1: "email-validator is not installed"
@@ -586,6 +750,43 @@ from ..data_schema import LoginRequest
 from services.auth_service.data_schema import LoginRequest
 ```
 
+### Error 6 (gRPC): "No module named 'user_pb2'"
+
+**Causa**: No se compilaron los archivos .proto.
+
+**Solución**:
+```bash
+python -m grpc_tools.protoc \
+  --proto_path=. \
+  --python_out=./protos \
+  --grpc_python_out=./protos \
+  user.proto
+```
+
+### Error 7 (gRPC): "StatusCode.UNAVAILABLE"
+
+**Causa**: Servidor gRPC no está corriendo o dirección incorrecta.
+
+**Solución**:
+```python
+# Verificar que el servidor esté corriendo
+# Verificar host:port correcto
+page = UserServicePage("localhost:50051")  # Puerto correcto
+```
+
+### Error 8 (gRPC): "Method not found"
+
+**Causa**: Nombre de método no coincide con el definido en .proto.
+
+**Solución**:
+```python
+# Verificar que el nombre coincida EXACTAMENTE con el proto
+# Si el proto tiene: rpc GetUser -> usar "GetUser"
+# Si el proto tiene: rpc GetUserById -> usar "GetUserById"
+
+return self.call("user", "GetUser", request)  # Exacto
+```
+
 ---
 
 ## ✅ Checklist Pre-Entrega
@@ -619,6 +820,14 @@ Antes de decir "terminado", verifica:
 - [ ] Ejecutar `python verify_installation.py` pasa todas las pruebas
 - [ ] No hay imports relativos (`from ..` o `from .`)
 - [ ] No hay errores de sintaxis obvios
+
+### Si es gRPC (adicional)
+- [ ] Archivo .proto está definido correctamente
+- [ ] Archivos `_pb2.py` y `_pb2_grpc.py` están generados
+- [ ] Service Page hereda de `BaseGrpcPage` (no `BasePage`)
+- [ ] Stubs registrados en `setup()` con `register_stub()`
+- [ ] Se compilan los protos antes de ejecutar tests
+- [ ] Servidor gRPC está corriendo antes de los tests
 
 ---
 

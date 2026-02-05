@@ -1,0 +1,559 @@
+# Guía de Testing gRPC para Agentes de IA
+
+> **Versión 1.0 - Soporte gRPC**
+>
+> Esta guía permite a los agentes de IA generar tests E2E para APIs gRPC perfectamente.
+
+## 📋 Índice
+
+1. [Filosofía del Testing gRPC](#filosofía-del-testing-grpc)
+2. [Estructura de Tests gRPC](#estructura-de-tests-grpc)
+3. [Patrones Obligatorios gRPC](#patrones-obligatorios-grpc)
+4. [Flujo de Trabajo](#flujo-de-trabajo)
+5. [Ejemplos Completos](#ejemplos-completos)
+6. [Errores Comunes y Soluciones](#errores-comunes-y-soluciones)
+
+---
+
+## 🎯 Filosofía del Testing gRPC
+
+### Diferencias Clave con REST
+
+| Aspecto | REST | gRPC |
+|---------|------|------|
+| Protocolo | HTTP/1.1 | HTTP/2 |
+| Formato | JSON | Protocol Buffers (protobuf) |
+| Modelo | Recursos | Servicios y Métodos |
+| Tipado | Débil (JSON) | Fuerte (protobuf) |
+| Streaming | Polling | Bidireccional nativo |
+
+### Principios Fundamentales gRPC
+
+1. **Service-Oriented**: Cada servicio gRPC tiene métodos definidos en .proto
+2. **Strong Typing**: Los mensajes protobuf tienen tipos estrictos
+3. **Stub-Based**: Usamos stubs generados para llamar al servicio
+4. **State Sharing**: Igual que REST, compartimos estado entre tests
+5. **Proto-First**: Siempre definir primero el archivo .proto
+
+---
+
+## 🏗️ Estructura de Tests gRPC
+
+### Estructura de Directorios
+
+```
+services/
+└── {service_name}/
+    ├── __init__.py
+    ├── protos/
+    │   ├── __init__.py
+    │   ├── {service}.proto          # Definición del servicio
+    │   ├── {service}_pb2.py         # Generado por protoc
+    │   └── {service}_pb2_grpc.py    # Generado por protoc
+    ├── {service}_page.py            # Page Object Model gRPC
+    └── modules/
+        ├── __init__.py
+        ├── _01_create_entity.py
+        ├── _02_get_entity.py
+        ├── _03_update_entity.py
+        ├── _04_delete_entity.py
+        └── _99_cleanup.py
+```
+
+### Convenciones de Nomenclatura gRPC
+
+| Elemento | Convención | Ejemplo |
+|----------|------------|---------|
+| Archivo .proto | snake_case | `user_service.proto` |
+| Servicio gRPC | PascalCase | `UserService` |
+| Método gRPC | PascalCase | `GetUser`, `CreateUser` |
+| Mensajes | PascalCase | `GetUserRequest`, `User` |
+| Clase Page | `{Service}GrpcPage` | `UserServiceGrpcPage` |
+| Métodos Page | `do_*` | `do_get_user()`, `do_create_user()` |
+| Módulos de Test | `_XX_descripcion.py` | `_01_create_user.py` |
+
+---
+
+## ⚠️ Patrones Obligatorios gRPC
+
+### 1. Estructura del Archivo .proto (OBLIGATORIO)
+
+```protobuf
+syntax = "proto3";
+
+package user;  // Namespace del paquete
+
+option go_package = "github.com/example/user";
+
+// Definición del servicio
+service UserService {
+  // Métodos CRUD básicos
+  rpc GetUser (GetUserRequest) returns (User);
+  rpc CreateUser (CreateUserRequest) returns (User);
+  rpc UpdateUser (UpdateUserRequest) returns (User);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+}
+
+// Mensajes Request/Response
+message GetUserRequest {
+  string id = 1;
+}
+
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+  int32 age = 3;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int32 age = 4;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// Entidad principal
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int32 age = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+```
+
+### 2. Compilación de Protos (OBLIGATORIO)
+
+```bash
+# SIEMPRE compilar los protos antes de usarlos
+python -m grpc_tools.protoc \
+  --proto_path=. \
+  --python_out=./protos \
+  --grpc_python_out=./protos \
+  user_service.proto
+```
+
+### 3. Imports Absolutos (OBLIGATORIO)
+
+```python
+# ❌ NUNCA uses imports relativos
+from ..protos import user_pb2  # PROHIBIDO
+from .user_page import UserPage  # PROHIBIDO
+
+# ✅ SIEMPRE usa imports absolutos desde services/
+from services.user_service.protos import user_pb2
+from services.user_service.protos import user_pb2_grpc
+from services.user_service.user_page import UserServicePage
+```
+
+### 4. Creación de Service Page gRPC (OBLIGATORIO)
+
+```python
+"""Page object for User gRPC service."""
+
+from typing import Any, Optional
+from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcRetryConfig
+from services.user_service.protos import user_pb2
+from services.user_service.protos import user_pb2_grpc
+
+
+class UserServicePage(BaseGrpcPage):
+    """Page for testing User gRPC service."""
+
+    def __init__(
+        self,
+        host: str = "localhost:50051",
+        use_tls: bool = False,
+        timeout: float = 30.0,
+    ):
+        super().__init__(host=host, use_tls=use_tls, timeout=timeout)
+
+    def setup(self) -> "UserServicePage":
+        """Setup page and register stubs."""
+        super().setup()
+
+        # ✅ Registrar el stub con nombre descriptivo
+        self.register_stub("user", user_pb2_grpc.UserServiceStub)
+
+        return self
+
+    # ✅ Usar prefijo do_* para todos los métodos
+    def do_get_user(self, user_id: str) -> user_pb2.User:
+        """Call GetUser method."""
+        # Crear request usando el mensaje protobuf generado
+        request = user_pb2.GetUserRequest(id=user_id)
+
+        # Llamar al método gRPC
+        return self.call("user", "GetUser", request)
+
+    def do_create_user(self, name: str, email: str, age: int = 0) -> user_pb2.User:
+        """Call CreateUser method."""
+        request = user_pb2.CreateUserRequest(
+            name=name,
+            email=email,
+            age=age
+        )
+        return self.call("user", "CreateUser", request)
+
+    def do_update_user(
+        self,
+        user_id: str,
+        name: Optional[str] = None,
+        email: Optional[str] = None,
+        age: Optional[int] = None
+    ) -> user_pb2.User:
+        """Call UpdateUser method."""
+        request = user_pb2.UpdateUserRequest(
+            id=user_id,
+            name=name or "",
+            email=email or "",
+            age=age or 0
+        )
+        return self.call("user", "UpdateUser", request)
+
+    def do_delete_user(self, user_id: str) -> user_pb2.DeleteUserResponse:
+        """Call DeleteUser method."""
+        request = user_pb2.DeleteUserRequest(id=user_id)
+        return self.call("user", "DeleteUser", request)
+
+    def do_list_users(self, page_size: int = 10) -> user_pb2.ListUsersResponse:
+        """Call ListUsers method."""
+        request = user_pb2.ListUsersRequest(page_size=page_size)
+        return self.call("user", "ListUsers", request)
+```
+
+### 5. Estructura de Test gRPC (OBLIGATORIO)
+
+```python
+"""Test module for creating a user."""
+
+from services.user_service.protos import user_pb2
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.user_service.user_page import UserServicePage
+
+
+def run(page: "UserServicePage"):
+    """Execute create user test."""
+    print("STEP: Create User via gRPC")
+
+    # Arrange
+    name = "John Doe"
+    email = "john@example.com"
+    age = 30
+
+    # Act
+    response = page.do_create_user(name, email, age)
+
+    # Assert - usando atributos del mensaje protobuf
+    assert response.id, "User ID should not be empty"
+    assert response.name == name, f"Name mismatch: {response.name} != {name}"
+    assert response.email == email, f"Email mismatch: {response.email} != {email}"
+    assert response.age == age, f"Age mismatch: {response.age} != {age}"
+
+    # Guardar ID para siguientes tests
+    page.set_state("created_user_id", response.id)
+    print(f"✓ Created user with ID: {response.id}")
+```
+
+---
+
+## 🔄 Flujo de Trabajo
+
+### Paso 1: Analizar el Archivo .proto
+
+Lee el archivo .proto para identificar:
+- Nombre del servicio (`service XxxService`)
+- Métodos disponibles (`rpc MethodName`)
+- Mensajes Request/Response
+- Tipos de datos de cada campo
+
+### Paso 2: Crear Estructura de Directorios
+
+```bash
+mkdir -p services/{service_name}/protos
+mkdir -p services/{service_name}/modules
+```
+
+### Paso 3: Copiar y Compilar Proto
+
+1. Copiar el archivo .proto al directorio `protos/`
+2. Compilar:
+```bash
+python -m grpc_tools.protoc \
+  --proto_path=services/{service_name}/protos \
+  --python_out=services/{service_name}/protos \
+  --grpc_python_out=services/{service_name}/protos \
+  {service_name}.proto
+```
+
+### Paso 4: Implementar Service Page
+
+Crear `{service_name}_page.py` con:
+- Herencia de `BaseGrpcPage`
+- Registro de stubs en `setup()`
+- Métodos `do_*` para cada RPC
+
+### Paso 5: Crear Módulos de Test
+
+Para cada método RPC, crear un test:
+- `_01_method_happy_path.py` - Caso exitoso
+- `_02_method_validation.py` - Validaciones
+- `_03_method_errors.py` - Manejo de errores
+
+---
+
+## 📚 Ejemplos Completos
+
+### Ejemplo 1: CRUD Completo
+
+```python
+# services/product_service/product_page.py
+
+from socialseed_e2e.core.base_grpc_page import BaseGrpcPage
+from services.product_service.protos import product_pb2, product_pb2_grpc
+
+
+class ProductServicePage(BaseGrpcPage):
+    """Page for Product gRPC service."""
+
+    def setup(self):
+        super().setup()
+        self.register_stub("product", product_pb2_grpc.ProductServiceStub)
+        return self
+
+    def do_create_product(self, name: str, price: float, stock: int):
+        """Create a new product."""
+        request = product_pb2.CreateProductRequest(
+            name=name,
+            price=price,
+            stock=stock
+        )
+        return self.call("product", "CreateProduct", request)
+
+    def do_get_product(self, product_id: str):
+        """Get product by ID."""
+        request = product_pb2.GetProductRequest(id=product_id)
+        return self.call("product", "GetProduct", request)
+```
+
+```python
+# services/product_service/modules/_01_create_product.py
+
+def run(page):
+    """Test product creation."""
+    response = page.do_create_product(
+        name="Laptop",
+        price=999.99,
+        stock=10
+    )
+
+    assert response.id
+    assert response.name == "Laptop"
+    assert abs(response.price - 999.99) < 0.01  # Float comparison
+
+    page.set_state("product_id", response.id)
+```
+
+### Ejemplo 2: Métodos con Metadata (Headers)
+
+```python
+def do_create_user_with_auth(self, name: str, email: str, auth_token: str):
+    """Create user with authentication."""
+    request = user_pb2.CreateUserRequest(name=name, email=email)
+
+    metadata = {"authorization": f"Bearer {auth_token}"}
+
+    return self.call(
+        "user",
+        "CreateUser",
+        request,
+        metadata=metadata
+    )
+```
+
+### Ejemplo 3: Manejo de Errores
+
+```python
+def run(page):
+    """Test error handling."""
+    import grpc
+
+    try:
+        # Intentar obtener usuario inexistente
+        response = page.do_get_user("nonexistent-id")
+        assert False, "Should have raised an error"
+    except grpc.RpcError as e:
+        # Verificar código de error esperado
+        assert e.code() == grpc.StatusCode.NOT_FOUND
+        print(f"✓ Got expected error: {e.details()}")
+```
+
+### Ejemplo 4: Usar ProtoSchemaHandler (Dinámico)
+
+```python
+from socialseed_e2e.utils.proto_schema import ProtoSchemaHandler
+
+class DynamicPage(BaseGrpcPage):
+    def __init__(self, host: str):
+        super().__init__(host)
+        self.proto_handler = ProtoSchemaHandler("./protos")
+        self.proto_handler.compile_protos()
+
+    def do_create_dynamic(self, **kwargs):
+        """Create using dynamic message creation."""
+        request = self.proto_handler.create_message(
+            "user_pb2",
+            "CreateUserRequest",
+            **kwargs
+        )
+        return self.call("user", "CreateUser", request)
+```
+
+---
+
+## ❌ Errores Comunes y Soluciones
+
+### Error 1: "ModuleNotFoundError: No module named 'user_pb2'"
+
+**Causa**: No se compilaron los archivos .proto
+
+**Solución**:
+```bash
+python -m grpc_tools.protoc \
+  --proto_path=. \
+  --python_out=./protos \
+  --grpc_python_out=./protos \
+  user.proto
+```
+
+### Error 2: "AttributeError: 'XxxStub' object has no method 'MethodName'"
+
+**Causa**: Nombre de método incorrecto o stub mal registrado
+
+**Solución**:
+```python
+# Verificar que el nombre del método coincide exactamente con el .proto
+# Si el proto tiene: rpc GetUser -> usar "GetUser"
+# Si el proto tiene: rpc GetUserById -> usar "GetUserById"
+
+# Verificar registro del stub
+self.register_stub("user", user_pb2_grpc.UserServiceStub)
+```
+
+### Error 3: "grpc.RpcError: StatusCode.UNAVAILABLE"
+
+**Causa**: Servidor gRPC no está corriendo o dirección incorrecta
+
+**Solución**:
+```python
+# Verificar que el servidor esté corriendo
+# Verificar host:port correcto
+page = UserServicePage("localhost:50051")  # Puerto correcto
+```
+
+### Error 4: "TypeError: Parameter to MergeFrom() must be instance of same class"
+
+**Causa**: Mezcla de mensajes de diferentes módulos protobuf
+
+**Solución**:
+```python
+# Asegurar que todos los mensajes vienen del mismo módulo
+from services.user_service.protos import user_pb2
+
+# Correcto
+request = user_pb2.GetUserRequest(id="123")
+
+# Incorrecto - mezclando con otro módulo
+# from other_module.protos import user_pb2
+```
+
+### Error 5: "ValueError: invalid literal for int() with base 10: ''"
+
+**Causa**: Campos numéricos en protobuf no pueden ser cadenas vacías
+
+**Solución**:
+```python
+# Correcto - usar 0 para campos numéricos opcionales
+request = user_pb2.UpdateUserRequest(
+    id=user_id,
+    name=name or "",
+    age=age or 0  # No usar ""
+)
+```
+
+---
+
+## ✅ Checklist Pre-Entrega
+
+Antes de entregar tests gRPC, verificar:
+
+- [ ] Archivo .proto está definido y compila sin errores
+- [ ] Archivos `_pb2.py` y `_pb2_grpc.py` están generados
+- [ ] Service Page hereda de `BaseGrpcPage`
+- [ ] Stubs registrados correctamente en `setup()`
+- [ ] Todos los métodos usan prefijo `do_*`
+- [ ] Imports son absolutos (no relativos)
+- [ ] Tests comparten estado usando `set_state()` / `get_state()`
+- [ ] Se usa `page.assert_ok()` después de llamadas exitosas
+- [ ] Manejo de errores con try/except para casos negativos
+- [ ] Documentación de cada método con docstrings
+
+---
+
+## 🎯 Prompt para Agentes de IA
+
+Cuando el usuario pida generar tests gRPC, usar este prompt:
+
+```
+Genera tests E2E para el servicio gRPC definido en {ruta/al/archivo.proto}.
+
+Pasos:
+1. Lee el archivo .proto y extrae:
+   - Nombre del servicio
+   - Todos los métodos RPC
+   - Mensajes Request/Response
+   - Tipos de datos
+
+2. Crea la estructura:
+   - services/{nombre_servicio}/protos/{nombre}.proto
+   - services/{nombre_servicio}/{nombre}_page.py
+   - services/{nombre_servicio}/modules/_01_*.py, etc.
+
+3. Implementa:
+   - Service Page con BaseGrpcPage
+   - Métodos do_* para cada RPC
+   - Tests que cubran happy path y errores
+   - State sharing entre tests
+
+4. Compila los protos automáticamente
+
+Reglas:
+- Usa imports absolutos desde services/
+- Prefijo do_* en métodos
+- Maneja autenticación via metadata si es necesario
+- Usa set_state/get_state para compartir IDs
+```

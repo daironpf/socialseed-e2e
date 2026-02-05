@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "github.com/example/user";
+
+// User service for managing users
+service UserService {
+  // Get a user by ID
+  rpc GetUser (GetUserRequest) returns (User);
+
+  // Create a new user
+  rpc CreateUser (CreateUserRequest) returns (User);
+
+  // Update an existing user
+  rpc UpdateUser (UpdateUserRequest) returns (User);
+
+  // Delete a user
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+
+  // List all users
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+}
+
+// User message
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int32 age = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+// Request to get a user
+message GetUserRequest {
+  string id = 1;
+}
+
+// Request to create a user
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+  int32 age = 3;
+}
+
+// Request to update a user
+message UpdateUserRequest {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int32 age = 4;
+}
+
+// Request to delete a user
+message DeleteUserRequest {
+  string id = 1;
+}
+
+// Response from delete operation
+message DeleteUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request to list users
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+// Response with list of users
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}

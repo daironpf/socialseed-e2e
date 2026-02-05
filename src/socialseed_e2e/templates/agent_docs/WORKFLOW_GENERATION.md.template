@@ -4,9 +4,29 @@ Sigue este flujo de trabajo cuando el usuario te pida generar tests a partir de 
 
 **IMPORTANT PRINCIPLES:**
 - NO relative imports (from ..x import y) - use absolute imports from `services.xxx.data_schema`
-- Always use `by_alias=True` when serializing Pydantic models
+- Always use `by_alias=True` when serializing Pydantic models (REST only)
 - Handle authentication headers manually (no `update_headers` method)
 - Use `do_*` prefix for methods to avoid name conflicts with attributes
+- For gRPC: Compile proto files first, use generated stubs
+
+## Determinar el Tipo de API
+
+Antes de empezar, pregunta al usuario:
+- ¿Es una API **REST** (HTTP/JSON)?
+- ¿Es una API **gRPC** (Protocol Buffers)?
+
+### Si es REST
+Sigue los pasos de esta guía normalmente.
+
+### Si es gRPC
+Lee primero: **GRPC_AGENT_GUIDE.md.template**
+
+Pasos adicionales para gRPC:
+1. Solicitar archivo .proto
+2. Compilar: `python -m grpc_tools.protoc --proto_path=. --python_out=./protos --grpc_python_out=./protos service.proto`
+3. Heredar de `BaseGrpcPage` en lugar de `BasePage`
+4. Registrar stubs gRPC en lugar de configurar endpoints HTTP
+5. Crear mensajes protobuf en lugar de Pydantic models
 
 ## Paso 1: Entender el Servicio
 

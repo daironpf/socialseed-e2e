@@ -1,0 +1,577 @@
+# Ejemplo Completo de Test gRPC Generado
+
+Este archivo sirve como referencia "Gold Standard" para tests gRPC.
+
+## Scenario: API de Inventario (InventoryService)
+
+### 1. services/inventory_service/protos/inventory.proto
+
+```protobuf
+syntax = "proto3";
+
+package inventory;
+
+option go_package = "github.com/example/inventory";
+
+service InventoryService {
+  rpc CreateItem (CreateItemRequest) returns (Item);
+  rpc GetItem (GetItemRequest) returns (Item);
+  rpc UpdateItem (UpdateItemRequest) returns (Item);
+  rpc DeleteItem (DeleteItemRequest) returns (DeleteItemResponse);
+  rpc ListItems (ListItemsRequest) returns (ListItemsResponse);
+  rpc UpdateStock (UpdateStockRequest) returns (Item);
+}
+
+message Item {
+  string id = 1;
+  string name = 2;
+  string sku = 3;
+  string description = 4;
+  double price = 5;
+  int32 stock_quantity = 6;
+  string category = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateItemRequest {
+  string name = 1;
+  string sku = 2;
+  string description = 3;
+  double price = 4;
+  int32 stock_quantity = 5;
+  string category = 6;
+}
+
+message GetItemRequest {
+  string id = 1;
+}
+
+message UpdateItemRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  string category = 5;
+}
+
+message DeleteItemRequest {
+  string id = 1;
+}
+
+message DeleteItemResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListItemsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  string category = 3;
+}
+
+message ListItemsResponse {
+  repeated Item items = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateStockRequest {
+  string item_id = 1;
+  int32 quantity_change = 2;
+  string reason = 3;
+}
+```
+
+### 2. Compilar Protos
+
+```bash
+cd services/inventory_service
+python -m grpc_tools.protoc \
+  --proto_path=./protos \
+  --python_out=./protos \
+  --grpc_python_out=./protos \
+  inventory.proto
+```
+
+### 3. services/inventory_service/inventory_page.py
+
+```python
+"""Page object for Inventory gRPC service."""
+
+from typing import Optional
+from socialseed_e2e.core.base_grpc_page import BaseGrpcPage
+from services.inventory_service.protos import inventory_pb2
+from services.inventory_service.protos import inventory_pb2_grpc
+
+
+class InventoryServicePage(BaseGrpcPage):
+    """Page for testing Inventory gRPC service.
+
+    Provides methods for CRUD operations on inventory items
+    and stock management.
+    """
+
+    def __init__(
+        self,
+        host: str = "localhost:50051",
+        use_tls: bool = False,
+        timeout: float = 30.0,
+    ):
+        super().__init__(host=host, use_tls=use_tls, timeout=timeout)
+        self.created_item_id: Optional[str] = None
+        self.created_item_sku: Optional[str] = None
+
+    def setup(self) -> "InventoryServicePage":
+        """Setup page and register stubs."""
+        super().setup()
+        self.register_stub("inventory", inventory_pb2_grpc.InventoryServiceStub)
+        return self
+
+    def do_create_item(
+        self,
+        name: str,
+        sku: str,
+        description: str,
+        price: float,
+        stock_quantity: int,
+        category: str
+    ) -> inventory_pb2.Item:
+        """Create a new inventory item.
+
+        Args:
+            name: Item name
+            sku: Stock keeping unit (unique identifier)
+            description: Item description
+            price: Item price
+            stock_quantity: Initial stock quantity
+            category: Item category
+
+        Returns:
+            Created Item message
+        """
+        request = inventory_pb2.CreateItemRequest(
+            name=name,
+            sku=sku,
+            description=description,
+            price=price,
+            stock_quantity=stock_quantity,
+            category=category
+        )
+        return self.call("inventory", "CreateItem", request)
+
+    def do_get_item(self, item_id: str) -> inventory_pb2.Item:
+        """Get item by ID.
+
+        Args:
+            item_id: Item unique identifier
+
+        Returns:
+            Item message
+        """
+        request = inventory_pb2.GetItemRequest(id=item_id)
+        return self.call("inventory", "GetItem", request)
+
+    def do_update_item(
+        self,
+        item_id: str,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        price: Optional[float] = None,
+        category: Optional[str] = None
+    ) -> inventory_pb2.Item:
+        """Update an existing item.
+
+        Args:
+            item_id: Item ID to update
+            name: New name (optional)
+            description: New description (optional)
+            price: New price (optional)
+            category: New category (optional)
+
+        Returns:
+            Updated Item message
+        """
+        request = inventory_pb2.UpdateItemRequest(
+            id=item_id,
+            name=name or "",
+            description=description or "",
+            price=price or 0.0,
+            category=category or ""
+        )
+        return self.call("inventory", "UpdateItem", request)
+
+    def do_delete_item(self, item_id: str) -> inventory_pb2.DeleteItemResponse:
+        """Delete an item.
+
+        Args:
+            item_id: Item ID to delete
+
+        Returns:
+            Delete response
+        """
+        request = inventory_pb2.DeleteItemRequest(id=item_id)
+        return self.call("inventory", "DeleteItem", request)
+
+    def do_list_items(
+        self,
+        page_size: int = 10,
+        category: Optional[str] = None
+    ) -> inventory_pb2.ListItemsResponse:
+        """List items with optional filtering.
+
+        Args:
+            page_size: Number of items per page
+            category: Filter by category (optional)
+
+        Returns:
+            List response with items
+        """
+        request = inventory_pb2.ListItemsRequest(
+            page_size=page_size,
+            category=category or ""
+        )
+        return self.call("inventory", "ListItems", request)
+
+    def do_update_stock(
+        self,
+        item_id: str,
+        quantity_change: int,
+        reason: str
+    ) -> inventory_pb2.Item:
+        """Update item stock quantity.
+
+        Args:
+            item_id: Item ID
+            quantity_change: Positive for addition, negative for removal
+            reason: Reason for stock change
+
+        Returns:
+            Updated Item with new stock quantity
+        """
+        request = inventory_pb2.UpdateStockRequest(
+            item_id=item_id,
+            quantity_change=quantity_change,
+            reason=reason
+        )
+        return self.call("inventory", "UpdateStock", request)
+```
+
+### 4. services/inventory_service/modules/_01_create_item.py
+
+```python
+"""Test module: Create inventory item."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.inventory_service.inventory_page import InventoryServicePage
+
+
+def run(page: "InventoryServicePage"):
+    """Execute create item test.
+
+    Test Steps:
+    1. Create a new item with all fields
+    2. Verify response has ID
+    3. Verify all fields match input
+    4. Save item ID for subsequent tests
+    """
+    print("STEP 1: Create Inventory Item")
+
+    # Arrange
+    item_data = {
+        "name": "Wireless Mouse",
+        "sku": "WM-2024-001",
+        "description": "High-quality wireless mouse with ergonomic design",
+        "price": 29.99,
+        "stock_quantity": 100,
+        "category": "Electronics"
+    }
+
+    # Act
+    response = page.do_create_item(**item_data)
+
+    # Assert
+    assert response.id, "Item ID should not be empty"
+    assert response.name == item_data["name"], f"Name mismatch"
+    assert response.sku == item_data["sku"], f"SKU mismatch"
+    assert response.description == item_data["description"], f"Description mismatch"
+    assert abs(response.price - item_data["price"]) < 0.01, f"Price mismatch"
+    assert response.stock_quantity == item_data["stock_quantity"], f"Stock mismatch"
+    assert response.category == item_data["category"], f"Category mismatch"
+    assert response.created_at, "Created timestamp should be set"
+
+    # Save state for next tests
+    page.set_state("item_id", response.id)
+    page.set_state("item_sku", response.sku)
+
+    print(f"✓ Created item: {response.name} (ID: {response.id}, SKU: {response.sku})")
+```
+
+### 5. services/inventory_service/modules/_02_get_item.py
+
+```python
+"""Test module: Get inventory item by ID."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.inventory_service.inventory_page import InventoryServicePage
+
+
+def run(page: "InventoryServicePage"):
+    """Execute get item test.
+
+    Test Steps:
+    1. Retrieve item using ID from previous test
+    2. Verify all fields match created item
+    """
+    print("STEP 2: Get Inventory Item")
+
+    # Get item ID from previous test
+    item_id = page.get_state("item_id")
+    assert item_id, "Item ID should be available from previous test"
+
+    # Act
+    response = page.do_get_item(item_id)
+
+    # Assert
+    assert response.id == item_id, "Retrieved item ID should match"
+    assert response.name == "Wireless Mouse", "Name should match created item"
+    assert response.sku == "WM-2024-001", "SKU should match"
+    assert response.category == "Electronics", "Category should match"
+
+    print(f"✓ Retrieved item: {response.name} (ID: {response.id})")
+```
+
+### 6. services/inventory_service/modules/_03_update_item.py
+
+```python
+"""Test module: Update inventory item."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.inventory_service.inventory_page import InventoryServicePage
+
+
+def run(page: "InventoryServicePage"):
+    """Execute update item test.
+
+    Test Steps:
+    1. Update item name and price
+    2. Verify response reflects changes
+    3. Verify unchanged fields remain the same
+    """
+    print("STEP 3: Update Inventory Item")
+
+    # Get item ID from previous test
+    item_id = page.get_state("item_id")
+    assert item_id, "Item ID should be available"
+
+    # Arrange - new values
+    new_name = "Wireless Mouse Pro"
+    new_price = 39.99
+
+    # Act
+    response = page.do_update_item(
+        item_id=item_id,
+        name=new_name,
+        price=new_price
+    )
+
+    # Assert - check updated fields
+    assert response.name == new_name, "Name should be updated"
+    assert abs(response.price - new_price) < 0.01, "Price should be updated"
+
+    # Assert - unchanged fields should remain
+    assert response.sku == "WM-2024-001", "SKU should remain unchanged"
+    assert response.category == "Electronics", "Category should remain unchanged"
+    assert response.updated_at, "Updated timestamp should be set"
+
+    print(f"✓ Updated item: {response.name} (${response.price})")
+```
+
+### 7. services/inventory_service/modules/_04_update_stock.py
+
+```python
+"""Test module: Update item stock quantity."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.inventory_service.inventory_page import InventoryServicePage
+
+
+def run(page: "InventoryServicePage"):
+    """Execute stock update test.
+
+    Test Steps:
+    1. Add stock to item
+    2. Verify new quantity
+    3. Remove some stock
+    4. Verify final quantity
+    """
+    print("STEP 4: Update Stock Quantity")
+
+    item_id = page.get_state("item_id")
+    assert item_id, "Item ID should be available"
+
+    # Initial stock was 100, add 50 more
+    response = page.do_update_stock(
+        item_id=item_id,
+        quantity_change=50,
+        reason="Restocking for holiday season"
+    )
+
+    assert response.stock_quantity == 150, "Stock should be 150 after adding 50"
+    print(f"✓ Added stock: 150 units available")
+
+    # Now sell 30 units
+    response = page.do_update_stock(
+        item_id=item_id,
+        quantity_change=-30,
+        reason="Customer order #12345"
+    )
+
+    assert response.stock_quantity == 120, "Stock should be 120 after removing 30"
+    print(f"✓ Removed stock: 120 units available")
+```
+
+### 8. services/inventory_service/modules/_05_list_items.py
+
+```python
+"""Test module: List inventory items."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.inventory_service.inventory_page import InventoryServicePage
+
+
+def run(page: "InventoryServicePage"):
+    """Execute list items test.
+
+    Test Steps:
+    1. List all items
+    2. Verify created item is in the list
+    3. Filter by category
+    4. Verify filtering works
+    """
+    print("STEP 5: List Inventory Items")
+
+    item_id = page.get_state("item_id")
+
+    # List all items
+    response = page.do_list_items(page_size=10)
+
+    assert response.total_count >= 1, "Should have at least our created item"
+    assert len(response.items) >= 1, "Items list should not be empty"
+
+    # Verify our item is in the list
+    item_ids = [item.id for item in response.items]
+    assert item_id in item_ids, "Created item should be in the list"
+
+    print(f"✓ Listed {len(response.items)} items (total: {response.total_count})")
+
+    # Test category filtering
+    response = page.do_list_items(page_size=10, category="Electronics")
+
+    assert all(item.category == "Electronics" for item in response.items), \
+        "All items should be in Electronics category"
+
+    print(f"✓ Filtered by category: {len(response.items)} Electronics items")
+```
+
+### 9. services/inventory_service/modules/_99_cleanup.py
+
+```python
+"""Test module: Cleanup - delete created items."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.inventory_service.inventory_page import InventoryServicePage
+
+
+def run(page: "InventoryServicePage"):
+    """Execute cleanup test.
+
+    Test Steps:
+    1. Delete the item created in test 1
+    2. Verify deletion success
+    3. Verify item no longer exists
+    """
+    print("STEP 99: Cleanup - Delete Item")
+
+    item_id = page.get_state("item_id")
+    if not item_id:
+        print("  No item to clean up")
+        return
+
+    # Act - delete item
+    response = page.do_delete_item(item_id)
+
+    # Assert
+    assert response.success, "Delete should succeed"
+    assert "deleted" in response.message.lower() or "success" in response.message.lower(), \
+        "Message should indicate success"
+
+    print(f"✓ Deleted item (ID: {item_id})")
+
+    # Verify item no longer exists
+    import grpc
+    try:
+        page.do_get_item(item_id)
+        assert False, "Item should not exist after deletion"
+    except grpc.RpcError as e:
+        assert e.code() == grpc.StatusCode.NOT_FOUND, \
+            "Should get NOT_FOUND error"
+        print(f"✓ Verified item no longer exists")
+```
+
+---
+
+## Key Points from Example
+
+### 1. State Sharing
+```python
+# Create test saves item_id
+page.set_state("item_id", response.id)
+
+# Subsequent tests retrieve it
+item_id = page.get_state("item_id")
+```
+
+### 2. Error Handling
+```python
+import grpc
+
+try:
+    page.do_get_item(deleted_id)
+except grpc.RpcError as e:
+    assert e.code() == grpc.StatusCode.NOT_FOUND
+```
+
+### 3. Float Comparisons
+```python
+# Don't use exact equality for floats
+assert abs(response.price - 29.99) < 0.01
+```
+
+### 4. Proto Message Access
+```python
+# Access fields directly as attributes
+item.id
+item.name
+item.stock_quantity
+```
+
+### 5. Cleanup Pattern
+```python
+# Always cleanup in _99_cleanup.py
+# Check if state exists before cleanup
+if not page.get_state("item_id"):
+    return  # Nothing to clean up
+```
