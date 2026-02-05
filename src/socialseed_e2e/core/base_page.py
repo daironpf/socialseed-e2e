@@ -264,14 +264,13 @@ class BasePage:
             config: Service configuration object
             playwright: Optional Playwright instance
             **kwargs: Additional arguments passed to BasePage constructor
-
         Returns:
             Configured BasePage instance
         """
         return cls(
             base_url=config.base_url,
             playwright=playwright,
-            default_headers=getattr(config, "headers", None),
+            default_headers=config.default_headers,
             health_endpoint=getattr(config, "health_endpoint", "/actuator/health"),
             **kwargs,
         )

@@ -19,6 +19,8 @@ class TestOrchestrator:
     Auto-discovers modules in services/*/modules/ and runs them.
     """
 
+    __test__ = False
+
     def __init__(
         self, root_dir: Optional[str] = None, services_path: str = "verify_services/e2e/services"
     ):

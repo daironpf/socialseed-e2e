@@ -246,8 +246,8 @@ class TestServicePageTemplate:
 
         assert "class UsersApiPage(BasePage):" in result
         assert "users-api" in result
-        assert "get_users_api_config" in result
-        assert "/users/{entity_id}" in result
+        assert "ENDPOINTS" in result
+        assert "access_token" in result
 
 
 class TestTestModuleTemplate:
@@ -293,7 +293,7 @@ class TestDataSchemaTemplate:
         assert "class UsersApiDTO(BaseModel):" in result
         assert "UsersApiCreateDTO" in result
         assert "UsersApiUpdateDTO" in result
-        assert "# Custom constants here" in result
+        assert "TEST_ENTITY" in result
 
 
 class TestConfigTemplate:
