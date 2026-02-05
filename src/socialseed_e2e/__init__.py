@@ -40,13 +40,15 @@ Uso básico:
 Para más información: https://github.com/daironpf/socialseed-e2e
 """
 
-__version__ = "0.2.0"
-__version_info__ = (0, 2, 0)
-__author__ = "Dairon Pérez Frías"
-__email__ = "dairon.perezfrias@gmail.com"
-__license__ = "MIT"
-__copyright__ = "Copyright 2026 Dairon Pérez Frías"
-__url__ = "https://github.com/daironpf/socialseed-e2e"
+from socialseed_e2e.__version__ import (
+    __author__,
+    __copyright__,
+    __email__,
+    __license__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 
 # CLI
 from socialseed_e2e.cli import main
