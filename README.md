@@ -30,6 +30,61 @@
 
 ---
 
+## 🚀 Quick Start
+
+```bash
+# Install
+pip install socialseed-e2e
+playwright install chromium
+
+# Initialize project
+e2e init my-api-tests
+cd my-api-tests
+
+# Create service and test
+e2e new-service users-api
+e2e new-test login --service users-api
+
+# Run tests
+e2e run
+```
+
+📚 **[Complete Quick Start Guide →](https://daironpf.github.io/socialseed-e2e/quickstart.html)**
+
+---
+
+## 🤖 Workflow with AI Agents
+
+socialseed-e2e is designed to be the first **AI-Native Testing Framework**. When you initialize a project with `e2e init`, a `.agent/` folder is created with specific instructions for LLMs (Claude, GPT-4, etc.).
+
+### How to use it:
+
+1. **Initialize**: Run `e2e init` in your project root.
+2. **Prompt your Agent**:
+   > "Read the documentation in the `.agent/` folder to understand the testing framework. Then, scan my API controllers in `../src/controllers/` and generate the corresponding E2E tests following the framework patterns."
+3. **Execute**: Run `e2e run` to verify the generated tests.
+
+The `.agent` folder contains:
+- **`AGENT_GUIDE.md`**: ⭐ **START HERE** - Complete guide with error prevention patterns, camelCase serialization, and common pitfalls to avoid
+- `FRAMEWORK_CONTEXT.md`: Architecture and core concepts.
+- `WORKFLOW_GENERATION.md`: Step-by-step guide for generating tests.
+- `EXAMPLE_TEST.md`: Gold standard code examples.
+
+### 🛡️ AI-First Error Prevention (v2.0)
+
+The framework now includes automatic safeguards for AI-generated code:
+
+- ✅ **Absolute imports only** - No more `ImportError` from relative imports
+- ✅ **CamelCase serialization** - Automatic Pydantic aliases for Java backends
+- ✅ **Dependency management** - `requirements.txt` includes email-validator
+- ✅ **Method naming** - `do_*` prefix prevents attribute/method conflicts
+- ✅ **Header handling** - Manual authentication management (no missing methods)
+- ✅ **Verification script** - Run `python verify_installation.py` to check setup
+
+**Result:** AI agents can generate working E2E tests with minimal or no human intervention.
+
+---
+
 ## 🏗️ Architecture
 
 ### Hexagonal Design
@@ -93,29 +148,6 @@ graph TD;
 
 ---
 
-## 🚀 Quick Start
-
-```bash
-# Install
-pip install socialseed-e2e
-playwright install chromium
-
-# Initialize project
-e2e init my-api-tests
-cd my-api-tests
-
-# Create service and test
-e2e new-service users-api
-e2e new-test login --service users-api
-
-# Run tests
-e2e run
-```
-
-📚 **[Complete Quick Start Guide →](https://daironpf.github.io/socialseed-e2e/quickstart.html)**
-
----
-
 ## 📦 Installation
 
 ```bash
@@ -165,6 +197,7 @@ pytest --cov=socialseed_e2e --cov-report=html
 - ✅ **Mock API**: Flask-based server for integration testing
 - ✅ **CI/CD**: GitHub Actions configured (CI, Release, Docs)
 - ✅ **Documentation**: Complete guides hosted on GitHub Pages
+- ✅ **AI-Ready**: Perfect for automated test generation workflows
 
 ### In Progress
 - 🚧 HTML reports with detailed metrics
@@ -211,40 +244,10 @@ This project recognizes AI agents as legitimate co-authors:
 - **Claude (Anthropic)** - Documentation, feature suggestions, bug fixes
 
 See [AI_CONTRIBUTORS.md](AI_CONTRIBUTORS.md) for full details and contribution philosophy.
-
+this list need updates
 ---
 
-## 🤖 Workflow with AI Agents
 
-socialseed-e2e is designed to be the first **AI-Native Testing Framework**. When you initialize a project with `e2e init`, a `.agent/` folder is created with specific instructions for LLMs (Claude, GPT-4, etc.).
-
-### How to use it:
-
-1. **Initialize**: Run `e2e init` in your project root.
-2. **Prompt your Agent**:
-   > "Read the documentation in the `.agent/` folder to understand the testing framework. Then, scan my API controllers in `src/controllers/` and generate the corresponding E2E tests following the framework patterns."
-3. **Execute**: Run `e2e run` to verify the generated tests.
-
-The `.agent` folder contains:
-- **`AGENT_GUIDE.md`**: ⭐ **START HERE** - Complete guide with error prevention patterns, camelCase serialization, and common pitfalls to avoid
-- `FRAMEWORK_CONTEXT.md`: Architecture and core concepts.
-- `WORKFLOW_GENERATION.md`: Step-by-step guide for generating tests.
-- `EXAMPLE_TEST.md`: Gold standard code examples.
-
-### 🛡️ AI-First Error Prevention (v2.0)
-
-The framework now includes automatic safeguards for AI-generated code:
-
-- ✅ **Absolute imports only** - No more `ImportError` from relative imports
-- ✅ **CamelCase serialization** - Automatic Pydantic aliases for Java backends
-- ✅ **Dependency management** - `requirements.txt` includes email-validator
-- ✅ **Method naming** - `do_*` prefix prevents attribute/method conflicts
-- ✅ **Header handling** - Manual authentication management (no missing methods)
-- ✅ **Verification script** - Run `python verify_installation.py` to check setup
-
-**Result:** AI agents can generate working E2E tests with minimal or no human intervention.
-
----
 
 ## 📚 Documentation
 
