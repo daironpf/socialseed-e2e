@@ -1,0 +1,197 @@
+"""gRPC Page Template for ${service_name} Service.
+
+This module provides a gRPC service page for testing ${service_name}.
+It inherits from BaseGrpcPage and provides service-specific methods.
+"""
+
+from typing import Any, Optional
+
+from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcRetryConfig
+from socialseed_e2e.utils.proto_schema import ProtoSchemaHandler
+
+# Import generated protobuf modules after compiling
+# from protos import ${proto_module_name}_pb2
+# from protos import ${proto_module_name}_pb2_grpc
+
+
+class ${class_name}GrpcPage(BaseGrpcPage):
+    """Page object for ${service_name} gRPC service.
+
+    This class provides methods for interacting with the ${service_name}
+    gRPC service, handling protobuf messages and service calls.
+
+    Example:
+        >>> page = ${class_name}GrpcPage("localhost:50051")
+        >>> page.setup()
+        >>> response = page.do_get_user("user-123")
+        >>> page.assert_ok(response)
+        >>> page.teardown()
+
+    Attributes:
+        proto_handler: Handler for protobuf schema operations
+        ${service}_stub: The gRPC stub for ${service_name}
+    """
+
+    def __init__(
+        self,
+        host: str = "localhost:50051",
+        use_tls: bool = False,
+        proto_dir: str = "./protos",
+        timeout: float = 30.0,
+        retry_config: Optional[GrpcRetryConfig] = None,
+        **kwargs
+    ):
+        """Initialize the ${service_name} gRPC page.
+
+        Args:
+            host: gRPC server host:port
+            use_tls: Whether to use TLS/SSL
+            proto_dir: Directory containing .proto files
+            timeout: Default timeout for calls
+            retry_config: Retry configuration
+            **kwargs: Additional arguments
+        """
+        super().__init__(
+            host=host,
+            use_tls=use_tls,
+            timeout=timeout,
+            retry_config=retry_config,
+            **kwargs
+        )
+
+        # Initialize protobuf schema handler
+        self.proto_handler = ProtoSchemaHandler(proto_dir)
+
+        # Compile proto files
+        self.proto_handler.compile_protos()
+
+    def setup(self) -> "${class_name}GrpcPage":
+        """Set up the gRPC page and register stubs.
+
+        Returns:
+            Self for method chaining
+        """
+        super().setup()
+
+        # Register gRPC stubs
+        # TODO: Import and register your generated stubs here
+        # from protos.${proto_module_name}_pb2_grpc import ${class_name}Stub
+        # self.register_stub("${service}", ${class_name}Stub)
+
+        return self
+
+    # ==========================================================================
+    # Service Methods - Implement your gRPC methods here
+    # ==========================================================================
+
+    def do_get_${entity}(self, ${entity}_id: str) -> Any:
+        """Call Get${Entity} method.
+
+        Args:
+            ${entity}_id: ID of the ${entity} to get
+
+        Returns:
+            The response message
+        """
+        # Create request message using protobuf handler
+        # request = self.proto_handler.create_message(
+        #     "${proto_module_name}_pb2",
+        #     "Get${Entity}Request",
+        #     id=${entity}_id
+        # )
+
+        # Make the gRPC call
+        # return self.call("${service}", "Get${Entity}", request)
+
+        raise NotImplementedError("Implement this method with your proto definitions")
+
+    def do_create_${entity}(self, name: str, **kwargs) -> Any:
+        """Call Create${Entity} method.
+
+        Args:
+            name: Name of the ${entity}
+            **kwargs: Additional fields
+
+        Returns:
+            The response message with created ${entity}
+        """
+        # Create request message
+        # request = self.proto_handler.create_message(
+        #     "${proto_module_name}_pb2",
+        #     "Create${Entity}Request",
+        #     name=name,
+        #     **kwargs
+        # )
+
+        # return self.call("${service}", "Create${Entity}", request)
+
+        raise NotImplementedError("Implement this method with your proto definitions")
+
+    def do_update_${entity}(self, ${entity}_id: str, **kwargs) -> Any:
+        """Call Update${Entity} method.
+
+        Args:
+            ${entity}_id: ID of the ${entity} to update
+            **kwargs: Fields to update
+
+        Returns:
+            The response message
+        """
+        raise NotImplementedError("Implement this method with your proto definitions")
+
+    def do_delete_${entity}(self, ${entity}_id: str) -> Any:
+        """Call Delete${Entity} method.
+
+        Args:
+            ${entity}_id: ID of the ${entity} to delete
+
+        Returns:
+            The response message
+        """
+        raise NotImplementedError("Implement this method with your proto definitions")
+
+    def do_list_${entities}(self, page_size: int = 10, page_token: str = "") -> Any:
+        """Call List${Entities} method.
+
+        Args:
+            page_size: Number of items per page
+            page_token: Token for pagination
+
+        Returns:
+            The response message with list of ${entities}
+        """
+        raise NotImplementedError("Implement this method with your proto definitions")
+
+    # ==========================================================================
+    # Helper Methods
+    # ==========================================================================
+
+    def _get_metadata(self) -> dict:
+        """Get metadata for gRPC calls.
+
+        Override this to add authentication or other metadata.
+
+        Returns:
+            Dictionary of metadata key-value pairs
+        """
+        metadata = {}
+        # Add authentication token if available
+        # if self.access_token:
+        #     metadata["authorization"] = f"Bearer {self.access_token}"
+        return metadata
+
+    def _create_request(self, message_type: str, **kwargs) -> Any:
+        """Create a protobuf request message.
+
+        Args:
+            message_type: Name of the message type
+            **kwargs: Field values
+
+        Returns:
+            The created message
+        """
+        return self.proto_handler.create_message(
+            "${proto_module_name}_pb2",
+            message_type,
+            **kwargs
+        )
