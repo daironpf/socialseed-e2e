@@ -4,8 +4,8 @@ Version information for socialseed-e2e.
 This module contains version information and metadata about the package.
 """
 
-__version__ = "0.1.1"
-__version_info__ = (0, 1, 1)
+__version__ = "0.1.2"
+__version_info__ = (0, 1, 2)
 __author__ = "Dairon Pérez Frías"
 __email__ = "dairon.perezfrias@gmail.com"
 __license__ = "MIT"

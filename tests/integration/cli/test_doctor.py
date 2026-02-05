@@ -27,7 +27,7 @@ class TestE2EDoctorCommand:
         result = cli_runner.invoke(cli, ["doctor"])
 
         assert result.exit_code == 0
-        assert "Verificación" in result.output or "Check" in result.output
+        assert any(word in result.output for word in ["Verificación", "Verification", "Check"])
         assert "Python" in result.output
 
     def test_doctor_checks_python_version(self, cli_runner):

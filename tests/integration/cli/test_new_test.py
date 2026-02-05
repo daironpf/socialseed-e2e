@@ -94,4 +94,6 @@ class TestE2ENewTestCommand:
         result = isolated_cli_runner.invoke(cli, ["new-test", "login", "--service", "nonexistent"])
 
         assert result.exit_code != 0
-        assert "no existe" in result.output or "not found" in result.output.lower()
+        assert any(
+            word in result.output.lower() for word in ["no existe", "not found", "does not exist"]
+        )

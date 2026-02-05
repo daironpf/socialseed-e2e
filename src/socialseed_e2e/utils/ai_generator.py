@@ -49,36 +49,36 @@ class JavaControllerParser:
         """
         endpoints = []
 
-        # Pattern for method detection with annotations
-        method_pattern = r'@((?:Post|Get|Put|Delete|Patch)Mapping)\s*\(\s*(?:value\s*=\s*)?"([^"]+)"[^)]*\)\s*(?:@[^\n]+\s*)*?(?:public\s+)?\s*(?:ResponseEntity<[^>]+>|\w+)\s+(\w+)\s*\([^)]*\)'
+        # Even more robust regex for Spring Boot methods
+        method_pattern = r'@(?:Post|Get|Put|Delete|Patch)Mapping\s*\(\s*(?:(?:value|path)\s*=\s*)?"([^"]+)"[^)]*\)\s*(?:@[^;{]+\s+)*?(?:public\s+)?\s*(?:ResponseEntity<[^>]+>|[\w<>\?]+)\s+(\w+)\s*\(([^)]*)\)'
 
-        # Alternative pattern for simple mappings
-        simple_pattern = r'@((?:Post|Get|Put|Delete|Patch)Mapping)\s*\(\s*"([^"]+)"\s*\)\s*(?:@[^\n]+\s*)*?(?:public\s+)?\s*(?:ResponseEntity<[^>]+>|\w+)\s+(\w+)\s*\([^)]*\)'
+        # We need to find the HTTP method separately because we removed it from the capturing group to simplify the regex
+        all_mapping_patterns = [
+            (r"@PostMapping", "POST"),
+            (r"@GetMapping", "GET"),
+            (r"@PutMapping", "PUT"),
+            (r"@DeleteMapping", "DELETE"),
+            (r"@PatchMapping", "PATCH"),
+        ]
 
-        for pattern in [method_pattern, simple_pattern]:
+        for mapping_tag, http_method in all_mapping_patterns:
+            pattern = (
+                mapping_tag
+                + r'\s*\(\s*(?:(?:value|path)\s*=\s*)?"([^"]+)"[^)]*\)\s*(?:@[^;{]+\s+)*?(?:public\s+)?\s*(?:ResponseEntity<[^>]+>|[\w<>\?]+)\s+(\w+)\s*\(([^)]*)\)'
+            )
             matches = re.finditer(pattern, java_code, re.MULTILINE | re.DOTALL)
             for match in matches:
-                http_method = match.group(1).replace("Mapping", "").upper()
-                path = match.group(2)
-                method_name = match.group(3)
+                path = match.group(1)
+                method_name = match.group(2)
+                arguments = match.group(3)
 
                 # Check for @RequestBody
                 request_dto = None
                 request_body_match = re.search(
-                    rf"{re.escape(match.group(0))}.*?@RequestBody\s+@Valid\s+(\w+)\s+(\w+)",
-                    java_code,
-                    re.DOTALL,
+                    r"@RequestBody\s+(?:@\w+\s+)*(\w+)\s+(\w+)", arguments
                 )
                 if request_body_match:
                     request_dto = request_body_match.group(1)
-                else:
-                    request_body_match = re.search(
-                        rf"{re.escape(match.group(0))}.*?@RequestBody\s+(\w+)\s+(\w+)",
-                        java_code,
-                        re.DOTALL,
-                    )
-                    if request_body_match:
-                        request_dto = request_body_match.group(1)
 
                 # Check for authentication requirements
                 requires_auth = (
@@ -122,13 +122,18 @@ class JavaControllerParser:
             # Parse record components
             components = record_match.group(1)
             # Split by comma, but be careful with generics
+            # Improved regex to capture annotations for each field
             field_defs = re.findall(
-                r"(?:@\w+(?:\([^)]*\))?\s*)*(\w+(?:<[^>]+>)?)\s+(\w+)", components
+                r"((?:@\w+(?:\([^)]*\))?\s*)*)(\w+(?:<[^>]+>)?)\s+(\w+)", components
             )
 
-            for type_hint, name in field_defs:
+            for annotations, type_hint, name in field_defs:
                 # Map Java types to Python
                 py_type = JavaControllerParser._map_java_type(type_hint.strip())
+
+                # Check for @Email specifically in this field's annotations
+                if "@Email" in annotations and py_type == "str":
+                    py_type = "EmailStr"
 
                 fields.append(DtoField(name=name, type_hint=py_type, required=True))
 

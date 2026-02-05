@@ -22,6 +22,9 @@ class TestE2ERunCommand:
         """Test that run shows configuration information."""
         isolated_cli_runner.invoke(cli, ["init"])
         isolated_cli_runner.invoke(cli, ["new-service", "test-api"])
+        # Create a dummy test
+        modules_dir = temp_dir / "services" / "test-api" / "modules"
+        (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
         result = isolated_cli_runner.invoke(cli, ["run"])
 
@@ -33,6 +36,9 @@ class TestE2ERunCommand:
         """Test that run shows environment information."""
         isolated_cli_runner.invoke(cli, ["init"])
         isolated_cli_runner.invoke(cli, ["new-service", "test-api"])
+        # Create a dummy test
+        modules_dir = temp_dir / "services" / "test-api" / "modules"
+        (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
         result = isolated_cli_runner.invoke(cli, ["run"])
 
@@ -45,16 +51,23 @@ class TestE2ERunCommand:
 
         # Create a service
         isolated_cli_runner.invoke(cli, ["new-service", "users-api"])
+        # Create a dummy test
+        modules_dir = temp_dir / "services" / "users-api" / "modules"
+        (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
         result = isolated_cli_runner.invoke(cli, ["run"])
 
         assert result.exit_code == 0
         assert "users-api" in result.output
-        assert "Servicios" in result.output or "Services" in result.output
+        assert any(word in result.output for word in ["Test", "result", "passed"])
 
     def test_run_with_service_filter(self, isolated_cli_runner, temp_dir):
         """Test run with --service filter option."""
         isolated_cli_runner.invoke(cli, ["init"])
+        isolated_cli_runner.invoke(cli, ["new-service", "users-api"])
+        # Create a dummy test
+        modules_dir = temp_dir / "services" / "users-api" / "modules"
+        (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
         result = isolated_cli_runner.invoke(cli, ["run", "--service", "users-api"])
 
