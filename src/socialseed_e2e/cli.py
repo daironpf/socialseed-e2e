@@ -765,6 +765,159 @@ def _update_e2e_conf(service_name: str, base_url: str, health_endpoint: str) -> 
     console.print("  [green]✓[/green] Updated: e2e.conf")
 
 
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option("--force", is_flag=True, help="Force full scan instead of smart sync")
+def manifest(directory: str, force: bool):
+    """Generate AI Project Manifest for token optimization.
+
+    Analyzes the project and generates project_knowledge.json containing:
+    - All detected endpoints and HTTP methods
+    - DTO schemas and validation rules
+    - Port configurations and environment variables
+    - Relationships between services
+
+    Examples:
+        e2e manifest                    # Generate manifest in current directory
+        e2e manifest /path/to/project   # Generate manifest for specific project
+        e2e manifest --force            # Force full re-scan
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n📚 [bold cyan]Generating AI Project Manifest[/bold cyan]")
+    console.print(f"   Project: {target_path}\n")
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestGenerator
+
+        generator = ManifestGenerator(target_path)
+        manifest = generator.generate(force_full_scan=force)
+
+        # Display summary
+        table = Table(title="Project Summary")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Count", style="green")
+
+        total_endpoints = sum(len(s.endpoints) for s in manifest.services)
+        total_dtos = sum(len(s.dto_schemas) for s in manifest.services)
+        total_ports = sum(len(s.ports) for s in manifest.services)
+        total_env_vars = len(manifest.global_env_vars)
+
+        table.add_row("Services", str(len(manifest.services)))
+        table.add_row("Endpoints", str(total_endpoints))
+        table.add_row("DTOs", str(total_dtos))
+        table.add_row("Ports", str(total_ports))
+        table.add_row("Global Env Vars", str(total_env_vars))
+
+        console.print(table)
+        console.print()
+
+        # Display services
+        if manifest.services:
+            console.print("[bold]Services detected:[/bold]")
+            for service in manifest.services:
+                framework = service.framework or "unknown framework"
+                console.print(f"  • {service.name} ({service.language}, {framework})")
+            console.print()
+
+        console.print("[bold green]✅ Manifest generated successfully![/bold green]")
+        console.print(f"   📄 Location: {generator.manifest_path}\n")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error generating manifest:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--format",
+    "-f",
+    default="json",
+    type=click.Choice(["json", "markdown"]),
+    help="Output format",
+)
+def manifest_query(directory: str, format: str):
+    """Query the AI Project Manifest.
+
+    Displays project information from the generated manifest.
+
+    Examples:
+        e2e manifest-query                    # Query current directory
+        e2e manifest-query /path/to/project   # Query specific project
+        e2e manifest-query -f markdown        # Output as Markdown
+    """
+    target_path = Path(directory).resolve()
+    manifest_path = target_path / "project_knowledge.json"
+
+    if not manifest_path.exists():
+        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print("Run 'e2e manifest' first to generate the manifest.")
+        sys.exit(1)
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestAPI
+
+        api = ManifestAPI(target_path)
+
+        if format == "json":
+            output = api.export_summary(format="json")
+            console.print(output)
+        else:  # markdown
+            output = api.export_summary(format="markdown")
+            console.print(output)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error querying manifest:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+def watch(directory: str):
+    """Watch project files and auto-update manifest.
+
+    Monitors source files for changes and automatically updates
+    the project_knowledge.json manifest using smart sync.
+
+    Examples:
+        e2e watch                    # Watch current directory
+        e2e watch /path/to/project   # Watch specific project
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestGenerator, SmartSyncManager
+
+        generator = ManifestGenerator(target_path)
+
+        # Ensure manifest exists
+        if not generator.manifest_path.exists():
+            console.print("📚 Generating initial manifest...\n")
+            generator.generate()
+
+        console.print("\n👁️  [bold cyan]Starting file watcher[/bold cyan]")
+        console.print(f"   Project: {target_path}")
+        console.print("   Press Ctrl+C to stop\n")
+
+        manager = SmartSyncManager(generator, debounce_seconds=2.0)
+        manager.start_watching(blocking=True)
+
+    except KeyboardInterrupt:
+        console.print("\n\n[yellow]👋 File watcher stopped by user[/yellow]")
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()
