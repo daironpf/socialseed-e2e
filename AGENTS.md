@@ -86,6 +86,85 @@ e2e --version                      # Versión
 5. **Crear tests**: `e2e new-test login --service users-api`
 6. **Ejecutar**: `e2e run`
 
+## AI Project Manifest (Nuevo Feature)
+
+### Generación de project_knowledge.json
+
+El framework ahora incluye un sistema de **Manifest de Conocimiento del Proyecto** que genera un archivo JSON estructurado con información de la API:
+
+```bash
+# Generar el manifest en el directorio actual
+e2e manifest
+
+# Para un proyecto específico
+e2e manifest /path/to/project
+
+# Forzar re-escaneo completo
+e2e manifest --force
+```
+
+### Smart Sync (Sincronización Inteligente)
+
+El sistema detecta automáticamente cambios en archivos y solo re-escanea los modificados:
+
+```bash
+# Iniciar watcher con auto-actualización
+e2e watch
+
+# O usar SmartSyncManager programáticamente
+from socialseed_e2e.project_manifest import ManifestGenerator, SmartSyncManager
+
+generator = ManifestGenerator("/path/to/project")
+manager = SmartSyncManager(generator)
+manager.start_watching()
+```
+
+### Internal API para Consulta
+
+Los agentes de IA pueden consultar el manifest en lugar de parsear el código fuente:
+
+```python
+from socialseed_e2e.project_manifest import ManifestAPI, HttpMethod
+
+api = ManifestAPI("/path/to/project")
+
+# Obtener endpoints
+endpoints = api.get_endpoints(method=HttpMethod.POST, requires_auth=True)
+
+# Buscar DTOs
+dto = api.get_dto("UserRequest")
+
+# Obtener variables de entorno
+env_vars = api.get_environment_variables()
+
+# Consultas optimizadas para tokens
+from socialseed_e2e.project_manifest import TokenOptimizedQuery
+query = TokenOptimizedQuery(api)
+compact_endpoints = query.list_all_endpoints_compact()
+```
+
+### Características del Manifest
+
+- **Endpoints**: Métodos HTTP, paths, parámetros, DTOs de request/response
+- **DTO Schemas**: Campos con tipos, validaciones (min/max, regex), defaults
+- **Puertos y Configuración**: Puertos detectados, variables de entorno
+- **Dependencias entre Servicios**: Qué endpoints llaman a otros servicios
+- **Multi-lenguaje**: Soporta Python (FastAPI, Flask), Java (Spring), JavaScript/TypeScript (Express)
+
+### Localización del Código
+
+```
+src/socialseed_e2e/project_manifest/
+├── __init__.py           # API pública
+├── models.py             # Modelos Pydantic (DTOs, Endpoints, etc.)
+├── parsers.py            # Parsers por lenguaje (Python, Java, Node)
+├── generator.py          # Generador del manifest
+├── file_watcher.py       # Smart Sync con watcher de archivos
+└── api.py                # Internal API para consultas
+```
+
+Ver documentación completa en `docs/project-manifest.md`
+
 ## Sistema de Contexto Persistente (IMPORTANTE)
 
 ### Problema Conocido
@@ -183,6 +262,9 @@ jinja2>=3.1.0
 - ✅ Core del framework completo y testeado
 - ✅ Sistema de configuración YAML/JSON
 - ✅ Test orchestrator con auto-discover
+- ✅ AI Project Manifest v1.0 - Generación y consulta de conocimiento del proyecto
+- ✅ Smart Sync - Actualización incremental del manifest
+- ✅ Multi-language parsing - Python, Java, JavaScript/TypeScript
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
