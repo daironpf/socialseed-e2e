@@ -47,7 +47,9 @@ def init(directory: str, force: bool):
     """
     target_path = Path(directory).resolve()
 
-    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
+    console.print(
+        f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n"
+    )
 
     # Create directory structure
     dirs_to_create = [
@@ -65,7 +67,9 @@ def init(directory: str, force: bool):
                 if dir_path.parent == target_path
                 else str(dir_path.relative_to(target_path))
             )
-            console.print(f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}")
+            console.print(
+                f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}"
+            )
         else:
             console.print(
                 f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
@@ -89,7 +93,9 @@ def init(directory: str, force: bool):
         )
         console.print("  [green]✓[/green] Created: e2e.conf")
     else:
-        console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)")
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)"
+        )
 
     # Create .gitignore
     gitignore_path = target_path / ".gitignore"
@@ -219,13 +225,17 @@ email-validator>=2.0.0
         if result.returncode == 0:
             console.print("  [green]✓[/green] Dependencies installed")
         else:
-            console.print("  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed")
+            console.print(
+                "  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed"
+            )
             if result.stderr:
                 console.print(f"  [dim]{result.stderr[:200]}...[/dim]")
     except subprocess.TimeoutExpired:
         console.print("  [yellow]⚠ Warning:[/yellow] Installation took too long")
     except Exception as e:
-        console.print(f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}")
+        console.print(
+            f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}"
+        )
 
     # 2. Run verification (always)
     console.print("\n🔍 Verifying installation...")
@@ -294,7 +304,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         console.print("   Run: [cyan]e2e init[/cyan] first")
         sys.exit(1)
 
@@ -338,7 +350,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         str(service_path / f"{snake_case_name}_page.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py")
+    console.print(
+        f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py"
+    )
 
     # Create configuration file
     engine.render_to_file(
@@ -361,7 +375,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
     # Update e2e.conf
     _update_e2e_conf(name, base_url, health_endpoint)
 
-    console.print(f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n")
+    console.print(
+        f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n"
+    )
 
     console.print(
         Panel(
@@ -391,7 +407,9 @@ def new_test(name: str, service: str, description: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         sys.exit(1)
 
     # Verify that the service exists
@@ -400,7 +418,9 @@ def new_test(name: str, service: str, description: str):
 
     if not service_path.exists():
         console.print(f"[red]❌ Error:[/red] Service '{service}' does not exist.")
-        console.print(f"   Create the service first: [cyan]e2e new-service {service}[/cyan]")
+        console.print(
+            f"   Create the service first: [cyan]e2e new-service {service}[/cyan]"
+        )
         sys.exit(1)
 
     if not modules_path.exists():
@@ -440,10 +460,16 @@ def new_test(name: str, service: str, description: str):
     }
 
     # Create test using template
-    engine.render_to_file("test_module.py.template", template_vars, str(test_path), overwrite=False)
-    console.print(f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}")
+    engine.render_to_file(
+        "test_module.py.template", template_vars, str(test_path), overwrite=False
+    )
+    console.print(
+        f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}"
+    )
 
-    console.print(f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n")
+    console.print(
+        f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n"
+    )
 
     console.print(
         Panel(
@@ -566,7 +592,9 @@ def doctor():
     checks = []
 
     # Check Python
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    python_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     checks.append(("Python", python_version, sys.version_info >= (3, 9)))
 
     # Check Playwright
@@ -615,7 +643,9 @@ def doctor():
             services_exists,
         )
     )
-    checks.append(("tests/ directory", "OK" if tests_exists else "Not found", tests_exists))
+    checks.append(
+        ("tests/ directory", "OK" if tests_exists else "Not found", tests_exists)
+    )
 
     # Show results
     table = Table(title="System Verification")
@@ -641,11 +671,17 @@ def doctor():
         console.print("[cyan]Suggested solutions:[/cyan]")
 
         if not any(name == "Playwright" and ok for name, _, ok in checks):
-            console.print("  • Install Playwright: [white]pip install playwright[/white]")
+            console.print(
+                "  • Install Playwright: [white]pip install playwright[/white]"
+            )
         if not any(name == "Playwright CLI" and ok for name, _, ok in checks):
-            console.print("  • Install browsers: [white]playwright install chromium[/white]")
+            console.print(
+                "  • Install browsers: [white]playwright install chromium[/white]"
+            )
         if not any(name == "Pydantic" and ok for name, _, ok in checks):
-            console.print("  • Install dependencies: [white]pip install socialseed-e2e[/white]")
+            console.print(
+                "  • Install dependencies: [white]pip install socialseed-e2e[/white]"
+            )
         if not _is_e2e_project():
             console.print("  • Initialize project: [white]e2e init[/white]")
 
@@ -1009,7 +1045,9 @@ def retrieve(task: str, directory: str, max_chunks: int):
 
         for i, chunk in enumerate(chunks, 1):
             console.print(f"[bold]Chunk {i}:[/bold] {chunk.chunk_type}")
-            console.print(f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]")
+            console.print(
+                f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]"
+            )
             console.print(Panel(chunk.content, border_style="green"))
             console.print()
 
@@ -1059,6 +1097,53 @@ def build_index(directory: str):
     except ImportError as e:
         console.print(f"[red]❌ Missing dependency:[/red] {e}")
         console.print("Install with: pip install sentence-transformers")
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option("--auto-config", is_flag=True, help="Auto-generate e2e.conf from scan")
+def deep_scan(directory: str, auto_config: bool):
+    """Zero-config deep scan for automatic project mapping.
+
+    Analyzes your project to detect tech stack, extract endpoints,
+    and discover environment configuration without requiring manual setup.
+
+    Examples:
+        e2e deep-scan                    # Scan current directory
+        e2e deep-scan /path/to/project   # Scan specific project
+        e2e deep-scan --auto-config      # Scan and auto-configure
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    try:
+        from socialseed_e2e.project_manifest import DeepScanner, ManifestGenerator
+
+        # Run deep scan
+        scanner = DeepScanner(str(target_path))
+        result = scanner.scan()
+
+        if auto_config:
+            console.print("\n⚙️  [bold cyan]Auto-configuring project...[/bold cyan]\n")
+
+            for service in result["services"]:
+                service_name = service["name"]
+                recommendations = result["recommendations"]
+
+                if recommendations.get("base_url"):
+                    # Create service with detected config
+                    console.print(f"  Creating service: [green]{service_name}[/green]")
+                    console.print(f"  Base URL: {recommendations['base_url']}")
+
+            console.print("\n[bold green]✅ Auto-configuration complete![/bold green]")
+            console.print("   Run 'e2e run' to execute tests\n")
+
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
         sys.exit(1)
