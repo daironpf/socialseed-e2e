@@ -60,6 +60,10 @@ grpc = [
     "grpcio-tools>=1.59.0",
     "protobuf>=4.24.0",
 ]
+rag = [
+    "sentence-transformers>=2.2.0",
+    "numpy>=1.24.0",
+]
 
 [project.scripts]
 e2e = "socialseed_e2e.cli:main"
