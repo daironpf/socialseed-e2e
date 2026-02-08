@@ -165,6 +165,98 @@ src/socialseed_e2e/project_manifest/
 
 Ver documentación completa en `docs/project-manifest.md`
 
+## Zero-Config Deep Scan (Nuevo Feature #184)
+
+### Mapeo Automático sin Configuración
+
+El framework ahora puede actuar como un **detective** que mapea automáticamente tu aplicación sin necesidad de configuración manual:
+
+```bash
+# Analizar proyecto automáticamente
+e2e deep-scan
+
+# Analizar y auto-configurar
+e2e deep-scan --auto-config
+
+# Analizar proyecto específico
+e2e deep-scan /path/to/project
+```
+
+### Capacidades del Deep Scanner
+
+- **Detección de Tech Stack**: Identifica frameworks por patrones de código
+  - FastAPI: `@app.get`, `from fastapi import`
+  - Spring Boot: `@RestController`, `@GetMapping`
+  - Express: `require('express')`
+  - Django, Flask, NestJS, Gin, ASP.NET Core
+
+- **Extracción de Configuración**: Lee archivos de entorno
+  - `.env` files
+  - `docker-compose.yml`
+  - `application.properties` (Spring)
+  - Variables de entorno
+
+- **Descubrimiento de Servicios**: Detecta microservicios en estructuras comunes
+  - `services/`, `microservices/`, `apps/`
+
+- **Recomendaciones Automáticas**: Sugiere URLs base, puertos y endpoints de health
+
+### Deep Scanner API
+
+```python
+from socialseed_e2e.project_manifest import DeepScanner
+
+# Crear scanner
+scanner = DeepScanner("/path/to/project")
+
+# Ejecutar scan completo
+result = scanner.scan()
+
+# Ver frameworks detectados
+for fw in result['frameworks']:
+    print(f"{fw['framework']} ({fw['language']}) - {fw['confidence']:.0%}")
+
+# Ver servicios identificados
+for service in result['services']:
+    print(f"Service: {service['name']}")
+
+# Usar recomendaciones
+recommendations = result['recommendations']
+print(f"Base URL: {recommendations['base_url']}")
+print(f"Health Endpoint: {recommendations['health_endpoint']}")
+```
+
+### Flujo de Trabajo Zero-Config
+
+```bash
+# 1. Ir al directorio del proyecto
+cd /path/to/existing-api
+
+# 2. Ejecutar deep scan
+e2e deep-scan --auto-config
+
+# 3. El framework detecta automáticamente:
+#    - Tech stack (FastAPI, Spring, Express, etc.)
+#    - Puerto (8000, 8080, 3000, etc.)
+#    - Endpoints disponibles
+#    - Variables de entorno necesarias
+
+# 4. Genera e2e.conf automáticamente
+
+# 5. Listo para ejecutar tests
+e2e run
+```
+
+### Localización del Código
+
+```
+src/socialseed_e2e/project_manifest/
+├── deep_scanner.py       # Deep scanner zero-config
+│   ├── TechStackDetector    # Detección de frameworks
+│   ├── EnvironmentDetector  # Detección de config
+│   └── DeepScanner          # Scanner principal
+```
+
 ## Vector Embeddings & RAG (Nuevo Feature #86)
 
 ### Búsqueda Semántica con Embeddings
@@ -349,6 +441,7 @@ jinja2>=3.1.0
 - ✅ Multi-language parsing - Python, Java, JavaScript/TypeScript
 - ✅ Vector Embeddings & RAG v1.0 - Búsqueda semántica y retrieval para AI agents
 - ✅ Auto-sync de índice vectorial con cambios en manifest
+- ✅ Zero-Config Deep Scan - Detección automática de tech stack y configuración
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos

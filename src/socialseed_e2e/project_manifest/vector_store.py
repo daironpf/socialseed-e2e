@@ -8,9 +8,7 @@ import json
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from socialseed_e2e.project_manifest.models import (
     DtoSchema,
@@ -74,7 +72,7 @@ class ManifestVectorStore:
         self.metadata_path = self.index_dir / self.METADATA_FILENAME
 
         # Internal state
-        self._embeddings: Optional[np.ndarray] = None
+        self._embeddings: Optional[Any] = None
         self._metadata: List[Dict[str, Any]] = []
         self._model: Optional[Any] = None
         self._manifest: Optional[ProjectKnowledge] = None

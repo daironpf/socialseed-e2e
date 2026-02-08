@@ -21,6 +21,11 @@ Example:
 """
 
 from socialseed_e2e.project_manifest.api import ManifestAPI, TokenOptimizedQuery
+from socialseed_e2e.project_manifest.deep_scanner import (
+    DeepScanner,
+    EnvironmentDetector,
+    TechStackDetector,
+)
 from socialseed_e2e.project_manifest.file_watcher import FileWatcher, SmartSyncManager
 from socialseed_e2e.project_manifest.generator import ManifestGenerator
 from socialseed_e2e.project_manifest.models import (
@@ -91,4 +96,8 @@ __all__ = [
     "TaskContextBuilder",
     "VectorIndexSyncManager",
     "IntegratedSyncManager",
+    # Deep Scanner
+    "DeepScanner",
+    "TechStackDetector",
+    "EnvironmentDetector",
 ]
