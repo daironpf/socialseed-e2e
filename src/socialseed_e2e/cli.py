@@ -918,6 +918,152 @@ def watch(directory: str):
         sys.exit(1)
 
 
+@cli.command()
+@click.argument("query")
+@click.option("--directory", "-d", default=".", help="Project directory")
+@click.option("--top-k", "-k", default=5, help="Number of results")
+@click.option(
+    "--type",
+    "-t",
+    type=click.Choice(["endpoint", "dto", "service"]),
+    help="Filter by type",
+)
+def search(query: str, directory: str, top_k: int, type: str):
+    """Semantic search on project manifest.
+
+    Performs semantic search using vector embeddings to find
+    relevant endpoints, DTOs, and services.
+
+    Examples:
+        e2e search "authentication endpoints"
+        e2e search "user DTO" --type dto
+        e2e search "payment" --top-k 10
+    """
+    target_path = Path(directory).resolve()
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestVectorStore
+
+        store = ManifestVectorStore(target_path)
+
+        if not store.is_index_valid():
+            console.print("📊 Building vector index...")
+            store.build_index()
+
+        results = store.search(query, top_k=top_k, item_type=type)
+
+        if not results:
+            console.print("[yellow]No results found[/yellow]")
+            return
+
+        table = Table(title=f"Search Results: '{query}'")
+        table.add_column("Type", style="cyan")
+        table.add_column("Name", style="green")
+        table.add_column("Score", style="yellow")
+        table.add_column("Service", style="dim")
+
+        for result in results:
+            table.add_row(
+                result.item_type,
+                result.item_id,
+                f"{result.score:.3f}",
+                result.service_name or "-",
+            )
+
+        console.print(table)
+
+    except ImportError as e:
+        console.print(f"[red]❌ Missing dependency:[/red] {e}")
+        console.print("Install with: pip install sentence-transformers")
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+
+
+@cli.command()
+@click.argument("task")
+@click.option("--directory", "-d", default=".", help="Project directory")
+@click.option("--max-chunks", "-c", default=5, help="Maximum chunks")
+def retrieve(task: str, directory: str, max_chunks: int):
+    """Retrieve context for a specific task.
+
+    Retrieves relevant context from the project manifest
+    for the given task description.
+
+    Examples:
+        e2e retrieve "create user authentication tests"
+        e2e retrieve "test payment flow" --max-chunks 3
+    """
+    target_path = Path(directory).resolve()
+
+    try:
+        from socialseed_e2e.project_manifest import RAGRetrievalEngine
+
+        engine = RAGRetrievalEngine(target_path)
+        chunks = engine.retrieve_for_task(task, max_chunks=max_chunks)
+
+        if not chunks:
+            console.print("[yellow]No context found for this task[/yellow]")
+            return
+
+        console.print(f"\n[bold cyan]Task:[/bold cyan] {task}\n")
+
+        for i, chunk in enumerate(chunks, 1):
+            console.print(f"[bold]Chunk {i}:[/bold] {chunk.chunk_type}")
+            console.print(f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]")
+            console.print(Panel(chunk.content, border_style="green"))
+            console.print()
+
+    except ImportError as e:
+        console.print(f"[red]❌ Missing dependency:[/red] {e}")
+        console.print("Install with: pip install sentence-transformers")
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+def build_index(directory: str):
+    """Build vector index for semantic search.
+
+    Creates embeddings for all endpoints, DTOs, and services
+    in the project manifest.
+
+    Examples:
+        e2e build-index              # Build index for current directory
+        e2e build-index /path/to/project  # Build for specific project
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    manifest_path = target_path / "project_knowledge.json"
+    if not manifest_path.exists():
+        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print("Run 'e2e manifest' first to generate the manifest.")
+        sys.exit(1)
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestVectorStore
+
+        console.print("\n📊 [bold cyan]Building Vector Index[/bold cyan]")
+        console.print(f"   Project: {target_path}\n")
+
+        store = ManifestVectorStore(target_path)
+        store.build_index()
+
+        console.print("[bold green]✅ Vector index built successfully![/bold green]")
+        console.print(f"   📄 Location: {store.index_dir}\n")
+
+    except ImportError as e:
+        console.print(f"[red]❌ Missing dependency:[/red] {e}")
+        console.print("Install with: pip install sentence-transformers")
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()

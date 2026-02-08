@@ -165,6 +165,88 @@ src/socialseed_e2e/project_manifest/
 
 Ver documentación completa en `docs/project-manifest.md`
 
+## Vector Embeddings & RAG (Nuevo Feature #86)
+
+### Búsqueda Semántica con Embeddings
+
+El framework ahora soporta **embeddings vectoriales** para búsqueda semántica sobre el Project Manifest, permitiendo RAG (Retrieval-Augmented Generation):
+
+```bash
+# Instalar dependencias de RAG
+pip install socialseed-e2e[rag]
+
+# Construir índice vectorial
+e2e build-index
+
+# Buscar endpoints semánticamente
+e2e search "authentication endpoints"
+e2e search "user DTO" --type dto
+e2e search "payment" --top-k 10
+
+# Obtener contexto para una tarea específica
+e2e retrieve "create user authentication tests"
+e2e retrieve "test payment flow" --max-chunks 3
+```
+
+### Vector Store API
+
+```python
+from socialseed_e2e.project_manifest import ManifestVectorStore, RAGRetrievalEngine
+
+# Crear y usar vector store
+store = ManifestVectorStore("/path/to/project")
+store.build_index()
+
+# Búsqueda semántica
+results = store.search("authentication endpoints", top_k=5)
+for result in results:
+    print(f"{result.item_id}: {result.score:.3f}")
+
+# Retrieval para RAG
+engine = RAGRetrievalEngine("/path/to/project")
+chunks = engine.retrieve_for_task(
+    "create tests for user authentication",
+    max_chunks=5
+)
+for chunk in chunks:
+    print(f"{chunk.chunk_type}: {chunk.token_estimate} tokens")
+```
+
+### Auto-sincronización de Embeddings
+
+El índice vectorial se actualiza automáticamente cuando el manifest cambia:
+
+```python
+from socialseed_e2e.project_manifest import VectorIndexSyncManager
+
+# Iniciar sync manager
+sync = VectorIndexSyncManager("/path/to/project")
+
+# Verificar estado
+stats = sync.get_stats()
+print(f"Index valid: {stats['index_valid']}")
+
+# Forzar reconstrucción
+sync.force_rebuild()
+```
+
+### Características del Sistema RAG
+
+- **Embeddings**: Usa `all-MiniLM-L6-v2` por defecto (384 dimensiones)
+- **Almacenamiento**: Índices guardados en `.e2e/manifest_*.pkl`
+- **Context Chunks**: Fragmentos optimizados de 512-2048 tokens
+- **Auto-refresh**: Índice se invalida cuando `project_knowledge.json` cambia
+- **Filtros**: Búsqueda por tipo (endpoint, dto, service) o servicio
+
+### Localización del Código RAG
+
+```
+src/socialseed_e2e/project_manifest/
+├── vector_store.py       # Embeddings y búsqueda vectorial
+├── retrieval.py          # Engine de retrieval para RAG
+└── vector_sync.py        # Sincronización automática
+```
+
 ## Sistema de Contexto Persistente (IMPORTANTE)
 
 ### Problema Conocido
@@ -265,6 +347,8 @@ jinja2>=3.1.0
 - ✅ AI Project Manifest v1.0 - Generación y consulta de conocimiento del proyecto
 - ✅ Smart Sync - Actualización incremental del manifest
 - ✅ Multi-language parsing - Python, Java, JavaScript/TypeScript
+- ✅ Vector Embeddings & RAG v1.0 - Búsqueda semántica y retrieval para AI agents
+- ✅ Auto-sync de índice vectorial con cambios en manifest
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos

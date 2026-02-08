@@ -45,6 +45,16 @@ from socialseed_e2e.project_manifest.parsers import (
     PythonParser,
     parser_registry,
 )
+from socialseed_e2e.project_manifest.retrieval import (
+    ContextChunk,
+    RAGRetrievalEngine,
+    TaskContextBuilder,
+)
+from socialseed_e2e.project_manifest.vector_store import ManifestVectorStore, SearchResult
+from socialseed_e2e.project_manifest.vector_sync import (
+    IntegratedSyncManager,
+    VectorIndexSyncManager,
+)
 
 __all__ = [
     # Main classes
@@ -73,4 +83,12 @@ __all__ = [
     "NodeParser",
     "ParseResult",
     "parser_registry",
+    # Vector Store & RAG
+    "ManifestVectorStore",
+    "SearchResult",
+    "RAGRetrievalEngine",
+    "ContextChunk",
+    "TaskContextBuilder",
+    "VectorIndexSyncManager",
+    "IntegratedSyncManager",
 ]
