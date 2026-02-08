@@ -213,16 +213,25 @@ class EnvironmentDetector:
         }
 
         # Check docker-compose.yml
-        config.update(self._parse_docker_compose(project_root))
+        docker_result = self._parse_docker_compose(project_root)
+        config["ports"].extend(docker_result.get("ports", []))
+        config["env_vars"].extend(docker_result.get("env_vars", []))
+        config["config_files"].extend(docker_result.get("config_files", []))
 
         # Check .env files
-        config.update(self._parse_env_files(project_root))
+        env_result = self._parse_env_files(project_root)
+        config["env_vars"].extend(env_result.get("env_vars", []))
+        config["base_urls"].extend(env_result.get("base_urls", []))
+        config["config_files"].extend(env_result.get("config_files", []))
 
         # Check application properties (Java)
-        config.update(self._parse_application_properties(project_root))
+        props_result = self._parse_application_properties(project_root)
+        config["ports"].extend(props_result.get("ports", []))
+        config["config_files"].extend(props_result.get("config_files", []))
 
         # Check application config files
-        config.update(self._parse_app_config(project_root))
+        app_result = self._parse_app_config(project_root)
+        config["config_files"].extend(app_result.get("config_files", []))
 
         return config
 
