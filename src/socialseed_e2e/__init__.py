@@ -91,11 +91,7 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import (
-        BaseGrpcPage,
-        GrpcCallLog,
-        GrpcRetryConfig,
-    )
+    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -155,6 +151,36 @@ try:
     from socialseed_e2e.utils.proto_schema import ProtoRegistry, ProtoSchemaHandler
 except ImportError:
     pass
+
+# Core - Visual Traceability
+from socialseed_e2e.core.traceability import (
+    Component,
+    Interaction,
+    InteractionType,
+    LogicBranch,
+    LogicBranchType,
+    LogicFlow,
+    LogicMapper,
+    SequenceDiagram,
+    SequenceDiagramGenerator,
+    TestTrace,
+    TraceCollector,
+    TraceConfig,
+    TraceContext,
+    TraceReport,
+    TraceReporter,
+    create_collector,
+    disable_traceability,
+    enable_traceability,
+    end_test_trace,
+    get_global_collector,
+    record_interaction,
+    record_logic_branch,
+    set_global_collector,
+    start_test_trace,
+    trace_assertion,
+    trace_http_request,
+)
 
 __all__ = [
     # Version
@@ -240,4 +266,31 @@ __all__ = [
     "to_class_name",
     "template_to_snake_case",
     "template_to_camel_case",
+    # Core - Visual Traceability
+    "TraceCollector",
+    "TraceReporter",
+    "SequenceDiagramGenerator",
+    "LogicMapper",
+    "TestTrace",
+    "TraceConfig",
+    "TraceReport",
+    "Component",
+    "Interaction",
+    "InteractionType",
+    "LogicBranch",
+    "LogicBranchType",
+    "LogicFlow",
+    "SequenceDiagram",
+    "enable_traceability",
+    "disable_traceability",
+    "TraceContext",
+    "start_test_trace",
+    "end_test_trace",
+    "record_interaction",
+    "record_logic_branch",
+    "trace_http_request",
+    "trace_assertion",
+    "get_global_collector",
+    "set_global_collector",
+    "create_collector",
 ]

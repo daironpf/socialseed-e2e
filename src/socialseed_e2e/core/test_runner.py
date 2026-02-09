@@ -211,18 +211,62 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
     Returns:
         TestResult with execution details
     """
+    import time
+    from pathlib import Path
+
     start_time = time.time()
     test_name = module_path.stem
+
+    # Initialize traceability
+    trace_collector = None
+    try:
+        from socialseed_e2e.core.traceability import (
+            TraceCollector,
+            TraceConfig,
+            get_global_collector,
+            set_global_collector,
+        )
+
+        # Check if traceability is already enabled globally
+        trace_collector = get_global_collector()
+        if trace_collector is None:
+            # Create new collector for this test
+            trace_config = TraceConfig(
+                enabled=True,
+                capture_request_body=True,
+                capture_response_body=True,
+                track_logic_branches=True,
+                generate_sequence_diagrams=True,
+                output_format="mermaid",
+            )
+            trace_collector = TraceCollector(trace_config)
+            set_global_collector(trace_collector)
+
+        # Start test trace
+        trace_collector.start_trace(
+            test_name=test_name,
+            service_name=service_name,
+            metadata={"module_path": str(module_path)},
+        )
+
+    except ImportError:
+        pass  # Traceability not available
 
     try:
         # Load the test module
         run_func = load_test_module(module_path)
 
         if run_func is None:
+            # End trace with error
+            if trace_collector:
+                trace_collector.end_trace("error", "No 'run' function found in module")
+
+            duration = (time.time() - start_time) * 1000
             return TestResult(
                 name=test_name,
                 service=service_name,
                 status="error",
+                duration_ms=duration,
                 error_message="No 'run' function found in module",
             )
 
@@ -230,12 +274,22 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         run_func(page)
 
         duration = (time.time() - start_time) * 1000
+
+        # End trace with success
+        if trace_collector:
+            trace_collector.end_trace("passed")
+
         return TestResult(
             name=test_name, service=service_name, status="passed", duration_ms=duration
         )
 
     except AssertionError as e:
         duration = (time.time() - start_time) * 1000
+
+        # End trace with failure
+        if trace_collector:
+            trace_collector.end_trace("failed", str(e))
+
         return TestResult(
             name=test_name,
             service=service_name,
@@ -245,6 +299,11 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         )
     except Exception as e:
         duration = (time.time() - start_time) * 1000
+
+        # End trace with error
+        if trace_collector:
+            trace_collector.end_trace("error", str(e))
+
         return TestResult(
             name=test_name,
             service=service_name,
@@ -399,31 +458,45 @@ def run_all_tests(
 
         results[service_name] = suite_result
 
-    return results
-
-    # Load configuration
+    # Generate traceability report if traces were collected
     try:
-        loader = ApiConfigLoader()
-        config = loader.load()
-    except Exception:
-        config = None
+        from socialseed_e2e.core.traceability import TraceReporter, get_global_collector
 
-    # Run tests for each service
-    for service_name in services:
-        # Get service configuration
-        service_config = None
-        if config and service_name in config.services:
-            service_config = config.services[service_name]
+        collector = get_global_collector()
+        if collector and collector.get_all_traces():
+            console.print("\n[bold cyan]Generating traceability report...[/bold cyan]")
 
-        suite_result = run_service_tests(
-            service_name=service_name,
-            service_config=service_config,
-            services_path=services_path,
-            specific_module=specific_module,
-            verbose=verbose,
-        )
+            reporter = TraceReporter(collector)
+            report = reporter.generate_report()
 
-        results[service_name] = suite_result
+            # Save reports
+            output_dir = Path("e2e_reports")
+            output_dir.mkdir(exist_ok=True)
+
+            html_path = reporter.save_html_report(
+                report, str(output_dir / "traceability_report.html")
+            )
+            md_path = reporter.save_markdown_report(
+                report, str(output_dir / "traceability_report.md")
+            )
+            json_path = reporter.save_json_report(
+                report, str(output_dir / "traceability_report.json")
+            )
+
+            console.print(f"[green]✓[/green] HTML report: {html_path}")
+            console.print(f"[green]✓[/green] Markdown report: {md_path}")
+            console.print(f"[green]✓[/green] JSON report: {json_path}")
+
+            # Print summary
+            summary = report.summary
+            console.print(f"\n[dim]Trace Summary:[/dim]")
+            console.print(f"  Total Tests: {summary.get('total_tests', 0)}")
+            console.print(f"  Total Interactions: {summary.get('total_interactions', 0)}")
+            console.print(f"  Total Components: {summary.get('total_components', 0)}")
+            console.print(f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}")
+
+    except ImportError:
+        pass  # Traceability not available
 
     return results
 

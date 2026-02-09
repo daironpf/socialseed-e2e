@@ -469,12 +469,32 @@ def new_test(name: str, service: str, description: str):
     default="text",
     help="Output format",
 )
+@click.option(
+    "--trace",
+    "-t",
+    is_flag=True,
+    help="Enable visual traceability and generate sequence diagrams",
+)
+@click.option(
+    "--trace-output",
+    type=click.Path(),
+    help="Directory for traceability reports (default: e2e_reports)",
+)
+@click.option(
+    "--trace-format",
+    type=click.Choice(["mermaid", "plantuml", "both"]),
+    default="mermaid",
+    help="Format for sequence diagrams",
+)
 def run(
     service: Optional[str],
     module: Optional[str],
     config: Optional[str],
     verbose: bool,
     output: str,
+    trace: bool,
+    trace_output: Optional[str],
+    trace_format: str,
 ):
     """Execute E2E tests.
 
@@ -486,6 +506,9 @@ def run(
         config: Path to the e2e.conf file
         verbose: If True, shows detailed information
         output: Output format (text or json)
+        trace: If True, enable visual traceability with sequence diagrams
+        trace_output: Directory for traceability reports
+        trace_format: Format for sequence diagrams (mermaid, plantuml, both)
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -510,6 +533,32 @@ def run(
 
     # Import test runner
     from .core.test_runner import print_summary, run_all_tests
+
+    # Initialize traceability if enabled
+    if trace:
+        try:
+            from socialseed_e2e.core.traceability import (
+                TraceConfig,
+                enable_traceability,
+                instrument_base_page,
+            )
+
+            trace_config = TraceConfig(
+                enabled=True,
+                capture_request_body=True,
+                capture_response_body=True,
+                track_logic_branches=True,
+                generate_sequence_diagrams=True,
+                output_format=trace_format,
+            )
+            enable_traceability(trace_config, auto_instrument=True)
+            console.print("📊 [cyan]Visual traceability enabled[/cyan]")
+            console.print(f"   Format: {trace_format}")
+            if trace_output:
+                console.print(f"   Output: {trace_output}")
+            console.print()
+        except ImportError as e:
+            console.print(f"[yellow]⚠ Traceability not available: {e}[/yellow]")
 
     # Determine services path
     # If a config file was explicitly provided, we prioritize the 'services' folder next to it.
