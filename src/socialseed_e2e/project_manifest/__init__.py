@@ -57,6 +57,22 @@ from socialseed_e2e.project_manifest.discovery_report import (
     DiscoverySummary,
     generate_discovery_report,
 )
+
+# AI-Driven Security Fuzzing (Issue #189)
+from socialseed_e2e.project_manifest.security_fuzzer import (
+    AttackType,
+    FuzzingSession,
+    MaliciousPayloadGenerator,
+    SecurityPayload,
+    SecurityTestResult,
+    SeverityLevel,
+)
+from socialseed_e2e.project_manifest.security_executor import (
+    ResilienceMonitor,
+    SecurityReportGenerator,
+    SecurityTestExecutor,
+    run_security_fuzzing,
+)
 from socialseed_e2e.project_manifest.dummy_data_generator import (
     DataGenerationContext,
     DataGenerationStrategy,
@@ -157,4 +173,15 @@ __all__ = [
     "DiscoverySummary",
     "DiscoveredFlow",
     "generate_discovery_report",
+    # AI-Driven Security Fuzzing (Issue #189)
+    "MaliciousPayloadGenerator",
+    "SecurityPayload",
+    "SecurityTestResult",
+    "FuzzingSession",
+    "AttackType",
+    "SeverityLevel",
+    "ResilienceMonitor",
+    "SecurityTestExecutor",
+    "SecurityReportGenerator",
+    "run_security_fuzzing",
 ]
