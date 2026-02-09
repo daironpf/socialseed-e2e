@@ -57,22 +57,6 @@ from socialseed_e2e.project_manifest.discovery_report import (
     DiscoverySummary,
     generate_discovery_report,
 )
-
-# AI-Driven Security Fuzzing (Issue #189)
-from socialseed_e2e.project_manifest.security_fuzzer import (
-    AttackType,
-    FuzzingSession,
-    MaliciousPayloadGenerator,
-    SecurityPayload,
-    SecurityTestResult,
-    SeverityLevel,
-)
-from socialseed_e2e.project_manifest.security_executor import (
-    ResilienceMonitor,
-    SecurityReportGenerator,
-    SecurityTestExecutor,
-    run_security_fuzzing,
-)
 from socialseed_e2e.project_manifest.dummy_data_generator import (
     DataGenerationContext,
     DataGenerationStrategy,
@@ -93,6 +77,33 @@ from socialseed_e2e.project_manifest.observer import (
     PortScanner,
     PortScanResult,
     ServiceObserver,
+)
+
+# AI Regression Agents for Differential Testing (Issue #84)
+from socialseed_e2e.project_manifest.regression_agent import (
+    CodeChange,
+    GitDiffAnalyzer,
+    ImpactAnalysis,
+    ImpactAnalyzer,
+    RegressionAgent,
+    RegressionTestResult,
+    run_regression_analysis,
+)
+from socialseed_e2e.project_manifest.security_executor import (
+    ResilienceMonitor,
+    SecurityReportGenerator,
+    SecurityTestExecutor,
+    run_security_fuzzing,
+)
+
+# AI-Driven Security Fuzzing (Issue #189)
+from socialseed_e2e.project_manifest.security_fuzzer import (
+    AttackType,
+    FuzzingSession,
+    MaliciousPayloadGenerator,
+    SecurityPayload,
+    SecurityTestResult,
+    SeverityLevel,
 )
 
 __all__ = [
@@ -184,4 +195,12 @@ __all__ = [
     "SecurityTestExecutor",
     "SecurityReportGenerator",
     "run_security_fuzzing",
+    # AI Regression Agents (Issue #84)
+    "RegressionAgent",
+    "GitDiffAnalyzer",
+    "ImpactAnalyzer",
+    "CodeChange",
+    "ImpactAnalysis",
+    "RegressionTestResult",
+    "run_regression_analysis",
 ]
