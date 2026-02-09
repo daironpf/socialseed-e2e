@@ -8,7 +8,7 @@ enabling developers and AI agents to create, manage, and run API tests.
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 from rich.console import Console
@@ -1309,10 +1309,220 @@ def generate_tests(
         sys.exit(1)
 
 
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--host",
+    "-h",
+    multiple=True,
+    default=["localhost", "127.0.0.1"],
+    help="Hosts to scan (can be specified multiple times)",
+)
+@click.option(
+    "--ports",
+    "-p",
+    help="Port range to scan (e.g., 8000-9000 or 8080,8081,3000)",
+)
+@click.option(
+    "--docker/--no-docker",
+    default=True,
+    help="Scan Docker containers (default: enabled)",
+)
+@click.option(
+    "--cross-ref/--no-cross-ref",
+    default=True,
+    help="Cross-reference with project code (default: enabled)",
+)
+@click.option(
+    "--auto-setup",
+    is_flag=True,
+    help="Auto-setup environment using Docker (build and run)",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Show what would be done without executing",
+)
+@click.option(
+    "--timeout",
+    "-t",
+    default=2.0,
+    help="Timeout for port scanning (seconds)",
+)
+def observe(
+    directory: str,
+    host: Tuple[str, ...],
+    ports: Optional[str],
+    docker: bool,
+    cross_ref: bool,
+    auto_setup: bool,
+    dry_run: bool,
+    timeout: float,
+):
+    """Auto-detect running services and ports (The Observer - Issue #186).
+
+    Scans for open ports, detects HTTP/gRPC services, finds Docker containers,
+    and cross-references with project code to identify running APIs.
+
+    Examples:
+        e2e observe                              # Scan localhost
+        e2e observe /path/to/project             # Scan specific project
+        e2e observe --host 192.168.1.100         # Scan remote host
+        e2e observe --ports 8000-9000            # Custom port range
+        e2e observe --auto-setup                 # Build and run Docker
+        e2e observe --dry-run                    # Preview only
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n🔭 [bold cyan]The Observer - Service Detection[/bold cyan]")
+    console.print(f"   Project: {target_path}")
+    console.print(f"   Hosts: {', '.join(host)}\n")
+
+    try:
+        import asyncio
+
+        from socialseed_e2e.project_manifest import ServiceObserver
+
+        # Parse ports if specified
+        port_list = None
+        if ports:
+            port_list = []
+            for part in ports.split(","):
+                if "-" in part:
+                    start, end = part.split("-")
+                    port_list.extend(range(int(start), int(end) + 1))
+                else:
+                    port_list.append(int(part))
+
+        # Create observer
+        observer = ServiceObserver(target_path)
+        observer.port_scanner.timeout = timeout
+
+        # Run observation
+        console.print("📡 [yellow]Scanning for services...[/yellow]\n")
+
+        results = asyncio.run(
+            observer.observe(
+                hosts=list(host),
+                scan_docker=docker,
+                cross_reference=cross_ref,
+            )
+        )
+
+        # Display results
+        if results["services_detected"]:
+            console.print("\n[bold green]✅ Services Detected:[/bold green]\n")
+
+            from rich.table import Table
+
+            table = Table(title="Running Services")
+            table.add_column("Service", style="cyan")
+            table.add_column("URL", style="green")
+            table.add_column("Type", style="yellow")
+            table.add_column("Source", style="dim")
+            table.add_column("Health", style="white")
+
+            for svc in results["services_detected"]:
+                table.add_row(
+                    svc["name"],
+                    svc["url"],
+                    svc["type"].upper(),
+                    svc.get("detected_from", "scan"),
+                    svc.get("health", "N/A") or "N/A",
+                )
+
+            console.print(table)
+        else:
+            console.print("\n[yellow]⚠ No running services detected[/yellow]")
+
+        # Show Docker containers
+        if docker and results["docker_containers"]:
+            console.print("\n[bold]🐳 Docker Containers:[/bold]\n")
+
+            table = Table(title="Containers")
+            table.add_column("Name", style="cyan")
+            table.add_column("Image", style="green")
+            table.add_column("Ports", style="yellow")
+            table.add_column("Status", style="white")
+
+            for container in results["docker_containers"]:
+                ports_str = ", ".join(f"{p['public']}->{p['private']}" for p in container["ports"])
+                table.add_row(
+                    container["name"],
+                    container["image"],
+                    ports_str or "N/A",
+                    container["status"],
+                )
+
+            console.print(table)
+
+        # Show cross-references
+        if cross_ref and results["cross_references"]:
+            console.print("\n[bold]🔗 Cross-References:[/bold]\n")
+
+            for ref in results["cross_references"]:
+                console.print(
+                    f"   ✓ [green]{ref['detected_service']}[/green] matches "
+                    f"[cyan]{ref['code_service']}[/cyan] (port {ref['port']})"
+                )
+
+        # Docker setup suggestions
+        if results["dockerfile_found"]:
+            console.print(f"\n[bold]🐳 Docker Setup:[/bold]")
+            console.print(f"   Dockerfile: {results['dockerfile_found']}")
+
+            for suggestion in results["suggestions"]:
+                if suggestion["type"] == "docker":
+                    console.print(f"\n   {suggestion['message']}")
+                    console.print(f"   Command: [cyan]{suggestion['command']}[/cyan]")
+
+                    if auto_setup:
+                        console.print("\n   [yellow]Executing auto-setup...[/yellow]\n")
+                        setup_result = asyncio.run(observer.auto_setup(dry_run=dry_run))
+
+                        if setup_result["success"]:
+                            console.print("   [green]✅ Setup successful![/green]")
+                            if "output" in setup_result:
+                                console.print(f"   Output: {setup_result['output'][:200]}...")
+                        else:
+                            console.print(
+                                f"   [red]❌ Setup failed:[/red] {setup_result['message']}"
+                            )
+                    elif not dry_run:
+                        console.print(
+                            "\n   [italic]Use --auto-setup to build and run automatically[/italic]"
+                        )
+
+        # Summary
+        console.print(f"\n{'=' * 60}")
+        console.print("[bold]📊 Summary:[/bold]")
+        console.print(f"   Services detected: {len(results['services_detected'])}")
+        console.print(f"   Docker containers: {len(results['docker_containers'])}")
+        console.print(f"   Cross-references: {len(results['cross_references'])}")
+
+        if results["dockerfile_found"]:
+            console.print(f"   Dockerfile: ✓ Found")
+
+        console.print()
+
+    except KeyboardInterrupt:
+        console.print("\n\n[yellow]👋 Observation interrupted by user[/yellow]")
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()
 
 
 if __name__ == "__main__":
-    main()
+    cli()
