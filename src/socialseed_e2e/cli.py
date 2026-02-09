@@ -1289,12 +1289,46 @@ def generate_tests(
         console.print(f"   Total files generated: {total_files}")
         console.print(f"   Validation rules: {total_validations}")
 
+        # Generate AI Discovery Report
+        if not dry_run:
+            console.print("\n📝 [yellow]Generating AI Discovery Report...[/yellow]")
+
+            from socialseed_e2e.project_manifest import generate_discovery_report
+
+            # Collect flows from all generated suites
+            all_flows = []
+            for svc, suite_generator in generated_suites:
+                for flow in suite_generator.flows:
+                    all_flows.append(
+                        {
+                            "name": flow.name,
+                            "description": flow.description,
+                            "steps": [
+                                {"endpoint": {"name": step.endpoint.name}} for step in flow.steps
+                            ],
+                            "flow_type": flow.flow_type.value
+                            if hasattr(flow.flow_type, "value")
+                            else str(flow.flow_type),
+                        }
+                    )
+
+            # Generate the report
+            report_path = generate_discovery_report(
+                project_root=target_path,
+                manifest=manifest,
+                flows=all_flows,
+                tests_generated=total_files,
+                output_dir=output_path,
+            )
+
+            console.print(f"   ✓ Report saved: {report_path}")
+
         if not dry_run:
             console.print(f"\n📁 Output directory: {output_path}")
             console.print("\n[bold]Next steps:[/bold]")
-            console.print("   1. Review generated test files")
+            console.print("   1. Review the AI Discovery Report in .e2e/DISCOVERY_REPORT.md")
             console.print("   2. Customize test data in data_schema.py")
-            console.print("   3. Run tests: [cyan]e2e run --service <name>[/cyan]")
+            console.print("   3. Run tests: [cyan]e2e run[/cyan]")
         else:
             console.print("\n[italic]Run without --dry-run to create files[/italic]")
 
@@ -1516,6 +1550,88 @@ def observe(
         import traceback
 
         console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--output",
+    "-o",
+    help="Output directory for the report",
+)
+@click.option(
+    "--open",
+    "--view",
+    is_flag=True,
+    help="Open the report after generation",
+)
+def discover(directory: str, output: Optional[str], open: bool):
+    """Generate AI Discovery Report for the project (Issue #187).
+
+    Creates a comprehensive "Mental Map" report summarizing:
+    - Discovered endpoints and services
+    - Technology stack analysis
+    - Business flows detected
+    - Generated test suites
+
+    The report is saved as a markdown file in .e2e/DISCOVERY_REPORT.md
+
+    Examples:
+        e2e discover                    # Generate report for current project
+        e2e discover /path/to/project   # Generate for specific project
+        e2e discover --open             # Generate and open the report
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n🤖 [bold cyan]AI Discovery Report[/bold cyan]")
+    console.print(f"   Project: {target_path}\n")
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestAPI, generate_discovery_report
+
+        # Load manifest
+        api = ManifestAPI(target_path)
+        manifest = api._load_manifest()
+
+        if not manifest:
+            console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
+            sys.exit(1)
+
+        # Generate report
+        output_dir = Path(output) if output else None
+        report_path = generate_discovery_report(
+            project_root=target_path, manifest=manifest, output_dir=output_dir
+        )
+
+        console.print(f"\n✅ [bold green]Discovery Report generated![/bold green]")
+        console.print(f"   📄 Location: {report_path}\n")
+
+        console.print("[bold]What's in the report:[/bold]")
+        console.print("   • Technology stack analysis")
+        console.print("   • Discovered endpoints and services")
+        console.print("   • Business flows mental map")
+        console.print("   • Single command to run all tests")
+        console.print("   • Next steps and recommendations\n")
+
+        console.print("[bold]Quick Start:[/bold]")
+        console.print("   Run: [cyan]e2e run[/cyan]\n")
+
+        if open:
+            # Try to open the report
+            try:
+                import webbrowser
+
+                webbrowser.open(f"file://{report_path}")
+            except Exception:
+                console.print(f"   [dim]Open manually: {report_path}[/dim]")
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
         sys.exit(1)
 
 
