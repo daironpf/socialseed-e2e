@@ -60,38 +60,15 @@ from socialseed_e2e.project_manifest.flow_test_generator import (
     FlowBasedTestSuiteGenerator,
     GeneratedTestSuite,
 )
-from socialseed_e2e.project_manifest.generator import ManifestGenerator
-from socialseed_e2e.project_manifest.models import (
-    DtoField,
-    DtoSchema,
-    EndpointInfo,
-    EndpointParameter,
-    EnvironmentVariable,
-    FileMetadata,
-    HttpMethod,
-    PortConfig,
-    ProjectKnowledge,
-    ServiceDependency,
-    ServiceInfo,
-    ValidationRule,
-)
-from socialseed_e2e.project_manifest.parsers import (
-    BaseParser,
-    JavaParser,
-    NodeParser,
-    ParseResult,
-    PythonParser,
-    parser_registry,
-)
-from socialseed_e2e.project_manifest.retrieval import (
-    ContextChunk,
-    RAGRetrievalEngine,
-    TaskContextBuilder,
-)
-from socialseed_e2e.project_manifest.vector_store import ManifestVectorStore, SearchResult
-from socialseed_e2e.project_manifest.vector_sync import (
-    IntegratedSyncManager,
-    VectorIndexSyncManager,
+
+# The Observer - Auto-detect running services and ports (Issue #186)
+from socialseed_e2e.project_manifest.observer import (
+    DetectedService,
+    DockerContainer,
+    DockerSetupSuggestion,
+    PortScanner,
+    PortScanResult,
+    ServiceObserver,
 )
 
 __all__ = [
@@ -160,4 +137,11 @@ __all__ = [
     # Flow Test Generator (Issue #185)
     "FlowBasedTestSuiteGenerator",
     "GeneratedTestSuite",
+    # The Observer - Auto-detect services (Issue #186)
+    "ServiceObserver",
+    "PortScanner",
+    "PortScanResult",
+    "DetectedService",
+    "DockerContainer",
+    "DockerSetupSuggestion",
 ]
