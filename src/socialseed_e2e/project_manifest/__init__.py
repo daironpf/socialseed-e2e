@@ -49,6 +49,14 @@ from socialseed_e2e.project_manifest.deep_scanner import (
     EnvironmentDetector,
     TechStackDetector,
 )
+
+# AI Discovery Report (Issue #187)
+from socialseed_e2e.project_manifest.discovery_report import (
+    DiscoveredFlow,
+    DiscoveryReportGenerator,
+    DiscoverySummary,
+    generate_discovery_report,
+)
 from socialseed_e2e.project_manifest.dummy_data_generator import (
     DataGenerationContext,
     DataGenerationStrategy,
@@ -144,4 +152,9 @@ __all__ = [
     "DetectedService",
     "DockerContainer",
     "DockerSetupSuggestion",
+    # AI Discovery Report (Issue #187)
+    "DiscoveryReportGenerator",
+    "DiscoverySummary",
+    "DiscoveredFlow",
+    "generate_discovery_report",
 ]
