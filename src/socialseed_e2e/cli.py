@@ -47,9 +47,7 @@ def init(directory: str, force: bool):
     """
     target_path = Path(directory).resolve()
 
-    console.print(
-        f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n"
-    )
+    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
 
     # Create directory structure
     dirs_to_create = [
@@ -67,9 +65,7 @@ def init(directory: str, force: bool):
                 if dir_path.parent == target_path
                 else str(dir_path.relative_to(target_path))
             )
-            console.print(
-                f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}"
-            )
+            console.print(f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}")
         else:
             console.print(
                 f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
@@ -93,9 +89,7 @@ def init(directory: str, force: bool):
         )
         console.print("  [green]✓[/green] Created: e2e.conf")
     else:
-        console.print(
-            "  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)"
-        )
+        console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)")
 
     # Create .gitignore
     gitignore_path = target_path / ".gitignore"
@@ -225,17 +219,13 @@ email-validator>=2.0.0
         if result.returncode == 0:
             console.print("  [green]✓[/green] Dependencies installed")
         else:
-            console.print(
-                "  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed"
-            )
+            console.print("  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed")
             if result.stderr:
                 console.print(f"  [dim]{result.stderr[:200]}...[/dim]")
     except subprocess.TimeoutExpired:
         console.print("  [yellow]⚠ Warning:[/yellow] Installation took too long")
     except Exception as e:
-        console.print(
-            f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}"
-        )
+        console.print(f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}")
 
     # 2. Run verification (always)
     console.print("\n🔍 Verifying installation...")
@@ -304,9 +294,7 @@ def new_service(name: str, base_url: str, health_endpoint: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print(
-            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
-        )
+        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
         console.print("   Run: [cyan]e2e init[/cyan] first")
         sys.exit(1)
 
@@ -350,9 +338,7 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         str(service_path / f"{snake_case_name}_page.py"),
         overwrite=False,
     )
-    console.print(
-        f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py"
-    )
+    console.print(f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py")
 
     # Create configuration file
     engine.render_to_file(
@@ -375,9 +361,7 @@ def new_service(name: str, base_url: str, health_endpoint: str):
     # Update e2e.conf
     _update_e2e_conf(name, base_url, health_endpoint)
 
-    console.print(
-        f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n"
-    )
+    console.print(f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n")
 
     console.print(
         Panel(
@@ -407,9 +391,7 @@ def new_test(name: str, service: str, description: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print(
-            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
-        )
+        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
         sys.exit(1)
 
     # Verify that the service exists
@@ -418,9 +400,7 @@ def new_test(name: str, service: str, description: str):
 
     if not service_path.exists():
         console.print(f"[red]❌ Error:[/red] Service '{service}' does not exist.")
-        console.print(
-            f"   Create the service first: [cyan]e2e new-service {service}[/cyan]"
-        )
+        console.print(f"   Create the service first: [cyan]e2e new-service {service}[/cyan]")
         sys.exit(1)
 
     if not modules_path.exists():
@@ -460,16 +440,10 @@ def new_test(name: str, service: str, description: str):
     }
 
     # Create test using template
-    engine.render_to_file(
-        "test_module.py.template", template_vars, str(test_path), overwrite=False
-    )
-    console.print(
-        f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}"
-    )
+    engine.render_to_file("test_module.py.template", template_vars, str(test_path), overwrite=False)
+    console.print(f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}")
 
-    console.print(
-        f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n"
-    )
+    console.print(f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n")
 
     console.print(
         Panel(
@@ -592,9 +566,7 @@ def doctor():
     checks = []
 
     # Check Python
-    python_version = (
-        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    )
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     checks.append(("Python", python_version, sys.version_info >= (3, 9)))
 
     # Check Playwright
@@ -643,9 +615,7 @@ def doctor():
             services_exists,
         )
     )
-    checks.append(
-        ("tests/ directory", "OK" if tests_exists else "Not found", tests_exists)
-    )
+    checks.append(("tests/ directory", "OK" if tests_exists else "Not found", tests_exists))
 
     # Show results
     table = Table(title="System Verification")
@@ -671,17 +641,11 @@ def doctor():
         console.print("[cyan]Suggested solutions:[/cyan]")
 
         if not any(name == "Playwright" and ok for name, _, ok in checks):
-            console.print(
-                "  • Install Playwright: [white]pip install playwright[/white]"
-            )
+            console.print("  • Install Playwright: [white]pip install playwright[/white]")
         if not any(name == "Playwright CLI" and ok for name, _, ok in checks):
-            console.print(
-                "  • Install browsers: [white]playwright install chromium[/white]"
-            )
+            console.print("  • Install browsers: [white]playwright install chromium[/white]")
         if not any(name == "Pydantic" and ok for name, _, ok in checks):
-            console.print(
-                "  • Install dependencies: [white]pip install socialseed-e2e[/white]"
-            )
+            console.print("  • Install dependencies: [white]pip install socialseed-e2e[/white]")
         if not _is_e2e_project():
             console.print("  • Initialize project: [white]e2e init[/white]")
 
@@ -1045,9 +1009,7 @@ def retrieve(task: str, directory: str, max_chunks: int):
 
         for i, chunk in enumerate(chunks, 1):
             console.print(f"[bold]Chunk {i}:[/bold] {chunk.chunk_type}")
-            console.print(
-                f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]"
-            )
+            console.print(f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]")
             console.print(Panel(chunk.content, border_style="green"))
             console.print()
 
@@ -1146,6 +1108,204 @@ def deep_scan(directory: str, auto_config: bool):
 
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--output",
+    "-o",
+    default="services",
+    help="Output directory for generated tests",
+)
+@click.option(
+    "--service",
+    "-s",
+    help="Generate tests for specific service only",
+)
+@click.option(
+    "--strategy",
+    type=click.Choice(["valid", "invalid", "edge", "chaos", "all"]),
+    default="all",
+    help="Data generation strategy",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Show what would be generated without creating files",
+)
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def generate_tests(
+    directory: str,
+    output: str,
+    service: str,
+    strategy: str,
+    dry_run: bool,
+    verbose: bool,
+):
+    """Autonomous test suite generation based on code intent (Issue #185).
+
+    Analyzes your project to understand business logic, detects endpoint
+    relationships, and generates complete test suites with:
+
+    \b
+    - Flow-based tests (register → login → use)
+    - CRUD lifecycle tests
+    - Validation tests (success, failure, edge cases)
+    - Chaos tests with intelligent dummy data
+
+    The generator automatically:
+    - Parses database models (SQLAlchemy, Prisma, Hibernate)
+    - Detects validation rules from code
+    - Generates valid dummy data based on constraints
+    - Creates tests that follow your API's business flows
+
+    Examples:
+        e2e generate-tests                    # Generate for all services
+        e2e generate-tests --service users    # Generate for specific service
+        e2e generate-tests --dry-run          # Preview without creating files
+        e2e generate-tests --strategy chaos   # Generate chaos tests only
+    """
+    target_path = Path(directory).resolve()
+    output_path = Path(output).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n🧪 [bold cyan]Autonomous Test Suite Generation[/bold cyan]")
+    console.print(f"   Project: {target_path}")
+    console.print(f"   Output: {output_path}")
+    if strategy != "all":
+        console.print(f"   Strategy: {strategy}")
+    console.print()
+
+    try:
+        from socialseed_e2e.project_manifest import DatabaseSchema, db_parser_registry
+        from socialseed_e2e.project_manifest.flow_test_generator import FlowBasedTestSuiteGenerator
+
+        # Parse database schema if available
+        console.print("📊 [yellow]Step 1/5:[/yellow] Parsing database models...")
+        db_schema = db_parser_registry.parse_project(target_path)
+        if db_schema.entities:
+            console.print(f"   ✓ Found {len(db_schema.entities)} entities")
+            for entity in db_schema.entities[:3]:
+                console.print(f"     - {entity.name} ({len(entity.columns)} columns)")
+            if len(db_schema.entities) > 3:
+                console.print(f"     ... and {len(db_schema.entities) - 3} more")
+        else:
+            console.print("   ⚠ No database models found")
+
+        # Load project manifest
+        console.print("\n📚 [yellow]Step 2/5:[/yellow] Loading project manifest...")
+        manifest_path = target_path / "project_knowledge.json"
+        if not manifest_path.exists():
+            console.print("   ⚠ Manifest not found, generating...")
+            from socialseed_e2e.project_manifest import ManifestGenerator
+
+            generator = ManifestGenerator(target_path)
+            generator.generate()
+
+        from socialseed_e2e.project_manifest import ManifestAPI
+
+        api = ManifestAPI(target_path)
+        manifest = api._load_manifest()
+        if manifest is None:
+            console.print("[red]❌ Error:[/red] Could not load project manifest")
+            sys.exit(1)
+        console.print(f"   ✓ Loaded manifest with {len(manifest.services)} services")
+
+        # Generate tests for each service
+        console.print("\n🤖 [yellow]Step 3/5:[/yellow] Analyzing business logic...")
+
+        services_to_process = manifest.services
+        if service:
+            services_to_process = [s for s in services_to_process if s.name == service]
+            if not services_to_process:
+                console.print(f"[red]❌ Service '{service}' not found in manifest[/red]")
+                sys.exit(1)
+
+        generated_suites = []
+        for svc in services_to_process:
+            console.print(f"   Analyzing: {svc.name}...")
+
+            # Create test suite generator
+            suite_generator = FlowBasedTestSuiteGenerator(service_info=svc, db_schema=db_schema)
+
+            # Analyze flows
+            flow_count = len(suite_generator.flows)
+            relationship_count = len(suite_generator.analysis_result["relationships"])
+            console.print(f"     ✓ Detected {flow_count} flows, {relationship_count} relationships")
+
+            generated_suites.append((svc, suite_generator))
+
+        # Generate and write test suites
+        console.print("\n✨ [yellow]Step 4/5:[/yellow] Generating test code...")
+
+        if dry_run:
+            console.print("   [italic]Dry run mode - no files will be created[/italic]")
+
+        total_files = 0
+        for svc, suite_generator in generated_suites:
+            suite = suite_generator.generate_test_suite()
+
+            if not dry_run:
+                # Write files to disk
+                suite_generator.write_to_files(output_path)
+
+            file_count = len(suite.test_modules) + 2  # +2 for data_schema and page
+            total_files += file_count
+
+            console.print(f"\n   [bold]{svc.name}:[/bold]")
+            console.print(f"     📄 data_schema.py ({len(svc.dto_schemas)} DTOs)")
+            console.print(f"     📄 {svc.name}_page.py ({len(svc.endpoints)} endpoints)")
+            for flow in suite.flows_detected:
+                console.print(f"     📄 {flow.name} ({len(flow.steps)} steps)")
+
+        # Show validation criteria summary
+        console.print("\n🎯 [yellow]Step 5/5:[/yellow] Extracting validation criteria...")
+        total_validations = 0
+        for svc, suite_generator in generated_suites:
+            validations = suite_generator.analysis_result["validation_criteria"]
+            total_validations += len(validations)
+
+            if validations:
+                console.print(f"   {svc.name}: {len(validations)} validation rules")
+
+                # Show example validation rules
+                for i, (key, criteria) in enumerate(list(validations.items())[:2]):
+                    console.print(f"     - {key}: {len(criteria.rules)} rules")
+
+        if total_validations == 0:
+            console.print("   ⚠ No validation rules detected")
+
+        # Summary
+        console.print(f"\n{'=' * 60}")
+        console.print("[bold green]✅ Test generation complete![/bold green]")
+        console.print(f"{'=' * 60}")
+        console.print(f"\n📊 Summary:")
+        console.print(f"   Services processed: {len(generated_suites)}")
+        console.print(f"   Total files generated: {total_files}")
+        console.print(f"   Validation rules: {total_validations}")
+
+        if not dry_run:
+            console.print(f"\n📁 Output directory: {output_path}")
+            console.print("\n[bold]Next steps:[/bold]")
+            console.print("   1. Review generated test files")
+            console.print("   2. Customize test data in data_schema.py")
+            console.print("   3. Run tests: [cyan]e2e run --service <name>[/cyan]")
+        else:
+            console.print("\n[italic]Run without --dry-run to create files[/italic]")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error generating tests:[/red] {e}")
+        import traceback
+
+        if verbose:
+            console.print(traceback.format_exc())
         sys.exit(1)
 
 

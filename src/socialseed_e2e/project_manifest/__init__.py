@@ -21,12 +21,45 @@ Example:
 """
 
 from socialseed_e2e.project_manifest.api import ManifestAPI, TokenOptimizedQuery
+
+# Flow-based test generation (Issue #185)
+from socialseed_e2e.project_manifest.business_logic_inference import (
+    BusinessFlow,
+    BusinessLogicInferenceEngine,
+    EndpointRelationship,
+    FlowStep,
+    FlowType,
+    RelationshipType,
+    ValidationCriteria,
+)
+from socialseed_e2e.project_manifest.db_model_parsers import (
+    BaseDBParser,
+    ColumnInfo,
+    DatabaseParserRegistry,
+    DatabaseSchema,
+    EntityInfo,
+    EntityRelationship,
+    HibernateParser,
+    PrismaParser,
+    SQLAlchemyParser,
+    db_parser_registry,
+)
 from socialseed_e2e.project_manifest.deep_scanner import (
     DeepScanner,
     EnvironmentDetector,
     TechStackDetector,
 )
+from socialseed_e2e.project_manifest.dummy_data_generator import (
+    DataGenerationContext,
+    DataGenerationStrategy,
+    DummyDataGenerator,
+    GeneratedData,
+)
 from socialseed_e2e.project_manifest.file_watcher import FileWatcher, SmartSyncManager
+from socialseed_e2e.project_manifest.flow_test_generator import (
+    FlowBasedTestSuiteGenerator,
+    GeneratedTestSuite,
+)
 from socialseed_e2e.project_manifest.generator import ManifestGenerator
 from socialseed_e2e.project_manifest.models import (
     DtoField,
@@ -100,4 +133,31 @@ __all__ = [
     "DeepScanner",
     "TechStackDetector",
     "EnvironmentDetector",
+    # Business Logic Inference (Issue #185)
+    "BusinessLogicInferenceEngine",
+    "BusinessFlow",
+    "FlowStep",
+    "FlowType",
+    "EndpointRelationship",
+    "RelationshipType",
+    "ValidationCriteria",
+    # Database Model Parsers (Issue #185)
+    "BaseDBParser",
+    "SQLAlchemyParser",
+    "PrismaParser",
+    "HibernateParser",
+    "DatabaseSchema",
+    "EntityInfo",
+    "EntityRelationship",
+    "ColumnInfo",
+    "DatabaseParserRegistry",
+    "db_parser_registry",
+    # Dummy Data Generator (Issue #185)
+    "DummyDataGenerator",
+    "DataGenerationStrategy",
+    "GeneratedData",
+    "DataGenerationContext",
+    # Flow Test Generator (Issue #185)
+    "FlowBasedTestSuiteGenerator",
+    "GeneratedTestSuite",
 ]
