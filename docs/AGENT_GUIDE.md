@@ -856,6 +856,397 @@ Antes de decir "terminado", verifica:
 
 ---
 
+## 🤖 Generación Autónoma de Tests (Issue #185) - NUEVO
+
+### ¿Qué es la Generación Autónoma?
+
+El framework ahora puede **generar automáticamente tests completos** analizando tu código fuente. No necesitas escribir los tests manualmente - el sistema:
+
+1. **Analiza tu código** y detecta endpoints
+2. **Entiende las relaciones** entre endpoints (registro → login → perfil)
+3. **Parsea modelos de base de datos** (SQLAlchemy, Prisma, Hibernate)
+4. **Genera datos de prueba** válidos basados en constraints
+5. **Crea tests de flujo** completos con validaciones
+
+### Cuándo Usar la Generación Autónoma
+
+**✅ Úsala cuando:**
+- Tienes una API existente con muchos endpoints
+- Quieres tests rápidamente sin escribir código manualmente
+- Necesitas cubrir casos edge y validaciones automáticamente
+- Tu API tiene flujos complejos que deben probarse en secuencia
+
+**❌ No la uses cuando:**
+- Necesitas tests altamente personalizados con lógica de negocio específica
+- Tu API no sigue patrones REST estándar
+- Quieres control total sobre cada detalle del test
+
+### Paso a Paso: Generación de Tests
+
+#### Paso 1: Preparar el Proyecto
+
+```bash
+# Asegúrate de estar en un proyecto E2E inicializado
+cd /path/to/your/api-project
+
+# Inicializar si no existe
+e2e init
+
+# Generar manifest del proyecto (esto analiza tu código)
+e2e manifest
+```
+
+#### Paso 2: Generar Tests Automáticamente
+
+```bash
+# Generar tests para TODOS los servicios detectados
+e2e generate-tests
+
+# O generar para un servicio específico
+e2e generate-tests --service users-api
+
+# Preview sin crear archivos (recomendado primero)
+e2e generate-tests --dry-run
+
+# Generar solo tests de validación edge case
+e2e generate-tests --strategy edge
+```
+
+#### Paso 3: Revisar lo Generado
+
+El comando creará esta estructura:
+
+```
+services/{service_name}/
+├── __init__.py
+├── data_schema.py          # ← DTOs detectados + datos de prueba
+├── {service_name}_page.py  # ← Page object con métodos de flujo
+└── modules/
+    ├── __init__.py
+    ├── _01_auth_flow.py    # ← Flujo: Registro → Login → Perfil
+    ├── _02_crud_flow.py    # ← Flujo: Create → Read → Update → Delete
+    └── _99_validation_tests.py  # ← Tests de validación automáticos
+```
+
+#### Paso 4: Ejecutar los Tests Generados
+
+```bash
+# Ejecutar todos los tests
+e2e run
+
+# Ejecutar solo un servicio
+e2e run --service users-api
+
+# Ejecutar un flujo específico
+e2e run --service users-api --module _01_auth_flow
+```
+
+### Cómo Funciona la Detección de Flujos
+
+El sistema detecta automáticamente estos patrones:
+
+#### Flujo de Autenticación
+```
+POST /auth/register  →  POST /auth/login  →  GET /auth/me
+    (guarda datos)       (guarda token)        (usa token)
+```
+
+#### Flujo CRUD
+```
+POST /users       →  GET /users/{id}  →  PUT /users/{id}  →  DELETE /users/{id}
+(guarda user_id)      (verifica datos)      (actualiza)         (elimina)
+```
+
+#### Flujos Personalizados
+Si detecta patrones como `/checkout` → `/payment` → `/confirm`, crea un flujo de checkout automáticamente.
+
+### Personalizar Datos de Prueba
+
+Edita `data_schema.py` después de generarlo:
+
+```python
+# En services/users-api/data_schema.py
+
+TEST_DATA = {
+    "auth_flow": {
+        "register": {
+            "email": "tu-email@empresa.com",  # ← Personaliza esto
+            "password": "TuPasswordSeguro123!",
+            "username": "usuario_prueba"
+        },
+        "login": {
+            "email": "tu-email@empresa.com",  # ← Debe coincidir con register
+            "password": "TuPasswordSeguro123!"
+        }
+    }
+}
+```
+
+### Estrategias de Generación de Datos
+
+El sistema soporta múltiples estrategias:
+
+```bash
+# Valid - Datos que deberían funcionar (default)
+e2e generate-tests --strategy valid
+
+# Invalid - Datos que deberían fallar validación
+e2e generate-tests --strategy invalid
+
+# Edge - Casos límite (min, max, vacíos)
+e2e generate-tests --strategy edge
+
+# Chaos - Datos aleatorios/fuzzy
+e2e generate-tests --strategy chaos
+
+# All - Todas las estrategias
+e2e generate-tests --strategy all
+```
+
+### Ejemplo Completo: API de Usuarios
+
+Supongamos que tienes esta API:
+
+```java
+// Tu código Java (Spring Boot)
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @PostMapping("/register")
+    public ResponseEntity<User> register(@RequestBody RegisterRequest request) {
+        // ...
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        // ...
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal User user) {
+        // ...
+    }
+}
+```
+
+**Generas tests automáticamente:**
+
+```bash
+e2e manifest
+e2e generate-tests --service users-api
+```
+
+**El sistema genera:**
+
+```python
+# services/users-api/modules/_01_user_authentication_flow.py
+
+def run(page: UsersApiPage) -> APIResponse:
+    """Execute User Authentication Flow.
+
+    Steps:
+    1. Register new user
+    2. Login with credentials
+    3. Access protected profile
+    """
+    # Step 1: Register
+    register_data = TEST_DATA["auth_flow"]["register_user"]
+    register_request = RegisterRequest(**register_data)
+    response = page.do_register(register_request)
+    assert response.ok, "Registration failed"
+
+    # Step 2: Login
+    login_data = TEST_DATA["auth_flow"]["login_user"]
+    login_request = LoginRequest(**login_data)
+    response = page.do_login(login_request)
+    assert response.ok, "Login failed"
+
+    # Step 3: Get profile (uses token from login)
+    response = page.do_get_current_user()
+    assert response.ok, "Get profile failed"
+
+    return response
+```
+
+### Tests de Validación Generados
+
+Para cada campo con validaciones, genera tests automáticos:
+
+```python
+# services/users-api/modules/_99_validation_tests.py
+
+def test_register_username_below_minimum():
+    """Test username with less than 3 characters should fail."""
+    data = {
+        "username": "ab",  # Less than min_length=3
+        "email": "test@example.com",
+        "password": "Password123!"
+    }
+    request = RegisterRequest(**data)
+    response = page.do_register(request)
+    assert response.status == 400, "Should fail with 400"
+
+def test_register_email_invalid_format():
+    """Test invalid email format should fail."""
+    data = {
+        "username": "testuser",
+        "email": "not-an-email",  # Invalid format
+        "password": "Password123!"
+    }
+    request = RegisterRequest(**data)
+    response = page.do_register(request)
+    assert response.status == 400, "Should fail with 400"
+```
+
+### Mejores Prácticas para Agentes
+
+**1. Siempre revisa los tests generados**
+
+```bash
+# Primero dry-run para ver qué se generará
+e2e generate-tests --dry-run
+
+# Luego genera y revisa
+e2e generate-tests
+vim services/users-api/data_schema.py  # Revisa los datos
+```
+
+**2. Personaliza los datos de prueba**
+
+Los tests generados usan datos genéricos. Actualízalos a valores reales:
+
+```python
+# Antes (generado automáticamente)
+"email": "testuser_123@example.com"
+
+# Después (personalizado)
+"email": "test@miempresa.com"
+```
+
+**3. Ejecuta incrementalmente**
+
+```bash
+# Primero un solo flujo
+e2e run --service users-api --module _01_auth_flow
+
+# Si funciona, ejecuta todos
+e2e run --service users-api
+```
+
+**4. Añade tests personalizados después**
+
+Los tests generados cubren el 80% de los casos. Añade tests manuales para casos específicos:
+
+```bash
+# Crear test manual adicional
+e2e new-test custom_scenario --service users-api
+```
+
+### Troubleshooting de Generación Autónoma
+
+#### "No flows detected"
+
+**Problema**: El sistema no detecta flujos en tu API.
+
+**Solución**: Asegúrate de que tus endpoints tengan nombres descriptivos:
+```java
+// ❌ Mal - Nombres genéricos
+@PostMapping("/action1")
+@PostMapping("/process")
+
+// ✅ Bien - Nombres descriptivos
+@PostMapping("/register")
+@PostMapping("/login")
+```
+
+#### "No database models found"
+
+**Problema**: No detecta modelos de base de datos.
+
+**Solución**: Verifica ubicaciones:
+```
+# SQLAlchemy
+models.py, db.py, database.py
+
+# Prisma
+prisma/schema.prisma o schema.prisma
+
+# Hibernate
+src/main/java/**/model/*.java
+```
+
+#### "Validation tests fail"
+
+**Problema**: Los tests de validación generados fallan.
+
+**Solución**: Revisa las validaciones detectadas en `data_schema.py`:
+```python
+VALIDATION_RULES = {
+    "RegisterRequest": {
+        "username": {
+            "min_length": 3,  # ← ¿Es correcto?
+            "max_length": 50
+        }
+    }
+}
+```
+
+### Flujo de Trabajo Recomendado para Agentes
+
+Cuando un usuario te pida tests para su API:
+
+**OPCIÓN A: API Existente (Usar Generación Autónoma)**
+```bash
+# 1. Verificar si hay código fuente
+ls /path/to/project
+
+# 2. Si hay código, usar generación autónoma
+e2e init
+e2e manifest
+e2e generate-tests --dry-run  # Mostrar al usuario
+
+# 3. Generar y personalizar
+e2e generate-tests
+# Editar data_schema.py con datos reales
+
+# 4. Ejecutar
+e2e run
+```
+
+**OPCIÓN B: API Nueva o Sin Código (Manual)**
+```bash
+# 1. Crear servicio manualmente
+e2e new-service users-api
+
+# 2. Implementar tests manualmente según AGENT_GUIDE.md
+# ... crear data_schema.py, page.py, tests ...
+
+# 3. Ejecutar
+e2e run
+```
+
+### Prompt Sugerido para Usuarios
+
+Si un usuario quiere usar la generación autónoma, diles:
+
+> "Para generar tests automáticamente para tu API, ejecuta estos comandos:
+>
+> ```bash
+> e2e manifest
+> e2e generate-tests
+> ```
+>
+> Esto analizará tu código fuente y generará tests completos basados en tus endpoints y modelos de base de datos. Luego revisa y personaliza los datos en `services/{nombre}/data_schema.py`."
+
+---
+
+**Versión**: 2.1
+**Fecha**: 2026-02-08
+**Feature**: Issue #185 - Autonomous Test Generation
+
+---
+
 ## 📞 Soporte
 
 Si encuentras problemas:
