@@ -47,7 +47,9 @@ def init(directory: str, force: bool):
     """
     target_path = Path(directory).resolve()
 
-    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
+    console.print(
+        f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n"
+    )
 
     # Create directory structure
     dirs_to_create = [
@@ -65,7 +67,9 @@ def init(directory: str, force: bool):
                 if dir_path.parent == target_path
                 else str(dir_path.relative_to(target_path))
             )
-            console.print(f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}")
+            console.print(
+                f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}"
+            )
         else:
             console.print(
                 f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
@@ -89,7 +93,9 @@ def init(directory: str, force: bool):
         )
         console.print("  [green]✓[/green] Created: e2e.conf")
     else:
-        console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)")
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)"
+        )
 
     # Create .gitignore
     gitignore_path = target_path / ".gitignore"
@@ -219,13 +225,17 @@ email-validator>=2.0.0
         if result.returncode == 0:
             console.print("  [green]✓[/green] Dependencies installed")
         else:
-            console.print("  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed")
+            console.print(
+                "  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed"
+            )
             if result.stderr:
                 console.print(f"  [dim]{result.stderr[:200]}...[/dim]")
     except subprocess.TimeoutExpired:
         console.print("  [yellow]⚠ Warning:[/yellow] Installation took too long")
     except Exception as e:
-        console.print(f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}")
+        console.print(
+            f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}"
+        )
 
     # 2. Run verification (always)
     console.print("\n🔍 Verifying installation...")
@@ -294,7 +304,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         console.print("   Run: [cyan]e2e init[/cyan] first")
         sys.exit(1)
 
@@ -338,7 +350,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         str(service_path / f"{snake_case_name}_page.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py")
+    console.print(
+        f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py"
+    )
 
     # Create configuration file
     engine.render_to_file(
@@ -361,7 +375,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
     # Update e2e.conf
     _update_e2e_conf(name, base_url, health_endpoint)
 
-    console.print(f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n")
+    console.print(
+        f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n"
+    )
 
     console.print(
         Panel(
@@ -391,7 +407,9 @@ def new_test(name: str, service: str, description: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         sys.exit(1)
 
     # Verify that the service exists
@@ -400,7 +418,9 @@ def new_test(name: str, service: str, description: str):
 
     if not service_path.exists():
         console.print(f"[red]❌ Error:[/red] Service '{service}' does not exist.")
-        console.print(f"   Create the service first: [cyan]e2e new-service {service}[/cyan]")
+        console.print(
+            f"   Create the service first: [cyan]e2e new-service {service}[/cyan]"
+        )
         sys.exit(1)
 
     if not modules_path.exists():
@@ -440,10 +460,16 @@ def new_test(name: str, service: str, description: str):
     }
 
     # Create test using template
-    engine.render_to_file("test_module.py.template", template_vars, str(test_path), overwrite=False)
-    console.print(f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}")
+    engine.render_to_file(
+        "test_module.py.template", template_vars, str(test_path), overwrite=False
+    )
+    console.print(
+        f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}"
+    )
 
-    console.print(f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n")
+    console.print(
+        f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n"
+    )
 
     console.print(
         Panel(
@@ -615,7 +641,9 @@ def doctor():
     checks = []
 
     # Check Python
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    python_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     checks.append(("Python", python_version, sys.version_info >= (3, 9)))
 
     # Check Playwright
@@ -664,7 +692,9 @@ def doctor():
             services_exists,
         )
     )
-    checks.append(("tests/ directory", "OK" if tests_exists else "Not found", tests_exists))
+    checks.append(
+        ("tests/ directory", "OK" if tests_exists else "Not found", tests_exists)
+    )
 
     # Show results
     table = Table(title="System Verification")
@@ -690,11 +720,17 @@ def doctor():
         console.print("[cyan]Suggested solutions:[/cyan]")
 
         if not any(name == "Playwright" and ok for name, _, ok in checks):
-            console.print("  • Install Playwright: [white]pip install playwright[/white]")
+            console.print(
+                "  • Install Playwright: [white]pip install playwright[/white]"
+            )
         if not any(name == "Playwright CLI" and ok for name, _, ok in checks):
-            console.print("  • Install browsers: [white]playwright install chromium[/white]")
+            console.print(
+                "  • Install browsers: [white]playwright install chromium[/white]"
+            )
         if not any(name == "Pydantic" and ok for name, _, ok in checks):
-            console.print("  • Install dependencies: [white]pip install socialseed-e2e[/white]")
+            console.print(
+                "  • Install dependencies: [white]pip install socialseed-e2e[/white]"
+            )
         if not _is_e2e_project():
             console.print("  • Initialize project: [white]e2e init[/white]")
 
@@ -1058,7 +1094,9 @@ def retrieve(task: str, directory: str, max_chunks: int):
 
         for i, chunk in enumerate(chunks, 1):
             console.print(f"[bold]Chunk {i}:[/bold] {chunk.chunk_type}")
-            console.print(f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]")
+            console.print(
+                f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]"
+            )
             console.print(Panel(chunk.content, border_style="green"))
             console.print()
 
@@ -1232,7 +1270,9 @@ def generate_tests(
 
     try:
         from socialseed_e2e.project_manifest import DatabaseSchema, db_parser_registry
-        from socialseed_e2e.project_manifest.flow_test_generator import FlowBasedTestSuiteGenerator
+        from socialseed_e2e.project_manifest.flow_test_generator import (
+            FlowBasedTestSuiteGenerator,
+        )
 
         # Parse database schema if available
         console.print("📊 [yellow]Step 1/5:[/yellow] Parsing database models...")
@@ -1272,7 +1312,9 @@ def generate_tests(
         if service:
             services_to_process = [s for s in services_to_process if s.name == service]
             if not services_to_process:
-                console.print(f"[red]❌ Service '{service}' not found in manifest[/red]")
+                console.print(
+                    f"[red]❌ Service '{service}' not found in manifest[/red]"
+                )
                 sys.exit(1)
 
         generated_suites = []
@@ -1280,12 +1322,16 @@ def generate_tests(
             console.print(f"   Analyzing: {svc.name}...")
 
             # Create test suite generator
-            suite_generator = FlowBasedTestSuiteGenerator(service_info=svc, db_schema=db_schema)
+            suite_generator = FlowBasedTestSuiteGenerator(
+                service_info=svc, db_schema=db_schema
+            )
 
             # Analyze flows
             flow_count = len(suite_generator.flows)
             relationship_count = len(suite_generator.analysis_result["relationships"])
-            console.print(f"     ✓ Detected {flow_count} flows, {relationship_count} relationships")
+            console.print(
+                f"     ✓ Detected {flow_count} flows, {relationship_count} relationships"
+            )
 
             generated_suites.append((svc, suite_generator))
 
@@ -1308,12 +1354,16 @@ def generate_tests(
 
             console.print(f"\n   [bold]{svc.name}:[/bold]")
             console.print(f"     📄 data_schema.py ({len(svc.dto_schemas)} DTOs)")
-            console.print(f"     📄 {svc.name}_page.py ({len(svc.endpoints)} endpoints)")
+            console.print(
+                f"     📄 {svc.name}_page.py ({len(svc.endpoints)} endpoints)"
+            )
             for flow in suite.flows_detected:
                 console.print(f"     📄 {flow.name} ({len(flow.steps)} steps)")
 
         # Show validation criteria summary
-        console.print("\n🎯 [yellow]Step 5/5:[/yellow] Extracting validation criteria...")
+        console.print(
+            "\n🎯 [yellow]Step 5/5:[/yellow] Extracting validation criteria..."
+        )
         total_validations = 0
         for svc, suite_generator in generated_suites:
             validations = suite_generator.analysis_result["validation_criteria"]
@@ -1353,7 +1403,8 @@ def generate_tests(
                             "name": flow.name,
                             "description": flow.description,
                             "steps": [
-                                {"endpoint": {"name": step.endpoint.name}} for step in flow.steps
+                                {"endpoint": {"name": step.endpoint.name}}
+                                for step in flow.steps
                             ],
                             "flow_type": flow.flow_type.value
                             if hasattr(flow.flow_type, "value")
@@ -1375,7 +1426,9 @@ def generate_tests(
         if not dry_run:
             console.print(f"\n📁 Output directory: {output_path}")
             console.print("\n[bold]Next steps:[/bold]")
-            console.print("   1. Review the AI Discovery Report in .e2e/DISCOVERY_REPORT.md")
+            console.print(
+                "   1. Review the AI Discovery Report in .e2e/DISCOVERY_REPORT.md"
+            )
             console.print("   2. Customize test data in data_schema.py")
             console.print("   3. Run tests: [cyan]e2e run[/cyan]")
         else:
@@ -1533,7 +1586,9 @@ def observe(
             table.add_column("Status", style="white")
 
             for container in results["docker_containers"]:
-                ports_str = ", ".join(f"{p['public']}->{p['private']}" for p in container["ports"])
+                ports_str = ", ".join(
+                    f"{p['public']}->{p['private']}" for p in container["ports"]
+                )
                 table.add_row(
                     container["name"],
                     container["image"],
@@ -1570,7 +1625,9 @@ def observe(
                         if setup_result["success"]:
                             console.print("   [green]✅ Setup successful![/green]")
                             if "output" in setup_result:
-                                console.print(f"   Output: {setup_result['output'][:200]}...")
+                                console.print(
+                                    f"   Output: {setup_result['output'][:200]}..."
+                                )
                         else:
                             console.print(
                                 f"   [red]❌ Setup failed:[/red] {setup_result['message']}"
@@ -1641,14 +1698,19 @@ def discover(directory: str, output: Optional[str], open: bool):
     console.print(f"   Project: {target_path}\n")
 
     try:
-        from socialseed_e2e.project_manifest import ManifestAPI, generate_discovery_report
+        from socialseed_e2e.project_manifest import (
+            ManifestAPI,
+            generate_discovery_report,
+        )
 
         # Load manifest
         api = ManifestAPI(target_path)
         manifest = api._load_manifest()
 
         if not manifest:
-            console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
+            console.print(
+                "[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]"
+            )
             sys.exit(1)
 
         # Generate report
@@ -1753,7 +1815,9 @@ def security_test(
         manifest = api._load_manifest()
 
         if not manifest:
-            console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
+            console.print(
+                "[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]"
+            )
             sys.exit(1)
 
         # Get services to test
@@ -1806,7 +1870,9 @@ def security_test(
 
             # Summary
             total_vulns = sum(len(s.vulnerabilities_found) for s in all_sessions)
-            avg_resilience = sum(s.resilience_score for s in all_sessions) / len(all_sessions)
+            avg_resilience = sum(s.resilience_score for s in all_sessions) / len(
+                all_sessions
+            )
 
             console.print(f"{'=' * 60}")
             console.print("[bold]🔒 Security Testing Complete[/bold]")
@@ -1818,7 +1884,9 @@ def security_test(
             console.print(f"   Average resilience score: {avg_resilience:.1f}%")
 
             if total_vulns > 0:
-                console.print(f"\n   [red]⚠ {total_vulns} vulnerabilities require attention![/red]")
+                console.print(
+                    f"\n   [red]⚠ {total_vulns} vulnerabilities require attention![/red]"
+                )
                 console.print(f"   📄 See report: {output_path}")
             else:
                 console.print(f"\n   [green]✅ No vulnerabilities found![/green]")
@@ -1890,7 +1958,10 @@ def regression(
     console.print(f"   Comparing: {base_ref} → {target_ref}\n")
 
     try:
-        from socialseed_e2e.project_manifest import RegressionAgent, run_regression_analysis
+        from socialseed_e2e.project_manifest import (
+            RegressionAgent,
+            run_regression_analysis,
+        )
 
         # Run regression analysis
         agent = RegressionAgent(target_path, base_ref, target_ref)
@@ -2077,12 +2148,18 @@ def mock_analyze(directory: str, output: str, format: str):
                 if dependency.detected_calls:
                     console.print("   Files:")
                     for call in dependency.detected_calls[:3]:
-                        console.print(f"     • {call.file_path}:{call.line_number} ({call.method})")
+                        console.print(
+                            f"     • {call.file_path}:{call.line_number} ({call.method})"
+                        )
                     if len(dependency.detected_calls) > 3:
-                        console.print(f"     ... and {len(dependency.detected_calls) - 3} more")
+                        console.print(
+                            f"     ... and {len(dependency.detected_calls) - 3} more"
+                        )
 
                 if dependency.env_var_keys:
-                    console.print(f"   Environment variables: {', '.join(dependency.env_var_keys)}")
+                    console.print(
+                        f"   Environment variables: {', '.join(dependency.env_var_keys)}"
+                    )
                 console.print()
 
         else:  # JSON format
@@ -2121,7 +2198,9 @@ def mock_analyze(directory: str, output: str, format: str):
         )
 
         console.print("\n[bold]Next steps:[/bold]")
-        console.print("   1. Generate mock servers: [cyan]e2e mock-generate <service>[/cyan]")
+        console.print(
+            "   1. Generate mock servers: [cyan]e2e mock-generate <service>[/cyan]"
+        )
         console.print("   2. Run mock servers: [cyan]e2e mock-run[/cyan]")
         console.print("   3. Run E2E tests with mocks enabled\n")
 
@@ -2158,7 +2237,9 @@ def mock_analyze(directory: str, output: str, format: str):
     is_flag=True,
     help="Generate mocks for all detected services",
 )
-def mock_generate(service: str, port: int, output_dir: str, docker: bool, generate_all: bool):
+def mock_generate(
+    service: str, port: int, output_dir: str, docker: bool, generate_all: bool
+):
     """Generate mock server for external API (Issue #191).
 
     Creates a FastAPI-based mock server that mimics the behavior
@@ -2178,7 +2259,10 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
     console.print(f"   Output: {output_path.resolve()}\n")
 
     try:
-        from socialseed_e2e.ai_mocking import ExternalServiceRegistry, MockServerGenerator
+        from socialseed_e2e.ai_mocking import (
+            ExternalServiceRegistry,
+            MockServerGenerator,
+        )
 
         generator = MockServerGenerator(output_path)
 
@@ -2192,7 +2276,9 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
             servers = generator.generate_all_mock_servers(services, base_port=port)
 
             for i, server in enumerate(servers):
-                file_path = generator.save_mock_server(server, f"mock_{server.service_name}.py")
+                file_path = generator.save_mock_server(
+                    server, f"mock_{server.service_name}.py"
+                )
                 console.print(f"  [green]✓[/green] {server.service_name}: {file_path}")
 
                 if docker:
@@ -2208,7 +2294,9 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
                 compose_path.write_text(compose)
                 console.print(f"\n  [green]✓[/green] docker-compose.yml")
 
-            console.print(f"\n[bold green]✅ Generated {len(servers)} mock servers![/bold green]\n")
+            console.print(
+                f"\n[bold green]✅ Generated {len(servers)} mock servers![/bold green]\n"
+            )
 
         else:
             # Generate single service
@@ -2233,7 +2321,9 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
                 dockerfile_path.write_text(dockerfile)
                 console.print(f"  [green]✓[/green] Generated: {dockerfile_path}")
 
-            console.print(f"\n[bold green]✅ Mock server generated successfully![/bold green]")
+            console.print(
+                f"\n[bold green]✅ Mock server generated successfully![/bold green]"
+            )
             console.print(f"\n[bold]To run the mock server:[/bold]")
             console.print(f"   cd {output_path}")
             console.print(f"   python mock_{service}.py")
@@ -2289,7 +2379,10 @@ def mock_run(services: str, config: str, detach: bool, port: int):
     console.print(f"\n🚀 [bold cyan]Starting Mock Servers[/bold cyan]\n")
 
     try:
-        from socialseed_e2e.ai_mocking import ExternalServiceRegistry, MockServerGenerator
+        from socialseed_e2e.ai_mocking import (
+            ExternalServiceRegistry,
+            MockServerGenerator,
+        )
 
         output_dir = Path(".e2e/mocks")
 
@@ -2299,10 +2392,14 @@ def mock_run(services: str, config: str, detach: bool, port: int):
         else:
             # Check for generated mocks
             if output_dir.exists():
-                service_list = [f.stem.replace("mock_", "") for f in output_dir.glob("mock_*.py")]
+                service_list = [
+                    f.stem.replace("mock_", "") for f in output_dir.glob("mock_*.py")
+                ]
             else:
                 console.print("[yellow]⚠ No mock servers found.[/yellow]")
-                console.print("   Run [cyan]e2e mock-generate <service>[/cyan] first.\n")
+                console.print(
+                    "   Run [cyan]e2e mock-generate <service>[/cyan] first.\n"
+                )
                 sys.exit(1)
 
         if not service_list:
@@ -2318,7 +2415,9 @@ def mock_run(services: str, config: str, detach: bool, port: int):
             mock_file = output_dir / f"mock_{service}.py"
 
             if not mock_file.exists():
-                console.print(f"  [yellow]⚠[/yellow] {service}: Mock not found, generating...")
+                console.print(
+                    f"  [yellow]⚠[/yellow] {service}: Mock not found, generating..."
+                )
                 generator = MockServerGenerator(output_dir)
                 try:
                     server = generator.generate_mock_server(service, port=current_port)
@@ -2348,7 +2447,9 @@ def mock_run(services: str, config: str, detach: bool, port: int):
                     try:
                         subprocess.run([sys.executable, str(mock_file)], check=True)
                     except KeyboardInterrupt:
-                        console.print(f"\n[yellow]👋 {service} mock server stopped[/yellow]\n")
+                        console.print(
+                            f"\n[yellow]👋 {service} mock server stopped[/yellow]\n"
+                        )
                     return
                 else:
                     # Multiple services - use subprocesses
@@ -2362,7 +2463,9 @@ def mock_run(services: str, config: str, detach: bool, port: int):
             current_port += 1
 
         if detach:
-            console.print(f"\n[bold green]✅ Mock servers running in background[/bold green]")
+            console.print(
+                f"\n[bold green]✅ Mock servers running in background[/bold green]"
+            )
             console.print(f"   Check with: [cyan]ps aux | grep mock_[/cyan]\n")
 
         elif processes:
@@ -2445,7 +2548,9 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
 
                 if verbose:
                     for error in result.errors:
-                        console.print(f"     [red]Error:[/red] {error.field} - {error.message}")
+                        console.print(
+                            f"     [red]Error:[/red] {error.field} - {error.message}"
+                        )
                         if error.expected is not None:
                             console.print(f"       Expected: {error.expected}")
                         if error.actual is not None:
@@ -2476,6 +2581,347 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
 
     except Exception as e:
         console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--service",
+    "-s",
+    default="unknown",
+    help="Service name for the profiling session",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=".e2e/performance",
+    help="Output directory for performance reports",
+)
+@click.option(
+    "--threshold",
+    "-t",
+    default=50.0,
+    help="Regression threshold percentage (default: 50)",
+)
+@click.option(
+    "--compare-baseline",
+    is_flag=True,
+    help="Compare with baseline and show regressions",
+)
+@click.option(
+    "--set-baseline",
+    is_flag=True,
+    help="Set current run as baseline for future comparisons",
+)
+def perf_profile(
+    directory: str,
+    service: str,
+    output: str,
+    threshold: float,
+    compare_baseline: bool,
+    set_baseline: bool,
+):
+    """Run performance profiling and analysis (Issue #87).
+
+    Profiles all E2E tests and provides AI-powered performance insights
+    including latency tracking, regression detection, and bottleneck analysis.
+
+    Examples:
+        e2e perf-profile                    # Profile current directory
+        e2e perf-profile /path/to/project   # Profile specific project
+        e2e perf-profile --compare-baseline # Compare with baseline
+        e2e perf-profile --set-baseline     # Set current as baseline
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    try:
+        from socialseed_e2e.performance import (
+            PerformanceProfiler,
+            ThresholdAnalyzer,
+            SmartAlertGenerator,
+        )
+
+        console.print("\n📊 [bold cyan]AI-Powered Performance Profiling[/bold cyan]")
+        console.print(f"   Service: {service}")
+        console.print(f"   Project: {target_path}\n")
+
+        # Create profiler
+        profiler = PerformanceProfiler(
+            service_name=service,
+            output_dir=Path(output),
+        )
+
+        # Start profiling
+        profiler.start_profiling()
+
+        console.print("[yellow]Profiling session started...[/yellow]")
+        console.print("Run your E2E tests now. Press Ctrl+C to stop profiling.\n")
+
+        try:
+            # Wait for user to finish tests
+            import time
+
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+
+        # Stop profiling
+        profiler.stop_profiling()
+
+        # Generate report
+        report = profiler.generate_report()
+        report_path = profiler.save_report(report)
+
+        console.print(f"\n[green]✓ Report saved:[/green] {report_path}")
+
+        # Compare with baseline if requested
+        if compare_baseline:
+            console.print("\n[yellow]Comparing with baseline...[/yellow]")
+
+            analyzer = ThresholdAnalyzer(
+                performance_dir=Path(output),
+                regression_threshold_pct=threshold,
+            )
+
+            if analyzer.load_baseline():
+                regressions = analyzer.detect_regressions(report)
+
+                if regressions:
+                    console.print(
+                        f"\n[red]⚠ {len(regressions)} regression(s) detected![/red]"
+                    )
+
+                    # Generate smart alerts
+                    alert_gen = SmartAlertGenerator(project_root=target_path)
+                    alerts = alert_gen.generate_alerts(report, regressions)
+
+                    for alert in alerts:
+                        severity_color = {
+                            "critical": "red",
+                            "warning": "yellow",
+                            "info": "blue",
+                        }.get(alert.severity.value, "white")
+
+                        console.print(
+                            f"\n[{severity_color}]{alert.severity.value.upper()}:[/{severity_color}] {alert.title}"
+                        )
+                        console.print(alert.message)
+
+                        if alert.recommendations:
+                            console.print("\n[cyan]Recommendations:[/cyan]")
+                            for rec in alert.recommendations[:3]:
+                                console.print(f"  • {rec}")
+                else:
+                    console.print("\n[green]✓ No regressions detected[/green]")
+            else:
+                console.print(
+                    "\n[yellow]⚠ No baseline found. Run with --set-baseline first.[/yellow]"
+                )
+
+        # Set baseline if requested
+        if set_baseline:
+            analyzer = ThresholdAnalyzer(performance_dir=Path(output))
+            baseline_path = analyzer.set_baseline(report)
+            console.print(f"\n[green]✓ Baseline set:[/green] {baseline_path}")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--output",
+    "-o",
+    default=".e2e/performance",
+    help="Performance reports directory",
+)
+@click.option(
+    "--baseline",
+    "-b",
+    help="Path to baseline report for comparison",
+)
+@click.option(
+    "--threshold",
+    "-t",
+    default=50.0,
+    help="Regression threshold percentage",
+)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["text", "json", "markdown"]),
+    default="text",
+    help="Output format",
+)
+def perf_report(
+    directory: str,
+    output: str,
+    baseline: str,
+    threshold: float,
+    format: str,
+):
+    """Generate performance report with AI analysis (Issue #87).
+
+    Analyzes performance reports and generates detailed analysis
+    including regressions, trends, and recommendations.
+
+    Examples:
+        e2e perf-report                     # Analyze latest report
+        e2e perf-report --baseline path     # Compare with baseline
+        e2e perf-report -f markdown         # Generate markdown report
+    """
+    target_path = Path(directory).resolve()
+    output_dir = Path(output)
+
+    try:
+        from socialseed_e2e.performance import (
+            ThresholdAnalyzer,
+            SmartAlertGenerator,
+        )
+
+        console.print("\n📈 [bold cyan]Performance Report Analysis[/bold cyan]\n")
+
+        # Load latest report
+        analyzer = ThresholdAnalyzer(
+            performance_dir=output_dir,
+            regression_threshold_pct=threshold,
+        )
+
+        latest_report = analyzer._find_baseline_file()
+        if not latest_report:
+            console.print("[red]Error:[/red] No performance reports found.")
+            console.print(
+                f"Run [cyan]e2e perf-profile[/cyan] first to generate reports."
+            )
+            sys.exit(1)
+
+        # Load baseline if provided
+        if baseline:
+            analyzer.load_baseline(Path(baseline))
+        else:
+            analyzer.load_baseline()
+
+        # Generate report
+        console.print(f"Analyzing: {latest_report}\n")
+
+        # Load and analyze
+        with open(latest_report, "r") as f:
+            import json
+
+            report_data = json.load(f)
+
+        # Check for regressions
+        if analyzer.baseline:
+            report = analyzer._report_from_dict(report_data)
+            regressions = analyzer.detect_regressions(report)
+
+            if regressions:
+                # Generate smart alerts
+                alert_gen = SmartAlertGenerator(project_root=target_path)
+                alerts = alert_gen.generate_alerts(report, regressions)
+
+                if format == "text":
+                    summary = alert_gen.generate_summary_report(report, regressions)
+                    console.print(summary)
+
+                    console.print("\n[bold]Detailed Alerts:[/bold]\n")
+                    for alert in alerts:
+                        severity_color = {
+                            "critical": "red",
+                            "warning": "yellow",
+                            "info": "blue",
+                        }.get(alert.severity.value, "white")
+
+                        console.print(
+                            f"[{severity_color}]{alert.severity.value.upper()}:[/{severity_color}] {alert.title}"
+                        )
+                        console.print(alert.message)
+                        console.print()
+
+                elif format == "json":
+                    import json
+
+                    output_data = {
+                        "report": report_data,
+                        "regressions": [
+                            {
+                                "endpoint": f"{r.method} {r.endpoint_path}",
+                                "type": r.regression_type.value,
+                                "change_pct": r.percentage_change,
+                                "severity": r.severity.value,
+                            }
+                            for r in regressions
+                        ],
+                        "alerts": [a.to_dict() for a in alerts],
+                    }
+                    console.print(json.dumps(output_data, indent=2))
+
+                elif format == "markdown":
+                    lines = [
+                        "# Performance Analysis Report",
+                        "",
+                        f"**Service:** {report_data.get('service_name', 'unknown')}",
+                        f"**Date:** {report_data.get('timestamp', 'N/A')}",
+                        "",
+                        "## Summary",
+                        "",
+                        f"- Total Requests: {report_data.get('total_requests', 0)}",
+                        f"- Overall Avg Latency: {report_data.get('overall_avg_latency', 0):.2f}ms",
+                        f"- Regressions Detected: {len(regressions)}",
+                        "",
+                        "## Regressions",
+                        "",
+                    ]
+
+                    for alert in alerts:
+                        lines.extend(
+                            [
+                                f"### {alert.title}",
+                                "",
+                                f"**Severity:** {alert.severity.value}",
+                                "",
+                                alert.message,
+                                "",
+                                "**Recommendations:**",
+                                "",
+                            ]
+                        )
+                        for rec in alert.recommendations[:3]:
+                            lines.append(f"- {rec}")
+                        lines.append("")
+
+                    console.print("\n".join(lines))
+
+            else:
+                console.print("[green]✓ No regressions detected[/green]")
+                console.print(
+                    "All endpoints are performing within expected thresholds."
+                )
+        else:
+            # Just show the report without comparison
+            console.print("[bold]Performance Summary:[/bold]\n")
+            console.print(report_data.get("summary", "No summary available"))
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
