@@ -7,8 +7,8 @@ conform to the expected contract, ensuring air-gapped testing integrity.
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 
 @dataclass
@@ -246,7 +246,7 @@ class ContractValidator:
                     if expected_type == "string" and not isinstance(header_value, str):
                         result.add_error(
                             field=f"header.{header_name}",
-                            message=f"Header should be string",
+                            message="Header should be string",
                             expected="string",
                             actual=type(header_value).__name__,
                         )
@@ -521,7 +521,7 @@ class ContractValidator:
         return result
 
     def load_schema(self, schema_path: Union[str, Path]) -> Dict[str, Any]:
-        """Load a JSON schema from file.
+        """Load a JSON schema from a file.
 
         Args:
             schema_path: Path to schema file

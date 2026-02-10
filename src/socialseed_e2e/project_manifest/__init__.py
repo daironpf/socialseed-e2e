@@ -21,6 +21,42 @@ Example:
 """
 
 from socialseed_e2e.project_manifest.api import ManifestAPI, TokenOptimizedQuery
+from socialseed_e2e.project_manifest.generator import ManifestGenerator
+from socialseed_e2e.project_manifest.models import (
+    DtoField,
+    DtoSchema,
+    EndpointInfo,
+    EndpointParameter,
+    EnvironmentVariable,
+    FileMetadata,
+    HttpMethod,
+    PortConfig,
+    ProjectKnowledge,
+    ServiceDependency,
+    ServiceInfo,
+    ValidationRule,
+)
+from socialseed_e2e.project_manifest.parsers import (
+    BaseParser,
+    JavaParser,
+    NodeParser,
+    ParseResult,
+    PythonParser,
+    parser_registry,
+)
+from socialseed_e2e.project_manifest.retrieval import (
+    ContextChunk,
+    RAGRetrievalEngine,
+    TaskContextBuilder,
+)
+from socialseed_e2e.project_manifest.vector_store import (
+    ManifestVectorStore,
+    SearchResult,
+)
+from socialseed_e2e.project_manifest.vector_sync import (
+    IntegratedSyncManager,
+    VectorIndexSyncManager,
+)
 
 # Flow-based test generation (Issue #185)
 from socialseed_e2e.project_manifest.business_logic_inference import (

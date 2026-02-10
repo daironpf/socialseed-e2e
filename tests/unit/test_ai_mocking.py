@@ -1,10 +1,18 @@
 """Tests for AI Mocking system."""
 
 import json
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
 
+import pytest
+
+from socialseed_e2e.ai_mocking.contract_validator import (
+    ContractValidator,
+    ValidationError,
+    ValidationResult,
+    validate_request_contract,
+    validate_response_contract,
+)
 from socialseed_e2e.ai_mocking.external_api_analyzer import (
     ExternalAPIAnalyzer,
     ExternalAPICall,
@@ -12,21 +20,14 @@ from socialseed_e2e.ai_mocking.external_api_analyzer import (
     analyze_external_apis,
 )
 from socialseed_e2e.ai_mocking.external_service_registry import (
-    ExternalServiceRegistry,
     ExternalServiceDefinition,
+    ExternalServiceRegistry,
     MockEndpoint,
 )
 from socialseed_e2e.ai_mocking.mock_server_generator import (
-    MockServerGenerator,
     GeneratedMockServer,
+    MockServerGenerator,
     generate_mock_server,
-)
-from socialseed_e2e.ai_mocking.contract_validator import (
-    ContractValidator,
-    ValidationResult,
-    ValidationError,
-    validate_request_contract,
-    validate_response_contract,
 )
 
 
@@ -82,14 +83,9 @@ class TestExternalAPIAnalyzer:
         analyzer = ExternalAPIAnalyzer(tmp_path)
 
         assert analyzer._extract_service_name("https://api.stripe.com/v1") == "stripe"
-        assert (
-            analyzer._extract_service_name("https://maps.googleapis.com")
-            == "google_maps"
-        )
+        assert analyzer._extract_service_name("https://maps.googleapis.com") == "google_maps"
         assert analyzer._extract_service_name("https://api.github.com") == "github"
-        assert (
-            analyzer._extract_service_name("https://custom.api.com/v1") == "custom_api"
-        )
+        assert analyzer._extract_service_name("https://custom.api.com/v1") == "custom_api"
 
     def test_detect_method_from_context(self, tmp_path):
         """Test HTTP method detection from code context."""
@@ -140,10 +136,12 @@ geocode_result = requests.get("https://maps.googleapis.com/maps/api/geocode/json
         """Test analyze_external_apis convenience function."""
         # Create a test file
         test_file = tmp_path / "test_api.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 import requests
 response = requests.get("https://api.stripe.com/v1/customers")
-""")
+"""
+        )
 
         result = analyze_external_apis(str(tmp_path))
 
@@ -308,9 +306,7 @@ class TestMockServerGenerator:
         """Test generating multiple mock servers."""
         generator = MockServerGenerator(tmp_path)
 
-        servers = generator.generate_all_mock_servers(
-            ["stripe", "google_maps"], base_port=9000
-        )
+        servers = generator.generate_all_mock_servers(["stripe", "google_maps"], base_port=9000)
 
         assert len(servers) == 2
         assert servers[0].port == 9000
@@ -501,7 +497,8 @@ class TestIntegration:
         project_dir.mkdir()
 
         code_file = project_dir / "api_client.py"
-        code_file.write_text('''
+        code_file.write_text(
+            '''
 import requests
 import os
 
@@ -524,14 +521,17 @@ def geocode_address(address):
         params={"address": address, "key": api_key}
     )
     return response.json()
-''')
+'''
+        )
 
         # Create .env file
         env_file = project_dir / ".env"
-        env_file.write_text("""
+        env_file.write_text(
+            """
 STRIPE_SECRET_KEY=sk_test_123
 GOOGLE_MAPS_API_KEY=abc123
-""")
+"""
+        )
 
         # Step 1: Analyze
         from socialseed_e2e.ai_mocking import ExternalAPIAnalyzer

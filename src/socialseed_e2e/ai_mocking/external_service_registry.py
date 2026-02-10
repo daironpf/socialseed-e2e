@@ -5,8 +5,7 @@ for popular third-party services like Stripe, Google Maps, AWS, etc.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Callable
-import json
+from typing import Any, Callable, Dict, List, Optional
 
 
 @dataclass
@@ -219,7 +218,7 @@ class ExternalServiceRegistry:
                 response_example={
                     "results": [
                         {
-                            "formatted_address": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+                            "formatted_address": "1600 Amphitheatre Parkway, Mountain View, CA",
                             "geometry": {
                                 "location": {
                                     "lat": 37.4224764,

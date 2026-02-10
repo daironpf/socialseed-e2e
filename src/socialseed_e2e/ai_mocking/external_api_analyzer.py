@@ -7,7 +7,7 @@ Google Maps, AWS, and other third-party services.
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, List, Set
 
 
 @dataclass
@@ -112,8 +112,14 @@ class ExternalAPIAnalyzer:
             "http": r'http\.(get|request)\s*\(\s*.*?["\']([^"\']+)["\']',
         },
         "java": {
-            "rest_template": r'restTemplate\.(getForObject|postForObject|exchange)\s*\(\s*["\']([^"\']+)["\']',
-            "web_client": r'webClient\.(get|post|put|delete)\s*\(\s*\)\s*\.uri\s*\(\s*["\']([^"\']+)["\']',
+            "rest_template": (
+                r"restTemplate\.(getForObject|postForObject|exchange)"
+                r'\s*\(\s*["\']([^"\']+)["\']'
+            ),
+            "web_client": (
+                r"webClient\.(get|post|put|delete)\s*\(\s*\)"
+                r'\s*\.uri\s*\(\s*["\']([^"\']+)["\']'
+            ),
             "http_client": r"HttpClient\.newHttpClient\s*\(\s*\)",
         },
     }
@@ -218,9 +224,11 @@ class ExternalAPIAnalyzer:
                 if len(groups) >= 2:
                     method = groups[0].upper() if groups[0] else "GET"
                     url = groups[-1]
-                else:
+                elif len(groups) == 1:
                     method = "GET"
                     url = groups[0]
+                else:
+                    continue
 
                 # Skip relative URLs
                 if url.startswith("/") and not url.startswith("//"):
@@ -368,7 +376,13 @@ class ExternalAPIAnalyzer:
     def _add_call(
         self, service_name: str, base_url: str, call: ExternalAPICall
     ) -> None:
-        """Add a detected call to the registry."""
+        """Add a detected call to the registry.
+
+        Args:
+            service_name: Name of the external service
+            base_url: Base URL for the service
+            call: The detected API call to add
+        """
         if service_name not in self.detected_apis:
             config = self.KNOWN_APIS.get(service_name, {})
             self.detected_apis[service_name] = ExternalAPIDependency(

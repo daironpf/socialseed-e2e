@@ -13,12 +13,12 @@ The AI Mocking system automatically detects external API calls in your codebase 
 
 ## Features
 
-✅ **Dependency Identification** - Automatically scans code for external HTTP calls  
-✅ **Mock Server Generation** - Creates FastAPI-based mock servers with realistic responses  
-✅ **Contract Testing** - Validates requests/responses against expected schemas  
-✅ **Multiple Languages** - Supports Python, JavaScript/TypeScript, Java, and more  
-✅ **Pre-configured Services** - Built-in support for 10+ popular APIs  
-✅ **Docker Support** - Generate Dockerfiles and docker-compose configurations  
+✅ **Dependency Identification** - Automatically scans code for external HTTP calls
+✅ **Mock Server Generation** - Creates FastAPI-based mock servers with realistic responses
+✅ **Contract Testing** - Validates requests/responses against expected schemas
+✅ **Multiple Languages** - Supports Python, JavaScript/TypeScript, Java, and more
+✅ **Pre-configured Services** - Built-in support for 10+ popular APIs
+✅ **Docker Support** - Generate Dockerfiles and docker-compose configurations
 
 ## Supported Services
 
@@ -190,7 +190,7 @@ def create_payment(amount: int, currency: str = "usd"):
 def test_payment_flow(payment_api):
     # This will use the mock server
     result = create_payment(amount=2000, currency="usd")
-    
+
     assert result["status"] == "requires_confirmation"
     assert "client_secret" in result
 ```
@@ -212,7 +212,7 @@ def geocode_address(address: str):
 # E2E test
 def test_geocoding(geo_api):
     result = geocode_address("1600 Amphitheatre Parkway")
-    
+
     assert result["status"] == "OK"
     assert len(result["results"]) > 0
     assert "geometry" in result["results"][0]

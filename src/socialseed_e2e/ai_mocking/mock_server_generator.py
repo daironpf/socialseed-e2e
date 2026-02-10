@@ -5,14 +5,13 @@ external third-party APIs based on service definitions.
 """
 
 import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from socialseed_e2e.ai_mocking.external_service_registry import (
-    ExternalServiceRegistry,
     ExternalServiceDefinition,
+    ExternalServiceRegistry,
     MockEndpoint,
 )
 
@@ -433,18 +432,18 @@ class MockServerGenerator:
             lines.extend(
                 [
                     f"  {service_name}:",
-                    f"    build:",
-                    f"      context: .",
+                    "    build:",
+                    "      context: .",
                     f"      dockerfile: Dockerfile.{server.service_name}",
-                    f"    ports:",
+                    "    ports:",
                     f'      - "{server.port}:{server.port}"',
-                    f"    environment:",
+                    "    environment:",
                     f"      - PORT={server.port}",
-                    f"    healthcheck:",
+                    "    healthcheck:",
                     f'      test: ["CMD", "curl", "-f", "http://localhost:{server.port}/__health"]',
-                    f"      interval: 10s",
-                    f"      timeout: 5s",
-                    f"      retries: 3",
+                    "      interval: 10s",
+                    "      timeout: 5s",
+                    "      retries: 3",
                     "",
                 ]
             )
