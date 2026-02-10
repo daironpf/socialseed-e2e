@@ -234,7 +234,9 @@ class TestCircularImportPrevention:
     def test_import_core_before_main(self):
         """Test importing core before main package."""
         # Clear any cached modules to simulate fresh import
-        modules_to_clear = [k for k in sys.modules.keys() if k.startswith("socialseed_e2e")]
+        modules_to_clear = [
+            k for k in sys.modules.keys() if k.startswith("socialseed_e2e")
+        ]
         for mod in modules_to_clear:
             del sys.modules[mod]
 
@@ -247,7 +249,9 @@ class TestCircularImportPrevention:
 
     def test_import_utils_before_main(self):
         """Test importing utils before main package."""
-        modules_to_clear = [k for k in sys.modules.keys() if k.startswith("socialseed_e2e")]
+        modules_to_clear = [
+            k for k in sys.modules.keys() if k.startswith("socialseed_e2e")
+        ]
         for mod in modules_to_clear:
             del sys.modules[mod]
 
@@ -261,7 +265,9 @@ class TestCircularImportPrevention:
 
     def test_import_templates_before_main(self):
         """Test importing templates before main package."""
-        modules_to_clear = [k for k in sys.modules.keys() if k.startswith("socialseed_e2e")]
+        modules_to_clear = [
+            k for k in sys.modules.keys() if k.startswith("socialseed_e2e")
+        ]
         for mod in modules_to_clear:
             del sys.modules[mod]
 
@@ -275,7 +281,9 @@ class TestCircularImportPrevention:
 
     def test_multiple_submodule_imports(self):
         """Test importing multiple submodules in various orders."""
-        modules_to_clear = [k for k in sys.modules.keys() if k.startswith("socialseed_e2e")]
+        modules_to_clear = [
+            k for k in sys.modules.keys() if k.startswith("socialseed_e2e")
+        ]
         for mod in modules_to_clear:
             del sys.modules[mod]
 
@@ -347,6 +355,8 @@ class TestImportSideEffects:
             "utils",
             "templates",
             "services",
+            "project_manifest",
+            "ai_mocking",
             "__init__.py",
             "__version__.py",
             "cli.py",
