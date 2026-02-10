@@ -103,6 +103,19 @@ try:
 except ImportError:
     GRPC_AVAILABLE = False
 
+# Core - WebSocket Support
+try:
+    from socialseed_e2e.core.base_websocket_page import (
+        WEBSOCKET_AVAILABLE,
+        BaseWebSocketPage,
+        WebSocketConfig,
+        WebSocketError,
+        WebSocketLog,
+        WebSocketMessage,
+    )
+except ImportError:
+    WEBSOCKET_AVAILABLE = False
+
 # Utils - Pydantic helpers (universal for all languages)
 # New universal model; Field creators for different conventions
 # Naming conversion utilities; Serialization utilities
@@ -242,6 +255,13 @@ __all__ = [
     "BaseGrpcPage",
     "GrpcRetryConfig",
     "GrpcCallLog",
+    # Core - WebSocket Support
+    "BaseWebSocketPage",
+    "WebSocketConfig",
+    "WebSocketMessage",
+    "WebSocketLog",
+    "WebSocketError",
+    "WEBSOCKET_AVAILABLE",
     # Core - Models
     "ServiceConfig",
     "TestContext",
