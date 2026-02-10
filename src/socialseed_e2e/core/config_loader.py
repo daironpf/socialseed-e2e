@@ -113,6 +113,23 @@ class ReportingConfig:
 
 
 @dataclass
+class ParallelConfig:
+    """Parallel test execution configuration.
+
+    Attributes:
+        enabled: Whether parallel execution is enabled (default: False)
+        max_workers: Maximum number of parallel workers (None = auto)
+        mode: Execution mode ('service' or 'test')
+        isolation_level: State isolation level ('process', 'service', 'none')
+    """
+
+    enabled: bool = False
+    max_workers: Optional[int] = None
+    mode: str = "service"  # 'service' or 'test'
+    isolation_level: str = "process"  # 'process', 'service', 'none'
+
+
+@dataclass
 class AppConfig:
     """Main application configuration container."""
 
@@ -129,6 +146,7 @@ class AppConfig:
     test_data: TestDataConfig = field(default_factory=TestDataConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
     reporting: ReportingConfig = field(default_factory=ReportingConfig)
+    parallel: ParallelConfig = field(default_factory=ParallelConfig)
 
 
 class ConfigError(Exception):
@@ -392,7 +410,14 @@ class ApiConfigLoader:
 
             # Validate environment
             if "environment" in general:
-                valid_envs = ["dev", "development", "staging", "prod", "production", "test"]
+                valid_envs = [
+                    "dev",
+                    "development",
+                    "staging",
+                    "prod",
+                    "production",
+                    "test",
+                ]
                 if general["environment"] not in valid_envs:
                     warnings.append(
                         f"Unusual environment value: {general['environment']}. "
@@ -542,6 +567,15 @@ class ApiConfigLoader:
             log_dir=reporting_data.get("log_dir", "./logs"),
             include_payloads=reporting_data.get("include_payloads", False),
             screenshot_on_failure=reporting_data.get("screenshot_on_failure", False),
+        )
+
+        # Parallel execution
+        parallel_data = data.get("parallel", {})
+        config.parallel = ParallelConfig(
+            enabled=parallel_data.get("enabled", False),
+            max_workers=parallel_data.get("max_workers"),
+            mode=parallel_data.get("mode", "service"),
+            isolation_level=parallel_data.get("isolation_level", "process"),
         )
 
         return config

@@ -11,6 +11,7 @@ from .headers import DEFAULT_BROWSER_HEADERS, DEFAULT_JSON_HEADERS, get_combined
 from .interfaces import IServicePage, ITestModule
 from .loaders import ModuleLoader
 from .models import ServiceConfig, TestContext
+from .parallel_runner import ParallelConfig, run_tests_parallel
 from .test_orchestrator import TestOrchestrator
 
 __all__ = [
@@ -21,6 +22,9 @@ __all__ = [
     "TestOrchestrator",
     "ServiceConfig",
     "TestContext",
+    # Parallel execution
+    "ParallelConfig",
+    "run_tests_parallel",
     # Interfaces
     "IServicePage",
     "ITestModule",

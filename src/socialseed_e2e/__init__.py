@@ -67,6 +67,7 @@ from socialseed_e2e.core.config_loader import (
     ApiGatewayConfig,
     AppConfig,
     DatabaseConfig,
+    ParallelConfig,
     ReportingConfig,
     SecurityConfig,
 )
@@ -79,6 +80,7 @@ from socialseed_e2e.core.config_loader import (
 )
 from socialseed_e2e.core.loaders import ModuleLoader
 from socialseed_e2e.core.models import ServiceConfig, TestContext
+from socialseed_e2e.core.parallel_runner import run_tests_parallel
 from socialseed_e2e.core.test_orchestrator import TestOrchestrator
 from socialseed_e2e.core.test_runner import (
     TestDiscoveryError,
@@ -233,6 +235,9 @@ __all__ = [
     "TestSuiteResult",
     "TestDiscoveryError",
     "TestExecutionError",
+    # Core - Parallel Execution
+    "ParallelConfig",
+    "run_tests_parallel",
     # Core - gRPC Support
     "BaseGrpcPage",
     "GrpcRetryConfig",
@@ -246,6 +251,7 @@ __all__ = [
     "TestDataConfig",
     "SecurityConfig",
     "ReportingConfig",
+    "ParallelConfig",
     # Utils - State Management
     "DynamicStateMixin",
     "AuthStateMixin",
