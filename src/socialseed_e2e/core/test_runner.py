@@ -18,7 +18,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from socialseed_e2e import BasePage
+from socialseed_e2e.core.base_page import BasePage
 from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig, get_service_config
 
 console = Console()
