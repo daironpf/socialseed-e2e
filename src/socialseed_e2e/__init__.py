@@ -91,7 +91,11 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
+    from socialseed_e2e.core.base_grpc_page import (
+        BaseGrpcPage,
+        GrpcCallLog,
+        GrpcRetryConfig,
+    )
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -151,6 +155,25 @@ try:
     from socialseed_e2e.utils.proto_schema import ProtoRegistry, ProtoSchemaHandler
 except ImportError:
     pass
+
+# Core - Interactive Doctor
+from socialseed_e2e.core.interactive_doctor import (
+    AppliedFix,
+    AutoFixer,
+    DiagnosisResult,
+    DoctorSession,
+    ErrorAnalyzer,
+    ErrorContext,
+    ErrorType,
+    FixStrategy,
+    FixSuggester,
+    FixSuggestion,
+    InteractiveDoctor,
+    MissingFieldDetails,
+    TypeMismatchDetails,
+    ValidationErrorDetails,
+    run_interactive_doctor,
+)
 
 # Core - Visual Traceability
 from socialseed_e2e.core.traceability import (
@@ -293,4 +316,20 @@ __all__ = [
     "get_global_collector",
     "set_global_collector",
     "create_collector",
+    # Core - Interactive Doctor
+    "InteractiveDoctor",
+    "ErrorAnalyzer",
+    "FixSuggester",
+    "AutoFixer",
+    "ErrorContext",
+    "DiagnosisResult",
+    "FixSuggestion",
+    "AppliedFix",
+    "DoctorSession",
+    "ErrorType",
+    "FixStrategy",
+    "TypeMismatchDetails",
+    "MissingFieldDetails",
+    "ValidationErrorDetails",
+    "run_interactive_doctor",
 ]
