@@ -491,9 +491,15 @@ def new_test(name: str, service: str, description: str):
 @click.option(
     "--output",
     "-o",
-    type=click.Choice(["text", "json"]),
+    type=click.Choice(["text", "json", "html"]),
     default="text",
-    help="Output format",
+    help="Output format (text, json, or html)",
+)
+@click.option(
+    "--report-dir",
+    type=click.Path(),
+    default=".e2e/reports",
+    help="Directory for HTML reports (default: .e2e/reports)",
 )
 @click.option(
     "--trace",
@@ -518,6 +524,7 @@ def run(
     config: Optional[str],
     verbose: bool,
     output: str,
+    report_dir: str,
     trace: bool,
     trace_output: Optional[str],
     trace_format: str,
@@ -531,7 +538,8 @@ def run(
         module: If specified, only run this test module
         config: Path to the e2e.conf file
         verbose: If True, shows detailed information
-        output: Output format (text or json)
+        output: Output format (text, json, or html)
+        report_dir: Directory for HTML reports
         trace: If True, enable visual traceability with sequence diagrams
         trace_output: Directory for traceability reports
         trace_format: Format for sequence diagrams (mermaid, plantuml, both)
@@ -617,6 +625,67 @@ def run(
 
         # Print summary
         all_passed = print_summary(results)
+
+        # Generate HTML report if requested
+        if output == "html":
+            try:
+                from socialseed_e2e.reporting import (
+                    HTMLReportGenerator,
+                    TestResultCollector,
+                )
+
+                console.print("\n📊 [cyan]Generating HTML report...[/cyan]")
+
+                # Convert test results to report format
+                collector = TestResultCollector(title="E2E Test Report")
+                collector.start_collection()
+
+                # Process results and create test records
+                for service_name, suite_result in results.items():
+                    for test_result in suite_result.results:
+                        test_id = f"{service_name}.{test_result.name}"
+                        collector.record_test_start(
+                            test_id, test_result.name, service_name
+                        )
+                        collector.record_test_end(
+                            test_id,
+                            status=test_result.status,
+                            duration_ms=test_result.duration_ms,
+                            error_message=test_result.error_message
+                            if test_result.error_message
+                            else None,
+                        )
+
+                # Generate report
+                report = collector.generate_report()
+                generator = HTMLReportGenerator()
+
+                import os
+
+                os.makedirs(report_dir, exist_ok=True)
+                report_path = generator.generate(
+                    report, output_path=os.path.join(report_dir, "report.html")
+                )
+
+                console.print(f"[green]✓ HTML report generated:[/green] {report_path}")
+
+                # Also export CSV and JSON
+                csv_path = generator.export_to_csv(
+                    report, output_path=os.path.join(report_dir, "report.csv")
+                )
+                json_path = generator.export_to_json(
+                    report, output_path=os.path.join(report_dir, "report.json")
+                )
+
+                console.print(f"[green]✓ CSV report:[/green] {csv_path}")
+                console.print(f"[green]✓ JSON report:[/green] {json_path}")
+
+            except Exception as e:
+                console.print(f"[yellow]⚠ Could not generate HTML report: {e}[/yellow]")
+                if verbose:
+                    import traceback
+
+                    console.print(traceback.format_exc())
 
         # Exit with appropriate code
         sys.exit(0 if all_passed else 1)
