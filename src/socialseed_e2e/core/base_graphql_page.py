@@ -101,9 +101,7 @@ class GraphQLError(Exception):
         if self.url:
             parts.append(f"URL: {self.url}")
         if self.query:
-            query_preview = (
-                self.query[:200] + "..." if len(self.query) > 200 else self.query
-            )
+            query_preview = self.query[:200] + "..." if len(self.query) > 200 else self.query
             parts.append(f"Query: {query_preview}")
         if self.errors:
             parts.append(f"GraphQL Errors: {len(self.errors)}")
@@ -283,9 +281,7 @@ class GraphQLQueryBuilder:
         self._current_field = None
         return self
 
-    def variable(
-        self, name: str, var_type: str, default: Any = None
-    ) -> "GraphQLQueryBuilder":
+    def variable(self, name: str, var_type: str, default: Any = None) -> "GraphQLQueryBuilder":
         """Declare a variable for the operation.
 
         Args:
@@ -311,9 +307,7 @@ class GraphQLQueryBuilder:
         """
         directive_str = f"@{name}"
         if arguments:
-            args_str = ", ".join(
-                f"{k}: {self._format_value(v)}" for k, v in arguments.items()
-            )
+            args_str = ", ".join(f"{k}: {self._format_value(v)}" for k, v in arguments.items())
             directive_str += f"({args_str})"
         self._directives.append(directive_str)
         return self
@@ -330,9 +324,7 @@ class GraphQLQueryBuilder:
             Self for method chaining
         """
         fields_str = "\n    ".join(fields)
-        self._fragments[name] = (
-            f"fragment {name} on {on_type} {{\n    {fields_str}\n  }}"
-        )
+        self._fragments[name] = f"fragment {name} on {on_type} {{\n    {fields_str}\n  }}"
         return self
 
     def _format_value(self, value: Any) -> str:
@@ -383,9 +375,7 @@ class GraphQLQueryBuilder:
 
         return f"({', '.join(formatted)})"
 
-    def _build_field(
-        self, field_def: Union[str, Dict[str, Any]], indent: int = 2
-    ) -> str:
+    def _build_field(self, field_def: Union[str, Dict[str, Any]], indent: int = 2) -> str:
         """Build a field string from its definition.
 
         Args:
@@ -410,17 +400,11 @@ class GraphQLQueryBuilder:
 
         if subfields:
             subfield_strs = [self._build_field(sf, indent + 2) for sf in subfields]
-            if any(
-                isinstance(sf, str) and not isinstance(sf, dict) for sf in subfields
-            ):
+            if any(isinstance(sf, str) and not isinstance(sf, dict) for sf in subfields):
                 # Mixed scalar and complex subfields
-                field_str += (
-                    " {\n" + "\n".join(subfield_strs) + "\n" + " " * indent + "}"
-                )
+                field_str += " {\n" + "\n".join(subfield_strs) + "\n" + " " * indent + "}"
             else:
-                field_str += (
-                    " {\n" + "\n".join(subfield_strs) + "\n" + " " * indent + "}"
-                )
+                field_str += " {\n" + "\n".join(subfield_strs) + "\n" + " " * indent + "}"
 
         return field_str
 
@@ -702,9 +686,7 @@ class GraphQLIntrospector:
             return []
 
         subscription_type_info = self.get_type(subscription_type_name)
-        return (
-            subscription_type_info.get("fields", []) if subscription_type_info else []
-        )
+        return subscription_type_info.get("fields", []) if subscription_type_info else []
 
     def get_query(self, name: str) -> Optional[Dict[str, Any]]:
         """Get a specific query field by name.
@@ -825,9 +807,7 @@ class BaseGraphQLPage(DynamicStateMixin):
         if playwright:
             self.playwright = playwright
         else:
-            self.playwright_manager = __import__(
-                "playwright"
-            ).sync_api.sync_playwright()
+            self.playwright_manager = __import__("playwright").sync_api.sync_playwright()
             self.playwright = self.playwright_manager.__enter__()
 
         self.api_context: Optional[APIRequestContext] = None

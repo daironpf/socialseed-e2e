@@ -93,11 +93,7 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import (
-        BaseGrpcPage,
-        GrpcCallLog,
-        GrpcRetryConfig,
-    )
+    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
 
     GRPC_AVAILABLE = True
 except ImportError:

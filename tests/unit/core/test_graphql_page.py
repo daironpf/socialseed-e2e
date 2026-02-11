@@ -26,9 +26,7 @@ pytestmark = pytest.mark.unit
 class MockResponse:
     """Mock Playwright APIResponse for testing."""
 
-    def __init__(
-        self, status=200, body=None, headers=None, url="http://test.com/graphql"
-    ):
+    def __init__(self, status=200, body=None, headers=None, url="http://test.com/graphql"):
         """Initialize mock response.
 
         Args:
@@ -90,12 +88,7 @@ class TestGraphQLQueryBuilder:
     def test_simple_query(self):
         """Test building a simple query."""
         builder = GraphQLQueryBuilder()
-        query = (
-            builder.query("GetUser")
-            .field("user", id="123")
-            .fields("name", "email")
-            .build()
-        )
+        query = builder.query("GetUser").field("user", id="123").fields("name", "email").build()
 
         assert "query GetUser" in query
         assert 'user(id: "123")' in query
@@ -121,10 +114,7 @@ class TestGraphQLQueryBuilder:
         """Test building a subscription."""
         builder = GraphQLQueryBuilder()
         subscription = (
-            builder.subscription("OnUserCreated")
-            .field("userCreated")
-            .fields("id", "name")
-            .build()
+            builder.subscription("OnUserCreated").field("userCreated").fields("id", "name").build()
         )
 
         assert "subscription OnUserCreated" in subscription
@@ -180,12 +170,7 @@ class TestGraphQLQueryBuilder:
     def test_alias(self):
         """Test field aliasing."""
         builder = GraphQLQueryBuilder()
-        query = (
-            builder.query("GetUsers")
-            .field("users", alias="allUsers")
-            .fields("id")
-            .build()
-        )
+        query = builder.query("GetUsers").field("users", alias="allUsers").fields("id").build()
 
         assert "allUsers: users" in query
 
@@ -571,9 +556,7 @@ class TestBaseGraphQLPageRequests:
             mock_instance = Mock()
             mock_pw.return_value = mock_instance
             mock_instance.__enter__ = Mock(
-                return_value=Mock(
-                    request=Mock(new_context=Mock(return_value=mock_api_context))
-                )
+                return_value=Mock(request=Mock(new_context=Mock(return_value=mock_api_context)))
             )
             mock_instance.__exit__ = Mock(return_value=False)
 
@@ -960,9 +943,7 @@ class TestBaseGraphQLPageContextManager:
             mock_instance.__exit__ = Mock(return_value=False)
 
             mock_api_context = Mock()
-            mock_instance.__enter__().request.new_context.return_value = (
-                mock_api_context
-            )
+            mock_instance.__enter__().request.new_context.return_value = mock_api_context
 
             with BaseGraphQLPage("http://test.com/graphql") as page:
                 assert page.api_context is not None
