@@ -116,6 +116,21 @@ try:
 except ImportError:
     WEBSOCKET_AVAILABLE = False
 
+# Core - GraphQL Support
+try:
+    from socialseed_e2e.core.base_graphql_page import (
+        GRAPHQL_AVAILABLE,
+        BaseGraphQLPage,
+        GraphQLError,
+        GraphQLIntrospector,
+        GraphQLQueryBuilder,
+        GraphQLRequestLog,
+        GraphQLRetryConfig,
+        graphql_query,
+    )
+except ImportError:
+    GRAPHQL_AVAILABLE = False
+
 # Utils - Pydantic helpers (universal for all languages)
 # New universal model; Field creators for different conventions
 # Naming conversion utilities; Serialization utilities
@@ -262,6 +277,15 @@ __all__ = [
     "WebSocketLog",
     "WebSocketError",
     "WEBSOCKET_AVAILABLE",
+    # Core - GraphQL Support
+    "BaseGraphQLPage",
+    "GraphQLQueryBuilder",
+    "GraphQLIntrospector",
+    "GraphQLRequestLog",
+    "GraphQLRetryConfig",
+    "GraphQLError",
+    "graphql_query",
+    "GRAPHQL_AVAILABLE",
     # Core - Models
     "ServiceConfig",
     "TestContext",

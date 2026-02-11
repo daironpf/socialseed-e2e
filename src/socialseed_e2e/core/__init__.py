@@ -5,6 +5,15 @@ Este módulo proporciona las clases y funciones principales del framework.
 Todo es agnóstico de servicios específicos.
 """
 
+from .base_graphql_page import (
+    BaseGraphQLPage,
+    GraphQLError,
+    GraphQLIntrospector,
+    GraphQLQueryBuilder,
+    GraphQLRequestLog,
+    GraphQLRetryConfig,
+    graphql_query,
+)
 from .base_page import BasePage
 from .base_websocket_page import (
     WEBSOCKET_AVAILABLE,
@@ -14,12 +23,7 @@ from .base_websocket_page import (
     WebSocketLog,
     WebSocketMessage,
 )
-from .config_loader import (
-    ApiConfigLoader,
-    get_config,
-    get_service_config,
-    get_service_url,
-)
+from .config_loader import ApiConfigLoader, get_config, get_service_config, get_service_url
 from .headers import DEFAULT_BROWSER_HEADERS, DEFAULT_JSON_HEADERS, get_combined_headers
 from .interfaces import IServicePage, ITestModule
 from .loaders import ModuleLoader
@@ -31,6 +35,7 @@ __all__ = [
     # Clases principales
     "BasePage",
     "BaseWebSocketPage",
+    "BaseGraphQLPage",
     "ApiConfigLoader",
     "ModuleLoader",
     "TestOrchestrator",
@@ -42,6 +47,13 @@ __all__ = [
     "WebSocketLog",
     "WebSocketError",
     "WEBSOCKET_AVAILABLE",
+    # GraphQL support
+    "GraphQLQueryBuilder",
+    "GraphQLIntrospector",
+    "GraphQLRequestLog",
+    "GraphQLRetryConfig",
+    "GraphQLError",
+    "graphql_query",
     # Parallel execution
     "ParallelConfig",
     "run_tests_parallel",
