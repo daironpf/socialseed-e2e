@@ -93,7 +93,11 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
+    from socialseed_e2e.core.base_grpc_page import (
+        BaseGrpcPage,
+        GrpcCallLog,
+        GrpcRetryConfig,
+    )
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -126,6 +130,26 @@ try:
     )
 except ImportError:
     GRAPHQL_AVAILABLE = False
+
+# Plugin Support
+from socialseed_e2e.plugins import (
+    AssertionRegistry,
+    Hook,
+    HookManager,
+    IAssertionPlugin,
+    IDataSourcePlugin,
+    IHookPlugin,
+    IPlugin,
+    ITestReporterPlugin,
+    LoadedPlugin,
+    PluginContext,
+    PluginError,
+    PluginLoadError,
+    PluginManager,
+    PluginMetadata,
+    PluginNotFoundError,
+    load_plugin,
+)
 
 # Utils - Pydantic helpers (universal for all languages)
 # New universal model; Field creators for different conventions
@@ -282,6 +306,23 @@ __all__ = [
     "GraphQLError",
     "graphql_query",
     "GRAPHQL_AVAILABLE",
+    # Plugin Support
+    "PluginManager",
+    "LoadedPlugin",
+    "PluginMetadata",
+    "PluginContext",
+    "IPlugin",
+    "ITestReporterPlugin",
+    "IAssertionPlugin",
+    "IDataSourcePlugin",
+    "IHookPlugin",
+    "AssertionRegistry",
+    "Hook",
+    "HookManager",
+    "PluginError",
+    "PluginNotFoundError",
+    "PluginLoadError",
+    "load_plugin",
     # Core - Models
     "ServiceConfig",
     "TestContext",
