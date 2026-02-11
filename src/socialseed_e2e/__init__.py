@@ -151,6 +151,19 @@ from socialseed_e2e.plugins import (
     load_plugin,
 )
 
+# Docker Compose Support
+from socialseed_e2e.docker import (
+    ComposeConfig,
+    DockerComposeError,
+    DockerComposeManager,
+    DockerComposeOptions,
+    DockerComposeParser,
+    HealthCheckError,
+    ServiceConfig,
+    ServiceNotFoundError,
+    ServiceStatus,
+)
+
 # Utils - Pydantic helpers (universal for all languages)
 # New universal model; Field creators for different conventions
 # Naming conversion utilities; Serialization utilities
@@ -323,6 +336,16 @@ __all__ = [
     "PluginNotFoundError",
     "PluginLoadError",
     "load_plugin",
+    # Docker Compose Support
+    "DockerComposeManager",
+    "DockerComposeOptions",
+    "DockerComposeParser",
+    "ComposeConfig",
+    "ServiceConfig",
+    "ServiceStatus",
+    "DockerComposeError",
+    "ServiceNotFoundError",
+    "HealthCheckError",
     # Core - Models
     "ServiceConfig",
     "TestContext",
