@@ -90,6 +90,29 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Integration with APM and Observability Tools (Issue #114)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Observability
+**Impacto:** Medio-Alto
+
+**Descripción:**
+Desarrollo de integraciones nativas con herramientas de observabilidad líderes como DataDog, New Relic, Prometheus (via Pushgateway) y Jaeger para tracing distribuido. Permite correlacionar ejecuciones de tests con métricas de performance y trazas de backend.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/observability/` - Base module para observabilidad
+- `src/socialseed_e2e/observability/datadog/` - Adaptador para DataDog
+- `src/socialseed_e2e/observability/newrelic/` - Adaptador para New Relic
+- `src/socialseed_e2e/observability/prometheus/` - Adaptador para Prometheus
+- `src/socialseed_e2e/observability/jaeger/` - Integración con Jaeger Tracing
+- `docs/observability.md` - Documentación de uso
+
+**Decisiones Importantes:**
+1. **Pushgateway para Prometheus:** Dado que los tests son efímeros, se optó por el patrón Pushgateway en lugar de scraping directo.
+2. **Provider Manager:** Sistema de gestión múltiple para enviar resultados a varios APMs simultáneamente.
+3. **Tracing Abstraction:** Interfaz unificada para añadir soporte a Zipkin o AWS X-Ray en el futuro.
+
+---
+
 #### 2026-02-12 - Native Cloud Platform Integrations (Issue #113)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / Cloud Testing
