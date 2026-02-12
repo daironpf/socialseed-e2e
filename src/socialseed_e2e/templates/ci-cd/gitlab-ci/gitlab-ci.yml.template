@@ -1,0 +1,53 @@
+stages:
+  - test
+  - report
+
+variables:
+  PIP_CACHE_DIR: "$$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+e2e_tests:
+  stage: test
+  image: python:3.10
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install socialseed-e2e
+    - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - pip install playwright
+    - playwright install-deps chromium
+    - playwright install chromium
+  script:
+    - e2e run --output html --report-dir .e2e/reports
+  artifacts:
+    when: always
+    paths:
+      - .e2e/reports/
+    expire_in: 30 days
+    reports:
+      junit: .e2e/reports/report.json # Assuming we add junit output or use json
+
+# Parallel execution example
+e2e_tests_parallel:
+  stage: test
+  image: python:3.10
+  parallel: 3
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install socialseed-e2e
+    - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - pip install playwright
+    - playwright install-deps chromium
+    - playwright install chromium
+  script:
+    # Example of manual splitting if parallel-mode isn't enough
+    - e2e run --parallel auto --output html --report-dir .e2e/reports/part-$$CI_NODE_INDEX
+  artifacts:
+    when: always
+    paths:
+      - .e2e/reports/

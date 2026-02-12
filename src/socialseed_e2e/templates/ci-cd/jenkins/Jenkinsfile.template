@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        PYTHON_VERSION = '3.10'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                sh "python$${PYTHON_VERSION} -m venv venv"
+                sh ". venv/bin/activate && pip install --upgrade pip"
+                sh ". venv/bin/activate && pip install socialseed-e2e"
+                script {
+                    if (fileExists('requirements.txt')) {
+                        sh ". venv/bin/activate && pip install -r requirements.txt"
+                    }
+                }
+            }
+        }
+
+        stage('Install Browsers') {
+            steps {
+                sh ". venv/bin/activate && playwright install --with-deps chromium"
+            }
+        }
+
+        stage('Run E2E Tests') {
+            steps {
+                sh ". venv/bin/activate && e2e run --output html --report-dir .e2e/reports"
+            }
+        }
+    }
+
+    post {
+        always {
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: '.e2e/reports',
+                reportFiles: 'report.html',
+                reportName: 'E2E Test Report'
+            ])
+            archiveArtifacts artifacts: '.e2e/reports/**', fingerprint: true
+        }
+        failure {
+            echo "E2E Tests failed!"
+            // Add notifications here (Slack/Email)
+        }
+    }
+}

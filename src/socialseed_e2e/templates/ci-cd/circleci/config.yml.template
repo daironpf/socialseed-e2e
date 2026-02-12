@@ -1,0 +1,44 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+      - run:
+          name: Install dependencies
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install socialseed-e2e
+            if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install Playwright
+          command: |
+            . venv/bin/activate
+            playwright install --with-deps chromium
+      - run:
+          name: Run E2E Tests
+          command: |
+            . venv/bin/activate
+            e2e run --output html --report-dir .e2e/reports
+      - store_artifacts:
+          path: .e2e/reports
+          destination: e2e-reports
+      - store_test_results:
+          path: .e2e/reports
+
+workflows:
+  version: 2
+  test-workflow:
+    jobs:
+      - test

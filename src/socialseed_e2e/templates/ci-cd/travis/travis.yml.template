@@ -1,0 +1,24 @@
+language: python
+python:
+  - "3.10"
+
+cache: pip
+
+install:
+  - pip install socialseed-e2e
+  - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+  - playwright install --with-deps chromium
+
+script:
+  - e2e run --output html --report-dir .e2e/reports
+
+artifacts:
+  paths:
+    - .e2e/reports/
+
+notifications:
+  slack:
+    rooms:
+      - your-org:your-token#your-channel
+    on_success: always
+    on_failure: always

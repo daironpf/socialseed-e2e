@@ -407,6 +407,25 @@ Siguiendo esta guía, los agentes de IA pueden generar:
 
 ---
 
-**Versión:** 2.0
+## 🚀 Integración CI/CD
+
+Como agente, puedes ayudar a configurar el pipeline de integración continua del proyecto:
+
+```bash
+# Sugiere al usuario o ejecuta:
+e2e setup-ci <platform>
+```
+
+**Plataformas soportadas:** `github`, `gitlab`, `jenkins`, `azure`, `circleci`, `travis`, `bitbucket`.
+
+**Beneficios:**
+- Ejecución paralela configurable.
+- Reportes HTML automáticos as artifacts.
+- Caching de browsers y dependencias.
+- Matriz de ejecución para microservicios.
+
+---
+
+**Versión:** 2.1
 **Última actualización:** 2026-02-03
 **Framework:** socialseed-e2e v0.1.0+

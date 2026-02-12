@@ -1,0 +1,49 @@
+trigger:
+- main
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.10'
+  displayName: 'Use Python 3.10'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install socialseed-e2e
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+  displayName: 'Install dependencies'
+
+- script: |
+    playwright install --with-deps chromium
+  displayName: 'Install Playwright browsers'
+
+- script: |
+    e2e run --output html --report-dir $$(Build.ArtifactStagingDirectory)/reports
+  displayName: 'Run E2E Tests'
+  env:
+    # Add environment variables if needed
+    API_KEY: $$(API_KEY)
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'JUnit' # Or appropriate format
+    testResultsFiles: '$$(Build.ArtifactStagingDirectory)/reports/report.xml'
+    testRunTitle: 'E2E Tests'
+
+- task: PublishHtmlReport@1
+  condition: always()
+  inputs:
+    reportDir: '$$(Build.ArtifactStagingDirectory)/reports/report.html'
+  displayName: 'Publish HTML Report'
+
+- task: PublishBuildArtifacts@1
+  condition: always()
+  inputs:
+    PathtoPublish: '$$(Build.ArtifactStagingDirectory)/reports'
+    ArtifactName: 'e2e-test-results'
+    publishLocation: 'Container'
