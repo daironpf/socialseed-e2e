@@ -90,6 +90,27 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Chaos Engineering Testing Capabilities (Issue #117)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Reliability Testing
+**Impacto:** Medio-Alto
+
+**Descripción:**
+Implementación de capacidades de ingeniería de caos nativas. Permite inyectar latencia de red, fallos de conectividad, paradas de servicios (vía Docker) y agotamiento de recursos (CPU/Memoria) para validar la resiliencia del sistema durante las pruebas E2E.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/chaos/` - Módulo central de caos
+- `src/socialseed_e2e/chaos/network_chaos.py` - Inyección de latencia y fallos de red
+- `src/socialseed_e2e/chaos/service_chaos.py` - Simulación de caída de servicios
+- `src/socialseed_e2e/chaos/resource_chaos.py` - Limitación de recursos computacionales
+- `docs/chaos-testing.md` - Guía de ingeniería de caos
+
+**Decisiones Importantes:**
+1. **Docker-Centric Service Chaos**: Aprovechando que la mayoría de los despliegues de socialseed se basan en Docker, se utilizó la SDK de Docker para manipular el estado de los servicios.
+2. **Decorator Pattern for Network**: Implementación de decoradores para facilitar la inyección de caos en llamadas de API existentes sin modificar la infraestructura de red del SO.
+
+---
+
 #### 2026-02-12 - Consumer-Driven Contract Testing (Issue #116)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / Microservices Testing

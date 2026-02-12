@@ -35,6 +35,7 @@ e2e run             # Ejecutar tests generados
 - [Observability & APM](observability.md) - **🆕 Integración con DataDog, New Relic y Prometheus**
 - [Database Testing](database-testing.md) - **🆕 Soporte avanzado para SQL y NoSQL**
 - [Contract Testing](contract-testing.md) - **🆕 CDC (Consumer-Driven Contracts) y compatibilidad**
+- [Chaos Engineering](chaos-testing.md) - **🆕 Pruebas de resiliencia e inyección de fallos**
 - [Testing Guide](testing-guide.md) - Configuración de pytest, marcadores y cobertura
 - [Agent Guide](AGENT_GUIDE.md) - Guía para agentes de IA
 
