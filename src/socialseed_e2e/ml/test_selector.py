@@ -58,9 +58,7 @@ class TestSelector:
         self._available_tests: Dict[str, Dict] = {}
         self._test_mapping: Dict[str, str] = {}  # Maps test IDs to file paths
 
-    def register_test(
-        self, test_id: str, test_name: str, file_path: str, **metadata
-    ) -> None:
+    def register_test(self, test_id: str, test_name: str, file_path: str, **metadata) -> None:
         """Register a test for selection.
 
         Args:
@@ -119,9 +117,7 @@ class TestSelector:
 
         # Calculate statistics
         total_tests = len(test_list)
-        skipped_tests = [
-            t.test_id for t in predictions if t not in selected_predictions
-        ]
+        skipped_tests = [t.test_id for t in predictions if t not in selected_predictions]
         estimated_duration = sum(p.estimated_duration_ms for p in selected_predictions)
 
         # Calculate savings
@@ -136,9 +132,7 @@ class TestSelector:
             skipped_tests=skipped_tests,
             estimated_duration_ms=estimated_duration,
             estimated_coverage=self._estimate_coverage(selected_predictions),
-            risk_reduction=self._calculate_risk_reduction(
-                selected_predictions, impact_analysis
-            ),
+            risk_reduction=self._calculate_risk_reduction(selected_predictions, impact_analysis),
             savings_percentage=round(savings_pct, 2),
             impact_analysis=impact_analysis,
         )
@@ -165,9 +159,7 @@ class TestSelector:
         history = self.flakiness_detector.get_test_history(test_id)
 
         # Calculate failure probability
-        failure_prob = self._calculate_failure_probability(
-            test_id, history, impact_analysis
-        )
+        failure_prob = self._calculate_failure_probability(test_id, history, impact_analysis)
 
         # Calculate estimated duration
         estimated_duration = self._estimate_duration(test_id, history)
@@ -176,9 +168,7 @@ class TestSelector:
         priority = self._determine_priority(failure_prob, test_id, impact_analysis)
 
         # Generate reasons
-        reasons = self._generate_prediction_reasons(
-            test_id, failure_prob, history, impact_analysis
-        )
+        reasons = self._generate_prediction_reasons(test_id, failure_prob, history, impact_analysis)
 
         # Calculate confidence
         confidence = self._calculate_confidence(history)
@@ -340,19 +330,13 @@ class TestSelector:
         # Historical reasons
         if history:
             if history.failure_rate > 0.3:
-                reasons.append(
-                    f"High historical failure rate ({history.failure_rate:.1%})"
-                )
+                reasons.append(f"High historical failure rate ({history.failure_rate:.1%})")
 
             if history.flaky_score > 0.3:
-                reasons.append(
-                    f"Test shows flaky behavior (score: {history.flaky_score:.2f})"
-                )
+                reasons.append(f"Test shows flaky behavior (score: {history.flaky_score:.2f})")
 
             if history.recent_failures > 0:
-                reasons.append(
-                    f"Recent failures ({history.recent_failures} in last 10 runs)"
-                )
+                reasons.append(f"Recent failures ({history.recent_failures} in last 10 runs)")
 
         # Impact reasons
         if impact_analysis and self._is_affected_by_changes(test_id, impact_analysis):
@@ -465,10 +449,7 @@ class TestSelector:
             selected.append(pred)
 
         # Apply max tests limit if configured
-        if (
-            self.config.max_tests_to_select
-            and len(selected) > self.config.max_tests_to_select
-        ):
+        if self.config.max_tests_to_select and len(selected) > self.config.max_tests_to_select:
             # Sort by priority and failure probability, then limit
             selected = sorted(
                 selected,
@@ -623,9 +604,7 @@ class TestSelector:
                 redundant_tests.append(redundant)
 
         # Calculate potential savings
-        total_duration = sum(
-            self._estimate_duration(rt.test_id, None) for rt in redundant_tests
-        )
+        total_duration = sum(self._estimate_duration(rt.test_id, None) for rt in redundant_tests)
 
         return RedundancyReport(
             total_tests=len(test_ids),

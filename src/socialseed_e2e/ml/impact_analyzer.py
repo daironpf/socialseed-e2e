@@ -9,13 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from socialseed_e2e.ml.models import (
-    ChangeType,
-    CodeChange,
-    FileType,
-    ImpactAnalysis,
-    TestPriority,
-)
+from socialseed_e2e.ml.models import ChangeType, CodeChange, FileType, ImpactAnalysis, TestPriority
 
 
 class ImpactAnalyzer:
@@ -275,7 +269,9 @@ class ImpactAnalyzer:
             # Pattern for Python function definitions
             python_pattern = r"^[\+\-]\s*def\s+(\w+)"
             # Pattern for Java/JS/TS method definitions
-            java_pattern = r"^[\+\-]\s*(?:public|private|protected)?\s*(?:static)?\s*\w+\s+(\w+)\s*\("
+            java_pattern = (
+                r"^[\+\-]\s*(?:public|private|protected)?\s*(?:static)?\s*\w+\s+(\w+)\s*\("
+            )
 
             for line in diff_content.split("\n"):
                 # Try Python pattern
@@ -496,9 +492,7 @@ class ImpactAnalyzer:
         # Factor 4: Critical files changed
         critical_patterns = ["core", "api", "service", "model", "config"]
         for change in changes:
-            if any(
-                pattern in change.file_path.lower() for pattern in critical_patterns
-            ):
+            if any(pattern in change.file_path.lower() for pattern in critical_patterns):
                 score += 0.1
                 break
 
@@ -566,9 +560,7 @@ class ImpactAnalyzer:
                     module_path = module.replace(".", "/")
                     potential_path = self.project_root / f"{module_path}.py"
                     if potential_path.exists():
-                        dependencies.append(
-                            str(potential_path.relative_to(self.project_root))
-                        )
+                        dependencies.append(str(potential_path.relative_to(self.project_root)))
 
         except (IOError, OSError):
             pass

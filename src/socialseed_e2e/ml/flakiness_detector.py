@@ -53,8 +53,7 @@ class FlakinessDetector:
         self.history_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.history_file, "w") as f:
             data = {
-                test_id: history.model_dump()
-                for test_id, history in self._test_histories.items()
+                test_id: history.model_dump() for test_id, history in self._test_histories.items()
             }
             json.dump(data, f, indent=2, default=str)
 
@@ -157,9 +156,7 @@ class FlakinessDetector:
         # Score 4: Recent trend (recent failures indicate flakiness)
         if history.runs:
             recent_runs = history.runs[-10:]
-            recent_pass_rate = sum(1 for r in recent_runs if r.passed) / len(
-                recent_runs
-            )
+            recent_pass_rate = sum(1 for r in recent_runs if r.passed) / len(recent_runs)
             if 0.2 <= recent_pass_rate <= 0.8:
                 trend_score = 1.0 - abs(recent_pass_rate - 0.5) * 2.0
                 scores.append(trend_score * 0.20)
@@ -322,9 +319,7 @@ class FlakinessDetector:
 
         # Find most common error pattern
         most_common_error = (
-            max(error_patterns.items(), key=lambda x: x[1])
-            if error_patterns
-            else ("unknown", 0)
+            max(error_patterns.items(), key=lambda x: x[1]) if error_patterns else ("unknown", 0)
         )
 
         # Analyze timing patterns
@@ -435,9 +430,7 @@ class FlakinessDetector:
 
         # Check for alternating pass/fail pattern
         recent_runs = runs[-10:]
-        pass_fail_sequence = [
-            "P" if r.passed else "F" for r in recent_runs if not r.skipped
-        ]
+        pass_fail_sequence = ["P" if r.passed else "F" for r in recent_runs if not r.skipped]
 
         if len(pass_fail_sequence) < 5:
             return False
@@ -464,10 +457,7 @@ class FlakinessDetector:
         Args:
             output_path: Path to export to
         """
-        data = {
-            test_id: history.model_dump()
-            for test_id, history in self._test_histories.items()
-        }
+        data = {test_id: history.model_dump() for test_id, history in self._test_histories.items()}
 
         with open(output_path, "w") as f:
             json.dump(data, f, indent=2, default=str)
@@ -484,4 +474,3 @@ class FlakinessDetector:
                 self._test_histories[test_id] = TestHistory(**history_data)
 
         self._save_history()
-
