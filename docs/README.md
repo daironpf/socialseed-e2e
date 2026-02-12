@@ -34,6 +34,7 @@ e2e run             # Ejecutar tests generados
 - [Cloud Integrations](cloud-integrations.md) - **🆕 Integración nativa con AWS, GCP y Azure**
 - [Observability & APM](observability.md) - **🆕 Integración con DataDog, New Relic y Prometheus**
 - [Database Testing](database-testing.md) - **🆕 Soporte avanzado para SQL y NoSQL**
+- [Contract Testing](contract-testing.md) - **🆕 CDC (Consumer-Driven Contracts) y compatibilidad**
 - [Testing Guide](testing-guide.md) - Configuración de pytest, marcadores y cobertura
 - [Agent Guide](AGENT_GUIDE.md) - Guía para agentes de IA
 
