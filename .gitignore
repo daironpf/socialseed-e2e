@@ -226,3 +226,4 @@ out/
 
 # SocialSeed E2E Local Data
 .e2e/
+e2e_reports/
