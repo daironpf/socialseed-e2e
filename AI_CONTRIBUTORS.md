@@ -90,6 +90,27 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Native Cloud Platform Integrations (Issue #113)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Cloud Testing
+**Impacto:** Alto
+
+**Descripción:**
+Implementación de soporte nativo para interactuar con AWS, GCP y Azure durante la ejecución de tests E2E. Permite invocar Lambdas, verificar estados de contenedores (Cloud Run, ACI), gestionar buckets S3 y mucho más.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/cloud/` - Core module para integraciones cloud
+- `src/socialseed_e2e/cloud/aws/` - Adaptador para Amazon Web Services
+- `src/socialseed_e2e/cloud/gcp/` - Adaptador para Google Cloud Platform
+- `src/socialseed_e2e/cloud/azure/` - Adaptador para Microsoft Azure
+- `docs/cloud-integrations.md` - Guía detallada de uso
+
+**Decisiones Importantes:**
+1. **Graceful Degradation:** Los módulos cloud no son dependencias obligatorias del core. Si las SDKs (boto3, etc.) no están instaladas, se lanza un error informativo solo al intentar usarlas.
+2. **Abstracción Unificada:** Uso de interfaces base (`CloudFunction`, `CloudService`) para mantener consistencia entre proveedores.
+
+---
+
 #### 2026-02-12 - IDE Extensions for VS Code & PyCharm (Issue #112)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / IDE Support

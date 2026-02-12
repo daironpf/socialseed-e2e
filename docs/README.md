@@ -31,6 +31,7 @@ e2e run             # Ejecutar tests generados
 
 ### Testing Avanzado
 - [Mock API for Testing](mock-api.md) - API mock basada en Flask
+- [Cloud Integrations](cloud-integrations.md) - **🆕 Integración nativa con AWS, GCP y Azure**
 - [Testing Guide](testing-guide.md) - Configuración de pytest, marcadores y cobertura
 - [Agent Guide](AGENT_GUIDE.md) - Guía para agentes de IA
 
