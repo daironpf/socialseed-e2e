@@ -2752,9 +2752,7 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
         console.print(f"   Invalid: {total_invalid}")
 
         if total_invalid == 0:
-            console.print(
-                "\n   [bold green]✅ All contracts validated successfully![/bold green]\n"
-            )
+            console.print("\n   [bold green]✅ All contracts validated successfully![/bold green]\n")
         else:
             console.print(
                 f"\n   [bold yellow]⚠ {total_invalid} contract(s) "
