@@ -4,10 +4,12 @@ Provides decorators and utilities for tagging, dependencies, and priorities.
 """
 
 from enum import IntEnum
-from typing import Callable, List, Optional, Any, Set, Dict
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set
 
 
 class Priority(IntEnum):
+    """Priority levels for test execution."""
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -15,7 +17,8 @@ class Priority(IntEnum):
 
 
 def tag(*tags: str):
-    """Decorator to add tags to a test module's run function."""
+    """Add tags to a test module's run function."""
+
     def decorator(func: Callable):
         if not hasattr(func, "_e2e_metadata"):
             func._e2e_metadata = {}
@@ -23,14 +26,16 @@ def tag(*tags: str):
             func._e2e_metadata["tags"] = set()
         func._e2e_metadata["tags"].update(tags)
         return func
+
     return decorator
 
 
 def depends_on(*dependencies: str):
-    """Decorator to define test dependencies.
-    
+    """Define test dependencies.
+
     Dependencies should be valid test module names (e.g. 'test_login').
     """
+
     def decorator(func: Callable):
         if not hasattr(func, "_e2e_metadata"):
             func._e2e_metadata = {}
@@ -38,16 +43,19 @@ def depends_on(*dependencies: str):
             func._e2e_metadata["depends_on"] = set()
         func._e2e_metadata["depends_on"].update(dependencies)
         return func
+
     return decorator
 
 
 def priority(level: Priority):
-    """Decorator to set test priority."""
+    """Set test priority."""
+
     def decorator(func: Callable):
         if not hasattr(func, "_e2e_metadata"):
             func._e2e_metadata = {}
         func._e2e_metadata["priority"] = level
         return func
+
     return decorator
 
 
@@ -57,20 +65,18 @@ class TestOrganizationManager:
     @staticmethod
     def get_metadata(func: Callable) -> Dict[str, Any]:
         """Extract e2e metadata from a function."""
-        return getattr(func, "_e2e_metadata", {
-            "tags": set(),
-            "depends_on": set(),
-            "priority": Priority.MEDIUM
-        })
+        return getattr(
+            func, "_e2e_metadata", {"tags": set(), "depends_on": set(), "priority": Priority.MEDIUM}
+        )
 
     @staticmethod
     def filter_tests(
-        modules: List[Any], 
-        include_tags: Optional[Set[str]] = None, 
-        exclude_tags: Optional[Set[str]] = None
+        modules: List[Any],
+        include_tags: Optional[Set[str]] = None,
+        exclude_tags: Optional[Set[str]] = None,
     ) -> List[Any]:
         """Filter list of test modules based on tags.
-        
+
         Args:
             modules: List of objects with a 'run_func' or similar
             include_tags: If provided, only include tests having at least ONE of these tags
@@ -90,19 +96,21 @@ class TestOrganizationManager:
             # Exclude logic
             if exclude_tags and (tags & exclude_tags):
                 continue
-            
+
             # Include logic
             if include_tags and not (tags & include_tags):
                 continue
-                
+
             filtered.append(mod)
-        
+
         return filtered
 
     @staticmethod
-    def sort_tests(modules: List[Path], load_func: Callable[[Path], Optional[Callable]]) -> List[Path]:
+    def sort_tests(
+        modules: List[Path], load_func: Callable[[Path], Optional[Callable]]
+    ) -> List[Path]:
         """Sort test modules by dependencies and priority.
-        
+
         Uses a topological sort for dependencies, with priority as a secondary sort key.
         """
         # 1. Load functions and extract metadata
@@ -112,16 +120,15 @@ class TestOrganizationManager:
             if func:
                 metadata_map[path.stem] = (path, TestOrganizationManager.get_metadata(func))
             else:
-                metadata_map[path.stem] = (path, {
-                    "tags": set(), 
-                    "depends_on": set(), 
-                    "priority": Priority.MEDIUM
-                })
+                metadata_map[path.stem] = (
+                    path,
+                    {"tags": set(), "depends_on": set(), "priority": Priority.MEDIUM},
+                )
 
         # 2. Build adjacency list for topological sort
         adj = {name: [] for name in metadata_map}
         in_degree = {name: 0 for name in metadata_map}
-        
+
         for name, (path, meta) in metadata_map.items():
             for dep in meta.get("depends_on", set()):
                 if dep in metadata_map:
@@ -132,7 +139,7 @@ class TestOrganizationManager:
 
         # 3. Kahn's algorithm with priority-aware queue
         import heapq
-        
+
         # We want higher priority (higher number) to go first among nodes with 0 in-degree.
         # heapq is a min-priority queue, so we use -priority.
         queue = []
@@ -146,7 +153,7 @@ class TestOrganizationManager:
         while queue:
             p, name = heapq.heappop(queue)
             sorted_paths.append(metadata_map[name][0])
-            
+
             for neighbor in adj[name]:
                 in_degree[neighbor] -= 1
                 if in_degree[neighbor] == 0:
@@ -159,5 +166,5 @@ class TestOrganizationManager:
             for path in modules:
                 if path.stem not in seen:
                     sorted_paths.append(path)
-                    
+
         return sorted_paths

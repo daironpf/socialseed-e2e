@@ -1,11 +1,12 @@
+"""Example test module for user login."""
 from socialseed_e2e.core import Priority, depends_on, priority, tag
 
 
 @tag("smoke", "auth")
 @priority(Priority.HIGH)
-@depends_on("test_01_registration")
+@depends_on("01_registration")
 def run(page):
-    """Example test: User Login."""
+    """Run login test."""
     print("Running login test...")
     # Verify dependency state if needed
     if not page.get_metadata("user_registered"):

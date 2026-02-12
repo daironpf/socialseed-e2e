@@ -249,10 +249,21 @@ class BasePage:
         self.request_history: List[RequestLog] = []
         self._max_history_size = 100
 
+        # Shared metadata for tests
+        self.metadata: Dict[str, Any] = {}
+
         # Response interceptors
         self._response_interceptors: List[Callable[[APIResponse], None]] = []
 
         logger.info(f"BasePage initialized for {self.base_url}")
+
+    def set_metadata(self, key: str, value: Any) -> None:
+        """Set a metadata value for sharing state between tests."""
+        self.metadata[key] = value
+
+    def get_metadata(self, key: str, default: Any = None) -> Any:
+        """Get a metadata value."""
+        return self.metadata.get(key, default)
 
     @classmethod
     def from_config(
@@ -1054,7 +1065,6 @@ class BasePage:
         """
         start_time = time.time()
         try:
-            old_timeout = None
             if timeout and self.api_context:
                 # Note: Playwright doesn't support per-request timeout easily
                 # This is a simplified implementation
@@ -1068,7 +1078,7 @@ class BasePage:
             try:
                 body = response.json()
                 message = body.get("status", "OK") if isinstance(body, dict) else "OK"
-            except:
+            except Exception:
                 message = "OK" if is_healthy else "Unhealthy"
 
             return ServiceHealth(

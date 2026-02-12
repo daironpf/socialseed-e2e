@@ -65,7 +65,7 @@ e2e run --tag smoke --exclude-tag experimental
 The following examples demonstrate a common workflow organized by dependencies and tags.
 
 ### 1. Registration (The Base)
-`services/example_service/modules/test_01_registration.py`
+`services/example_service/modules/01_registration.py`
 ```python
 @tag("smoke", "account")
 @priority(Priority.CRITICAL)
@@ -75,20 +75,20 @@ def run(page):
 ```
 
 ### 2. Login (Depends on Registration)
-`services/example_service/modules/test_02_login.py`
+`services/example_service/modules/02_login.py`
 ```python
 @tag("smoke", "auth")
-@depends_on("test_01_registration")
+@depends_on("01_registration")
 def run(page):
     # Login logic...
     page.set_metadata("logged_in", True)
 ```
 
 ### 3. Profile Update (Depends on Login)
-`services/example_service/modules/test_03_profile.py`
+`services/example_service/modules/03_profile.py`
 ```python
 @tag("auth", "profile")
-@depends_on("test_02_login")
+@depends_on("02_login")
 def run(page):
     # Profile logic...
     pass
@@ -101,7 +101,7 @@ Only tests with the `smoke` tag will run, respecting their dependencies:
 ```bash
 e2e run --tag smoke
 ```
-*Output order: test_01_registration -> test_02_login*
+*Output order: 01_registration -> 02_login*
 
 ### Run everything except Profile tests
 ```bash
