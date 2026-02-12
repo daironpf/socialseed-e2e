@@ -21,6 +21,11 @@ e2e run             # Ejecutar tests generados
 - [Quick Start](quickstart.md) - Primeros pasos en 15 minutos
 - [Autonomous Test Generation](autonomous-test-generation-guide.md) - **🆕 Generación automática de tests**
 
+### Core Concepts
+- [Core Engine](core-engine.md) - Arquitectura del motor de E2E
+- [Test Organization](test-organization.md) - **🆕 Tags, dependencias y prioridades**
+- [API Configuration](api-config.md) - Definición de servicios y endpoints
+
 ### Configuración y Uso
 - [Configuration](configuration.md) - Configuración de e2e.conf
 - [CLI Reference](cli-reference.md) - Referencia completa de comandos

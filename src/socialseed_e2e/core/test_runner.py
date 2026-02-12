@@ -20,6 +20,7 @@ from rich.table import Table
 
 from socialseed_e2e.core.base_page import BasePage
 from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig, get_service_config
+from socialseed_e2e.core.organization import Priority, TestOrganizationManager
 
 console = Console()
 
@@ -320,6 +321,8 @@ def run_service_tests(
     services_path: Path = Path("services"),
     specific_module: Optional[str] = None,
     verbose: bool = False,
+    include_tags: Optional[List[str]] = None,
+    exclude_tags: Optional[List[str]] = None,
 ) -> TestSuiteResult:
     """Run all tests for a service.
 
@@ -352,6 +355,32 @@ def run_service_tests(
 
     if not test_modules:
         console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
+        return suite_result
+
+    # Advanced Organization: Filtering and Sorting
+    if not specific_module:
+        # Load and Filter
+        include_set = set(include_tags) if include_tags else None
+        exclude_set = set(exclude_tags) if exclude_tags else None
+        
+        # We need a wrapper class for TestOrganizationManager.filter_tests since it expects objects with 'run'
+        class ModuleStub:
+            def __init__(self, path):
+                self.path = path
+                self.run = load_test_module(path)
+        
+        stubs = [ModuleStub(p) for p in test_modules]
+        filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
+        test_modules = [s.path for s in filtered_stubs]
+        
+        # Sort by dependencies and priority
+        test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
+
+    if not test_modules:
+        if include_tags or exclude_tags:
+            console.print(f"[yellow]No tests matched tags for service '{service_name}'[/yellow]")
+        else:
+            console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
         return suite_result
 
     # Get base URL
@@ -405,6 +434,8 @@ def run_all_tests(
     specific_service: Optional[str] = None,
     specific_module: Optional[str] = None,
     verbose: bool = False,
+    include_tags: Optional[List[str]] = None,
+    exclude_tags: Optional[List[str]] = None,
 ) -> Dict[str, TestSuiteResult]:
     """Run all tests for all services or a specific service.
 
@@ -454,6 +485,8 @@ def run_all_tests(
             services_path=services_path,
             specific_module=specific_module,
             verbose=verbose,
+            include_tags=include_tags,
+            exclude_tags=exclude_tags,
         )
 
         results[service_name] = suite_result

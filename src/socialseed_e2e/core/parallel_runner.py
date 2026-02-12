@@ -25,6 +25,7 @@ from socialseed_e2e.core.test_runner import (
     discover_test_modules,
     load_test_module,
 )
+from socialseed_e2e.core.organization import TestOrganizationManager
 
 
 @dataclass
@@ -214,6 +215,8 @@ def run_tests_parallel(
     specific_module: Optional[str] = None,
     parallel_config: Optional[ParallelConfig] = None,
     verbose: bool = False,
+    include_tags: Optional[List[str]] = None,
+    exclude_tags: Optional[List[str]] = None,
 ) -> Dict[str, TestSuiteResult]:
     """Run all tests in parallel using multiple worker processes.
 
@@ -265,9 +268,29 @@ def run_tests_parallel(
             if module_path.exists():
                 test_modules = [module_path]
             else:
-                continue
+                test_modules = []
         else:
             test_modules = discover_test_modules(service_path)
+        if not test_modules:
+            continue
+
+        # Advanced Organization: Filtering and Sorting
+        if not specific_module:
+            # Filter
+            include_set = set(include_tags) if include_tags else None
+            exclude_set = set(exclude_tags) if exclude_tags else None
+            
+            class ModuleStub:
+                def __init__(self, path):
+                    self.path = path
+                    self.run = load_test_module(path)
+            
+            stubs = [ModuleStub(p) for p in test_modules]
+            filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
+            test_modules = [s.path for s in filtered_stubs]
+            
+            # Sort
+            test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
 
         if not test_modules:
             continue

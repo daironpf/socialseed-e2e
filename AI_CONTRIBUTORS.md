@@ -90,6 +90,27 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Advanced Test Organization with Tags and Dependencies (Issue #119)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Test Lifecycle
+**Impacto:** Alto
+
+**Descripción:**
+Implementación de un sistema robusto de organización de pruebas. Incluye decoradores `@tag`, `@depends_on` y `@priority`, permitiendo la selección dinámica de pruebas por etiquetas y el ordenamiento inteligente basado en dependencias y niveles de importancia.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/core/organization.py` - Lógica de etiquetado y ordenamiento topológico
+- `src/socialseed_e2e/core/test_runner.py` - Integración con el motor de ejecución secuencial
+- `src/socialseed_e2e/core/parallel_runner.py` - Soporte para filtrado en ejecución paralela
+- `src/socialseed_e2e/cli.py` - Nuevas opciones `--tag` y `--exclude-tag`
+- `docs/test-organization.md` - Guía de organización de tests
+
+**Decisiones Importantes:**
+1. **Topological Sort**: Se utilizó el algoritmo de Kahn para resolver las dependencias entre módulos de prueba de forma determinista.
+2. **Metadata Injection**: Se implementó una inyección de metadatos ligera en las funciones `run` para evitar cambios disruptivos en la firma de las funciones existentes.
+
+---
+
 #### 2026-02-12 - Advanced Performance and Load Testing (Issue #118)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / Performance Testing

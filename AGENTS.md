@@ -451,6 +451,7 @@ jinja2>=3.1.0
 - ✅ Consumer-Driven Contract Testing - CDC y detección de breaking changes (#116)
 - ✅ Chaos Engineering Testing - Inyección de fallos y resiliencia (#117)
 - ✅ Advanced Performance & Load Testing - Generación de carga y SLAs (#118)
+- ✅ Advanced Test Organization - Tags, dependencias y prioridades (#119)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
