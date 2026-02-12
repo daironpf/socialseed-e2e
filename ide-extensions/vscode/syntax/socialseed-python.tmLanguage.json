@@ -1,0 +1,16 @@
+{
+    "scopeName": "source.python.socialseed",
+    "injectionSelector": "L:source.python",
+    "patterns": [
+        {
+            "match": "\\b(do_[a-zA-Z0-9_]+|get|post|put|delete|patch|assert_status|assert_ok|assert_json)\\b",
+            "name": "keyword.other.socialseed.e2e"
+        },
+        {
+            "match": "def\\s+(run)\\s*\\(",
+            "captures": {
+                "1": { "name": "entity.name.function.socialseed.run" }
+            }
+        }
+    ]
+}

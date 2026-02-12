@@ -1,0 +1,85 @@
+{
+    "name": "socialseed-e2e",
+    "displayName": "SocialSeed E2E",
+    "description": "First-class development experience for socialseed-e2e framework",
+    "version": "0.1.0",
+    "publisher": "daironpf",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": [
+        "Testing",
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:python",
+        "workspaceContains:e2e.conf"
+    ],
+    "main": "./src/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "socialseed-e2e.runAllTests",
+                "title": "E2E: Run All Tests",
+                "category": "SocialSeed E2E"
+            },
+            {
+                "command": "socialseed-e2e.initProject",
+                "title": "E2E: Initialize Project",
+                "category": "SocialSeed E2E"
+            },
+            {
+                "command": "socialseed-e2e.newService",
+                "title": "E2E: Create New Service",
+                "category": "SocialSeed E2E"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "socialseed-e2e.runAllTests",
+                    "when": "view == testing",
+                    "group": "navigation"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "socialseed-e2e.runAllTests",
+                    "when": "resourceFilename =~ /.*e2e.conf/ || resourceFilename =~ /.*_flow.py/"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "SocialSeed E2E",
+            "properties": {
+                "socialseed-e2e.executablePath": {
+                    "type": "string",
+                    "default": "e2e",
+                    "description": "Path to the e2e executable"
+                },
+                "socialseed-e2e.verboseLogging": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable verbose logging for the extension"
+                }
+            }
+        },
+        "grammars": [
+            {
+                "path": "./syntax/socialseed-python.tmLanguage.json",
+                "scopeName": "source.python.socialseed",
+                "injectTo": [
+                    "source.python"
+                ]
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "echo 'Skipping compilation for base skeleton'",
+        "watch": "echo 'Skipping watch for base skeleton'"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.80.0"
+    }
+}

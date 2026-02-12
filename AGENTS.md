@@ -444,6 +444,7 @@ jinja2>=3.1.0
 - ✅ Auto-sync de índice vectorial con cambios en manifest
 - ✅ Zero-Config Deep Scan - Detección automática de tech stack y configuración
 - ✅ CI/CD Templates - Plantillas para GitHub, GitLab, Jenkins, Azure, etc. (#111)
+- ✅ IDE Extensions - Soporte inicial para VS Code y PyCharm (#112)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos

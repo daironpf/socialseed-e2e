@@ -90,6 +90,26 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - IDE Extensions for VS Code & PyCharm (Issue #112)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / IDE Support
+**Impacto:** Muy Alto
+
+**Descripción:**
+Desarrollo inicial de extensiones oficiales para VS Code y PyCharm/IntelliJ. Incluye integración de comandos CLI, resaltado de sintaxis especializado y estructuras de proyecto listas para desarrollo de plugins.
+
+**Archivos Creados/Modificados:**
+- `ide-extensions/vscode/` - Extensión para VS Code (package.json, extension logic, syntax)
+- `ide-extensions/pycharm/` - Plugin para PyCharm (Gradle, Kotlin, plugin.xml)
+- `docs/ide-extensions.md` - Guía de uso y desarrollo de extensiones
+
+**Decisiones Importantes:**
+1. **VS Code Syntax Injection:** Uso de TextMate grammar injections para añadir resaltado a palabras clave de socialseed-e2e sin romper el soporte estándar de Python.
+2. **PyCharm Kotlin Base:** Elección de Kotlin para el plugin de PyCharm siguiendo las recomendaciones modernas de JetBrains.
+3. **CLI Proxying:** Ambas extensiones actúan como proxies del ejecutable `e2e`, permitiendo que el framework siga siendo la fuente de verdad.
+
+---
+
 #### 2026-02-12 - Comprehensive CI/CD Templates (Issue #111)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / DevOps
