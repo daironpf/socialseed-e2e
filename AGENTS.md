@@ -447,6 +447,7 @@ jinja2>=3.1.0
 - ✅ IDE Extensions - Soporte inicial para VS Code y PyCharm (#112)
 - ✅ Cloud Platform Integrations - Soporte nativo para AWS, GCP y Azure (#113)
 - ✅ APM & Observability - Integración con DataDog, New Relic y Prometheus (#114)
+- ✅ Database Testing Support - Soporte avanzado para SQL y NoSQL (#115)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
