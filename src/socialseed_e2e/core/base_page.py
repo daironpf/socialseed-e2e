@@ -9,12 +9,19 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 
 from playwright.sync_api import APIRequestContext, APIResponse, Playwright
 
 from socialseed_e2e.core.headers import DEFAULT_BROWSER_HEADERS, DEFAULT_JSON_HEADERS
 from socialseed_e2e.core.models import ServiceConfig
+
+# Import assertions for integration
+try:
+    from socialseed_e2e.assertions import AssertionBuilder, expect
+except ImportError:
+    # Handle circular dependency if any
+    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -264,6 +271,16 @@ class BasePage:
     def get_metadata(self, key: str, default: Any = None) -> Any:
         """Get a metadata value."""
         return self.metadata.get(key, default)
+
+    # Assertion Integration
+
+    def expect(self, value: Any, name: str = "value") -> "AssertionBuilder":
+        """Start a fluent assertion.
+
+        Example:
+            page.expect(user_id).exists().equals(123)
+        """
+        return expect(value, name)
 
     @classmethod
     def from_config(
@@ -941,7 +958,7 @@ class BasePage:
                                 status=response.status,
                             )
 
-        return data
+        return cast(Dict[str, Any], data)
 
     def _check_type(self, value: Any, expected_type: str) -> bool:
         """Check if a value matches an expected JSON schema type.
@@ -963,7 +980,7 @@ class BasePage:
         }
 
         if expected_type in type_map:
-            return isinstance(value, type_map[expected_type])
+            return isinstance(value, cast(type, type_map[expected_type]))
         return True
 
     # Utility methods
@@ -977,7 +994,7 @@ class BasePage:
         Returns:
             Response body as string
         """
-        return response.text()
+        return cast(str, response.text())
 
     def get_last_request(self) -> Optional[RequestLog]:
         """Get the most recent request log entry.

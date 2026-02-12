@@ -90,6 +90,28 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Comprehensive Assertion Library (Issue #120)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / DSL
+**Impacto:** Medio-Alto
+
+**Descripción:**
+Creación de una biblioteca de aserciones enriquecida y semántica. Incluye validación de esquemas JSON, aserciones específicas para GraphQL (datos y errores), validaciones temporales (ISO 8601, latencia), métricas estadísticas (percentiles, outliers) y aserciones avanzadas sobre colecciones.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/assertions/` - Nuevo paquete de aserciones
+- `src/socialseed_e2e/assertions/base.py` - API fluida `expect()` y excepciones base
+- `src/socialseed_e2e/assertions/json_schema.py` - Integración con jsonschema
+- `src/socialseed_e2e/assertions/graphql.py` - Validaciones de respuestas GraphQL
+- `docs/assertions.md` - Documentación detallada de la biblioteca
+- `services/example_service/modules/04_assertions_demo.py` - Ejemplo práctico de uso
+
+**Decisiones Importantes:**
+1. **Fluent API**: Se implementó el patrón *Fluent Interface* para permitir aserciones encadenables y legibles.
+2. **Contextual Errors**: La excepción `E2EAssertionError` captura metadatos detallados (esperado vs actual) para mejorar la trazabilidad en fallos.
+
+---
+
 #### 2026-02-12 - Advanced Test Organization with Tags and Dependencies (Issue #119)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / Test Lifecycle
