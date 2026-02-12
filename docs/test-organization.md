@@ -60,6 +60,60 @@ e2e run --exclude-tag flaky --exclude-tag slow
 e2e run --tag smoke --exclude-tag experimental
 ```
 
+## Practical Examples
+
+The following examples demonstrate a common workflow organized by dependencies and tags.
+
+### 1. Registration (The Base)
+`services/example_service/modules/test_01_registration.py`
+```python
+@tag("smoke", "account")
+@priority(Priority.CRITICAL)
+def run(page):
+    # Registration logic...
+    page.set_metadata("user_registered", True)
+```
+
+### 2. Login (Depends on Registration)
+`services/example_service/modules/test_02_login.py`
+```python
+@tag("smoke", "auth")
+@depends_on("test_01_registration")
+def run(page):
+    # Login logic...
+    page.set_metadata("logged_in", True)
+```
+
+### 3. Profile Update (Depends on Login)
+`services/example_service/modules/test_03_profile.py`
+```python
+@tag("auth", "profile")
+@depends_on("test_02_login")
+def run(page):
+    # Profile logic...
+    pass
+```
+
+## Running the Examples
+
+### Run the complete Smoke Suite
+Only tests with the `smoke` tag will run, respecting their dependencies:
+```bash
+e2e run --tag smoke
+```
+*Output order: test_01_registration -> test_02_login*
+
+### Run everything except Profile tests
+```bash
+e2e run --exclude-tag profile
+```
+
+### Run only Auth-related tests
+This will trigger `test_02_login` and `test_03_profile` (and their dependency `test_01_registration` if not filtered out):
+```bash
+e2e run --tag auth
+```
+
 ## Best Practices
 
 1.  **Atomic Smoke Tests**: Tag your most critical "happy path" tests with `smoke` and run them on every commit.
