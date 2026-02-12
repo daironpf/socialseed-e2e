@@ -448,6 +448,7 @@ jinja2>=3.1.0
 - ✅ Cloud Platform Integrations - Soporte nativo para AWS, GCP y Azure (#113)
 - ✅ APM & Observability - Integración con DataDog, New Relic y Prometheus (#114)
 - ✅ Database Testing Support - Soporte avanzado para SQL y NoSQL (#115)
+- ✅ Consumer-Driven Contract Testing - CDC y detección de breaking changes (#116)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos

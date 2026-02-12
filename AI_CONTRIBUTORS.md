@@ -90,6 +90,27 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Consumer-Driven Contract Testing (Issue #116)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Microservices Testing
+**Impacto:** Alto
+
+**Descripción:**
+Implementación de pruebas de contrato dirigidas por el consumidor (CDC) para asegurar la compatibilidad entre microservicios. Incluye un DSL para definir contratos, un verificador de proveedores y un registro local con detección de cambios disruptivos (breaking changes).
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/contract_testing/` - Módulo central de pruebas de contrato
+- `src/socialseed_e2e/contract_testing/consumer.py` - DSL para generación de contratos
+- `src/socialseed_e2e/contract_testing/provider.py` - Replay y verificación de contratos
+- `src/socialseed_e2e/contract_testing/registry.py` - Registro local y comparación de versiones
+- `docs/contract-testing.md` - Guía de implementación y mejores prácticas
+
+**Decisiones Importantes:**
+1. **Pact-Compatible Logic**: Aunque es una implementación nativa, sigue los principios de Pact para facilitar la transición a desarrolladores familiarizados con CDC.
+2. **Local First Registry**: Se priorizó un registro local basado en archivos para facilitar el uso en pipelines de CI sin dependencias externas complejas.
+
+---
+
 #### 2026-02-12 - Comprehensive Database Testing Support (Issue #115)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / Database Testing
