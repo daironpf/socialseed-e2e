@@ -26,6 +26,7 @@ e2e run             # Ejecutar tests generados
 - [CLI Reference](cli-reference.md) - Referencia completa de comandos
 - [Writing Tests](writing-tests.md) - Cómo escribir tests manualmente
 - [CI/CD Integration](ci-cd.md) - **🆕 Integración continua y plantillas**
+- [IDE Extensions](ide-extensions.md) - **🆕 Extensiones para VS Code y PyCharm**
 - [API Reference](api-reference.md) - Referencia de la API
 
 ### Testing Avanzado

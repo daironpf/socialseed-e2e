@@ -1,0 +1,32 @@
+<idea-plugin>
+    <id>com.socialseed.e2e</id>
+    <name>SocialSeed E2E</name>
+    <vendor email="support@socialseed.com" url="https://github.com/daironpf/socialseed-e2e">SocialSeed</vendor>
+
+    <description><![CDATA[
+    First-class development experience for socialseed-e2e framework in PyCharm.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.python</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="SocialSeed E2E" 
+                    secondary="true" 
+                    icon="AllIcons.Actions.Execute" 
+                    anchor="right" 
+                    factoryClass="com.socialseed.e2e.E2EToolWindowFactory"/>
+        
+        <configurationType implementation="com.socialseed.e2e.run.E2ERunConfigurationType"/>
+    </extensions>
+
+    <actions>
+        <group id="SocialSeedE2E.Menu" text="SocialSeed E2E" description="SocialSeed E2E Actions">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <action id="SocialSeedE2E.RunAll" 
+                    class="com.socialseed.e2e.actions.RunAllTestsAction" 
+                    text="Run All E2E Tests" 
+                    description="Executes all E2E tests in the current project"/>
+        </group>
+    </actions>
+</idea-plugin>
