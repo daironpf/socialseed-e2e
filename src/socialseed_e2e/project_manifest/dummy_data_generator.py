@@ -374,9 +374,7 @@ class DummyDataGenerator:
         if self.db_schema and context.entity_name:
             entity = self.db_schema.get_entity(context.entity_name)
             if entity:
-                db_column = next(
-                    (c for c in entity.columns if c.name == field.name), None
-                )
+                db_column = next((c for c in entity.columns if c.name == field.name), None)
 
         # Generate based on strategy
         if strategy == DataGenerationStrategy.VALID:
@@ -448,9 +446,7 @@ class DummyDataGenerator:
             expected_result=expected,
         )
 
-    def _generate_valid_value(
-        self, field: DtoField, db_column: Optional[ColumnInfo] = None
-    ) -> Any:
+    def _generate_valid_value(self, field: DtoField, db_column: Optional[ColumnInfo] = None) -> Any:
         """Generate a valid value for a field."""
         field_type = field.type.lower()
 
@@ -515,9 +511,7 @@ class DummyDataGenerator:
         if data_type == "str" or data_type == "string":
             min_len = 1
             max_len = column.max_length or 255
-            return self._generate_random_string(
-                random.randint(min_len, min(max_len, 50))
-            )
+            return self._generate_random_string(random.randint(min_len, min(max_len, 50)))
         elif data_type == "int" or data_type == "integer":
             min_val = column.min_value or 0
             max_val = column.max_value or 1000000
@@ -770,11 +764,7 @@ class DummyDataGenerator:
             return random.choice(self.COUNTRIES)
         elif "company" in field_lower or "organization" in field_lower:
             return random.choice(self.COMPANIES)
-        elif (
-            "description" in field_lower
-            or "comment" in field_lower
-            or "note" in field_lower
-        ):
+        elif "description" in field_lower or "comment" in field_lower or "note" in field_lower:
             return self._generate_lorem_text(20)
         elif "url" in field_lower or "website" in field_lower:
             return f"https://www.{random.choice(self.DOMAINS)}"
@@ -867,7 +857,9 @@ class DummyDataGenerator:
 
     def _generate_phone(self) -> str:
         """Generate a valid phone number."""
-        return f"+1-{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
+        return (
+            f"+1-{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
+        )
 
     def _generate_lorem_text(self, num_words: int = 10) -> str:
         """Generate lorem ipsum text."""
@@ -917,9 +909,7 @@ class DummyDataGenerator:
 
         # Now generate related records with FK references
         for parent in parent_records:
-            related_data = self.generate_for_entity(
-                related_entity, DataGenerationStrategy.VALID
-            )
+            related_data = self.generate_for_entity(related_entity, DataGenerationStrategy.VALID)
             related_record = {k: v.value for k, v in related_data.items()}
 
             # Set foreign key to parent primary key
@@ -1044,15 +1034,10 @@ class DummyDataGenerator:
                     parent_entity = self._find_parent_entity(entity)
                     if parent_entity:
                         parent_pk = (
-                            parent_entity.primary_keys[0]
-                            if parent_entity.primary_keys
-                            else "id"
+                            parent_entity.primary_keys[0] if parent_entity.primary_keys else "id"
                         )
                         for col in entity.columns:
-                            if (
-                                col.foreign_key
-                                and parent_entity.table_name in col.foreign_key
-                            ):
+                            if col.foreign_key and parent_entity.table_name in col.foreign_key:
                                 record[col.name] = parent.get(parent_pk)
 
                 records.append(record)
@@ -1209,9 +1194,7 @@ class DummyDataGenerator:
 
         return self._generate_valid_column_value(column)
 
-    def generate_edge_cases_comprehensive(
-        self, dto: DtoSchema
-    ) -> List[EdgeCaseScenario]:
+    def generate_edge_cases_comprehensive(self, dto: DtoSchema) -> List[EdgeCaseScenario]:
         """Generate comprehensive edge cases for all fields.
 
         Args:
@@ -1604,15 +1587,11 @@ class DummyDataGenerator:
             # Generate a few records and cache their PKs
             records = []
             for _ in range(5):
-                data = self.generate_for_entity(
-                    ref_entity, DataGenerationStrategy.VALID
-                )
+                data = self.generate_for_entity(ref_entity, DataGenerationStrategy.VALID)
                 record = {k: v.value for k, v in data.items()}
                 records.append(record)
                 if ref_column in record:
-                    self._fk_value_cache.setdefault(cache_key, []).append(
-                        record[ref_column]
-                    )
+                    self._fk_value_cache.setdefault(cache_key, []).append(record[ref_column])
 
             if self._fk_value_cache.get(cache_key):
                 return random.choice(self._fk_value_cache[cache_key])

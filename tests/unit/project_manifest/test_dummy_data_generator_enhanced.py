@@ -36,9 +36,7 @@ class TestBusinessRules:
         generator = DummyDataGenerator()
 
         # Check that email rule is initialized
-        email_rules = [
-            r for r in generator._business_rules if r.rule_type == "email_format"
-        ]
+        email_rules = [r for r in generator._business_rules if r.rule_type == "email_format"]
         assert len(email_rules) > 0
         assert email_rules[0].field_pattern == r".*email.*"
 
@@ -46,9 +44,7 @@ class TestBusinessRules:
         """Test date range business rule."""
         generator = DummyDataGenerator()
 
-        date_rules = [
-            r for r in generator._business_rules if r.rule_type == "date_range"
-        ]
+        date_rules = [r for r in generator._business_rules if r.rule_type == "date_range"]
         assert len(date_rules) >= 2  # Should have birth date and future date rules
 
 
@@ -95,9 +91,7 @@ class TestEntityGraphGeneration:
         generator = DummyDataGenerator(db_schema=schema)
 
         # Generate graph
-        result = generator.generate_entity_graph(
-            user_entity, depth=2, records_per_level=2
-        )
+        result = generator.generate_entity_graph(user_entity, depth=2, records_per_level=2)
 
         # Verify
         assert "User" in result
@@ -418,17 +412,13 @@ class TestForeignKeyGeneration:
 
         # Valid data
         valid_data = {"id": 1, "user_id": 2}
-        is_valid, errors = generator.validate_referential_integrity(
-            valid_data, post_entity
-        )
+        is_valid, errors = generator.validate_referential_integrity(valid_data, post_entity)
         assert is_valid is True
         assert len(errors) == 0
 
         # Invalid data
         invalid_data = {"id": 1, "user_id": 999}
-        is_valid, errors = generator.validate_referential_integrity(
-            invalid_data, post_entity
-        )
+        is_valid, errors = generator.validate_referential_integrity(invalid_data, post_entity)
         assert is_valid is False
         assert len(errors) > 0
 
@@ -455,9 +445,7 @@ class TestIntegration:
         generator = DummyDataGenerator(db_schema=schema)
 
         # 1. Generate entity graph
-        graph = generator.generate_entity_graph(
-            user_entity, depth=1, records_per_level=2
-        )
+        graph = generator.generate_entity_graph(user_entity, depth=1, records_per_level=2)
         assert "User" in graph
 
         # 2. Generate with constraints
