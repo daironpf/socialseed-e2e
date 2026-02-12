@@ -505,6 +505,20 @@ def new_test(name: str, service: str, description: str):
     default="service",
     help="Parallel execution mode: 'service' runs services in parallel",
 )
+@click.option(
+    "--tag",
+    "-t",
+    "include_tags",
+    multiple=True,
+    help="Only run tests with these tags",
+)
+@click.option(
+    "--exclude-tag",
+    "-x",
+    "exclude_tags",
+    multiple=True,
+    help="Exclude tests with these tags",
+)
 def run(
     service: Optional[str],
     module: Optional[str],
@@ -517,6 +531,8 @@ def run(
     trace_format: str,
     parallel: Optional[int],
     parallel_mode: str,
+    include_tags: Tuple[str, ...],
+    exclude_tags: Tuple[str, ...],
 ):
     """Execute E2E tests.
 
@@ -600,6 +616,10 @@ def run(
         console.print(f"🔍 [yellow]Filtering by module:[/yellow] {module}")
     if verbose:
         console.print("📢 [yellow]Verbose mode activated[/yellow]")
+    if include_tags:
+        console.print(f"🏷️ [yellow]Including tags:[/yellow] {', '.join(include_tags)}")
+    if exclude_tags:
+        console.print(f"🚫 [yellow]Excluding tags:[/yellow] {', '.join(exclude_tags)}")
 
     console.print()
 
@@ -635,6 +655,8 @@ def run(
                 specific_module=module,
                 parallel_config=parallel_config,
                 verbose=verbose,
+                include_tags=list(include_tags) if include_tags else None,
+                exclude_tags=list(exclude_tags) if exclude_tags else None,
             )
         else:
             results = run_all_tests(
@@ -642,6 +664,8 @@ def run(
                 specific_service=service,
                 specific_module=module,
                 verbose=verbose,
+                include_tags=list(include_tags) if include_tags else None,
+                exclude_tags=list(exclude_tags) if exclude_tags else None,
             )
 
         # Print summary

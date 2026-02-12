@@ -28,6 +28,7 @@ from .headers import DEFAULT_BROWSER_HEADERS, DEFAULT_JSON_HEADERS, get_combined
 from .interfaces import IServicePage, ITestModule
 from .loaders import ModuleLoader
 from .models import ServiceConfig, TestContext
+from .organization import Priority, depends_on, priority, tag
 from .parallel_runner import ParallelConfig, run_tests_parallel
 from .test_orchestrator import TestOrchestrator
 
@@ -60,6 +61,11 @@ __all__ = [
     # Interfaces
     "IServicePage",
     "ITestModule",
+    # Organization
+    "Priority",
+    "tag",
+    "depends_on",
+    "priority",
     # Funciones utilitarias
     "get_config",
     "get_service_config",
