@@ -90,6 +90,23 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Record and Replay Test Sessions (Issue #121)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Recorder
+**Impacto:** Medio
+
+**Descripción:**
+Implementación de un grabador interactivo para capturar tráfico de API manual. Incluye un servidor proxy de grabación, modelos para persistencia de sesiones en JSON, un reproductor directo y un conversor de sesiones a módulos de prueba de Python compatibles con el framework.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/recorder/` - Nuevo paquete del grabador
+- `src/socialseed_e2e/recorder/proxy_server.py` - Proxy de interceptación
+- `src/socialseed_e2e/recorder/converter.py` - Generador de código Python
+- `docs/recorder.md` - Documentación del grabador
+- `src/socialseed_e2e/cli.py` - Nuevos comandos `e2e recorder [record|replay|convert]`
+
+---
+
 #### 2026-02-12 - Comprehensive Assertion Library (Issue #120)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / DSL

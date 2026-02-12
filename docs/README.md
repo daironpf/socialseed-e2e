@@ -25,6 +25,7 @@ e2e run             # Ejecutar tests generados
 - [Core Engine](core-engine.md) - Arquitectura del motor de E2E
 - [Test Organization](test-organization.md) - **🆕 Tags, dependencias y prioridades**
 - [Assertion Library](assertions.md) - **🆕 Biblioteca de aserciones avanzada**
+- [Record and Replay](recorder.md) - **🆕 Grabación y reproducción de sesiones**
 - [API Configuration](api-config.md) - Definición de servicios y endpoints
 
 ### Configuración y Uso

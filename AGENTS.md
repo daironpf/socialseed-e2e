@@ -453,6 +453,7 @@ jinja2>=3.1.0
 - ✅ Advanced Performance & Load Testing - Generación de carga y SLAs (#118)
 - ✅ Advanced Test Organization - Tags, dependencias y prioridades (#119)
 - ✅ Comprehensive Assertion Library - JSON Schema, GraphQL, stats (#120)
+- ✅ Record and Replay Test Sessions - Proxy, convert & replay (#121)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
