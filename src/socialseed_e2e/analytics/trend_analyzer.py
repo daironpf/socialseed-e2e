@@ -233,9 +233,7 @@ class TrendAnalyzer:
         # Calculate magnitude and change
         start_value = values[0]
         end_value = values[-1]
-        change_percent = (
-            ((end_value - start_value) / start_value) * 100 if start_value != 0 else 0
-        )
+        change_percent = ((end_value - start_value) / start_value) * 100 if start_value != 0 else 0
         magnitude = abs(change_percent)
 
         return MetricTrend(
@@ -309,9 +307,7 @@ class TrendAnalyzer:
                         change_magnitude=change,
                         before_mean=before_mean,
                         after_mean=after_mean,
-                        confidence=min(
-                            1.0, z_score / (self.change_point_threshold * 3)
-                        ),
+                        confidence=min(1.0, z_score / (self.change_point_threshold * 3)),
                         change_type=change_type,
                     )
                 )
@@ -369,24 +365,16 @@ class TrendAnalyzer:
         # Calculate seasonality strength
         overall_mean = statistics.mean(values)
         hour_variance = (
-            statistics.variance(list(hourly_means.values()))
-            if len(hourly_means) > 1
-            else 0
+            statistics.variance(list(hourly_means.values())) if len(hourly_means) > 1 else 0
         )
         total_variance = statistics.variance(values) if len(values) > 1 else 1
 
-        seasonality_strength = (
-            hour_variance / total_variance if total_variance > 0 else 0
-        )
+        seasonality_strength = hour_variance / total_variance if total_variance > 0 else 0
 
         has_seasonality = seasonality_strength > 0.3
 
-        peak_times = [
-            timestamps[0].replace(hour=h, minute=0, second=0) for h in peak_hours
-        ]
-        trough_times = [
-            timestamps[0].replace(hour=h, minute=0, second=0) for h in trough_hours
-        ]
+        peak_times = [timestamps[0].replace(hour=h, minute=0, second=0) for h in peak_hours]
+        trough_times = [timestamps[0].replace(hour=h, minute=0, second=0) for h in trough_hours]
 
         return SeasonalityInfo(
             metric_name=metric_name,
@@ -499,12 +487,8 @@ class TrendAnalyzer:
             "decreasing_trends": len(
                 [t for t in trends if t.direction == TrendDirection.DECREASING]
             ),
-            "stable_trends": len(
-                [t for t in trends if t.direction == TrendDirection.STABLE]
-            ),
-            "volatile_trends": len(
-                [t for t in trends if t.direction == TrendDirection.VOLATILE]
-            ),
+            "stable_trends": len([t for t in trends if t.direction == TrendDirection.STABLE]),
+            "volatile_trends": len([t for t in trends if t.direction == TrendDirection.VOLATILE]),
             "change_points_detected": len(change_points),
             "seasonal_patterns": len([s for s in seasonalities if s.has_seasonality]),
         }

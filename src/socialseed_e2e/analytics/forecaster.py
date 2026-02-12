@@ -208,32 +208,22 @@ class PerformanceForecaster:
 
         # Generate forecast based on model
         if model == ForecastModel.LINEAR:
-            forecast_values, confidence_intervals = self._linear_forecast(
-                values, periods
-            )
+            forecast_values, confidence_intervals = self._linear_forecast(values, periods)
         elif model == ForecastModel.EXPONENTIAL_SMOOTHING:
-            forecast_values, confidence_intervals = (
-                self._exponential_smoothing_forecast(values, periods)
+            forecast_values, confidence_intervals = self._exponential_smoothing_forecast(
+                values, periods
             )
         elif model == ForecastModel.MOVING_AVERAGE:
-            forecast_values, confidence_intervals = self._moving_average_forecast(
-                values, periods
-            )
+            forecast_values, confidence_intervals = self._moving_average_forecast(values, periods)
         elif model == ForecastModel.SEASONAL:
-            forecast_values, confidence_intervals = self._seasonal_forecast(
-                values, periods
-            )
+            forecast_values, confidence_intervals = self._seasonal_forecast(values, periods)
         else:
-            forecast_values, confidence_intervals = self._linear_forecast(
-                values, periods
-            )
+            forecast_values, confidence_intervals = self._linear_forecast(values, periods)
 
         # Generate forecast timestamps
         last_timestamp = timestamps[-1]
         interval = self._estimate_interval(timestamps)
-        forecast_timestamps = [
-            last_timestamp + interval * (i + 1) for i in range(periods)
-        ]
+        forecast_timestamps = [last_timestamp + interval * (i + 1) for i in range(periods)]
 
         # Calculate trend direction
         trend_slope = self._calculate_trend_slope(values)
@@ -313,12 +303,9 @@ class PerformanceForecaster:
 
         if result:
             # Cap error rates at 1.0 (100%)
-            result.forecast_values = [
-                min(1.0, max(0.0, v)) for v in result.forecast_values
-            ]
+            result.forecast_values = [min(1.0, max(0.0, v)) for v in result.forecast_values]
             result.confidence_intervals = [
-                (max(0.0, lower), min(1.0, upper))
-                for lower, upper in result.confidence_intervals
+                (max(0.0, lower), min(1.0, upper)) for lower, upper in result.confidence_intervals
             ]
 
             # Add warning if error rate expected to increase
@@ -398,9 +385,7 @@ class PerformanceForecaster:
             "metric_name": metric_name,
             "capacity_limit": capacity_limit,
             "breach_predicted": False,
-            "current_utilization": last_forecast / capacity_limit
-            if capacity_limit > 0
-            else 0,
+            "current_utilization": last_forecast / capacity_limit if capacity_limit > 0 else 0,
             "headroom": capacity_limit - last_forecast,
             "confidence": result.confidence_level,
             "forecast_range": f"{last_confidence[0]:.2f} - {last_confidence[1]:.2f}",
@@ -456,9 +441,7 @@ class PerformanceForecaster:
             else:
                 forecast_std = std_error * _sqrt(1 + 1 / n)
             margin = z_score * forecast_std
-            confidence_intervals.append(
-                (forecast_values[i] - margin, forecast_values[i] + margin)
-            )
+            confidence_intervals.append((forecast_values[i] - margin, forecast_values[i] + margin))
 
         return forecast_values, confidence_intervals
 
@@ -489,9 +472,7 @@ class PerformanceForecaster:
 
         confidence_intervals = []
         for value in forecast_values:
-            margin = 1.96 * (
-                std_error + mean_error * 0.1
-            )  # Increase uncertainty with time
+            margin = 1.96 * (std_error + mean_error * 0.1)  # Increase uncertainty with time
             confidence_intervals.append((value - margin, value + margin))
 
         return forecast_values, confidence_intervals
@@ -509,21 +490,15 @@ class PerformanceForecaster:
             moving_averages.append(_mean(window))
 
         # Last moving average as forecast
-        last_ma = (
-            moving_averages[-1] if moving_averages else _mean(values[-window_size:])
-        )
+        last_ma = moving_averages[-1] if moving_averages else _mean(values[-window_size:])
 
         forecast_values = [last_ma] * periods
 
         # Calculate confidence intervals
-        std_dev = (
-            _std(moving_averages) if len(moving_averages) > 1 else _std(values) * 0.5
-        )
+        std_dev = _std(moving_averages) if len(moving_averages) > 1 else _std(values) * 0.5
         margin = 1.96 * std_dev
 
-        confidence_intervals = [
-            (value - margin, value + margin) for value in forecast_values
-        ]
+        confidence_intervals = [(value - margin, value + margin) for value in forecast_values]
 
         return forecast_values, confidence_intervals
 
@@ -545,9 +520,7 @@ class PerformanceForecaster:
 
         # Detrend
         trend_slope, trend_intercept = _polyfit(range(len(values)), values, 1)
-        detrended = [
-            values[i] - (trend_slope * i + trend_intercept) for i in range(len(values))
-        ]
+        detrended = [values[i] - (trend_slope * i + trend_intercept) for i in range(len(values))]
 
         # Calculate trend forecast
         last_trend = trend_slope * len(values) + trend_intercept
@@ -556,21 +529,16 @@ class PerformanceForecaster:
         forecast_values = []
         for i in range(periods):
             seasonal_idx = (len(values) + i) % period
-            forecast_values.append(
-                last_trend + trend_slope * i + seasonal_components[seasonal_idx]
-            )
+            forecast_values.append(last_trend + trend_slope * i + seasonal_components[seasonal_idx])
 
         # Confidence intervals
         residuals = [
-            abs(detrended[i] - seasonal_components[i % period])
-            for i in range(len(values))
+            abs(detrended[i] - seasonal_components[i % period]) for i in range(len(values))
         ]
         std_residual = _std(residuals)
         margin = 1.96 * std_residual
 
-        confidence_intervals = [
-            (value - margin, value + margin) for value in forecast_values
-        ]
+        confidence_intervals = [(value - margin, value + margin) for value in forecast_values]
 
         return forecast_values, confidence_intervals
 
@@ -609,8 +577,7 @@ class PerformanceForecaster:
             return timedelta(hours=1)
 
         intervals = [
-            (timestamps[i + 1] - timestamps[i]).total_seconds()
-            for i in range(len(timestamps) - 1)
+            (timestamps[i + 1] - timestamps[i]).total_seconds() for i in range(len(timestamps) - 1)
         ]
 
         avg_interval = _mean(intervals)
@@ -627,17 +594,11 @@ class PerformanceForecaster:
         mae = _mean([abs(a - f) for a, f in zip(actual[-len(forecast) :], forecast)])
 
         # Calculate RMSE (Root Mean Square Error)
-        rmse = _sqrt(
-            _mean([(a - f) ** 2 for a, f in zip(actual[-len(forecast) :], forecast)])
-        )
+        rmse = _sqrt(_mean([(a - f) ** 2 for a, f in zip(actual[-len(forecast) :], forecast)]))
 
         # Calculate MAPE (Mean Absolute Percentage Error)
         mape = _mean(
-            [
-                abs((a - f) / a) * 100
-                for a, f in zip(actual[-len(forecast) :], forecast)
-                if a != 0
-            ]
+            [abs((a - f) / a) * 100 for a, f in zip(actual[-len(forecast) :], forecast) if a != 0]
         )
 
         return {

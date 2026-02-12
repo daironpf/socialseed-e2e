@@ -22,10 +22,8 @@ from socialseed_e2e.analytics.forecaster import (
     PerformanceForecaster,
     TrendDirection,
 )
-from socialseed_e2e.analytics.trend_analyzer import (
-    TrendAnalyzer,
-    TrendDirection as TrendDirectionAnalyzer,
-)
+from socialseed_e2e.analytics.trend_analyzer import TrendAnalyzer
+from socialseed_e2e.analytics.trend_analyzer import TrendDirection as TrendDirectionAnalyzer
 
 
 class TestAnomalyDetector:
@@ -91,9 +89,7 @@ class TestAnomalyDetector:
         assert len(anomalies) > 0
 
         # Check that anomaly was detected
-        z_score_anomalies = [
-            a for a in anomalies if a.method == DetectionMethod.Z_SCORE
-        ]
+        z_score_anomalies = [a for a in anomalies if a.method == DetectionMethod.Z_SCORE]
         assert len(z_score_anomalies) > 0
 
     def test_detect_error_rate_anomalies(self):
@@ -126,15 +122,11 @@ class TestAnomalyDetector:
 
         # Add repeated errors
         for i in range(10):
-            detector.add_error(
-                base_time + timedelta(minutes=i), "Connection timeout to database"
-            )
+            detector.add_error(base_time + timedelta(minutes=i), "Connection timeout to database")
 
         # Add different errors
         for i in range(5):
-            detector.add_error(
-                base_time + timedelta(minutes=10 + i), f"Unique error {i}"
-            )
+            detector.add_error(base_time + timedelta(minutes=10 + i), f"Unique error {i}")
 
         patterns = detector.detect_error_patterns()
         assert len(patterns) > 0
@@ -229,7 +221,7 @@ class TestAnomalyDetector:
         detector = AnomalyDetector()
 
         # Create and add alert
-        from socialseed_e2e.analytics.anomaly_detector import AnomalyResult, Alert
+        from socialseed_e2e.analytics.anomaly_detector import Alert, AnomalyResult
 
         anomaly = AnomalyResult(
             is_anomaly=True,
@@ -265,7 +257,7 @@ class TestAnomalyDetector:
         detector = AnomalyDetector()
 
         # Create alerts
-        from socialseed_e2e.analytics.anomaly_detector import AnomalyResult, Alert
+        from socialseed_e2e.analytics.anomaly_detector import Alert, AnomalyResult
 
         for i in range(3):
             anomaly = AnomalyResult(
@@ -399,9 +391,7 @@ class TestPerformanceForecaster:
 
     def test_forecast_linear(self):
         """Test linear forecasting."""
-        forecaster = PerformanceForecaster(
-            config=ForecastConfig(model=ForecastModel.LINEAR)
-        )
+        forecaster = PerformanceForecaster(config=ForecastConfig(model=ForecastModel.LINEAR))
 
         timestamps = [datetime.utcnow() + timedelta(hours=i) for i in range(20)]
         values = [100 + i * 5 for i in range(20)]  # Linear trend
@@ -448,9 +438,7 @@ class TestPerformanceForecaster:
         timestamps = [datetime.utcnow() + timedelta(minutes=i) for i in range(30)]
         response_times = [100 + i * 10 for i in range(30)]
 
-        result = forecaster.forecast_response_time(
-            timestamps, response_times, periods=5
-        )
+        result = forecaster.forecast_response_time(timestamps, response_times, periods=5)
 
         assert result is not None
         assert result.metric_name == "response_time"

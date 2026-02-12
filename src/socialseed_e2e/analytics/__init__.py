@@ -38,9 +38,9 @@ from socialseed_e2e.analytics.trend_analyzer import (
     MetricTrend,
     SeasonalityInfo,
     TrendAnalyzer,
-    TrendDirection as TrendDirectionAnalyzer,
-    TrendReport,
 )
+from socialseed_e2e.analytics.trend_analyzer import TrendDirection as TrendDirectionAnalyzer
+from socialseed_e2e.analytics.trend_analyzer import TrendReport
 
 __all__ = [
     # Anomaly Detector

@@ -339,9 +339,7 @@ class AnomalyDetector:
         if len(self._error_history) > 500:
             self._error_history = self._error_history[-500:]
 
-    def detect_response_time_anomalies(
-        self, recent_minutes: int = 30
-    ) -> List[AnomalyResult]:
+    def detect_response_time_anomalies(self, recent_minutes: int = 30) -> List[AnomalyResult]:
         """Detect anomalies in response times.
 
         Args:
@@ -357,9 +355,7 @@ class AnomalyDetector:
             return []
 
         response_times = [
-            s.response_time_ms
-            for s in recent_snapshots
-            if s.response_time_ms is not None
+            s.response_time_ms for s in recent_snapshots if s.response_time_ms is not None
         ]
 
         if len(response_times) < self.config.min_data_points:
@@ -368,9 +364,7 @@ class AnomalyDetector:
         anomalies = []
 
         # Z-score method
-        z_anomalies = self._detect_with_z_score(
-            response_times, AnomalyType.RESPONSE_TIME
-        )
+        z_anomalies = self._detect_with_z_score(response_times, AnomalyType.RESPONSE_TIME)
         anomalies.extend(z_anomalies)
 
         # IQR method
@@ -399,9 +393,7 @@ class AnomalyDetector:
 
         return anomalies
 
-    def detect_error_rate_anomalies(
-        self, recent_minutes: int = 30
-    ) -> List[AnomalyResult]:
+    def detect_error_rate_anomalies(self, recent_minutes: int = 30) -> List[AnomalyResult]:
         """Detect anomalies in error rates.
 
         Args:
@@ -416,9 +408,7 @@ class AnomalyDetector:
         if len(recent_snapshots) < self.config.min_data_points:
             return []
 
-        error_rates = [
-            s.error_rate for s in recent_snapshots if s.error_rate is not None
-        ]
+        error_rates = [s.error_rate for s in recent_snapshots if s.error_rate is not None]
 
         if len(error_rates) < self.config.min_data_points:
             return []
@@ -440,9 +430,7 @@ class AnomalyDetector:
                             method=DetectionMethod.THRESHOLD,
                             value=er,
                             expected_range=(0, self.config.error_rate_threshold),
-                            severity=AlertSeverity.CRITICAL
-                            if er > 0.1
-                            else AlertSeverity.HIGH,
+                            severity=AlertSeverity.CRITICAL if er > 0.1 else AlertSeverity.HIGH,
                             confidence=1.0,
                             description=f"Error rate {er:.2%} exceeds threshold {self.config.error_rate_threshold:.2%}",
                             timestamp=recent_snapshots[i].timestamp,
@@ -480,18 +468,14 @@ class AnomalyDetector:
                         first_seen=data["first_seen"],
                         last_seen=data["last_seen"],
                         error_type=data["error_type"],
-                        severity=AlertSeverity.HIGH
-                        if frequency > 20
-                        else AlertSeverity.MEDIUM,
+                        severity=AlertSeverity.HIGH if frequency > 20 else AlertSeverity.MEDIUM,
                         sample_messages=data["messages"][:5],
                     )
                 )
 
         return unusual_patterns
 
-    def detect_security_anomalies(
-        self, recent_minutes: int = 60
-    ) -> List[SecurityAnomaly]:
+    def detect_security_anomalies(self, recent_minutes: int = 60) -> List[SecurityAnomaly]:
         """Detect security-related anomalies.
 
         Args:
@@ -686,9 +670,7 @@ class AnomalyDetector:
             "critical_anomalies": len(
                 [a for a in all_anomalies if a.severity == AlertSeverity.CRITICAL]
             ),
-            "high_anomalies": len(
-                [a for a in all_anomalies if a.severity == AlertSeverity.HIGH]
-            ),
+            "high_anomalies": len([a for a in all_anomalies if a.severity == AlertSeverity.HIGH]),
             "total_alerts": len(alerts),
             "unacknowledged_alerts": len([a for a in alerts if not a.acknowledged]),
             "error_patterns_found": len(error_patterns),
@@ -767,9 +749,7 @@ class AnomalyDetector:
                         value=value,
                         expected_range=(mean - 2 * std_dev, mean + 2 * std_dev),
                         severity=severity,
-                        confidence=min(
-                            1.0, z_score / (self.config.z_score_threshold * 2)
-                        ),
+                        confidence=min(1.0, z_score / (self.config.z_score_threshold * 2)),
                         description=f"Z-score {z_score:.2f} exceeds threshold {self.config.z_score_threshold}",
                         timestamp=datetime.utcnow(),
                     )
@@ -834,10 +814,7 @@ class AnomalyDetector:
                 or ts < patterns[simplified]["first_seen"]
             ):
                 patterns[simplified]["first_seen"] = ts
-            if (
-                patterns[simplified]["last_seen"] is None
-                or ts > patterns[simplified]["last_seen"]
-            ):
+            if patterns[simplified]["last_seen"] is None or ts > patterns[simplified]["last_seen"]:
                 patterns[simplified]["last_seen"] = ts
 
             # Try to determine error type
