@@ -2925,6 +2925,464 @@ def perf_report(
         sys.exit(1)
 
 
+@cli.command()
+@click.option(
+    "--project",
+    "-p",
+    default=".",
+    help="Path to project directory",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+@click.option(
+    "--name",
+    "-n",
+    required=True,
+    help="Strategy name",
+)
+@click.option(
+    "--description",
+    "-d",
+    default="",
+    help="Strategy description",
+)
+@click.option(
+    "--services",
+    "-s",
+    help="Comma-separated list of services to include (default: all)",
+)
+@click.option(
+    "--output",
+    "-o",
+    help="Output path for strategy file",
+    type=click.Path(),
+)
+def plan_strategy(project: str, name: str, description: str, services: str, output: str):
+    """Generate an AI-driven test strategy.
+
+    Analyzes the codebase and creates a comprehensive testing strategy
+    with risk-based prioritization and optimal execution order.
+
+    Examples:
+        e2e plan-strategy --name "API Regression Strategy"
+        e2e plan-strategy --name "Critical Path Tests" --services users-api,orders-api
+    """
+    from socialseed_e2e.ai_orchestrator import StrategyPlanner
+
+    console.print(f"\n🤖 [bold blue]Planning Test Strategy:[/bold blue] {name}\n")
+
+    try:
+        planner = StrategyPlanner(project)
+
+        target_services = None
+        if services:
+            target_services = [s.strip() for s in services.split(",")]
+
+        strategy = planner.generate_strategy(
+            name=name,
+            description=description or f"Auto-generated strategy for {name}",
+            target_services=target_services,
+        )
+
+        # Save strategy
+        output_path = Path(output) if output else None
+        saved_path = planner.save_strategy(strategy, output_path)
+
+        # Display summary
+        console.print(f"[green]✓[/green] Strategy generated: [bold]{strategy.id}[/bold]")
+        console.print(f"[green]✓[/green] Saved to: {saved_path}")
+        console.print()
+        console.print("[bold]Strategy Summary:[/bold]")
+        console.print(f"  Total test cases: {len(strategy.test_cases)}")
+        console.print(f"  Services covered: {', '.join(strategy.target_services)}")
+        console.print(f"  Estimated duration: {strategy.total_estimated_duration_ms // 1000}s")
+        console.print(f"  Parallel groups: {len(strategy.parallelization_groups)}")
+        console.print()
+
+        # Show priority breakdown
+        from socialseed_e2e.ai_orchestrator import TestPriority
+
+        priority_counts = {}
+        for tc in strategy.test_cases:
+            priority_counts[tc.priority] = priority_counts.get(tc.priority, 0) + 1
+
+        console.print("[bold]Priority Distribution:[/bold]")
+        for priority in [
+            TestPriority.CRITICAL,
+            TestPriority.HIGH,
+            TestPriority.MEDIUM,
+            TestPriority.LOW,
+        ]:
+            count = priority_counts.get(priority, 0)
+            if count > 0:
+                console.print(f"  {priority.value.upper()}: {count} tests")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--project",
+    "-p",
+    default=".",
+    help="Path to project directory",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+@click.option(
+    "--strategy-id",
+    "-s",
+    required=True,
+    help="Strategy ID to execute",
+)
+@click.option(
+    "--parallel",
+    "-j",
+    default=4,
+    help="Number of parallel workers",
+    type=int,
+)
+@click.option(
+    "--no-healing",
+    is_flag=True,
+    help="Disable self-healing",
+)
+@click.option(
+    "--auto-fix",
+    is_flag=True,
+    help="Auto-apply fixes without confirmation",
+)
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    help="Verbose output",
+)
+def autonomous_run(
+    project: str,
+    strategy_id: str,
+    parallel: int,
+    no_healing: bool,
+    auto_fix: bool,
+    verbose: bool,
+):
+    """Run tests autonomously with AI orchestration.
+
+    Executes a test strategy with intelligent retry, self-healing,
+    and autonomous debugging capabilities.
+
+    Examples:
+        e2e autonomous-run --strategy-id abc123
+        e2e autonomous-run --strategy-id abc123 --parallel 8 --auto-fix
+    """
+    from socialseed_e2e.ai_orchestrator import AutonomousRunner, OrchestratorConfig, StrategyPlanner
+
+    console.print(f"\n🚀 [bold blue]Autonomous Test Execution[/bold blue]\n")
+
+    try:
+        # Load strategy
+        planner = StrategyPlanner(project)
+        strategy = planner.load_strategy(strategy_id)
+
+        console.print(f"Loaded strategy: [bold]{strategy.name}[/bold]")
+        console.print(f"Test cases: {len(strategy.test_cases)}")
+        console.print()
+
+        # Configure runner
+        config = OrchestratorConfig(
+            enable_self_healing=not no_healing,
+            auto_apply_fixes=auto_fix,
+            parallel_workers=parallel,
+        )
+
+        runner = AutonomousRunner(project, config)
+
+        # Progress callback
+        def progress_callback(result):
+            if verbose:
+                status_color = "green" if result.status.value == "passed" else "red"
+                console.print(
+                    f"  [{status_color}]{result.status.value.upper()}[/{status_color}] {result.test_id} "
+                    f"({result.duration_ms}ms)"
+                )
+
+        # Create context factory (simplified - would use actual page creation)
+        def context_factory():
+            # This would create appropriate page context based on project config
+            from socialseed_e2e.core.base_page import BasePage
+
+            return BasePage("http://localhost:8000")
+
+        # Run execution
+        execution = runner.run_strategy(strategy, context_factory, progress_callback)
+
+        # Display results
+        console.print()
+        console.print("=" * 50)
+        console.print("[bold]Execution Complete[/bold]")
+        console.print("=" * 50)
+        console.print()
+
+        # Summary table
+        table = Table(title="Test Results Summary")
+        table.add_column("Status", style="bold")
+        table.add_column("Count", justify="right")
+
+        for status, count in execution.summary.items():
+            color = {
+                "passed": "green",
+                "failed": "red",
+                "healed": "yellow",
+                "flaky": "orange",
+            }.get(status, "white")
+            table.add_row(status.upper(), str(count), style=color)
+
+        console.print(table)
+        console.print()
+
+        # Overall status
+        if execution.status.value == "passed":
+            console.print("[bold green]✓ All tests passed![/bold green]")
+        elif execution.status.value == "healed":
+            console.print("[bold yellow]⚠ Some tests were auto-healed[/bold yellow]")
+        else:
+            console.print("[bold red]✗ Some tests failed[/bold red]")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--project",
+    "-p",
+    default=".",
+    help="Path to project directory",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+@click.option(
+    "--test-file",
+    "-f",
+    required=True,
+    help="Test file to analyze",
+    type=click.Path(exists=True, dir_okay=False),
+)
+def analyze_flaky(project: str, test_file: str):
+    """Analyze a test file for flakiness patterns.
+
+    Scans the test code and identifies patterns that commonly
+    cause flaky tests, providing recommendations for fixes.
+
+    Examples:
+        e2e analyze-flaky --test-file services/users/modules/test_login.py
+    """
+    from socialseed_e2e.ai_orchestrator import SelfHealer
+
+    console.print(f"\n🔍 [bold blue]Analyzing Test for Flakiness[/bold blue]\n")
+
+    try:
+        healer = SelfHealer(project)
+        report = healer.analyze_test_file(test_file)
+
+        console.print(f"[bold]File:[/bold] {report['test_file']}")
+        console.print()
+
+        patterns = report.get("flakiness_patterns", [])
+        if patterns:
+            console.print(f"[yellow]⚠ Found {len(patterns)} flakiness patterns:[/yellow]")
+            console.print()
+
+            table = Table(title="Detected Patterns")
+            table.add_column("Pattern", style="bold")
+            table.add_column("Severity")
+            table.add_column("Line")
+            table.add_column("Description")
+
+            for pattern in patterns:
+                severity_color = {
+                    "high": "red",
+                    "medium": "yellow",
+                    "low": "blue",
+                }.get(pattern["severity"], "white")
+
+                table.add_row(
+                    pattern["pattern"],
+                    f"[{severity_color}]{pattern['severity'].upper()}[/{severity_color}]",
+                    str(pattern["line"]),
+                    pattern["description"],
+                )
+
+            console.print(table)
+            console.print()
+
+            # Show recommendations
+            recommendations = report.get("recommendations", [])
+            if recommendations:
+                console.print("[bold]Recommendations:[/bold]")
+                for i, rec in enumerate(recommendations, 1):
+                    console.print(f"  {i}. {rec}")
+                console.print()
+        else:
+            console.print("[green]✓ No flakiness patterns detected[/green]")
+            console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--project",
+    "-p",
+    default=".",
+    help="Path to project directory",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+@click.option(
+    "--execution-id",
+    "-e",
+    required=True,
+    help="Execution ID to debug",
+)
+@click.option(
+    "--apply-fix",
+    is_flag=True,
+    help="Apply suggested fix automatically",
+)
+def debug_execution(project: str, execution_id: str, apply_fix: bool):
+    """Debug a failed test execution with AI.
+
+    Analyzes failed tests, identifies root causes, and suggests
+    or applies fixes automatically.
+
+    Examples:
+        e2e debug-execution --execution-id exec_20240211_120000
+        e2e debug-execution --execution-id exec_20240211_120000 --apply-fix
+    """
+    from socialseed_e2e.ai_orchestrator import AIDebugger
+
+    console.print(f"\n🐛 [bold blue]AI-Powered Debug Analysis[/bold blue]\n")
+
+    try:
+        debugger = AIDebugger(project)
+        report = debugger.get_debug_report(execution_id)
+
+        if "error" in report:
+            console.print(f"[red]Error:[/red] {report['error']}")
+            return
+
+        console.print(f"[bold]Execution ID:[/bold] {execution_id}")
+        console.print(f"[bold]Total Failures:[/bold] {report['total_failures']}")
+        console.print(f"[bold]Avg Confidence:[/bold] {report['average_confidence']:.2%}")
+        console.print(f"[bold]Need Review:[/bold] {report['requiring_human_review']}")
+        console.print()
+
+        # Show failures by type
+        if report.get("failures_by_type"):
+            console.print("[bold]Failures by Type:[/bold]")
+            for error_type, count in report["failures_by_type"].items():
+                console.print(f"  {error_type}: {count}")
+            console.print()
+
+        # Show detailed analyses
+        analyses = report.get("analyses", [])
+        if analyses:
+            for analysis in analyses:
+                console.print("-" * 50)
+                console.print(f"[bold]Test:[/bold] {analysis['test_id']}")
+                console.print(f"[bold]Failure Type:[/bold] {analysis['failure_type']}")
+                console.print(f"[bold]Confidence:[/bold] {analysis['confidence_score']:.2%}")
+                console.print(f"[bold]Root Cause:[/bold] {analysis['root_cause']}")
+                console.print()
+
+                if analysis.get("suggested_fixes"):
+                    console.print("[bold]Suggested Fixes:[/bold]")
+                    for fix in analysis["suggested_fixes"]:
+                        risk = fix.get("risk_level", "unknown")
+                        score = fix.get("applicability_score", 0)
+                        console.print(
+                            f"  - {fix['description']} (risk: {risk}, score: {score:.2f})"
+                        )
+                    console.print()
+
+        console.print("-" * 50)
+        console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--project",
+    "-p",
+    default=".",
+    help="Path to project directory",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+def healing_stats(project: str):
+    """View self-healing statistics.
+
+    Shows statistics about auto-healed tests, most common
+    flakiness patterns, and healing success rates.
+    """
+    from socialseed_e2e.ai_orchestrator import SelfHealer
+
+    console.print(f"\n📊 [bold blue]Self-Healing Statistics[/bold blue]\n")
+
+    try:
+        healer = SelfHealer(project)
+        stats = healer.get_healing_statistics()
+
+        console.print(f"[bold]Total Healings:[/bold] {stats['total_healings']}")
+        console.print()
+
+        if stats.get("most_common_patterns"):
+            console.print("[bold]Most Common Flakiness Patterns:[/bold]")
+            table = Table()
+            table.add_column("Pattern", style="bold")
+            table.add_column("Count", justify="right")
+
+            for pattern, count in stats["most_common_patterns"]:
+                table.add_row(pattern, str(count))
+
+            console.print(table)
+            console.print()
+
+        recent = stats.get("recent_healings", [])
+        if recent:
+            console.print("[bold]Recent Healings:[/bold]")
+            for healing in recent[-5:]:
+                console.print(f"  - {healing['test_id']} ({healing['timestamp']})")
+            console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()
