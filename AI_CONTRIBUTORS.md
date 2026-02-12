@@ -90,6 +90,26 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Advanced Performance and Load Testing (Issue #118)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / Performance Testing
+**Impacto:** Alto
+
+**Descripción:**
+Evolución de las capacidades de performance del framework. Se implementó un motor de generación de carga asíncrono, soporte para patrones de ramp-up, validación automática de SLAs (latencia P95, tasa de error) y un generador de dashboards visuales en HTML.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/performance/load_generator.py` - Motor de carga concurrente
+- `src/socialseed_e2e/performance/metrics_collector.py` - Análisis estadístico y SLAs
+- `src/socialseed_e2e/performance/dashboard.py` - Visualización de métricas en HTML
+- `docs/advanced-performance.md` - Guía de testing de carga
+
+**Decisiones Importantes:**
+1. **Asynchronous I/O**: El generador utiliza `asyncio` para simular cientos de usuarios concurrentes de forma eficiente en un solo proceso.
+2. **Self-Contained Dashboards**: Los reportes HTML incluyen Chart.js vía CDN para ser ligeros y visualmente impactantes sin dependencias locales.
+
+---
+
 #### 2026-02-12 - Chaos Engineering Testing Capabilities (Issue #117)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Feature / Reliability Testing
