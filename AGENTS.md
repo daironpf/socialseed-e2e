@@ -452,6 +452,7 @@ jinja2>=3.1.0
 - ✅ Chaos Engineering Testing - Inyección de fallos y resiliencia (#117)
 - ✅ Advanced Performance & Load Testing - Generación de carga y SLAs (#118)
 - ✅ Advanced Test Organization - Tags, dependencias y prioridades (#119)
+- ✅ Comprehensive Assertion Library - JSON Schema, GraphQL, stats (#120)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
