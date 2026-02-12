@@ -450,6 +450,7 @@ jinja2>=3.1.0
 - ✅ Database Testing Support - Soporte avanzado para SQL y NoSQL (#115)
 - ✅ Consumer-Driven Contract Testing - CDC y detección de breaking changes (#116)
 - ✅ Chaos Engineering Testing - Inyección de fallos y resiliencia (#117)
+- ✅ Advanced Performance & Load Testing - Generación de carga y SLAs (#118)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos

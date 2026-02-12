@@ -16,6 +16,9 @@ from .performance_models import (
 from .performance_profiler import PerformanceProfiler
 from .threshold_analyzer import ThresholdAnalyzer
 from .smart_alerts import SmartAlertGenerator
+from .load_generator import LoadGenerator
+from .metrics_collector import MetricsCollector, SLAPolicy
+from .dashboard import PerformanceDashboard
 
 __all__ = [
     "EndpointPerformanceMetrics",
@@ -26,4 +29,8 @@ __all__ = [
     "PerformanceProfiler",
     "ThresholdAnalyzer",
     "SmartAlertGenerator",
+    "LoadGenerator",
+    "MetricsCollector",
+    "SLAPolicy",
+    "PerformanceDashboard",
 ]

@@ -223,3 +223,6 @@ out/
 node_modules/
 dist/
 out/
+
+# SocialSeed E2E Local Data
+.e2e/
