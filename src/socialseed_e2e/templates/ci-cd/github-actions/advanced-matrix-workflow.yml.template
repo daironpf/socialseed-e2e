@@ -1,0 +1,86 @@
+name: E2E Tests (Advanced Matrix)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 0 * * *' # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      services: $${{ steps.set-services.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install socialseed-e2e
+        run: pip install socialseed-e2e
+      - id: set-services
+        name: Discover Services
+        run: |
+          # Use e2e manifest to discover services if available,
+          # otherwise fallback to listing the services directory
+          if e2e manifest > /dev/null 2>&1; then
+            SERVICES=$$(python -c "import json; print(json.dumps([s['name'] for s in json.load(open('project_knowledge.json'))['services']]))")
+          else
+            SERVICES=$$(ls -d services/*/ | xargs -n 1 basename | jq -R -s -c 'split("\n")[:-1]')
+          fi
+          echo "services=$$SERVICES" >> $$GITHUB_OUTPUT
+
+  test:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: $${{ fromJson(needs.discover.outputs.services) }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install socialseed-e2e
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Install Playwright Browsers
+      run: playwright install --with-deps chromium
+
+    - name: Run E2E Tests for $${{ matrix.service }}
+      run: e2e run --service $${{ matrix.service }} --output html --report-dir .e2e/reports/$${{ matrix.service }}
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-results-$${{ matrix.service }}
+        path: .e2e/reports/$${{ matrix.service }}
+        retention-days: 30
+
+  notify:
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: $${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: $${{ secrets.SLACK_WEBHOOK_URL }}
+        if: env.SLACK_WEBHOOK_URL != ''

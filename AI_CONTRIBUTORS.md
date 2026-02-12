@@ -90,6 +90,26 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Febrero 2026
 
+#### 2026-02-12 - Comprehensive CI/CD Templates (Issue #111)
+**Agente:** Antigravity (Google DeepMind)
+**Tipo:** Feature / DevOps
+**Impacto:** Crítico
+
+**Descripción:**
+Creación de plantillas listas para usar para pipelines de CI/CD en las principales plataformas (GitHub, GitLab, Jenkins, Azure, CircleCI, Travis, Bitbucket). Incluye ejecución paralela, splitting de tests, caching y reportes automáticos.
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/templates/ci-cd/` - Directorio con plantillas para 7 plataformas
+- `src/socialseed_e2e/cli.py` - Implementación del comando `e2e setup-ci <platform>`
+- `AGENTS.md` - Actualización de documentación y comandos
+
+**Decisiones Importantes:**
+1. **Escapado de variables:** Uso de `$$` para evitar que `string.Template` interfiera con las variables propias de los sistemas CI (ej: `${{ matrix }}`).
+2. **Estrategia Matrix:** Implementación de descubrimiento dinámico de servicios para paralelización en GitHub Actions.
+3. **Persistencia de Reportes:** Configuración estándar de artefactos HTML para facilitar la visualización de resultados en todas las plataformas.
+
+---
+
 #### 2026-02-01 - Documentación de Configuración Completa (Issue #28)
 **Agente:** OpenCode AI Agent (kimi-k2.5-free)
 **Tipo:** Documentación

@@ -25,6 +25,7 @@ e2e run             # Ejecutar tests generados
 - [Configuration](configuration.md) - Configuración de e2e.conf
 - [CLI Reference](cli-reference.md) - Referencia completa de comandos
 - [Writing Tests](writing-tests.md) - Cómo escribir tests manualmente
+- [CI/CD Integration](ci-cd.md) - **🆕 Integración continua y plantillas**
 - [API Reference](api-reference.md) - Referencia de la API
 
 ### Testing Avanzado

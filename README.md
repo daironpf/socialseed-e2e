@@ -93,6 +93,7 @@ e2e init [dir]              # Initialize project
 e2e new-service <name>      # Create service structure
 e2e new-test <name>         # Create test module
 e2e run                     # Run all tests
+e2e setup-ci <platform>     # Generate CI/CD pipelines
 e2e manifest                # Generate API knowledge
 e2e search "auth"           # Semantic search (RAG)
 e2e build-index             # Build vector index
@@ -107,6 +108,7 @@ All guides at **[daironpf.github.io/socialseed-e2e](https://daironpf.github.io/s
 
 - [Quick Start](https://daironpf.github.io/socialseed-e2e/quickstart.html)
 - [Writing Tests](https://daironpf.github.io/socialseed-e2e/writing-tests.html)
+- [CI/CD Integration](https://daironpf.github.io/socialseed-e2e/ci-cd.html)
 - [CLI Reference](https://daironpf.github.io/socialseed-e2e/cli-reference.html)
 - [AI Manifest](https://daironpf.github.io/socialseed-e2e/project-manifest.html)
 

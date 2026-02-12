@@ -72,6 +72,7 @@ e2e init [directorio]              # Inicializa proyecto
 e2e new-service <nombre>           # Crea estructura de servicio
 e2e new-test <nombre> --service <s> # Crea módulo de test
 e2e run [options]                  # Ejecuta tests
+e2e setup-ci <platform>            # Genera plantillas CI/CD
 e2e doctor                         # Verifica instalación
 e2e config                         # Muestra configuración
 e2e --version                      # Versión
@@ -442,6 +443,7 @@ jinja2>=3.1.0
 - ✅ Vector Embeddings & RAG v1.0 - Búsqueda semántica y retrieval para AI agents
 - ✅ Auto-sync de índice vectorial con cambios en manifest
 - ✅ Zero-Config Deep Scan - Detección automática de tech stack y configuración
+- ✅ CI/CD Templates - Plantillas para GitHub, GitLab, Jenkins, Azure, etc. (#111)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
