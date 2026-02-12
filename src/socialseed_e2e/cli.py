@@ -7,8 +7,9 @@ enabling developers and AI agents to create, manage, and run API tests.
 
 import subprocess
 import sys
+import time
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
 from rich.console import Console
@@ -807,6 +808,87 @@ def setup_ci(platform: str, force: bool):
     console.print("\n[bold green]✅ CI/CD templates generated successfully![/bold green]\n")
 
 
+@cli.group()
+def recorder():
+    """Commands for recording and replaying API sessions."""
+    pass
+
+
+@recorder.command("record")
+@click.argument("name")
+@click.option("--port", "-p", default=8090, help="Proxy port")
+@click.option("--output", "-o", help="Output file path (default: recordings/<name>.json)")
+def recorder_record(name: str, port: int, output: Optional[str]):
+    """Record a new API session via proxy."""
+    import os
+
+    from socialseed_e2e.recorder import RecordingProxy
+
+    output_path = output or f"recordings/{name}.json"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    proxy = RecordingProxy(port=port)
+    proxy.start(name)
+
+    console.print(
+        "\n[bold red]🔴 Recording Proxy active.[/bold red] [bold green]Press Ctrl+C to stop recording and save the session...[/bold green]\n"
+    )
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        session = proxy.stop()
+        session.save(output_path)
+        console.print(f"\n[bold green]✓ Session saved to:[/bold green] {output_path}")
+        console.print(f"Recorded {len(session.interactions)} interactions.")
+
+
+@recorder.command("replay")
+@click.argument("file")
+def recorder_replay(file: str):
+    """Replay a recorded session."""
+    from playwright.sync_api import sync_playwright
+
+    from socialseed_e2e.core.base_page import BasePage
+    from socialseed_e2e.recorder import RecordedSession, SessionPlayer
+
+    if not Path(file).exists():
+        console.print(f"[red]❌ Error:[/red] File '{file}' not found.")
+        return
+
+    session = RecordedSession.load(file)
+
+    with sync_playwright() as p:
+        page = BasePage(base_url="", playwright=p)
+        page.setup()
+        try:
+            SessionPlayer.play(session, page)
+        finally:
+            page.teardown()
+
+
+@recorder.command("convert")
+@click.argument("file")
+@click.option("--output", "-o", help="Output test file path")
+def recorder_convert(file: str, output: Optional[str]):
+    """Convert a recorded session to Python test code."""
+    from socialseed_e2e.recorder import RecordedSession, SessionConverter
+
+    if not Path(file).exists():
+        console.print(f"[red]❌ Error:[/red] File '{file}' not found.")
+        return
+
+    session = RecordedSession.load(file)
+    code = SessionConverter.to_python_code(session)
+
+    output_path = output or f"services/recorded/modules/{session.name}_flow.py"
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_path).write_text(code)
+
+    console.print(f"\n[bold green]✓ Test module generated:[/bold green] {output_path}")
+
+
 @cli.command()
 def doctor():
     """Verify installation and dependencies.
@@ -1462,7 +1544,8 @@ def generate_tests(
         from socialseed_e2e.project_manifest import ManifestAPI
 
         api = ManifestAPI(target_path)
-        manifest = api._load_manifest()
+        api._load_manifest()
+        manifest = api.manifest
         if manifest is None:
             console.print("[red]❌ Error:[/red] Could not load project manifest")
             sys.exit(1)
@@ -1674,7 +1757,7 @@ def observe(
         from socialseed_e2e.project_manifest import ServiceObserver
 
         # Parse ports if specified
-        port_list = None
+        port_list: Optional[List[int]] = None
         if ports:
             port_list = []
             for part in ports.split(","):
@@ -1848,7 +1931,8 @@ def discover(directory: str, output: Optional[str], open: bool):
 
         # Load manifest
         api = ManifestAPI(target_path)
-        manifest = api._load_manifest()
+        api._load_manifest()
+        manifest = api.manifest
 
         if not manifest:
             console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
@@ -1953,7 +2037,8 @@ def security_test(
 
         # Load manifest
         api = ManifestAPI(target_path)
-        manifest = api._load_manifest()
+        api._load_manifest()
+        manifest = api.manifest
 
         if not manifest:
             console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
@@ -2436,11 +2521,11 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
                 dockerfile_path.write_text(dockerfile)
                 console.print(f"  [green]✓[/green] Generated: {dockerfile_path}")
 
-            console.print(f"\n[bold green]✅ Mock server generated successfully![/bold green]")
-            console.print(f"\n[bold]To run the mock server:[/bold]")
+            console.print("\n[bold green]✅ Mock server generated successfully![/bold green]")
+            console.print("\n[bold]To run the mock server:[/bold]")
             console.print(f"   cd {output_path}")
             console.print(f"   python mock_{service}.py")
-            console.print(f"\n   Or with Docker:")
+            console.print("\n   Or with Docker:")
             console.print(f"   docker-compose up {service}\n")
 
     except Exception as e:
@@ -2489,7 +2574,7 @@ def mock_run(services: str, config: str, detach: bool, port: int):
     """
     import subprocess
 
-    console.print(f"\n🚀 [bold cyan]Starting Mock Servers[/bold cyan]\n")
+    console.print("\n🚀 [bold cyan]Starting Mock Servers[/bold cyan]\n")
 
     try:
         from socialseed_e2e.ai_mocking import ExternalServiceRegistry, MockServerGenerator
@@ -2526,7 +2611,7 @@ def mock_run(services: str, config: str, detach: bool, port: int):
                 try:
                     server = generator.generate_mock_server(service, port=current_port)
                     generator.save_mock_server(server)
-                    console.print(f"     [green]✓[/green] Generated")
+                    console.print("     [green]✓[/green] Generated")
                 except ValueError as e:
                     console.print(f"     [red]✗[/red] {e}")
                     continue
@@ -2565,8 +2650,8 @@ def mock_run(services: str, config: str, detach: bool, port: int):
             current_port += 1
 
         if detach:
-            console.print(f"\n[bold green]✅ Mock servers running in background[/bold green]")
-            console.print(f"   Check with: [cyan]ps aux | grep mock_[/cyan]\n")
+            console.print("\n[bold green]✅ Mock servers running in background[/bold green]")
+            console.print("   Check with: [cyan]ps aux | grep mock_[/cyan]\n")
 
         elif processes:
             console.print(f"\n[bold]Running {len(processes)} mock servers...[/bold]")
@@ -2577,7 +2662,7 @@ def mock_run(services: str, config: str, detach: bool, port: int):
                 for service, process in processes:
                     process.wait()
             except KeyboardInterrupt:
-                console.print(f"\n[yellow]👋 Stopping all mock servers...[/yellow]")
+                console.print("\n[yellow]👋 Stopping all mock servers...[/yellow]")
                 for service, process in processes:
                     process.terminate()
                     console.print(f"   [red]●[/red] {service} stopped")
@@ -2621,7 +2706,7 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
         console.print(f"[red]❌ Error:[/red] Contract file not found: {contract_path}")
         sys.exit(1)
 
-    console.print(f"\n✅ [bold cyan]Contract Validation[/bold cyan]")
+    console.print("\n✅ [bold cyan]Contract Validation[/bold cyan]")
     console.print(f"   File: {contract_path}\n")
 
     try:
@@ -2668,11 +2753,12 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
 
         if total_invalid == 0:
             console.print(
-                f"\n   [bold green]✅ All contracts validated successfully![/bold green]\n"
+                "\n   [bold green]✅ All contracts validated successfully![/bold green]\n"
             )
         else:
             console.print(
-                f"\n   [bold yellow]⚠ {total_invalid} contract(s) have validation issues[/bold yellow]\n"
+                f"\n   [bold yellow]⚠ {total_invalid} contract(s) "
+                f"have validation issues[/bold yellow]\n"
             )
 
         sys.exit(0 if total_invalid == 0 else 1)
@@ -2808,7 +2894,8 @@ def perf_profile(
                         }.get(alert.severity.value, "white")
 
                         console.print(
-                            f"\n[{severity_color}]{alert.severity.value.upper()}:[/{severity_color}] {alert.title}"
+                            f"\n[{severity_color}]{alert.severity.value.upper()}:"
+                            f"[/{severity_color}] {alert.title}"
                         )
                         console.print(alert.message)
 
@@ -2899,7 +2986,7 @@ def perf_report(
         latest_report = analyzer._find_baseline_file()
         if not latest_report:
             console.print("[red]Error:[/red] No performance reports found.")
-            console.print(f"Run [cyan]e2e perf-profile[/cyan] first to generate reports.")
+            console.print("Run [cyan]e2e perf-profile[/cyan] first to generate reports.")
             sys.exit(1)
 
         # Load baseline if provided
@@ -2940,7 +3027,8 @@ def perf_report(
                         }.get(alert.severity.value, "white")
 
                         console.print(
-                            f"[{severity_color}]{alert.severity.value.upper()}:[/{severity_color}] {alert.title}"
+                            f"[{severity_color}]{alert.severity.value.upper()}:"
+                            f"[/{severity_color}] {alert.title}"
                         )
                         console.print(alert.message)
                         console.print()
@@ -3093,7 +3181,7 @@ def plan_strategy(project: str, name: str, description: str, services: str, outp
         # Show priority breakdown
         from socialseed_e2e.ai_orchestrator import TestPriority
 
-        priority_counts = {}
+        priority_counts: Dict[TestPriority, int] = {}
         for tc in strategy.test_cases:
             priority_counts[tc.priority] = priority_counts.get(tc.priority, 0) + 1
 
@@ -3174,7 +3262,7 @@ def autonomous_run(
     """
     from socialseed_e2e.ai_orchestrator import AutonomousRunner, OrchestratorConfig, StrategyPlanner
 
-    console.print(f"\n🚀 [bold blue]Autonomous Test Execution[/bold blue]\n")
+    console.print("\n🚀 [bold blue]Autonomous Test Execution[/bold blue]\n")
 
     try:
         # Load strategy
@@ -3199,8 +3287,8 @@ def autonomous_run(
             if verbose:
                 status_color = "green" if result.status.value == "passed" else "red"
                 console.print(
-                    f"  [{status_color}]{result.status.value.upper()}[/{status_color}] {result.test_id} "
-                    f"({result.duration_ms}ms)"
+                    f"  [{status_color}]{result.status.value.upper()}[/{status_color}] "
+                    f"{result.test_id} ({result.duration_ms}ms)"
                 )
 
         # Create context factory (simplified - would use actual page creation)
@@ -3281,7 +3369,7 @@ def analyze_flaky(project: str, test_file: str):
     """
     from socialseed_e2e.ai_orchestrator import SelfHealer
 
-    console.print(f"\n🔍 [bold blue]Analyzing Test for Flakiness[/bold blue]\n")
+    console.print("\n🔍 [bold blue]Analyzing Test for Flakiness[/bold blue]\n")
 
     try:
         healer = SelfHealer(project)
@@ -3368,7 +3456,7 @@ def debug_execution(project: str, execution_id: str, apply_fix: bool):
     """
     from socialseed_e2e.ai_orchestrator import AIDebugger
 
-    console.print(f"\n🐛 [bold blue]AI-Powered Debug Analysis[/bold blue]\n")
+    console.print("\n🐛 [bold blue]AI-Powered Debug Analysis[/bold blue]\n")
 
     try:
         debugger = AIDebugger(project)
@@ -3439,7 +3527,7 @@ def healing_stats(project: str):
     """
     from socialseed_e2e.ai_orchestrator import SelfHealer
 
-    console.print(f"\n📊 [bold blue]Self-Healing Statistics[/bold blue]\n")
+    console.print("\n📊 [bold blue]Self-Healing Statistics[/bold blue]\n")
 
     try:
         healer = SelfHealer(project)
@@ -3518,7 +3606,7 @@ def translate(project: str, description: str, service: str, language: str, outpu
     """
     from socialseed_e2e.nlp import Language, NLToCodePipeline, TranslationContext
 
-    console.print(f"\n🌐 [bold blue]Natural Language Translation[/bold blue]\n")
+    console.print("\n🌐 [bold blue]Natural Language Translation[/bold blue]\n")
 
     try:
         # Detect language if not specified
@@ -3639,7 +3727,7 @@ def gherkin_translate(project: str, feature_file: str, output_dir: str):
     """
     from socialseed_e2e.nlp import GherkinParser, GherkinToCodeConverter, Language
 
-    console.print(f"\n🥒 [bold blue]Gherkin to Code Conversion[/bold blue]\n")
+    console.print("\n🥒 [bold blue]Gherkin to Code Conversion[/bold blue]\n")
 
     try:
         # Parse feature file
