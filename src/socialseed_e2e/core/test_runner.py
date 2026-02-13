@@ -18,9 +18,28 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from socialseed_e2e.ai_learning import FeedbackCollector, FeedbackType
 from socialseed_e2e.core.base_page import BasePage
 from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig, get_service_config
 from socialseed_e2e.core.organization import Priority, TestOrganizationManager
+
+# Global feedback collector instance
+_feedback_collector: Optional[FeedbackCollector] = None
+
+
+def get_feedback_collector() -> FeedbackCollector:
+    """Get or create the global feedback collector instance."""
+    global _feedback_collector
+    if _feedback_collector is None:
+        _feedback_collector = FeedbackCollector()
+    return _feedback_collector
+
+
+def set_feedback_collector(collector: FeedbackCollector):
+    """Set the global feedback collector instance."""
+    global _feedback_collector
+    _feedback_collector = collector
+
 
 console = Console()
 
@@ -280,9 +299,21 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         if trace_collector:
             trace_collector.end_trace("passed")
 
-        return TestResult(
+        result = TestResult(
             name=test_name, service=service_name, status="passed", duration_ms=duration
         )
+
+        # Collect feedback for successful test
+        collector = get_feedback_collector()
+        collector.collect_test_result(
+            test_name=test_name,
+            success=True,
+            execution_time=duration,
+            endpoint=getattr(page, "base_url", None),
+            metadata={"service": service_name},
+        )
+
+        return result
 
     except AssertionError as e:
         duration = (time.time() - start_time) * 1000
@@ -291,13 +322,26 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         if trace_collector:
             trace_collector.end_trace("failed", str(e))
 
-        return TestResult(
+        result = TestResult(
             name=test_name,
             service=service_name,
             status="failed",
             duration_ms=duration,
             error_message=str(e),
         )
+
+        # Collect feedback for failed test
+        collector = get_feedback_collector()
+        collector.collect_test_result(
+            test_name=test_name,
+            success=False,
+            execution_time=duration,
+            error_message=str(e),
+            endpoint=getattr(page, "base_url", None),
+            metadata={"service": service_name, "error_type": "assertion"},
+        )
+
+        return result
     except Exception as e:
         duration = (time.time() - start_time) * 1000
 
@@ -305,14 +349,29 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         if trace_collector:
             trace_collector.end_trace("error", str(e))
 
-        return TestResult(
+        error_traceback_str = traceback.format_exc()
+        result = TestResult(
             name=test_name,
             service=service_name,
             status="error",
             duration_ms=duration,
             error_message=str(e),
-            error_traceback=traceback.format_exc(),
+            error_traceback=error_traceback_str,
         )
+
+        # Collect feedback for test with error
+        collector = get_feedback_collector()
+        collector.collect_test_result(
+            test_name=test_name,
+            success=False,
+            execution_time=duration,
+            error_message=str(e),
+            stack_trace=error_traceback_str[:500],  # Limit stack trace size
+            endpoint=getattr(page, "base_url", None),
+            metadata={"service": service_name, "error_type": "exception"},
+        )
+
+        return result
 
 
 def run_service_tests(
@@ -362,17 +421,17 @@ def run_service_tests(
         # Load and Filter
         include_set = set(include_tags) if include_tags else None
         exclude_set = set(exclude_tags) if exclude_tags else None
-        
+
         # We need a wrapper class for TestOrganizationManager.filter_tests since it expects objects with 'run'
         class ModuleStub:
             def __init__(self, path):
                 self.path = path
                 self.run = load_test_module(path)
-        
+
         stubs = [ModuleStub(p) for p in test_modules]
         filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
         test_modules = [s.path for s in filtered_stubs]
-        
+
         # Sort by dependencies and priority
         test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
 

@@ -744,7 +744,16 @@ def run(
 @click.argument(
     "platform",
     type=click.Choice(
-        ["github", "gitlab", "jenkins", "azure", "circleci", "travis", "bitbucket", "all"]
+        [
+            "github",
+            "gitlab",
+            "jenkins",
+            "azure",
+            "circleci",
+            "travis",
+            "bitbucket",
+            "all",
+        ]
     ),
 )
 @click.option("--force", is_flag=True, help="Overwrite existing files")
@@ -784,7 +793,10 @@ def setup_ci(platform: str, force: bool):
         "circleci": [("ci-cd/circleci/config.yml.template", ".circleci/config.yml")],
         "travis": [("ci-cd/travis/travis.yml.template", ".travis.yml")],
         "bitbucket": [
-            ("ci-cd/bitbucket/bitbucket-pipelines.yml.template", "bitbucket-pipelines.yml")
+            (
+                "ci-cd/bitbucket/bitbucket-pipelines.yml.template",
+                "bitbucket-pipelines.yml",
+            )
         ],
     }
 
@@ -3774,6 +3786,332 @@ def gherkin_translate(project: str, feature_file: str, output_dir: str):
 
         console.print(traceback.format_exc())
         sys.exit(1)
+
+
+@cli.group()
+def ai_learning():
+    """Commands for AI learning and feedback loop."""
+    pass
+
+
+@ai_learning.command("feedback")
+@click.option("--storage-path", "-s", help="Path to feedback storage directory")
+@click.option("--limit", "-l", default=10, help="Number of recent feedback items to show")
+@click.option("--analyze", "-a", is_flag=True, help="Analyze patterns in feedback")
+def ai_feedback(storage_path: str, limit: int, analyze: bool):
+    """View collected feedback from test executions.
+
+    Displays feedback collected during test runs including:
+    - Test successes and failures
+    - User corrections
+    - Performance issues
+    - Code changes detected
+
+    Examples:
+        e2e ai-learning feedback              # Show recent feedback
+        e2e ai-learning feedback --analyze    # Analyze patterns
+        e2e ai-learning feedback -l 50        # Show last 50 items
+    """
+    from socialseed_e2e.ai_learning import FeedbackCollector
+
+    collector = FeedbackCollector(Path(storage_path) if storage_path else None)
+
+    console.print("\n🧠 [bold cyan]AI Learning - Feedback Collection[/bold cyan]\n")
+
+    # Load all feedback
+    all_feedback = collector.load_all_feedback()
+
+    if not all_feedback:
+        console.print("[yellow]⚠ No feedback collected yet[/yellow]")
+        console.print("   Run some tests first: [cyan]e2e run[/cyan]")
+        return
+
+    console.print(f"[green]✓[/green] Total feedback items: {len(all_feedback)}\n")
+
+    if analyze:
+        # Show pattern analysis
+        patterns = collector.analyze_patterns()
+
+        table = Table(title="Feedback Analysis")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+
+        table.add_row("Total Items", str(patterns["total"]))
+        table.add_row("Success Rate", f"{patterns['success_rate']:.1%}")
+        table.add_row("Avg Execution Time", f"{patterns['avg_execution_time']:.2f}s")
+        table.add_row("User Corrections", str(patterns["user_corrections"]))
+
+        console.print(table)
+        console.print()
+
+        # Show type distribution
+        if patterns.get("type_counts"):
+            console.print("[bold]Feedback Types:[/bold]")
+            for feedback_type, count in patterns["type_counts"].items():
+                console.print(f"  • {feedback_type}: {count}")
+            console.print()
+
+        # Show top errors
+        if patterns.get("top_errors"):
+            console.print("[bold]Top Errors:[/bold]")
+            for error_info in patterns["top_errors"][:5]:
+                console.print(f"  • {error_info['error'][:60]}... ({error_info['count']} times)")
+            console.print()
+    else:
+        # Show recent feedback
+        recent = collector.get_recent_feedback(limit=limit)
+
+        table = Table(title=f"Recent Feedback (last {len(recent)} items)")
+        table.add_column("Type", style="cyan")
+        table.add_column("Test Name", style="green")
+        table.add_column("Time", style="yellow")
+        table.add_column("Status", style="white")
+
+        for feedback in reversed(recent):
+            status_icon = "✓" if "success" in feedback.feedback_type.value else "✗"
+            status_color = "green" if "success" in feedback.feedback_type.value else "red"
+
+            table.add_row(
+                feedback.feedback_type.value,
+                feedback.test_name[:40],
+                feedback.timestamp.strftime("%H:%M:%S"),
+                f"[{status_color}]{status_icon}[/{status_color}]",
+            )
+
+        console.print(table)
+
+
+@ai_learning.command("train")
+@click.option("--storage-path", "-s", help="Path to feedback storage directory")
+@click.option("--output", "-o", help="Output path for trained model")
+def ai_train(storage_path: str, output: str):
+    """Train AI model from collected feedback.
+
+    Trains the model using user corrections and patterns
+    to improve future test generation.
+
+    Examples:
+        e2e ai-learning train              # Train with default settings
+        e2e ai-learning train -o model.json # Save model to specific file
+    """
+    from socialseed_e2e.ai_learning import FeedbackCollector, ModelTrainer, TrainingData
+
+    collector = FeedbackCollector(Path(storage_path) if storage_path else None)
+    trainer = ModelTrainer()
+
+    console.print("\n🤖 [bold cyan]AI Learning - Model Training[/bold cyan]\n")
+
+    # Get user corrections for training
+    all_feedback = collector.load_all_feedback()
+    corrections = [f for f in all_feedback if f.feedback_type.value == "user_correction"]
+
+    if not corrections:
+        console.print("[yellow]⚠ No user corrections found for training[/yellow]")
+        console.print("   Corrections are collected when users fix test assertions")
+        return
+
+    console.print(f"[green]✓[/green] Found {len(corrections)} corrections for training\n")
+
+    # Prepare training data
+    training_data = TrainingData(
+        inputs=[c.original_assertion or "" for c in corrections],
+        outputs=[c.corrected_assertion or "" for c in corrections],
+        contexts=[c.user_comment for c in corrections],
+    )
+
+    # Train
+    with console.status("[bold green]Training model..."):
+        metrics = trainer.train_from_corrections(training_data)
+
+    # Show results
+    table = Table(title="Training Results")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+
+    table.add_row("Training Samples", str(metrics.training_samples))
+    table.add_row("Accuracy", f"{metrics.accuracy:.1%}")
+    table.add_row("Precision", f"{metrics.precision:.1%}")
+    table.add_row("Recall", f"{metrics.recall:.1%}")
+    table.add_row("F1 Score", f"{metrics.f1_score:.1%}")
+    table.add_row("Training Time", f"{metrics.training_time:.2f}s")
+
+    console.print(table)
+    console.print()
+
+    # Save model if output specified
+    if output:
+        trainer.export_model(output)
+        console.print(f"[green]✓[/green] Model saved to: {output}\n")
+
+    # Show learning progress
+    progress = trainer.get_learning_progress()
+    console.print("[bold]Learning Progress:[/bold]")
+    console.print(f"  Total training sessions: {progress['total_training_sessions']}")
+    console.print(f"  Total samples processed: {progress['total_samples']}")
+    console.print(f"  Learned patterns: {progress['learned_patterns']}")
+    console.print(f"  Learned corrections: {progress['learned_corrections']}")
+    console.print()
+
+
+@ai_learning.command("adapt")
+@click.option(
+    "--strategy",
+    type=click.Choice(["conservative", "balanced", "aggressive"]),
+    default="balanced",
+)
+@click.option("--test-name", "-t", help="Specific test to get adaptation suggestions for")
+def ai_adapt(strategy: str, test_name: str):
+    """Get adaptation suggestions based on learned patterns.
+
+    Analyzes collected feedback and provides suggestions for:
+    - Test improvements
+    - Execution order optimization
+    - Codebase change adaptations
+
+    Examples:
+        e2e ai-learning adapt                    # General suggestions
+        e2e ai-learning adapt --test-name login  # Suggestions for specific test
+        e2e ai-learning adapt --strategy aggressive  # Use aggressive adaptation
+    """
+    from socialseed_e2e.ai_learning import AdaptationEngine, AdaptationStrategy, FeedbackCollector
+
+    strategy_map = {
+        "conservative": AdaptationStrategy.CONSERVATIVE,
+        "balanced": AdaptationStrategy.BALANCED,
+        "aggressive": AdaptationStrategy.AGGRESSIVE,
+    }
+
+    engine = AdaptationEngine(strategy=strategy_map[strategy])
+    collector = FeedbackCollector()
+
+    console.print(f"\n🔄 [bold cyan]AI Learning - Adaptation ({strategy})[/bold cyan]\n")
+
+    # Get feedback for analysis
+    all_feedback = collector.load_all_feedback()
+
+    if not all_feedback:
+        console.print("[yellow]⚠ No feedback available for adaptation[/yellow]")
+        return
+
+    # Get failure patterns
+    from socialseed_e2e.ai_learning import FeedbackType
+
+    failures = collector.get_feedback_by_type(FeedbackType.TEST_FAILURE)
+
+    if test_name:
+        # Get suggestions for specific test
+        test_feedback = collector.get_feedback_by_test(test_name)
+        failure_count = len([f for f in test_feedback if f.feedback_type.value == "test_failure"])
+
+        if failure_count > 0:
+            console.print(f"[bold]Test:[/bold] {test_name}")
+            console.print(f"[bold]Failures detected:[/bold] {failure_count}\n")
+
+            # This would use ModelTrainer in a real implementation
+            console.print("[bold]Suggestions:[/bold]")
+            if failure_count > 5:
+                console.print("  • Consider adding more robust error handling")
+                console.print("  • Check if test data is still valid")
+                console.print("  • Verify endpoint availability and response format")
+            if failure_count > 10:
+                console.print("  • This test may need significant refactoring")
+                console.print("  • Consider splitting into smaller, more focused tests")
+        else:
+            console.print(f"[green]✓[/green] Test '{test_name}' has no recorded failures")
+    else:
+        # Show general adaptation metrics
+        metrics = engine.get_adaptation_metrics()
+
+        table = Table(title="Adaptation Metrics")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+
+        table.add_row("Total Adaptations", str(metrics["total_adaptations"]))
+        table.add_row("Strategy", metrics["strategy"])
+        table.add_row("Confidence Threshold", f"{metrics.get('confidence_threshold', 0):.1%}")
+        table.add_row("Codebase Changes Tracked", str(metrics.get("codebase_changes_tracked", 0)))
+
+        console.print(table)
+        console.print()
+
+        # Show summary
+        patterns = collector.analyze_patterns()
+        console.print("[bold]Feedback Summary:[/bold]")
+        console.print(f"  Total feedback items: {patterns['total']}")
+        console.print(f"  Success rate: {patterns['success_rate']:.1%}")
+        console.print(f"  Recent failures: {len(failures)}")
+        console.print()
+
+
+@ai_learning.command("optimize")
+@click.argument("service")
+def ai_optimize(service: str):
+    """Optimize test execution order based on historical data.
+
+    Analyzes past test execution times and suggests
+    an optimized order for faster feedback.
+
+    Examples:
+        e2e ai-learning optimize users-api    # Optimize tests for users-api service
+    """
+    from socialseed_e2e.ai_learning import FeedbackCollector, ModelTrainer
+
+    collector = FeedbackCollector()
+    trainer = ModelTrainer()
+
+    console.print(f"\n⚡ [bold cyan]AI Learning - Test Optimization[/bold cyan]")
+    console.print(f"   Service: {service}\n")
+
+    # Get all feedback for this service
+    all_feedback = collector.load_all_feedback()
+    service_feedback = [f for f in all_feedback if f.metadata.get("service") == service]
+
+    if not service_feedback:
+        console.print("[yellow]⚠ No historical data for this service[/yellow]")
+        console.print("   Run tests first to collect execution data")
+        return
+
+    # Build execution history
+    execution_history = {}
+    for feedback in service_feedback:
+        if feedback.execution_time:
+            # Keep average if multiple executions
+            if feedback.test_name in execution_history:
+                execution_history[feedback.test_name] = (
+                    execution_history[feedback.test_name] + feedback.execution_time
+                ) / 2
+            else:
+                execution_history[feedback.test_name] = feedback.execution_time
+
+    if not execution_history:
+        console.print("[yellow]⚠ No execution time data available[/yellow]")
+        return
+
+    # Get test names
+    test_names = list(execution_history.keys())
+
+    # Optimize order
+    optimized = trainer.optimize_test_order(test_names, execution_history)
+
+    console.print(f"[green]✓[/green] Analyzed {len(test_names)} tests\n")
+
+    table = Table(title="Optimized Test Execution Order")
+    table.add_column("Order", style="cyan")
+    table.add_column("Test Name", style="green")
+    table.add_column("Avg Time", style="yellow")
+
+    for i, test_name in enumerate(optimized, 1):
+        avg_time = execution_history[test_name]
+        table.add_row(str(i), test_name, f"{avg_time:.2f}s")
+
+    console.print(table)
+    console.print()
+
+    # Calculate time savings
+    original_total = sum(execution_history.values())
+    console.print(f"[dim]Original total execution time: {original_total:.2f}s[/dim]")
+    console.print("[dim]Optimized order prioritizes faster tests for quicker feedback[/dim]")
+    console.print()
 
 
 def main():

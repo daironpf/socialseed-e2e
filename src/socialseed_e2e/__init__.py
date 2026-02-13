@@ -87,17 +87,15 @@ from socialseed_e2e.core.test_runner import (
     TestExecutionError,
     TestResult,
     TestSuiteResult,
+    get_feedback_collector,
     run_all_tests,
     run_service_tests,
+    set_feedback_collector,
 )
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import (
-        BaseGrpcPage,
-        GrpcCallLog,
-        GrpcRetryConfig,
-    )
+    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -131,6 +129,19 @@ try:
 except ImportError:
     GRAPHQL_AVAILABLE = False
 
+# Docker Compose Support
+from socialseed_e2e.docker import (
+    ComposeConfig,
+    DockerComposeError,
+    DockerComposeManager,
+    DockerComposeOptions,
+    DockerComposeParser,
+    HealthCheckError,
+    ServiceConfig,
+    ServiceNotFoundError,
+    ServiceStatus,
+)
+
 # Plugin Support
 from socialseed_e2e.plugins import (
     AssertionRegistry,
@@ -149,19 +160,6 @@ from socialseed_e2e.plugins import (
     PluginMetadata,
     PluginNotFoundError,
     load_plugin,
-)
-
-# Docker Compose Support
-from socialseed_e2e.docker import (
-    ComposeConfig,
-    DockerComposeError,
-    DockerComposeManager,
-    DockerComposeOptions,
-    DockerComposeParser,
-    HealthCheckError,
-    ServiceConfig,
-    ServiceNotFoundError,
-    ServiceStatus,
 )
 
 # Utils - Pydantic helpers (universal for all languages)
@@ -219,6 +217,18 @@ try:
 except ImportError:
     pass
 
+# AI Learning and Feedback Loop
+from socialseed_e2e.ai_learning import (
+    AdaptationEngine,
+    AdaptationStrategy,
+    FeedbackCollector,
+    FeedbackType,
+    LearningMetrics,
+    ModelTrainer,
+    TestFeedback,
+    TrainingData,
+)
+
 # Core - Interactive Doctor
 from socialseed_e2e.core.interactive_doctor import (
     AppliedFix,
@@ -252,7 +262,6 @@ from socialseed_e2e.core.traceability import (
     TestTrace,
     TraceCollector,
     TraceConfig,
-    TraceContext,
     TraceReport,
     TraceReporter,
     create_collector,
@@ -296,6 +305,8 @@ __all__ = [
     "TestSuiteResult",
     "TestDiscoveryError",
     "TestExecutionError",
+    "get_feedback_collector",
+    "set_feedback_collector",
     # Core - Parallel Execution
     "ParallelConfig",
     "run_tests_parallel",
@@ -442,4 +453,13 @@ __all__ = [
     "MissingFieldDetails",
     "ValidationErrorDetails",
     "run_interactive_doctor",
+    # AI Learning and Feedback Loop
+    "FeedbackCollector",
+    "TestFeedback",
+    "FeedbackType",
+    "ModelTrainer",
+    "TrainingData",
+    "LearningMetrics",
+    "AdaptationEngine",
+    "AdaptationStrategy",
 ]
