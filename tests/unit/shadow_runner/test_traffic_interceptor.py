@@ -1,16 +1,17 @@
 """Tests for traffic_interceptor module."""
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 from socialseed_e2e.shadow_runner.traffic_interceptor import (
+    CapturedInteraction,
     CapturedRequest,
     CapturedResponse,
-    CapturedInteraction,
-    TrafficInterceptor,
-    FlaskMiddleware,
     FastAPIMiddleware,
+    FlaskMiddleware,
+    TrafficInterceptor,
 )
 
 

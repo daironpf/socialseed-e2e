@@ -61,7 +61,7 @@ def get_users():
 
 if __name__ == '__main__':
     app.run()
-    
+
     # After shutdown
     shadow.stop_capturing()
     shadow.generate_tests(service_name="users-api")

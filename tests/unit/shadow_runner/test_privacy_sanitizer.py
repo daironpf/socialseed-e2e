@@ -1,19 +1,20 @@
 """Tests for privacy_sanitizer module."""
 
 import re
-import pytest
 from datetime import datetime
+
+import pytest
 
 from socialseed_e2e.shadow_runner.privacy_sanitizer import (
     PII_PATTERNS,
+    GDPRComplianceChecker,
     PrivacySanitizer,
     SanitizationRule,
-    GDPRComplianceChecker,
 )
 from socialseed_e2e.shadow_runner.traffic_interceptor import (
+    CapturedInteraction,
     CapturedRequest,
     CapturedResponse,
-    CapturedInteraction,
 )
 
 

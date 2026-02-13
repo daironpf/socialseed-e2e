@@ -88,9 +88,7 @@ class UserSession:
             session_id=data.get("session_id", data.get("id", str(uuid.uuid4()))),
             user_id=data.get("user_id"),
             start_time=datetime.fromisoformat(data["start_time"]),
-            end_time=datetime.fromisoformat(data["end_time"])
-            if data.get("end_time")
-            else None,
+            end_time=datetime.fromisoformat(data["end_time"]) if data.get("end_time") else None,
             metadata=data.get("metadata", {}),
             tags=data.get("tags", []),
         )
@@ -170,9 +168,7 @@ class SessionRecorder:
         self._save_session(session)
         return session
 
-    def add_interaction_to_session(
-        self, session_id: str, interaction: CapturedInteraction
-    ) -> bool:
+    def add_interaction_to_session(self, session_id: str, interaction: CapturedInteraction) -> bool:
         """Add an interaction to an active session.
 
         Args:
@@ -299,9 +295,7 @@ class SessionRecorder:
                 "interaction_id": interaction.id,
                 "method": interaction.request.method,
                 "path": interaction.request.path,
-                "status_code": interaction.response.status_code
-                if interaction.response
-                else None,
+                "status_code": interaction.response.status_code if interaction.response else None,
                 "success": False,
             }
 
@@ -324,9 +318,7 @@ class SessionRecorder:
 
         return results
 
-    def find_similar_sessions(
-        self, session_id: str, threshold: float = 0.8
-    ) -> List[UserSession]:
+    def find_similar_sessions(self, session_id: str, threshold: float = 0.8) -> List[UserSession]:
         """Find sessions similar to a given session.
 
         Args:

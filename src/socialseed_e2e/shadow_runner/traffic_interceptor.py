@@ -5,6 +5,7 @@ based on real user behavior.
 """
 
 import json
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -12,7 +13,6 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
-import threading
 
 
 class ProtocolType(str, Enum):
@@ -80,9 +80,7 @@ class CapturedRequest:
             headers=data.get("headers", {}),
             body=data.get("body"),
             query_params=data.get("query_params", {}),
-            timestamp=datetime.fromisoformat(
-                data.get("timestamp", datetime.now().isoformat())
-            ),
+            timestamp=datetime.fromisoformat(data.get("timestamp", datetime.now().isoformat())),
         )
 
 
@@ -248,7 +246,7 @@ class TrafficInterceptor:
             request_id = str(uuid.uuid4())
 
             # Parse URL
-            from urllib.parse import urlparse, parse_qs
+            from urllib.parse import parse_qs, urlparse
 
             parsed = urlparse(url or "")
             path = parsed.path or "/"
@@ -257,9 +255,7 @@ class TrafficInterceptor:
             request = CapturedRequest(
                 id=request_id,
                 timestamp=datetime.utcnow(),
-                protocol=protocol.value
-                if isinstance(protocol, ProtocolType)
-                else protocol,
+                protocol=protocol.value if isinstance(protocol, ProtocolType) else protocol,
                 method=method.upper() if method else "GET",
                 url=url or f"http://localhost{path}",
                 path=path,
@@ -343,9 +339,7 @@ class TrafficInterceptor:
                     interaction.response = response
                     break
 
-    def register_callback(
-        self, callback: Callable[[CapturedInteraction], None]
-    ) -> None:
+    def register_callback(self, callback: Callable[[CapturedInteraction], None]) -> None:
         """Register a callback for new interactions.
 
         Args:
@@ -530,9 +524,7 @@ class FlaskMiddleware:
         from flask import request
 
         # Calculate latency
-        latency = (
-            time.time() - getattr(request, "_shadow_start_time", time.time())
-        ) * 1000
+        latency = (time.time() - getattr(request, "_shadow_start_time", time.time())) * 1000
 
         # Capture response
         self.interceptor.capture_response(

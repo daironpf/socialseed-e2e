@@ -46,9 +46,7 @@ class FilterRule:
 
         # Check path patterns
         if self.path_patterns:
-            path_matched = any(
-                pattern.search(request.path) for pattern in self.path_patterns
-            )
+            path_matched = any(pattern.search(request.path) for pattern in self.path_patterns)
             if not path_matched:
                 return False
 
@@ -125,9 +123,7 @@ class CaptureFilter:
             name="exclude_health_checks",
             description="Exclude health checks, static assets, and monitoring endpoints",
             priority=100,
-            path_patterns=[
-                re.compile(pattern) for pattern in self.DEFAULT_EXCLUDE_PATHS
-            ],
+            path_patterns=[re.compile(pattern) for pattern in self.DEFAULT_EXCLUDE_PATHS],
             action="exclude",
         )
         self.add_rule(health_check_rule)
@@ -455,9 +451,7 @@ class SmartFilter(CaptureFilter):
         total = sum(self.endpoint_frequency.values()) if self.endpoint_frequency else 0
 
         # Get top endpoints sorted by frequency
-        sorted_endpoints = sorted(
-            self.endpoint_frequency.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_endpoints = sorted(self.endpoint_frequency.items(), key=lambda x: x[1], reverse=True)
         top_endpoints = [endpoint for endpoint, count in sorted_endpoints[:10]]
 
         return {
@@ -476,9 +470,7 @@ class SmartFilter(CaptureFilter):
         suggestions = []
 
         # Identify repetitive paths
-        sorted_paths = sorted(
-            self.path_frequency.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_paths = sorted(self.path_frequency.items(), key=lambda x: x[1], reverse=True)
 
         if sorted_paths and sorted_paths[0][1] > 100:
             path, count = sorted_paths[0]

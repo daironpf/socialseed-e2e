@@ -8,10 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from socialseed_e2e.shadow_runner.traffic_interceptor import (
-    CapturedInteraction,
-    RequestMethod,
-)
+from socialseed_e2e.shadow_runner.traffic_interceptor import CapturedInteraction, RequestMethod
 
 
 @dataclass
@@ -104,8 +101,7 @@ class TestGenerator:
 
         return GeneratedTest(
             name=test_name,
-            description=description
-            or f"Session test with {len(interactions)} interactions",
+            description=description or f"Session test with {len(interactions)} interactions",
             code=code,
             interactions=sorted_interactions,
             assertions=all_assertions,
@@ -154,9 +150,7 @@ class TestGenerator:
                 test_name = f"test_{self._sanitize_name(endpoint)}"
 
                 if len(endpoint_interactions) == 1:
-                    test = self.generate_test_from_interaction(
-                        endpoint_interactions[0], test_name
-                    )
+                    test = self.generate_test_from_interaction(endpoint_interactions[0], test_name)
                 else:
                     test = self.generate_test_from_session(
                         endpoint_interactions,
@@ -189,9 +183,7 @@ class TestGenerator:
 
         return tests
 
-    def _generate_single_test_code(
-        self, interaction: CapturedInteraction, test_name: str
-    ) -> str:
+    def _generate_single_test_code(self, interaction: CapturedInteraction, test_name: str) -> str:
         """Generate code for a single test.
 
         Args:
@@ -230,9 +222,7 @@ class TestGenerator:
         kwargs_str = ", ".join(kwargs)
 
         if kwargs_str:
-            code_lines.append(
-                f'    response = await page.{method}("{url}", {kwargs_str})'
-            )
+            code_lines.append(f'    response = await page.{method}("{url}", {kwargs_str})')
         else:
             code_lines.append(f'    response = await page.{method}("{url}")')
 
@@ -298,17 +288,13 @@ class TestGenerator:
             kwargs_str = ", ".join(kwargs)
 
             if kwargs_str:
-                code_lines.append(
-                    f'    response = await page.{method}("{url}", {kwargs_str})'
-                )
+                code_lines.append(f'    response = await page.{method}("{url}", {kwargs_str})')
             else:
                 code_lines.append(f'    response = await page.{method}("{url}")')
 
             # Add assertion
             if response:
-                code_lines.append(
-                    f"    assert response.status == {response.status_code}"
-                )
+                code_lines.append(f"    assert response.status == {response.status_code}")
 
             code_lines.append("")
 
@@ -330,9 +316,7 @@ class TestGenerator:
 
             # Try to check response time
             if interaction.response.latency_ms > 0:
-                assertions.append(
-                    f"Response time < {interaction.response.latency_ms * 2:.0f}ms"
-                )
+                assertions.append(f"Response time < {interaction.response.latency_ms * 2:.0f}ms")
 
             # Check for error status codes
             if interaction.response.status_code >= 400:
@@ -377,9 +361,7 @@ class TestGenerator:
         Returns:
             Formatted string
         """
-        items = [
-            f'"{k}": "{v}"' for k, v in list(data.items())[:5]
-        ]  # Limit to 5 headers
+        items = [f'"{k}": "{v}"' for k, v in list(data.items())[:5]]  # Limit to 5 headers
         return "{" + ", ".join(items) + "}"
 
     def _format_body(self, body: str) -> str:

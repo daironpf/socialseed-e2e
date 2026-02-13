@@ -1,21 +1,22 @@
 """Tests for ShadowRunner main class."""
 
-import pytest
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from socialseed_e2e.shadow_runner import (
-    ShadowRunner,
     CaptureConfig,
-    TestGenerationConfig,
     ReplayConfig,
+    ShadowRunner,
+    TestGenerationConfig,
 )
 from socialseed_e2e.shadow_runner.traffic_interceptor import (
+    CapturedInteraction,
     CapturedRequest,
     CapturedResponse,
-    CapturedInteraction,
 )
 
 

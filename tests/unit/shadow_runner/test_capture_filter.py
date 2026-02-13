@@ -1,18 +1,15 @@
 """Tests for capture_filter module."""
 
 import re
-import pytest
 from datetime import datetime
 
-from socialseed_e2e.shadow_runner.capture_filter import (
-    FilterRule,
-    CaptureFilter,
-    SmartFilter,
-)
+import pytest
+
+from socialseed_e2e.shadow_runner.capture_filter import CaptureFilter, FilterRule, SmartFilter
 from socialseed_e2e.shadow_runner.traffic_interceptor import (
+    CapturedInteraction,
     CapturedRequest,
     CapturedResponse,
-    CapturedInteraction,
 )
 
 

@@ -1,18 +1,16 @@
 """Tests for session_recorder module."""
 
-import pytest
 import json
 from datetime import datetime
 from pathlib import Path
 
-from socialseed_e2e.shadow_runner.session_recorder import (
-    UserSession,
-    SessionRecorder,
-)
+import pytest
+
+from socialseed_e2e.shadow_runner.session_recorder import SessionRecorder, UserSession
 from socialseed_e2e.shadow_runner.traffic_interceptor import (
+    CapturedInteraction,
     CapturedRequest,
     CapturedResponse,
-    CapturedInteraction,
 )
 
 

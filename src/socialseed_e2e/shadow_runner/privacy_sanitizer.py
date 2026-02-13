@@ -14,7 +14,6 @@ from socialseed_e2e.shadow_runner.traffic_interceptor import (
     CapturedResponse,
 )
 
-
 # Common PII patterns
 PII_PATTERNS = {
     "email": re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
@@ -78,9 +77,7 @@ class PrivacySanitizer:
         self.hash_salt = "shadow_runner_salt"  # In production, use a secure random salt
         self.enabled = True
 
-    def sanitize_interaction(
-        self, interaction: CapturedInteraction
-    ) -> CapturedInteraction:
+    def sanitize_interaction(self, interaction: CapturedInteraction) -> CapturedInteraction:
         """Sanitize an interaction.
 
         Args:
@@ -411,9 +408,7 @@ class PrivacySanitizer:
         """Disable sanitization."""
         self.enabled = False
 
-    def get_sanitization_report(
-        self, interactions: List[CapturedInteraction]
-    ) -> Dict[str, Any]:
+    def get_sanitization_report(self, interactions: List[CapturedInteraction]) -> Dict[str, Any]:
         """Get a report of what would be sanitized.
 
         Args:
