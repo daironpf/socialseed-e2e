@@ -125,6 +125,48 @@ from socialseed_e2e.project_manifest.regression_agent import (
     RegressionTestResult,
     run_regression_analysis,
 )
+
+# Deep Context Awareness for AI Agents (Issue #126)
+from socialseed_e2e.project_manifest.deep_context import (
+    DeepContext,
+    DeepContextAwarenessEngine,
+)
+from socialseed_e2e.project_manifest.semantic_analyzer import (
+    BusinessRule,
+    CodePattern,
+    DomainConcept,
+    SemanticCodebaseAnalyzer,
+    SemanticContext,
+    SemanticPatternType,
+)
+from socialseed_e2e.project_manifest.behavior_learner import (
+    BehaviorPattern,
+    BehaviorPatternType,
+    CorrectionPattern,
+    UserAction,
+    UserBehaviorLearner,
+    UserProfile,
+)
+from socialseed_e2e.project_manifest.relationship_mapper import (
+    APIDependency,
+    APICluster,
+    APIRelationshipMapper,
+    DataFlow,
+    DependencyStrength,
+    ImpactAnalysis as APIImpactAnalysis,
+    RelationshipCategory,
+)
+from socialseed_e2e.project_manifest.domain_understanding import (
+    BoundedContext,
+    DomainAttribute,
+    DomainElement,
+    DomainElementType,
+    DomainMethod,
+    DomainModel,
+    DomainModelUnderstanding,
+    DomainRelationship,
+    RelationshipType as DomainRelationshipType,
+)
 from socialseed_e2e.project_manifest.security_executor import (
     ResilienceMonitor,
     SecurityReportGenerator,
@@ -239,4 +281,35 @@ __all__ = [
     "ImpactAnalysis",
     "RegressionTestResult",
     "run_regression_analysis",
+    # Deep Context Awareness (Issue #126)
+    "DeepContextAwarenessEngine",
+    "DeepContext",
+    "SemanticCodebaseAnalyzer",
+    "SemanticContext",
+    "SemanticPatternType",
+    "DomainConcept",
+    "BusinessRule",
+    "CodePattern",
+    "UserBehaviorLearner",
+    "UserProfile",
+    "BehaviorPattern",
+    "BehaviorPatternType",
+    "UserAction",
+    "CorrectionPattern",
+    "APIRelationshipMapper",
+    "APIDependency",
+    "APICluster",
+    "DataFlow",
+    "RelationshipCategory",
+    "DependencyStrength",
+    "APIImpactAnalysis",
+    "DomainModelUnderstanding",
+    "DomainModel",
+    "DomainElement",
+    "DomainElementType",
+    "DomainAttribute",
+    "DomainMethod",
+    "DomainRelationship",
+    "DomainRelationshipType",
+    "BoundedContext",
 ]
