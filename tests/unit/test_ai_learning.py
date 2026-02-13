@@ -1,29 +1,26 @@
-import pytest
 import tempfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import Mock, patch
 
-from socialseed_e2e.ai_learning.feedback_collector import (
-    FeedbackCollector,
-    TestFeedback,
-    FeedbackType,
-)
-from socialseed_e2e.ai_learning.model_trainer import (
-    ModelTrainer,
-    TrainingData,
-    LearningMetrics,
-)
+import pytest
+
 from socialseed_e2e.ai_learning.adaptation_engine import (
     AdaptationEngine,
     AdaptationStrategy,
     CodebaseChange,
 )
+from socialseed_e2e.ai_learning.feedback_collector import (
+    FeedbackCollector,
+    FeedbackType,
+    TestFeedback,
+)
+from socialseed_e2e.ai_learning.model_trainer import LearningMetrics, ModelTrainer, TrainingData
 from socialseed_e2e.core.test_runner import (
+    TestResult,
+    execute_single_test,
     get_feedback_collector,
     set_feedback_collector,
-    execute_single_test,
-    TestResult,
 )
 
 
@@ -40,9 +37,7 @@ class TestFeedbackCollector:
         return FeedbackCollector(temp_storage)
 
     def test_collect_test_result_success(self, collector):
-        collector.collect_test_result(
-            test_name="test_login", success=True, execution_time=1.5
-        )
+        collector.collect_test_result(test_name="test_login", success=True, execution_time=1.5)
 
         recent = collector.get_recent_feedback(limit=1)
         assert len(recent) == 1
@@ -72,9 +67,7 @@ class TestFeedbackCollector:
 
         corrections = collector.get_feedback_by_type(FeedbackType.USER_CORRECTION)
         assert len(corrections) == 1
-        assert (
-            corrections[0].corrected_assertion == "assert response.status_code == 200"
-        )
+        assert corrections[0].corrected_assertion == "assert response.status_code == 200"
 
     def test_analyze_patterns(self, collector):
         # Add some feedback
@@ -174,9 +167,7 @@ class TestAdaptationEngine:
         learned_patterns = {"assert status": ["assert status_code"]}
         confidence_scores = {"assert status": 0.9}
 
-        adapted = engine.adapt_test_generation(
-            test_template, learned_patterns, confidence_scores
-        )
+        adapted = engine.adapt_test_generation(test_template, learned_patterns, confidence_scores)
 
         assert "status_code" in adapted
 
@@ -209,9 +200,7 @@ class TestAdaptationEngine:
         old_schema = {"id": "int", "name": "str"}
         new_schema = {"id": "int", "name": "str", "email": "str"}
 
-        recommendations = engine.adapt_to_api_changes(
-            "/api/users", old_schema, new_schema
-        )
+        recommendations = engine.adapt_to_api_changes("/api/users", old_schema, new_schema)
 
         assert len(recommendations["changes"]) > 0
         assert any(c["field"] == "email" for c in recommendations["changes"])
@@ -226,9 +215,7 @@ class TestAdaptationEngine:
         failure_patterns = ["timeout_error"]
         learned_corrections = {"timeout_error": "# Add retry with backoff"}
 
-        suggestions = engine.suggest_test_updates(
-            "test_api", failure_patterns, learned_corrections
-        )
+        suggestions = engine.suggest_test_updates("test_api", failure_patterns, learned_corrections)
 
         assert len(suggestions) > 0
         assert any(s["type"] == "correction" for s in suggestions)
@@ -267,10 +254,12 @@ class TestFeedbackCollectorIntegration:
 
         # Create a simple test module
         test_module = tmp_path / "test_module.py"
-        test_module.write_text("""
+        test_module.write_text(
+            """
 def run(page):
     pass
-""")
+"""
+        )
 
         # Create mock page
         mock_page = Mock()
@@ -298,10 +287,12 @@ def run(page):
 
         # Create a test module that fails
         test_module = tmp_path / "test_fail_module.py"
-        test_module.write_text("""
+        test_module.write_text(
+            """
 def run(page):
     assert False, "Test failed"
-""")
+"""
+        )
 
         # Create mock page
         mock_page = Mock()

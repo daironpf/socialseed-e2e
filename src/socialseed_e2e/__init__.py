@@ -95,11 +95,7 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import (
-        BaseGrpcPage,
-        GrpcCallLog,
-        GrpcRetryConfig,
-    )
+    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -133,6 +129,19 @@ try:
 except ImportError:
     GRAPHQL_AVAILABLE = False
 
+# Docker Compose Support
+from socialseed_e2e.docker import (
+    ComposeConfig,
+    DockerComposeError,
+    DockerComposeManager,
+    DockerComposeOptions,
+    DockerComposeParser,
+    HealthCheckError,
+    ServiceConfig,
+    ServiceNotFoundError,
+    ServiceStatus,
+)
+
 # Plugin Support
 from socialseed_e2e.plugins import (
     AssertionRegistry,
@@ -151,19 +160,6 @@ from socialseed_e2e.plugins import (
     PluginMetadata,
     PluginNotFoundError,
     load_plugin,
-)
-
-# Docker Compose Support
-from socialseed_e2e.docker import (
-    ComposeConfig,
-    DockerComposeError,
-    DockerComposeManager,
-    DockerComposeOptions,
-    DockerComposeParser,
-    HealthCheckError,
-    ServiceConfig,
-    ServiceNotFoundError,
-    ServiceStatus,
 )
 
 # Utils - Pydantic helpers (universal for all languages)
@@ -221,6 +217,18 @@ try:
 except ImportError:
     pass
 
+# AI Learning and Feedback Loop
+from socialseed_e2e.ai_learning import (
+    AdaptationEngine,
+    AdaptationStrategy,
+    FeedbackCollector,
+    FeedbackType,
+    LearningMetrics,
+    ModelTrainer,
+    TestFeedback,
+    TrainingData,
+)
+
 # Core - Interactive Doctor
 from socialseed_e2e.core.interactive_doctor import (
     AppliedFix,
@@ -267,18 +275,6 @@ from socialseed_e2e.core.traceability import (
     start_test_trace,
     trace_assertion,
     trace_http_request,
-)
-
-# AI Learning and Feedback Loop
-from socialseed_e2e.ai_learning import (
-    AdaptationEngine,
-    AdaptationStrategy,
-    FeedbackCollector,
-    FeedbackType,
-    LearningMetrics,
-    ModelTrainer,
-    TestFeedback,
-    TrainingData,
 )
 
 __all__ = [
