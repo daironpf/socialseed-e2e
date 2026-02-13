@@ -3945,6 +3945,493 @@ def ai_learning():
     pass
 
 
+@cli.group()
+def shadow():
+    """Shadow Runner - Capture traffic and auto-generate tests (Issue #130)."""
+    pass
+
+
+@shadow.command("capture")
+@click.argument("name")
+@click.option(
+    "--target-url", "-u", required=True, help="Target API URL to capture traffic from"
+)
+@click.option(
+    "--output",
+    "-o",
+    help="Output file for captured traffic (default: .e2e/shadow/<name>.json)",
+)
+@click.option("--filter-health", is_flag=True, help="Filter out health check requests")
+@click.option("--filter-static", is_flag=True, help="Filter out static asset requests")
+@click.option("--sanitize", is_flag=True, help="Sanitize PII from captured traffic")
+@click.option(
+    "--duration",
+    "-d",
+    type=int,
+    help="Capture duration in seconds (default: until Ctrl+C)",
+)
+@click.option("--max-requests", "-m", type=int, help="Maximum requests to capture")
+def shadow_capture(
+    name: str,
+    target_url: str,
+    output: Optional[str],
+    filter_health: bool,
+    filter_static: bool,
+    sanitize: bool,
+    duration: Optional[int],
+    max_requests: Optional[int],
+):
+    """Capture real API traffic via middleware proxy.
+
+    Intercepts HTTP traffic between clients and target API,
+    recording requests/responses for test generation.
+
+    Examples:
+        e2e shadow capture myapp -u http://localhost:8000
+        e2e shadow capture myapp -u http://localhost:8000 --duration 300
+        e2e shadow capture myapp -u http://localhost:8000 --sanitize --filter-health
+    """
+    console.print(f"\n🔍 [bold cyan]Shadow Runner - Traffic Capture[/bold cyan]")
+    console.print(f"   Name: {name}")
+    console.print(f"   Target: {target_url}\n")
+
+    try:
+        from socialseed_e2e.shadow_runner import CaptureConfig, ShadowRunner
+
+        output_path = Path(output) if output else Path(f".e2e/shadow/{name}.json")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        config = CaptureConfig(
+            target_url=target_url,
+            output_path=str(output_path),
+            filter_health_checks=filter_health,
+            filter_static_assets=filter_static,
+            sanitize_pii=sanitize,
+            max_requests=max_requests,
+        )
+
+        runner = ShadowRunner(config)
+
+        console.print(f"[yellow]Starting capture...[/yellow]")
+        console.print(f"   Filter health checks: {'Yes' if filter_health else 'No'}")
+        console.print(f"   Filter static assets: {'Yes' if filter_static else 'No'}")
+        console.print(f"   Sanitize PII: {'Yes' if sanitize else 'No'}")
+        if duration:
+            console.print(f"   Duration: {duration}s")
+        if max_requests:
+            console.print(f"   Max requests: {max_requests}")
+        console.print()
+
+        runner.start_capture()
+
+        console.print("[bold green]✓ Capture started![/bold green]")
+        if duration:
+            console.print(f"   Capturing for {duration} seconds...")
+            import time
+
+            time.sleep(duration)
+            session = runner.stop_capture()
+        else:
+            console.print("   Press Ctrl+C to stop capturing...\n")
+            try:
+                import time
+
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                session = runner.stop_capture()
+
+        # Save captured session
+        session.save(str(output_path))
+
+        console.print(f"\n[bold green]✓ Capture complete![/bold green]")
+        console.print(f"   Requests captured: {len(session.interactions)}")
+        console.print(f"   Saved to: {output_path}\n")
+
+        # Show summary
+        if session.interactions:
+            methods = {}
+            paths = set()
+            for interaction in session.interactions:
+                method = interaction.request.method
+                methods[method] = methods.get(method, 0) + 1
+                paths.add(interaction.request.path)
+
+            console.print("[bold]Captured Methods:[/bold]")
+            for method, count in sorted(methods.items()):
+                console.print(f"   {method}: {count}")
+
+            console.print(f"\n[bold]Unique Paths:[/bold] {len(paths)}")
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@shadow.command("generate")
+@click.argument("capture_file")
+@click.option("--service", "-s", required=True, help="Service name for generated tests")
+@click.option(
+    "--output-dir", "-o", default="services", help="Output directory for tests"
+)
+@click.option("--template", "-t", default="standard", help="Test template to use")
+@click.option(
+    "--group-by",
+    "-g",
+    type=click.Choice(["endpoint", "flow", "user"]),
+    default="endpoint",
+    help="Grouping strategy",
+)
+@click.option("--include-auth", is_flag=True, help="Include authentication patterns")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def shadow_generate(
+    capture_file: str,
+    service: str,
+    output_dir: str,
+    template: str,
+    group_by: str,
+    include_auth: bool,
+    verbose: bool,
+):
+    """Generate tests from captured traffic.
+
+    Analyzes captured API traffic and generates E2E test cases
+    that reproduce real user interactions.
+
+    Examples:
+        e2e shadow generate capture.json -s users-api
+        e2e shadow generate capture.json -s users-api --group-by flow
+        e2e shadow generate capture.json -s users-api --include-auth
+    """
+    capture_path = Path(capture_file)
+
+    if not capture_path.exists():
+        console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
+        sys.exit(1)
+
+    console.print(f"\n🤖 [bold cyan]Shadow Runner - Test Generation[/bold cyan]")
+    console.print(f"   Capture: {capture_path}")
+    console.print(f"   Service: {service}")
+    console.print(f"   Output: {output_dir}\n")
+
+    try:
+        from socialseed_e2e.shadow_runner import (
+            ShadowRunner,
+            TestGenerationConfig,
+        )
+
+        config = TestGenerationConfig(
+            service_name=service,
+            output_dir=output_dir,
+            template=template,
+            group_by=group_by,
+            include_auth_patterns=include_auth,
+        )
+
+        runner = ShadowRunner(config)
+
+        # Load captured session
+        console.print("[yellow]Loading capture file...[/yellow]")
+        session = runner.load_capture(str(capture_path))
+        console.print(f"   ✓ Loaded {len(session.interactions)} interactions\n")
+
+        # Generate tests
+        console.print("[yellow]Generating tests...[/yellow]")
+        generated_tests = runner.generate_tests(session)
+
+        if not generated_tests:
+            console.print(
+                "[yellow]⚠ No tests could be generated from this capture[/yellow]"
+            )
+            return
+
+        # Display results
+        console.print(
+            f"\n[bold green]✓ Generated {len(generated_tests)} test(s):[/bold green]\n"
+        )
+
+        for test in generated_tests:
+            console.print(f"   📄 {test.name}")
+            console.print(f"      Endpoints: {len(test.endpoints)}")
+            console.print(f"      File: {test.file_path}")
+            if verbose and test.description:
+                console.print(f"      Description: {test.description}")
+            console.print()
+
+        # Show summary
+        total_endpoints = sum(len(t.endpoints) for t in generated_tests)
+        console.print("=" * 50)
+        console.print("[bold]Summary:[/bold]")
+        console.print(f"   Tests generated: {len(generated_tests)}")
+        console.print(f"   Total endpoints covered: {total_endpoints}")
+        console.print(f"   Output directory: {Path(output_dir) / service}")
+        console.print()
+
+        console.print("[bold]Next steps:[/bold]")
+        console.print(
+            f"   1. Review generated tests in: {Path(output_dir) / service / 'modules'}"
+        )
+        console.print("   2. Customize test data as needed")
+        console.print("   3. Run tests: [cyan]e2e run --service {service}[/cyan]\n")
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@shadow.command("replay")
+@click.argument("capture_file")
+@click.option("--target-url", "-u", help="Override target URL for replay")
+@click.option(
+    "--speed",
+    "-s",
+    type=click.Choice(["realtime", "fast", "slow"]),
+    default="fast",
+    help="Replay speed",
+)
+@click.option("--stop-on-error", is_flag=True, help="Stop on first error")
+@click.option(
+    "--dry-run", is_flag=True, help="Show what would be replayed without executing"
+)
+def shadow_replay(
+    capture_file: str,
+    target_url: Optional[str],
+    speed: str,
+    stop_on_error: bool,
+    dry_run: bool,
+):
+    """Replay captured traffic session.
+
+    Replays a captured API session against a target API,
+    useful for load testing or regression testing.
+
+    Examples:
+        e2e shadow replay capture.json
+        e2e shadow replay capture.json -u http://localhost:8000
+        e2e shadow replay capture.json --speed realtime --stop-on-error
+    """
+    capture_path = Path(capture_file)
+
+    if not capture_path.exists():
+        console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
+        sys.exit(1)
+
+    console.print(f"\n🔄 [bold cyan]Shadow Runner - Session Replay[/bold cyan]")
+    console.print(f"   Capture: {capture_path}\n")
+
+    try:
+        from socialseed_e2e.shadow_runner import ReplayConfig, ShadowRunner
+
+        config = ReplayConfig(
+            capture_file=str(capture_path),
+            target_url=target_url,
+            speed=speed,
+            stop_on_error=stop_on_error,
+        )
+
+        runner = ShadowRunner(config)
+
+        # Load session
+        session = runner.load_capture(str(capture_path))
+        console.print(
+            f"[yellow]Loaded session with {len(session.interactions)} interactions[/yellow]\n"
+        )
+
+        if dry_run:
+            console.print("[bold]Dry run - would execute:[/bold]\n")
+            for i, interaction in enumerate(session.interactions, 1):
+                console.print(
+                    f"   {i}. {interaction.request.method} {interaction.request.path}"
+                )
+            console.print()
+            return
+
+        # Replay session
+        console.print(f"[bold]Replaying at {speed} speed...[/bold]\n")
+        results = runner.replay_session(session)
+
+        # Display results
+        success_count = sum(1 for r in results if r.success)
+        failed_count = len(results) - success_count
+
+        console.print("\n" + "=" * 50)
+        console.print("[bold]Replay Results:[/bold]")
+        console.print(f"   Total: {len(results)}")
+        console.print(f"   [green]✓ Success:[/green] {success_count}")
+        if failed_count > 0:
+            console.print(f"   [red]✗ Failed:[/red] {failed_count}")
+        console.print()
+
+        if failed_count > 0 and stop_on_error:
+            console.print("[yellow]⚠ Stopped on first error as requested[/yellow]\n")
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@shadow.command("analyze")
+@click.argument("capture_file")
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
+@click.option("--show-pii", is_flag=True, help="Show detected PII (for debugging)")
+def shadow_analyze(capture_file: str, format: str, show_pii: bool):
+    """Analyze captured traffic patterns.
+
+    Analyzes captured traffic to show usage patterns,
+    endpoint statistics, and detected data patterns.
+
+    Examples:
+        e2e shadow analyze capture.json
+        e2e shadow analyze capture.json -f json
+    """
+    capture_path = Path(capture_file)
+
+    if not capture_path.exists():
+        console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
+        sys.exit(1)
+
+    console.print(f"\n📊 [bold cyan]Shadow Runner - Traffic Analysis[/bold cyan]\n")
+
+    try:
+        from socialseed_e2e.shadow_runner import ShadowRunner
+
+        runner = ShadowRunner()
+        session = runner.load_capture(str(capture_path))
+
+        # Analyze patterns
+        analysis = runner.analyze_patterns(session)
+
+        if format == "json":
+            import json
+
+            console.print(json.dumps(analysis, indent=2, default=str))
+        else:
+            # Display as table
+            console.print(
+                f"[bold]Total Interactions:[/bold] {analysis['total_interactions']}"
+            )
+            console.print(f"[bold]Time Range:[/bold] {analysis['time_range']}")
+            console.print()
+
+            if analysis.get("method_distribution"):
+                console.print("[bold]Method Distribution:[/bold]")
+                table = Table()
+                table.add_column("Method", style="cyan")
+                table.add_column("Count", style="green")
+                table.add_column("Percentage", style="yellow")
+
+                for method, stats in analysis["method_distribution"].items():
+                    table.add_row(
+                        method, str(stats["count"]), f"{stats['percentage']:.1f}%"
+                    )
+                console.print(table)
+                console.print()
+
+            if analysis.get("top_endpoints"):
+                console.print("[bold]Top Endpoints:[/bold]")
+                table = Table()
+                table.add_column("Endpoint", style="cyan")
+                table.add_column("Method", style="green")
+                table.add_column("Hits", style="yellow")
+                table.add_column("Avg Response Time", style="white")
+
+                for endpoint in analysis["top_endpoints"][:10]:
+                    table.add_row(
+                        endpoint["path"][:50],
+                        endpoint["method"],
+                        str(endpoint["count"]),
+                        f"{endpoint['avg_response_time']:.0f}ms",
+                    )
+                console.print(table)
+                console.print()
+
+            if analysis.get("detected_patterns"):
+                console.print("[bold]Detected Patterns:[/bold]")
+                for pattern in analysis["detected_patterns"]:
+                    console.print(f"   • {pattern}")
+                console.print()
+
+            if show_pii and analysis.get("pii_detected"):
+                console.print("[bold yellow]⚠ PII Detected in Traffic:[/bold yellow]")
+                for pii in analysis["pii_detected"]:
+                    console.print(f"   • {pii['type']}: {pii['count']} occurrences")
+                console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+@shadow.command("export-middleware")
+@click.argument("framework", type=click.Choice(["flask", "fastapi"]))
+@click.option("--output", "-o", help="Output file path")
+def shadow_export_middleware(framework: str, output: Optional[str]):
+    """Export middleware code for traffic capture.
+
+    Generates ready-to-use middleware code for Flask or FastAPI
+    to capture traffic automatically.
+
+    Examples:
+        e2e shadow export-middleware flask
+        e2e shadow export-middleware fastapi -o shadow_middleware.py
+    """
+    console.print(f"\n📦 [bold cyan]Shadow Runner - Middleware Export[/bold cyan]")
+    console.print(f"   Framework: {framework}\n")
+
+    try:
+        from socialseed_e2e.shadow_runner import ShadowRunner
+
+        runner = ShadowRunner()
+        middleware_code = runner.export_middleware(framework)
+
+        if output:
+            output_path = Path(output)
+            output_path.write_text(middleware_code)
+            console.print(
+                f"[bold green]✓ Middleware saved to:[/bold green] {output_path}\n"
+            )
+        else:
+            console.print("[bold]Generated Middleware Code:[/bold]\n")
+            console.print("```python")
+            console.print(middleware_code)
+            console.print("```\n")
+
+        console.print("[bold]Usage:[/bold]")
+        if framework == "flask":
+            console.print("   1. Import the middleware in your Flask app")
+            console.print("   2. Register it before other middlewares:")
+            console.print("      app.wsgi_app = ShadowRunnerMiddleware(app.wsgi_app)\n")
+        else:
+            console.print("   1. Import the middleware in your FastAPI app")
+            console.print("   2. Add it as a middleware:")
+            console.print("      app.add_middleware(ShadowRunnerMiddleware)\n")
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
 @ai_learning.command("feedback")
 @click.option("--storage-path", "-s", help="Path to feedback storage directory")
 @click.option(
