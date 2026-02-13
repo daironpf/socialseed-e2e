@@ -69,6 +69,9 @@ secrets = [
     "hvac>=1.0.0",
     "boto3>=1.26.0",
 ]
+test-data = [
+    "Faker>=19.0.0",
+]
 
 [project.scripts]
 e2e = "socialseed_e2e.cli:main"
