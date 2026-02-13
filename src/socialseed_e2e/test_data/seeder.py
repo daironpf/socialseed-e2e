@@ -3,19 +3,21 @@ Data Seeder for managing test data lifecycle.
 Supports tracking created resources for automated cleanup.
 """
 import logging
-from typing import List, Any, Callable, Optional, Dict, Type, TypeVar, Union
 from contextlib import contextmanager
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 from .factories import DataFactory
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class DataSeeder:
     """
     Manages data seeding operations and cleanup.
     """
+
     def __init__(self):
         self._cleanup_stack: List[Callable[[], None]] = []
         self._factories: Dict[str, DataFactory] = {}
@@ -30,15 +32,17 @@ class DataSeeder:
             raise ValueError(f"Factory '{name}' not found. Register it first.")
         return self._factories[name]
 
-    def seed(self, 
-             factory: Union[str, DataFactory], 
-             count: int = 1, 
-             persist_fn: Optional[Callable[[Any], Any]] = None,
-             cleanup_fn: Optional[Callable[[Any], None]] = None,
-             **kwargs) -> List[Any]:
+    def seed(
+        self,
+        factory: Union[str, DataFactory],
+        count: int = 1,
+        persist_fn: Optional[Callable[[Any], Any]] = None,
+        cleanup_fn: Optional[Callable[[Any], None]] = None,
+        **kwargs,
+    ) -> List[Any]:
         """
         Seeds data using a factory.
-        
+
         Args:
             factory: Factory instance or name of registered factory.
             count: Number of items to create.
@@ -55,7 +59,7 @@ class DataSeeder:
         for _ in range(count):
             item = factory_instance.create(persist_fn=persist_fn, **kwargs)
             created_items.append(item)
-            
+
             if cleanup_fn:
                 # Add cleanup for this item to the stack
                 # We use a closure to capture the item specific to this iteration
@@ -64,9 +68,9 @@ class DataSeeder:
                         cleanup_fn(obj)
                     except Exception as e:
                         logger.error(f"Error cleaning up seeded item: {e}")
-                
+
                 self._cleanup_stack.append(cleanup_action)
-        
+
         return created_items
 
     def cleanup(self):
@@ -82,7 +86,7 @@ class DataSeeder:
     def scope(self):
         """
         Context manager that automatically runs cleanup on exit.
-        
+
         Usage:
             with seeder.scope():
                 seeder.seed(...)

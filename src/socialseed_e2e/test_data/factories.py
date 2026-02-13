@@ -3,39 +3,43 @@ Data Factory implementation for generating test data based on Pydantic models.
 Inspired by factory_boy but designed for Pydantic and API E2E testing.
 """
 import logging
-from typing import Type, TypeVar, Generic, Dict, Any, List, Optional, Callable, Union
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, Union
+
 from pydantic import BaseModel
+
 try:
     from faker import Faker
 except ImportError:
-    Faker = None # type: ignore
+    Faker = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
+
 
 class DataFactory(Generic[T]):
     """
     Base class for data factories.
-    
+
     Usage:
         class UserFactory(DataFactory[User]):
             model = User
-            
+
             def definition(self):
                 return {
                     "username": self.faker.user_name(),
                     "email": self.faker.email()
                 }
     """
+
     model: Type[T]
-    _faker: Optional['Faker'] = None
+    _faker: Optional["Faker"] = None
 
     def __init__(self, locale: str = "en_US"):
         self.locale = locale
 
     @property
-    def faker(self) -> 'Faker':
+    def faker(self) -> "Faker":
         if self._faker is None:
             if Faker is None:
                 raise ImportError("Faker is not installed. Install with 'pip install Faker'")
@@ -69,9 +73,9 @@ class DataFactory(Generic[T]):
     def create(self, persist_fn: Optional[Callable[[T], T]] = None, **kwargs) -> T:
         """
         Builds and optionally persists the model instance.
-        
+
         Args:
-            persist_fn: Function to persist the object (e.g., API call). 
+            persist_fn: Function to persist the object (e.g., API call).
                         If None, behaves like build().
             **kwargs: Attribute overrides.
         """
@@ -84,7 +88,9 @@ class DataFactory(Generic[T]):
                 raise e
         return instance
 
-    def create_batch(self, size: int, persist_fn: Optional[Callable[[T], T]] = None, **kwargs) -> List[T]:
+    def create_batch(
+        self, size: int, persist_fn: Optional[Callable[[T], T]] = None, **kwargs
+    ) -> List[T]:
         """Creates and persists a batch of instances."""
         instances = []
         for _ in range(size):
