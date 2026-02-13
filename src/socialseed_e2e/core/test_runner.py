@@ -19,8 +19,31 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from socialseed_e2e.core.base_page import BasePage
-from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig, get_service_config
+from socialseed_e2e.core.config_loader import (
+    ApiConfigLoader,
+    ServiceConfig,
+    get_service_config,
+)
 from socialseed_e2e.core.organization import Priority, TestOrganizationManager
+from socialseed_e2e.ai_learning import FeedbackCollector, FeedbackType
+
+# Global feedback collector instance
+_feedback_collector: Optional[FeedbackCollector] = None
+
+
+def get_feedback_collector() -> FeedbackCollector:
+    """Get or create the global feedback collector instance."""
+    global _feedback_collector
+    if _feedback_collector is None:
+        _feedback_collector = FeedbackCollector()
+    return _feedback_collector
+
+
+def set_feedback_collector(collector: FeedbackCollector):
+    """Set the global feedback collector instance."""
+    global _feedback_collector
+    _feedback_collector = collector
+
 
 console = Console()
 
@@ -151,7 +174,9 @@ def load_test_module(module_path: Path) -> Optional[Callable]:
         return None
 
 
-def create_page_class(service_name: str, service_path: Path) -> Optional[Type[BasePage]]:
+def create_page_class(
+    service_name: str, service_path: Path
+) -> Optional[Type[BasePage]]:
     """Create or find the Page class for a service.
 
     Args:
@@ -192,7 +217,11 @@ def create_page_class(service_name: str, service_path: Path) -> Optional[Type[Ba
         # Find the Page class (should be the one inheriting from BasePage)
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if isinstance(attr, type) and issubclass(attr, BasePage) and attr is not BasePage:
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, BasePage)
+                and attr is not BasePage
+            ):
                 return attr
 
         return None
@@ -201,7 +230,9 @@ def create_page_class(service_name: str, service_path: Path) -> Optional[Type[Ba
         return None
 
 
-def execute_single_test(module_path: Path, page: BasePage, service_name: str) -> TestResult:
+def execute_single_test(
+    module_path: Path, page: BasePage, service_name: str
+) -> TestResult:
     """Execute a single test module.
 
     Args:
@@ -280,9 +311,21 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         if trace_collector:
             trace_collector.end_trace("passed")
 
-        return TestResult(
+        result = TestResult(
             name=test_name, service=service_name, status="passed", duration_ms=duration
         )
+
+        # Collect feedback for successful test
+        collector = get_feedback_collector()
+        collector.collect_test_result(
+            test_name=test_name,
+            success=True,
+            execution_time=duration,
+            endpoint=getattr(page, "base_url", None),
+            metadata={"service": service_name},
+        )
+
+        return result
 
     except AssertionError as e:
         duration = (time.time() - start_time) * 1000
@@ -291,13 +334,26 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         if trace_collector:
             trace_collector.end_trace("failed", str(e))
 
-        return TestResult(
+        result = TestResult(
             name=test_name,
             service=service_name,
             status="failed",
             duration_ms=duration,
             error_message=str(e),
         )
+
+        # Collect feedback for failed test
+        collector = get_feedback_collector()
+        collector.collect_test_result(
+            test_name=test_name,
+            success=False,
+            execution_time=duration,
+            error_message=str(e),
+            endpoint=getattr(page, "base_url", None),
+            metadata={"service": service_name, "error_type": "assertion"},
+        )
+
+        return result
     except Exception as e:
         duration = (time.time() - start_time) * 1000
 
@@ -305,14 +361,29 @@ def execute_single_test(module_path: Path, page: BasePage, service_name: str) ->
         if trace_collector:
             trace_collector.end_trace("error", str(e))
 
-        return TestResult(
+        error_traceback_str = traceback.format_exc()
+        result = TestResult(
             name=test_name,
             service=service_name,
             status="error",
             duration_ms=duration,
             error_message=str(e),
-            error_traceback=traceback.format_exc(),
+            error_traceback=error_traceback_str,
         )
+
+        # Collect feedback for test with error
+        collector = get_feedback_collector()
+        collector.collect_test_result(
+            test_name=test_name,
+            success=False,
+            execution_time=duration,
+            error_message=str(e),
+            stack_trace=error_traceback_str[:500],  # Limit stack trace size
+            endpoint=getattr(page, "base_url", None),
+            metadata={"service": service_name, "error_type": "exception"},
+        )
+
+        return result
 
 
 def run_service_tests(
@@ -354,7 +425,9 @@ def run_service_tests(
         test_modules = discover_test_modules(service_path)
 
     if not test_modules:
-        console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
+        console.print(
+            f"[yellow]No test modules found for service '{service_name}'[/yellow]"
+        )
         return suite_result
 
     # Advanced Organization: Filtering and Sorting
@@ -362,25 +435,33 @@ def run_service_tests(
         # Load and Filter
         include_set = set(include_tags) if include_tags else None
         exclude_set = set(exclude_tags) if exclude_tags else None
-        
+
         # We need a wrapper class for TestOrganizationManager.filter_tests since it expects objects with 'run'
         class ModuleStub:
             def __init__(self, path):
                 self.path = path
                 self.run = load_test_module(path)
-        
+
         stubs = [ModuleStub(p) for p in test_modules]
-        filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
+        filtered_stubs = TestOrganizationManager.filter_tests(
+            stubs, include_set, exclude_set
+        )
         test_modules = [s.path for s in filtered_stubs]
-        
+
         # Sort by dependencies and priority
-        test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
+        test_modules = TestOrganizationManager.sort_tests(
+            test_modules, load_test_module
+        )
 
     if not test_modules:
         if include_tags or exclude_tags:
-            console.print(f"[yellow]No tests matched tags for service '{service_name}'[/yellow]")
+            console.print(
+                f"[yellow]No tests matched tags for service '{service_name}'[/yellow]"
+            )
         else:
-            console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
+            console.print(
+                f"[yellow]No test modules found for service '{service_name}'[/yellow]"
+            )
         return suite_result
 
     # Get base URL
@@ -389,7 +470,9 @@ def run_service_tests(
     # Create page class
     PageClass = create_page_class(service_name, service_path)
     if PageClass is None:
-        console.print(f"[yellow]No Page class found for '{service_name}', using BasePage[/yellow]")
+        console.print(
+            f"[yellow]No Page class found for '{service_name}', using BasePage[/yellow]"
+        )
         PageClass = BasePage
 
     console.print(f"\n[bold cyan]Running tests for service: {service_name}[/bold cyan]")
@@ -410,10 +493,14 @@ def run_service_tests(
 
                 if result.status == "passed":
                     suite_result.passed += 1
-                    console.print(f"  [green]✓[/green] {result.name} ({result.duration_ms:.0f}ms)")
+                    console.print(
+                        f"  [green]✓[/green] {result.name} ({result.duration_ms:.0f}ms)"
+                    )
                 elif result.status == "failed":
                     suite_result.failed += 1
-                    console.print(f"  [red]✗[/red] {result.name} - {result.error_message[:50]}")
+                    console.print(
+                        f"  [red]✗[/red] {result.name} - {result.error_message[:50]}"
+                    )
                     if verbose and result.error_message:
                         console.print(f"    [dim]{result.error_message}[/dim]")
                 elif result.status == "error":
@@ -524,9 +611,13 @@ def run_all_tests(
             summary = report.summary
             console.print(f"\n[dim]Trace Summary:[/dim]")
             console.print(f"  Total Tests: {summary.get('total_tests', 0)}")
-            console.print(f"  Total Interactions: {summary.get('total_interactions', 0)}")
+            console.print(
+                f"  Total Interactions: {summary.get('total_interactions', 0)}"
+            )
             console.print(f"  Total Components: {summary.get('total_components', 0)}")
-            console.print(f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}")
+            console.print(
+                f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}"
+            )
 
     except ImportError:
         pass  # Traceability not available
@@ -558,7 +649,9 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
         total_failed += suite_result.failed
         total_errors += suite_result.errors
 
-        status_color = "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
+        status_color = (
+            "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
+        )
         console.print(
             f"\n[{status_color}]{service_name}[/{status_color}]: "
             f"{suite_result.passed}/{suite_result.total} passed "

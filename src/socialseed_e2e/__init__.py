@@ -87,8 +87,10 @@ from socialseed_e2e.core.test_runner import (
     TestExecutionError,
     TestResult,
     TestSuiteResult,
+    get_feedback_collector,
     run_all_tests,
     run_service_tests,
+    set_feedback_collector,
 )
 
 # Core - gRPC Support
@@ -252,7 +254,6 @@ from socialseed_e2e.core.traceability import (
     TestTrace,
     TraceCollector,
     TraceConfig,
-    TraceContext,
     TraceReport,
     TraceReporter,
     create_collector,
@@ -266,6 +267,18 @@ from socialseed_e2e.core.traceability import (
     start_test_trace,
     trace_assertion,
     trace_http_request,
+)
+
+# AI Learning and Feedback Loop
+from socialseed_e2e.ai_learning import (
+    AdaptationEngine,
+    AdaptationStrategy,
+    FeedbackCollector,
+    FeedbackType,
+    LearningMetrics,
+    ModelTrainer,
+    TestFeedback,
+    TrainingData,
 )
 
 __all__ = [
@@ -296,6 +309,8 @@ __all__ = [
     "TestSuiteResult",
     "TestDiscoveryError",
     "TestExecutionError",
+    "get_feedback_collector",
+    "set_feedback_collector",
     # Core - Parallel Execution
     "ParallelConfig",
     "run_tests_parallel",
@@ -442,4 +457,13 @@ __all__ = [
     "MissingFieldDetails",
     "ValidationErrorDetails",
     "run_interactive_doctor",
+    # AI Learning and Feedback Loop
+    "FeedbackCollector",
+    "TestFeedback",
+    "FeedbackType",
+    "ModelTrainer",
+    "TrainingData",
+    "LearningMetrics",
+    "AdaptationEngine",
+    "AdaptationStrategy",
 ]
