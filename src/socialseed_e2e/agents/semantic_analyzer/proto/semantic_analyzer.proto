@@ -3,25 +3,24 @@ syntax = "proto3";
 package semantic_analyzer;
 
 option go_package = "github.com/socialseed-e2e/agents/semantic_analyzer/proto";
-option python_package = "socialseed_e2e.agents.semantic_analyzer.proto";
 
 // Semantic Analyzer Service
 service SemanticAnalyzer {
   // Run complete semantic drift analysis
   rpc Analyze(AnalyzeRequest) returns (AnalyzeResponse);
-  
+
   // Extract intent baselines only
   rpc ExtractIntents(ExtractIntentsRequest) returns (ExtractIntentsResponse);
-  
+
   // Capture state snapshots
   rpc CaptureState(CaptureStateRequest) returns (CaptureStateResponse);
-  
+
   // Detect drift between states
   rpc DetectDrift(DetectDriftRequest) returns (DetectDriftResponse);
-  
+
   // Get analysis status
   rpc GetAnalysisStatus(StatusRequest) returns (StatusResponse);
-  
+
   // Stream analysis progress
   rpc StreamAnalysisProgress(StreamRequest) returns (stream ProgressUpdate);
 }

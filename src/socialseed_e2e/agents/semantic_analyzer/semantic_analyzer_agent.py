@@ -5,15 +5,17 @@ Coordinates intent extraction, state capture, drift detection, and report genera
 """
 
 import subprocess
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import uuid
 
-from models import SemanticDriftReport
-from intent_baseline_extractor import IntentBaselineExtractor
-from stateful_analyzer import StatefulAnalyzer
-from logic_drift_detector import LogicDriftDetector
-from report_generator import SemanticDriftReportGenerator
+from socialseed_e2e.agents.semantic_analyzer.intent_baseline_extractor import (
+    IntentBaselineExtractor,
+)
+from socialseed_e2e.agents.semantic_analyzer.logic_drift_detector import LogicDriftDetector
+from socialseed_e2e.agents.semantic_analyzer.models import SemanticDriftReport
+from socialseed_e2e.agents.semantic_analyzer.report_generator import SemanticDriftReportGenerator
+from socialseed_e2e.agents.semantic_analyzer.stateful_analyzer import StatefulAnalyzer
 
 
 class SemanticAnalyzerAgent:
@@ -65,9 +67,7 @@ class SemanticAnalyzerAgent:
                 database_configs=database_configs,
             )
             print(f"   ✓ Captured {len(before_state.api_snapshots)} API snapshots")
-            print(
-                f"   ✓ Captured {len(before_state.database_snapshots)} database snapshots"
-            )
+            print(f"   ✓ Captured {len(before_state.database_snapshots)} database snapshots")
 
         # Step 3: Capture current state (after changes)
         after_state = None
@@ -78,9 +78,7 @@ class SemanticAnalyzerAgent:
                 commit_hash=target_commit,
             )
             print(f"   ✓ Captured {len(after_state.api_snapshots)} API snapshots")
-            print(
-                f"   ✓ Captured {len(after_state.database_snapshots)} database snapshots"
-            )
+            print(f"   ✓ Captured {len(after_state.database_snapshots)} database snapshots")
 
         # Step 4: Detect logic drift
         print("\n🔎 Step 4: Detecting Logic Drift...")
@@ -187,9 +185,7 @@ class SemanticAnalyzerAgent:
 
         # Filter by category if specified
         if intent_categories:
-            intent_baselines = [
-                i for i in intent_baselines if i.category in intent_categories
-            ]
+            intent_baselines = [i for i in intent_baselines if i.category in intent_categories]
 
         # Simple validation - check if intents are testable
         results = {

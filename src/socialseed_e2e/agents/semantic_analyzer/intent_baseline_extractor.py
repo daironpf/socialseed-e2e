@@ -4,12 +4,12 @@ Extracts semantic intent baselines from documentation, GitHub issues,
 code comments, and test cases to build a model of expected system behavior.
 """
 
+import json
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Set
-import json
 
-from models import IntentBaseline, IntentSource
+from socialseed_e2e.agents.semantic_analyzer.models import IntentBaseline, IntentSource
 
 
 class IntentBaselineExtractor:
@@ -58,9 +58,7 @@ class IntentBaselineExtractor:
                 except Exception as e:
                     print(f"Warning: Could not read {doc_file}: {e}")
 
-    def _parse_documentation_content(
-        self, content: str, file_path: Path
-    ) -> List[IntentBaseline]:
+    def _parse_documentation_content(self, content: str, file_path: Path) -> List[IntentBaseline]:
         """Parse documentation content to extract intent baselines."""
         baselines = []
 
@@ -189,9 +187,7 @@ class IntentBaselineExtractor:
                 except Exception as e:
                     pass  # Silently skip files that can't be read
 
-    def _parse_code_comments(
-        self, content: str, file_path: Path
-    ) -> List[IntentBaseline]:
+    def _parse_code_comments(self, content: str, file_path: Path) -> List[IntentBaseline]:
         """Parse code comments to extract intent baselines."""
         baselines = []
 
@@ -263,7 +259,9 @@ class IntentBaselineExtractor:
         baselines = []
 
         # Pattern for test functions
-        test_pattern = r"def\s+(test_\w+)\s*\([^)]*\):\s*(?:\"\"\"|''')?\s*(.+?)(?:\"\"\"|''')?(?=\n\s*def|\Z)"
+        test_pattern = (
+            r"def\s+(test_\w+)\s*\([^)]*\):\s*(?:\"\"\"|''')?\s*(.+?)(?:\"\"\"|''')?(?=\n\s*def|\Z)"
+        )
 
         matches = re.finditer(test_pattern, content, re.DOTALL)
         for match in matches:
@@ -369,7 +367,5 @@ class IntentBaselineExtractor:
     def get_baselines_by_entity(self, entity: str) -> List[IntentBaseline]:
         """Get all baselines related to a specific entity."""
         return [
-            b
-            for b in self.baselines
-            if entity.lower() in [e.lower() for e in b.related_entities]
+            b for b in self.baselines if entity.lower() in [e.lower() for e in b.related_entities]
         ]

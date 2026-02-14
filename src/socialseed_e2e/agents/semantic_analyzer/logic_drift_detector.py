@@ -6,10 +6,10 @@ semantic drift from the intended business logic.
 
 import json
 import re
-from typing import Any, Dict, List, Optional
 import uuid
+from typing import Any, Dict, List, Optional
 
-from models import (
+from socialseed_e2e.agents.semantic_analyzer.models import (
     DriftSeverity,
     DriftType,
     IntentBaseline,
@@ -62,16 +62,12 @@ class LogicDriftDetector:
                     self.detected_drifts.append(drift)
 
         # Also check for structural changes in database
-        db_drifts = self._detect_database_drifts(
-            intent_baselines, before_state, after_state
-        )
+        db_drifts = self._detect_database_drifts(intent_baselines, before_state, after_state)
         self.detected_drifts.extend(db_drifts)
 
         return self.detected_drifts
 
-    def _find_affected_endpoints(
-        self, intent: IntentBaseline, state: StateSnapshot
-    ) -> List[str]:
+    def _find_affected_endpoints(self, intent: IntentBaseline, state: StateSnapshot) -> List[str]:
         """Find API endpoints potentially affected by this intent."""
         affected = []
 
@@ -148,9 +144,7 @@ class LogicDriftDetector:
 
         # 4. Use LLM for semantic analysis if available
         if self.llm_client:
-            llm_drift = self._llm_based_drift_analysis(
-                intent, before_api, after_api, code_diff
-            )
+            llm_drift = self._llm_based_drift_analysis(intent, before_api, after_api, code_diff)
             if llm_drift:
                 return llm_drift
 
@@ -161,6 +155,7 @@ class LogicDriftDetector:
         intent: IntentBaseline,
         before_api: Any,
         after_api: Any,
+        code_diff: Optional[str] = None,
     ) -> Optional[LogicDrift]:
         """Use LLM to detect subtle semantic drift."""
         # This is a placeholder for LLM integration
@@ -168,21 +163,21 @@ class LogicDriftDetector:
 
         prompt = f"""
         Analyze whether the following API change represents a semantic drift from the intended behavior.
-        
+
         Intent: {intent.description}
         Expected Behavior: {intent.expected_behavior}
         Success Criteria: {intent.success_criteria}
-        
+
         Before:
         - Endpoint: {before_api.endpoint}
         - Status: {before_api.response_status}
         - Response: {json.dumps(before_api.response_body, indent=2)[:500]}
-        
+
         After:
         - Endpoint: {after_api.endpoint}
         - Status: {after_api.response_status}
         - Response: {json.dumps(after_api.response_body, indent=2)[:500]}
-        
+
         Does this change violate the intended behavior? If yes, explain why and classify the severity.
         """
 
@@ -238,12 +233,8 @@ class LogicDriftDetector:
 
         # Check for missing reciprocal relationships
         # Example: "follow" action should create reciprocal relationship
-        before_rels = {
-            (r["from"], r["relationship"], r["to"]) for r in before_db.relationships
-        }
-        after_rels = {
-            (r["from"], r["relationship"], r["to"]) for r in after_db.relationships
-        }
+        before_rels = {(r["from"], r["relationship"], r["to"]) for r in before_db.relationships}
+        after_rels = {(r["from"], r["relationship"], r["to"]) for r in after_db.relationships}
 
         missing_rels = before_rels - after_rels
 
@@ -252,10 +243,7 @@ class LogicDriftDetector:
 
             # Check if this relates to any intent
             for intent in intent_baselines:
-                if (
-                    "follow" in intent.description.lower()
-                    and rel_type.lower() == "follows"
-                ):
+                if "follow" in intent.description.lower() and rel_type.lower() == "follows":
                     drift = self._create_drift(
                         intent=intent,
                         drift_type=DriftType.RELATIONSHIP,
@@ -350,15 +338,12 @@ class LogicDriftDetector:
             affected_endpoints=affected_endpoints or [],
             affected_entities=affected_entities or [],
             reasoning=reasoning,
-            recommendation=recommendation
-            or self._generate_recommendation(drift_type, severity),
+            recommendation=recommendation or self._generate_recommendation(drift_type, severity),
             confidence=0.85,
             evidence=evidence or [],
         )
 
-    def _generate_recommendation(
-        self, drift_type: DriftType, severity: DriftSeverity
-    ) -> str:
+    def _generate_recommendation(self, drift_type: DriftType, severity: DriftSeverity) -> str:
         """Generate a recommendation based on drift type and severity."""
         recommendations = {
             DriftType.BEHAVIORAL: "Review the endpoint implementation to ensure it aligns with intended behavior",
@@ -371,9 +356,7 @@ class LogicDriftDetector:
             DriftType.MISSING_FUNCTIONALITY: "Implement missing functionality according to specifications",
         }
 
-        base_rec = recommendations.get(
-            drift_type, "Review the changes for semantic correctness"
-        )
+        base_rec = recommendations.get(drift_type, "Review the changes for semantic correctness")
 
         if severity == DriftSeverity.CRITICAL:
             return f"URGENT: {base_rec}. This is a critical issue that should be fixed immediately."

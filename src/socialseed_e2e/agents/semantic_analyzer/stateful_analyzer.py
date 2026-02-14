@@ -6,12 +6,16 @@ code changes to enable semantic comparison.
 
 import hashlib
 import json
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-import uuid
 
-from models import APISnapshot, DatabaseSnapshot, StateSnapshot
+from socialseed_e2e.agents.semantic_analyzer.models import (
+    APISnapshot,
+    DatabaseSnapshot,
+    StateSnapshot,
+)
 
 
 class StatefulAnalyzer:
@@ -93,9 +97,7 @@ class StatefulAnalyzer:
         self.snapshots[snapshot_id] = snapshot
         return snapshot
 
-    def _capture_api_state(
-        self, endpoint_config: Dict[str, Any]
-    ) -> Optional[APISnapshot]:
+    def _capture_api_state(self, endpoint_config: Dict[str, Any]) -> Optional[APISnapshot]:
         """Capture state of a single API endpoint."""
         try:
             # Import here to avoid dependency issues
@@ -147,9 +149,7 @@ class StatefulAnalyzer:
             print(f"Warning: Could not capture API state for {endpoint_config}: {e}")
             return None
 
-    def _capture_database_state(
-        self, db_config: Dict[str, Any]
-    ) -> Optional[DatabaseSnapshot]:
+    def _capture_database_state(self, db_config: Dict[str, Any]) -> Optional[DatabaseSnapshot]:
         """Capture state of a database."""
         db_type = db_config.get("type", "").lower()
 
@@ -167,9 +167,7 @@ class StatefulAnalyzer:
             print(f"Warning: Could not capture database state: {e}")
             return None
 
-    def _capture_neo4j_state(
-        self, db_config: Dict[str, Any]
-    ) -> Optional[DatabaseSnapshot]:
+    def _capture_neo4j_state(self, db_config: Dict[str, Any]) -> Optional[DatabaseSnapshot]:
         """Capture Neo4j graph database state."""
         try:
             from neo4j import GraphDatabase
@@ -201,9 +199,7 @@ class StatefulAnalyzer:
 
                 # Get relationships
                 for rel_type in rel_types:
-                    result = session.run(
-                        f"MATCH (a)-[r:{rel_type}]->(b) RETURN a, r, b LIMIT 100"
-                    )
+                    result = session.run(f"MATCH (a)-[r:{rel_type}]->(b) RETURN a, r, b LIMIT 100")
                     for record in result:
                         relationships.append(
                             {
@@ -240,9 +236,7 @@ class StatefulAnalyzer:
             print(f"Warning: Could not capture Neo4j state: {e}")
             return None
 
-    def _capture_sql_state(
-        self, db_config: Dict[str, Any]
-    ) -> Optional[DatabaseSnapshot]:
+    def _capture_sql_state(self, db_config: Dict[str, Any]) -> Optional[DatabaseSnapshot]:
         """Capture SQL database state (PostgreSQL, MySQL, SQLite)."""
         try:
             import sqlalchemy as sa
@@ -283,9 +277,7 @@ class StatefulAnalyzer:
             print(f"Warning: Could not capture SQL state: {e}")
             return None
 
-    def _capture_mongodb_state(
-        self, db_config: Dict[str, Any]
-    ) -> Optional[DatabaseSnapshot]:
+    def _capture_mongodb_state(self, db_config: Dict[str, Any]) -> Optional[DatabaseSnapshot]:
         """Capture MongoDB state."""
         try:
             from pymongo import MongoClient

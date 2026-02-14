@@ -340,6 +340,126 @@ src/socialseed_e2e/project_manifest/
 └── vector_sync.py        # Sincronización automática
 ```
 
+## Autonomous Semantic Regression & Logic Drift Detection Agent (#163)
+
+### Propósito Principal
+
+Este agente responde la pregunta: **"¿El comportamiento del sistema sigue alineado con el intento de negocio original?"**
+
+A diferencia de los tests E2E tradicionales que verifican "¿el botón es clickeable?", este agente realiza un análisis semántico profundo para detectar cuando los cambios de código introducen desviaciones lógicas que violan los requisitos de negocio, incluso cuando todos los tests pasan.
+
+### Características Principales
+
+- **Intent Baseline Extraction**: Extrae modelos semánticos de la documentación y GitHub issues
+- **Stateful Analysis**: Captura snapshots de estados API y base de datos antes/después de cambios
+- **Logic Drift Detection**: Usa razonamiento basado en LLM para detectar violaciones semánticas
+- **Reportes Comprehensivos**: Genera SEMANTIC_DRIFT_REPORT.md con insights accionables
+
+### Uso del CLI
+
+```bash
+# Análisis semántico completo
+e2e semantic-analyze run
+
+# Comparar commits específicos
+e2e semantic-analyze run -b HEAD~1 -t HEAD
+
+# Análisis con testing de API
+e2e semantic-analyze run -u http://localhost:8080
+
+# Incluir snapshots de base de datos
+e2e semantic-analyze run -d neo4j --db-uri bolt://localhost:7687
+
+# Extraer intenciones sin captura de estado
+e2e semantic-analyze intents
+
+# Filtrar por categoría
+e2e semantic-analyze intents -c auth -c user_management
+
+# Iniciar servidor gRPC
+e2e semantic-analyze server -p 50051
+```
+
+### API de Python
+
+```python
+from socialseed_e2e.agents import SemanticAnalyzerAgent
+
+# Crear agente
+agent = SemanticAnalyzerAgent(
+    project_root="/path/to/project",
+    project_name="My API",
+    base_url="http://localhost:8080",
+)
+
+# Análisis completo
+report = agent.analyze(
+    baseline_commit="abc123",
+    target_commit="def456",
+    api_endpoints=[
+        {"endpoint": "/api/users", "method": "GET"},
+        {"endpoint": "/api/follow", "method": "POST"},
+    ],
+    database_configs=[
+        {"type": "neo4j", "uri": "bolt://localhost:7687"},
+    ],
+)
+
+# Verificar resultados
+if report.has_critical_drifts():
+    print("🚨 Issues críticos encontrados!")
+    for drift in report.get_drifts_by_severity("critical"):
+        print(f"  - {drift.description}")
+
+# Obtener resumen
+summary = report.generate_summary()
+print(f"Total drifts: {summary['total_drifts']}")
+```
+
+### Tipos de Drift Detectados
+
+| Tipo | Descripción | Severidad Típica |
+|------|-------------|------------------|
+| **BEHAVIORAL** | Comportamiento difiere del intento | HIGH |
+| **RELATIONSHIP** | Relaciones entre entidades cambiadas | CRITICAL |
+| **STATE_TRANSITION** | Transiciones de máquina de estados incorrectas | HIGH |
+| **VALIDATION_LOGIC** | Reglas de validación cambiadas | MEDIUM |
+| **BUSINESS_RULE** | Lógica de negocio principal cambiada | CRITICAL |
+| **DATA_INTEGRITY** | Problemas de consistencia de datos | HIGH |
+| **SIDE_EFFECT** | Efectos secundarios inesperados | MEDIUM |
+| **MISSING_FUNCTIONALITY** | Comportamiento esperado no presente | HIGH |
+
+### Integración gRPC
+
+```protobuf
+service SemanticAnalyzer {
+  rpc Analyze(AnalyzeRequest) returns (AnalyzeResponse);
+  rpc ExtractIntents(ExtractIntentsRequest) returns (ExtractIntentsResponse);
+  rpc CaptureState(CaptureStateRequest) returns (CaptureStateResponse);
+  rpc DetectDrift(DetectDriftRequest) returns (DetectDriftResponse);
+  rpc StreamAnalysisProgress(StreamRequest) returns (stream ProgressUpdate);
+}
+```
+
+### Localización del Código
+
+```
+src/socialseed_e2e/agents/semantic_analyzer/
+├── __init__.py              # API pública
+├── models.py                # Modelos de datos (IntentBaseline, LogicDrift, etc.)
+├── intent_baseline_extractor.py  # Extracción de intenciones
+├── stateful_analyzer.py     # Captura de snapshots
+├── logic_drift_detector.py  # Detección de drift
+├── report_generator.py      # Generación de SEMANTIC_DRIFT_REPORT.md
+├── semantic_analyzer_agent.py    # Orchestrator principal
+├── grpc_server.py           # Servidor gRPC
+├── grpc_client.py           # Cliente gRPC
+└── proto/
+    ├── semantic_analyzer.proto   # Definición protobuf
+    ├── semantic_analyzer_pb2.py  # Generado
+    └── semantic_analyzer_pb2_grpc.py  # Generado
+```
+
 ## Sistema de Contexto Persistente (IMPORTANTE)
 
 ### Problema Conocido
@@ -454,6 +574,7 @@ jinja2>=3.1.0
 - ✅ Advanced Test Organization - Tags, dependencias y prioridades (#119)
 - ✅ Comprehensive Assertion Library - JSON Schema, GraphQL, stats (#120)
 - ✅ Record and Replay Test Sessions - Proxy, convert & replay (#121)
+- ✅ Autonomous Semantic Regression & Logic Drift Detection Agent (#163)
 - 🚧 CLI: Comandos básicos implementados (v0.1.0)
 - 🚧 Templates: Plantillas iniciales creadas
 - 📋 Pendiente: Tests unitarios completos
