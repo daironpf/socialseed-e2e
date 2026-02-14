@@ -5229,6 +5229,194 @@ def dashboard(port: int, host: str, no_browser: bool):
         sys.exit(1)
 
 
+@cli.group()
+def import_cmd():
+    """Import external formats into SocialSeed E2E."""
+    pass
+
+
+@import_cmd.command("postman")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option(
+    "--output",
+    "-o",
+    default="./services/imported",
+    help="Output directory for generated files",
+)
+@click.option(
+    "--service-name", "-s", default="imported", help="Service name for generated code"
+)
+def import_postman(file_path: str, output: str, service_name: str):
+    """Import Postman Collection (v2.1) into test modules.
+
+    Example:
+        e2e import postman ./my-collection.json --output ./services/api
+        e2e import postman ./collection.json --service-name user-service
+    """
+    try:
+        from socialseed_e2e.importers import PostmanImporter
+
+        console.print(f"\n📥 [bold green]Importing Postman Collection[/bold green]")
+        console.print(f"   File: {file_path}")
+        console.print(f"   Output: {output}")
+        console.print(f"   Service: {service_name}\n")
+
+        importer = PostmanImporter(output_dir=Path(output), service_name=service_name)
+
+        result = importer.import_file(Path(file_path))
+
+        if result.success:
+            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"   Generated {len(result.tests)} test files")
+
+            if result.warnings:
+                console.print(f"\n[yellow]⚠ Warnings:[/yellow]")
+                for warning in result.warnings:
+                    console.print(f"   - {warning}")
+        else:
+            console.print(f"[red]✗[/red] Import failed: {result.message}")
+            sys.exit(1)
+
+    except ImportError as e:
+        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        sys.exit(1)
+
+
+@import_cmd.command("openapi")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option(
+    "--output",
+    "-o",
+    default="./services/imported",
+    help="Output directory for generated files",
+)
+@click.option(
+    "--service-name", "-s", default="imported", help="Service name for generated code"
+)
+@click.option(
+    "--generate-scenarios", is_flag=True, help="Generate test scenarios from endpoints"
+)
+def import_openapi(
+    file_path: str, output: str, service_name: str, generate_scenarios: bool
+):
+    """Import OpenAPI/Swagger specification (3.0+) into test skeletons.
+
+    Example:
+        e2e import openapi ./swagger.yaml --output ./services/api
+        e2e import openapi ./api.json --service-name payment-api --generate-scenarios
+    """
+    try:
+        from socialseed_e2e.importers import OpenAPIImporter
+
+        console.print(f"\n📥 [bold green]Importing OpenAPI Specification[/bold green]")
+        console.print(f"   File: {file_path}")
+        console.print(f"   Output: {output}")
+        console.print(f"   Service: {service_name}")
+        if generate_scenarios:
+            console.print(f"   Generate scenarios: Yes")
+        console.print()
+
+        importer = OpenAPIImporter(output_dir=Path(output), service_name=service_name)
+
+        result = importer.import_file(Path(file_path))
+
+        if result.success:
+            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"   Generated {len(result.tests)} test files")
+            console.print(f"   Config file: {output}/openapi_config.yaml")
+
+            if result.warnings:
+                console.print(f"\n[yellow]⚠ Warnings:[/yellow]")
+                for warning in result.warnings:
+                    console.print(f"   - {warning}")
+        else:
+            console.print(f"[red]✗[/red] Import failed: {result.message}")
+            sys.exit(1)
+
+    except ImportError as e:
+        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        sys.exit(1)
+
+
+@import_cmd.command("curl")
+@click.argument("command")
+@click.option(
+    "--output",
+    "-o",
+    default="./services/imported",
+    help="Output directory for generated files",
+)
+@click.option("--name", "-n", default="curl_import", help="Test name")
+def import_curl(command: str, output: str, name: str):
+    """Import a curl command to generate a test case.
+
+    Example:
+        e2e import curl "curl -X POST https://api.example.com/users -d '{name:John}'"
+        e2e import curl "curl -H 'Authorization: Bearer token' https://api.example.com/profile"
+    """
+    try:
+        from socialseed_e2e.importers import CurlImporter
+
+        console.print(f"\n📥 [bold green]Importing Curl Command[/bold green]")
+        console.print(f"   Output: {output}")
+        console.print(f"   Name: {name}\n")
+
+        importer = CurlImporter(output_dir=Path(output))
+        result = importer.import_command(command)
+
+        if result.success:
+            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"   Generated test: {output}/{name}.py")
+        else:
+            console.print(f"[red]✗[/red] Import failed: {result.message}")
+            sys.exit(1)
+
+    except ImportError as e:
+        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        sys.exit(1)
+
+
+@import_cmd.command("environment")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option(
+    "--output",
+    "-o",
+    default="./services/imported",
+    help="Output directory for generated config",
+)
+@click.option(
+    "--service-name", "-s", default="imported", help="Service name for config"
+)
+def import_environment(file_path: str, output: str, service_name: str):
+    """Import Postman Environment into framework config.
+
+    Example:
+        e2e import environment ./environment.json --output ./config
+        e2e import environment ./prod-env.json --service-name production
+    """
+    try:
+        from socialseed_e2e.importers import PostmanEnvironmentImporter
+
+        console.print(f"\n📥 [bold green]Importing Postman Environment[/bold green]")
+        console.print(f"   File: {file_path}")
+        console.print(f"   Output: {output}")
+        console.print(f"   Service: {service_name}\n")
+
+        importer = PostmanEnvironmentImporter(output_dir=Path(output))
+        result = importer.import_file(Path(file_path))
+
+        if result.success:
+            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"   Config saved to: {output}/imported_config.yaml")
+        else:
+            console.print(f"[red]✗[/red] Import failed: {result.message}")
+            sys.exit(1)
+
+    except ImportError as e:
+        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()
