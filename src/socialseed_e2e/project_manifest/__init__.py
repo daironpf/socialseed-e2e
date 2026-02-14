@@ -21,41 +21,13 @@ Example:
 """
 
 from socialseed_e2e.project_manifest.api import ManifestAPI, TokenOptimizedQuery
-from socialseed_e2e.project_manifest.generator import ManifestGenerator
-from socialseed_e2e.project_manifest.models import (
-    DtoField,
-    DtoSchema,
-    EndpointInfo,
-    EndpointParameter,
-    EnvironmentVariable,
-    FileMetadata,
-    HttpMethod,
-    PortConfig,
-    ProjectKnowledge,
-    ServiceDependency,
-    ServiceInfo,
-    ValidationRule,
-)
-from socialseed_e2e.project_manifest.parsers import (
-    BaseParser,
-    JavaParser,
-    NodeParser,
-    ParseResult,
-    PythonParser,
-    parser_registry,
-)
-from socialseed_e2e.project_manifest.retrieval import (
-    ContextChunk,
-    RAGRetrievalEngine,
-    TaskContextBuilder,
-)
-from socialseed_e2e.project_manifest.vector_store import (
-    ManifestVectorStore,
-    SearchResult,
-)
-from socialseed_e2e.project_manifest.vector_sync import (
-    IntegratedSyncManager,
-    VectorIndexSyncManager,
+from socialseed_e2e.project_manifest.behavior_learner import (
+    BehaviorPattern,
+    BehaviorPatternType,
+    CorrectionPattern,
+    UserAction,
+    UserBehaviorLearner,
+    UserProfile,
 )
 
 # Flow-based test generation (Issue #185)
@@ -80,6 +52,9 @@ from socialseed_e2e.project_manifest.db_model_parsers import (
     SQLAlchemyParser,
     db_parser_registry,
 )
+
+# Deep Context Awareness for AI Agents (Issue #126)
+from socialseed_e2e.project_manifest.deep_context import DeepContext, DeepContextAwarenessEngine
 from socialseed_e2e.project_manifest.deep_scanner import (
     DeepScanner,
     EnvironmentDetector,
@@ -93,6 +68,19 @@ from socialseed_e2e.project_manifest.discovery_report import (
     DiscoverySummary,
     generate_discovery_report,
 )
+from socialseed_e2e.project_manifest.domain_understanding import (
+    BoundedContext,
+    DomainAttribute,
+    DomainElement,
+    DomainElementType,
+    DomainMethod,
+    DomainModel,
+    DomainModelUnderstanding,
+    DomainRelationship,
+)
+from socialseed_e2e.project_manifest.domain_understanding import (
+    RelationshipType as DomainRelationshipType,
+)
 from socialseed_e2e.project_manifest.dummy_data_generator import (
     DataGenerationContext,
     DataGenerationStrategy,
@@ -104,6 +92,22 @@ from socialseed_e2e.project_manifest.flow_test_generator import (
     FlowBasedTestSuiteGenerator,
     GeneratedTestSuite,
 )
+from socialseed_e2e.project_manifest.generator import ManifestGenerator
+from socialseed_e2e.project_manifest.hash_validator import HashValidator, ManifestVersionManager
+from socialseed_e2e.project_manifest.models import (
+    DtoField,
+    DtoSchema,
+    EndpointInfo,
+    EndpointParameter,
+    EnvironmentVariable,
+    FileMetadata,
+    HttpMethod,
+    PortConfig,
+    ProjectKnowledge,
+    ServiceDependency,
+    ServiceInfo,
+    ValidationRule,
+)
 
 # The Observer - Auto-detect running services and ports (Issue #186)
 from socialseed_e2e.project_manifest.observer import (
@@ -113,6 +117,14 @@ from socialseed_e2e.project_manifest.observer import (
     PortScanner,
     PortScanResult,
     ServiceObserver,
+)
+from socialseed_e2e.project_manifest.parsers import (
+    BaseParser,
+    JavaParser,
+    NodeParser,
+    ParseResult,
+    PythonParser,
+    parser_registry,
 )
 
 # AI Regression Agents for Differential Testing (Issue #84)
@@ -125,47 +137,19 @@ from socialseed_e2e.project_manifest.regression_agent import (
     RegressionTestResult,
     run_regression_analysis,
 )
-
-# Deep Context Awareness for AI Agents (Issue #126)
-from socialseed_e2e.project_manifest.deep_context import (
-    DeepContext,
-    DeepContextAwarenessEngine,
-)
-from socialseed_e2e.project_manifest.semantic_analyzer import (
-    BusinessRule,
-    CodePattern,
-    DomainConcept,
-    SemanticCodebaseAnalyzer,
-    SemanticContext,
-    SemanticPatternType,
-)
-from socialseed_e2e.project_manifest.behavior_learner import (
-    BehaviorPattern,
-    BehaviorPatternType,
-    CorrectionPattern,
-    UserAction,
-    UserBehaviorLearner,
-    UserProfile,
-)
 from socialseed_e2e.project_manifest.relationship_mapper import (
-    APIDependency,
     APICluster,
+    APIDependency,
     APIRelationshipMapper,
     DataFlow,
     DependencyStrength,
-    ImpactAnalysis as APIImpactAnalysis,
-    RelationshipCategory,
 )
-from socialseed_e2e.project_manifest.domain_understanding import (
-    BoundedContext,
-    DomainAttribute,
-    DomainElement,
-    DomainElementType,
-    DomainMethod,
-    DomainModel,
-    DomainModelUnderstanding,
-    DomainRelationship,
-    RelationshipType as DomainRelationshipType,
+from socialseed_e2e.project_manifest.relationship_mapper import ImpactAnalysis as APIImpactAnalysis
+from socialseed_e2e.project_manifest.relationship_mapper import RelationshipCategory
+from socialseed_e2e.project_manifest.retrieval import (
+    ContextChunk,
+    RAGRetrievalEngine,
+    TaskContextBuilder,
 )
 from socialseed_e2e.project_manifest.security_executor import (
     ResilienceMonitor,
@@ -183,6 +167,19 @@ from socialseed_e2e.project_manifest.security_fuzzer import (
     SecurityTestResult,
     SeverityLevel,
 )
+from socialseed_e2e.project_manifest.semantic_analyzer import (
+    BusinessRule,
+    CodePattern,
+    DomainConcept,
+    SemanticCodebaseAnalyzer,
+    SemanticContext,
+    SemanticPatternType,
+)
+from socialseed_e2e.project_manifest.vector_store import ManifestVectorStore, SearchResult
+from socialseed_e2e.project_manifest.vector_sync import (
+    IntegratedSyncManager,
+    VectorIndexSyncManager,
+)
 
 __all__ = [
     # Main classes
@@ -191,6 +188,9 @@ __all__ = [
     "TokenOptimizedQuery",
     "FileWatcher",
     "SmartSyncManager",
+    # Hash Validation (Issue #132)
+    "HashValidator",
+    "ManifestVersionManager",
     # Models
     "ProjectKnowledge",
     "ServiceInfo",

@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Tuple
 from socialseed_e2e.project_manifest.models import (
     EnvironmentVariable,
     FileMetadata,
+    ManifestFreshness,
     ProjectKnowledge,
     ServiceInfo,
 )
@@ -91,6 +92,9 @@ class ManifestGenerator:
         # Discover all source files
         source_files = self._discover_source_files()
 
+        # Compute SHA-256 hashes for all files
+        source_hashes = self._compute_source_hashes(source_files)
+
         # Group files by service/directory
         service_files = self._group_files_by_service(source_files)
 
@@ -117,11 +121,13 @@ class ManifestGenerator:
         project_name = self._detect_project_name()
 
         manifest = ProjectKnowledge(
-            version="1.0.0",
+            version="2.0",
             project_name=project_name,
             project_root=str(self.project_root),
             services=services,
             file_metadata=file_metadata,
+            source_hashes=source_hashes,
+            manifest_freshness=ManifestFreshness.FRESH,
             global_env_vars=global_env_vars,
             generated_at=datetime.utcnow(),
             last_updated=datetime.utcnow(),
@@ -134,6 +140,7 @@ class ManifestGenerator:
         print(f"   - {sum(len(s.endpoints) for s in services)} endpoints")
         print(f"   - {sum(len(s.dto_schemas) for s in services)} DTOs")
         print(f"   - {len(global_env_vars)} global environment variables")
+        print(f"   - {len(source_hashes)} source files hashed")
         print(f"   📄 Manifest saved to: {self.manifest_path}")
 
         return manifest
@@ -205,9 +212,27 @@ class ManifestGenerator:
         # Remove empty services
         services = [s for s in services if s.endpoints or s.dto_schemas]
 
+        # Update source hashes for changed files
+        source_hashes = dict(existing_manifest.source_hashes)
+        for file_path in changed_files:
+            file_key = str(file_path.relative_to(self.project_root))
+            try:
+                content = file_path.read_bytes()
+                file_hash = hashlib.sha256(content).hexdigest()
+                source_hashes[file_key] = f"sha256:{file_hash}"
+            except (OSError, IOError):
+                continue
+
+        # Remove hashes for deleted files
+        for removed_file in removed_files:
+            if removed_file in source_hashes:
+                del source_hashes[removed_file]
+
         # Update manifest
         existing_manifest.services = services
         existing_manifest.file_metadata = file_metadata
+        existing_manifest.source_hashes = source_hashes
+        existing_manifest.manifest_freshness = ManifestFreshness.FRESH
         existing_manifest.update_timestamp()
 
         # Re-detect global env vars
@@ -450,6 +475,9 @@ class ManifestGenerator:
     ) -> Tuple[List[Path], List[str]]:
         """Detect changed and removed files.
 
+        Uses SHA-256 hashes from source_hashes if available (v2.0),
+        otherwise falls back to MD5 checksums from file_metadata.
+
         Args:
             current_files: List of currently discovered files
             manifest: Existing manifest
@@ -461,7 +489,12 @@ class ManifestGenerator:
         removed_files = []
 
         current_file_paths = {str(f.relative_to(self.project_root)) for f in current_files}
-        manifest_file_paths = set(manifest.file_metadata.keys())
+
+        # Use source_hashes (v2.0) or fall back to file_metadata
+        if manifest.source_hashes:
+            manifest_file_paths = set(manifest.source_hashes.keys())
+        else:
+            manifest_file_paths = set(manifest.file_metadata.keys())
 
         # Find removed files
         removed_files = list(manifest_file_paths - current_file_paths)
@@ -470,29 +503,50 @@ class ManifestGenerator:
         for file_path in current_files:
             file_key = str(file_path.relative_to(self.project_root))
 
-            if file_key not in manifest.file_metadata:
+            if file_key not in manifest_file_paths:
                 # New file
                 changed_files.append(file_path)
             else:
-                # Check if file has changed
-                metadata = manifest.file_metadata[file_key]
-
+                # Check if file has changed using SHA-256 hash
                 try:
-                    stat = file_path.stat()
-                    current_mtime = datetime.fromtimestamp(stat.st_mtime)
+                    content = file_path.read_bytes()
+                    current_hash = f"sha256:{hashlib.sha256(content).hexdigest()}"
 
-                    if current_mtime > metadata.last_modified:
-                        # File modified, verify with checksum
-                        content = file_path.read_text(encoding="utf-8")
-                        current_checksum = hashlib.md5(content.encode()).hexdigest()
+                    if manifest.source_hashes:
+                        stored_hash = manifest.source_hashes.get(file_key)
+                    else:
+                        # Fall back to MD5 for older manifests
+                        current_hash = hashlib.md5(content).hexdigest()
+                        metadata = manifest.file_metadata.get(file_key)
+                        stored_hash = metadata.checksum if metadata else None
 
-                        if current_checksum != metadata.checksum:
-                            changed_files.append(file_path)
+                    if current_hash != stored_hash:
+                        changed_files.append(file_path)
 
                 except (OSError, IOError):
                     changed_files.append(file_path)
 
         return changed_files, removed_files
+
+    def _compute_source_hashes(self, source_files: List[Path]) -> Dict[str, str]:
+        """Compute SHA-256 hashes for all source files.
+
+        Args:
+            source_files: List of source file paths
+
+        Returns:
+            Dictionary mapping relative file paths to SHA-256 hashes
+        """
+        hashes = {}
+        for file_path in source_files:
+            try:
+                content = file_path.read_bytes()
+                file_hash = hashlib.sha256(content).hexdigest()
+                relative_path = str(file_path.relative_to(self.project_root))
+                hashes[relative_path] = f"sha256:{file_hash}"
+            except (OSError, IOError):
+                continue
+        return hashes
 
     def _remove_file_from_services(self, services: List[ServiceInfo], file_path: str) -> None:
         """Remove all data associated with a file from services."""

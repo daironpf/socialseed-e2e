@@ -149,10 +149,18 @@ class FileMetadata(BaseModel):
     )
 
 
+class ManifestFreshness(str, Enum):
+    """Manifest freshness status."""
+
+    FRESH = "fresh"
+    STALE = "stale"
+    PARTIAL = "partial"
+
+
 class ProjectKnowledge(BaseModel):
     """Root model for project knowledge manifest."""
 
-    version: str = Field("1.0.0", description="Manifest version")
+    version: str = Field("2.0", description="Manifest version")
     project_name: str = Field(..., description="Project name")
     project_root: str = Field(..., description="Project root directory")
     generated_at: datetime = Field(
@@ -166,6 +174,12 @@ class ProjectKnowledge(BaseModel):
     )
     file_metadata: Dict[str, FileMetadata] = Field(
         default_factory=dict, description="Tracked files metadata"
+    )
+    source_hashes: Dict[str, str] = Field(
+        default_factory=dict, description="SHA-256 hashes of source files"
+    )
+    manifest_freshness: ManifestFreshness = Field(
+        default=ManifestFreshness.FRESH, description="Manifest freshness status"
     )
     global_env_vars: List[EnvironmentVariable] = Field(
         default_factory=list, description="Global environment variables"

@@ -1224,6 +1224,76 @@ def manifest_query(directory: str, format: str):
 
 @cli.command()
 @click.argument("directory", default=".", required=False)
+def manifest_check(directory: str):
+    """Validate manifest freshness using source code hashes.
+
+    Quickly checks if the project manifest is up-to-date by comparing
+    stored SHA-256 hashes with current source files.
+
+    Examples:
+        e2e manifest-check                    # Check current directory
+        e2e manifest-check /path/to/project   # Check specific project
+    """
+    target_path = Path(directory).resolve()
+    manifest_path = target_path / "project_knowledge.json"
+
+    if not manifest_path.exists():
+        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print("Run 'e2e manifest' first to generate the manifest.")
+        sys.exit(1)
+
+    try:
+        from socialseed_e2e.project_manifest import ManifestGenerator
+        from socialseed_e2e.project_manifest.hash_validator import HashValidator
+
+        console.print("\n🔍 [bold cyan]Checking Manifest Freshness[/bold cyan]")
+        console.print(f"   Project: {target_path}\n")
+
+        # Load existing manifest
+        generator = ManifestGenerator(target_path)
+        manifest = generator.get_manifest()
+
+        if not manifest:
+            console.print("[red]❌ Error:[/red] Could not load manifest")
+            sys.exit(1)
+
+        # Validate using hash validator
+        validator = HashValidator(target_path)
+        freshness, changed_files = validator.validate_manifest(manifest)
+
+        # Display results
+        if freshness.value == "fresh":
+            console.print("[bold green]✅ Manifest is FRESH[/bold green]")
+            console.print("   All source files match stored hashes.\n")
+            console.print(f"   Version: {manifest.version}")
+            console.print(f"   Last updated: {manifest.last_updated}")
+            console.print(f"   Total files tracked: {len(manifest.source_hashes)}\n")
+        elif freshness.value == "stale":
+            console.print("[bold yellow]⚠️  Manifest is STALE[/bold yellow]")
+            console.print("   Source files have changed and need re-scanning.\n")
+
+            if changed_files:
+                console.print(f"   Changed files: {len(changed_files)}")
+                for file_path in list(changed_files.keys())[:5]:
+                    console.print(f"     • {file_path}")
+                if len(changed_files) > 5:
+                    console.print(f"     ... and {len(changed_files) - 5} more\n")
+
+            console.print("\n[yellow]Run 'e2e manifest' to update the manifest.[/yellow]\n")
+            sys.exit(1)
+        else:  # partial
+            console.print("[bold orange]⚠️  Manifest is PARTIALLY FRESH[/bold orange]")
+            console.print("   Some files may be outdated.\n")
+            console.print("[yellow]Run 'e2e manifest --force' for full re-scan.[/yellow]\n")
+            sys.exit(1)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error checking manifest:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("directory", default=".", required=False)
 def watch(directory: str):
     """Watch project files and auto-update manifest.
 
