@@ -95,11 +95,7 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import (
-        BaseGrpcPage,
-        GrpcCallLog,
-        GrpcRetryConfig,
-    )
+    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -238,6 +234,14 @@ try:
     from socialseed_e2e.dashboard.server import DashboardServer
 except ImportError:
     pass
+
+# TUI - Rich Terminal Interface (optional dependency)
+try:
+    from socialseed_e2e.tui import TuiApp
+
+    TUI_AVAILABLE = True
+except ImportError:
+    TUI_AVAILABLE = False
 
 # Core - Interactive Doctor
 from socialseed_e2e.core.interactive_doctor import (
@@ -474,4 +478,7 @@ __all__ = [
     "AdaptationStrategy",
     # Dashboard
     "DashboardServer",
+    # TUI
+    "TuiApp",
+    "TUI_AVAILABLE",
 ]
