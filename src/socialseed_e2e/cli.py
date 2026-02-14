@@ -48,7 +48,9 @@ def init(directory: str, force: bool):
     """
     target_path = Path(directory).resolve()
 
-    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
+    console.print(
+        f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n"
+    )
 
     # Create directory structure
     dirs_to_create = [
@@ -66,7 +68,9 @@ def init(directory: str, force: bool):
                 if dir_path.parent == target_path
                 else str(dir_path.relative_to(target_path))
             )
-            console.print(f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}")
+            console.print(
+                f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}"
+            )
         else:
             console.print(
                 f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
@@ -90,7 +94,9 @@ def init(directory: str, force: bool):
         )
         console.print("  [green]✓[/green] Created: e2e.conf")
     else:
-        console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)")
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)"
+        )
 
     # Create .gitignore
     gitignore_path = target_path / ".gitignore"
@@ -220,13 +226,17 @@ email-validator>=2.0.0
         if result.returncode == 0:
             console.print("  [green]✓[/green] Dependencies installed")
         else:
-            console.print("  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed")
+            console.print(
+                "  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed"
+            )
             if result.stderr:
                 console.print(f"  [dim]{result.stderr[:200]}...[/dim]")
     except subprocess.TimeoutExpired:
         console.print("  [yellow]⚠ Warning:[/yellow] Installation took too long")
     except Exception as e:
-        console.print(f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}")
+        console.print(
+            f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}"
+        )
 
     # 2. Run verification (always)
     console.print("\n🔍 Verifying installation...")
@@ -295,7 +305,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         console.print("   Run: [cyan]e2e init[/cyan] first")
         sys.exit(1)
 
@@ -339,7 +351,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         str(service_path / f"{snake_case_name}_page.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py")
+    console.print(
+        f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py"
+    )
 
     # Create configuration file
     engine.render_to_file(
@@ -362,7 +376,9 @@ def new_service(name: str, base_url: str, health_endpoint: str):
     # Update e2e.conf
     _update_e2e_conf(name, base_url, health_endpoint)
 
-    console.print(f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n")
+    console.print(
+        f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n"
+    )
 
     console.print(
         Panel(
@@ -392,7 +408,9 @@ def new_test(name: str, service: str, description: str):
 
     # Verify we are in an E2E project
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         sys.exit(1)
 
     # Verify that the service exists
@@ -401,7 +419,9 @@ def new_test(name: str, service: str, description: str):
 
     if not service_path.exists():
         console.print(f"[red]❌ Error:[/red] Service '{service}' does not exist.")
-        console.print(f"   Create the service first: [cyan]e2e new-service {service}[/cyan]")
+        console.print(
+            f"   Create the service first: [cyan]e2e new-service {service}[/cyan]"
+        )
         sys.exit(1)
 
     if not modules_path.exists():
@@ -441,10 +461,16 @@ def new_test(name: str, service: str, description: str):
     }
 
     # Create test using template
-    engine.render_to_file("test_module.py.template", template_vars, str(test_path), overwrite=False)
-    console.print(f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}")
+    engine.render_to_file(
+        "test_module.py.template", template_vars, str(test_path), overwrite=False
+    )
+    console.print(
+        f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}"
+    )
 
-    console.print(f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n")
+    console.print(
+        f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n"
+    )
 
     console.print(
         Panel(
@@ -631,7 +657,10 @@ def run(
     parallel_config = None
     run_tests_parallel_func = None
     if use_parallel and parallel is not None:
-        from socialseed_e2e.core.parallel_runner import ParallelConfig, run_tests_parallel
+        from socialseed_e2e.core.parallel_runner import (
+            ParallelConfig,
+            run_tests_parallel,
+        )
 
         run_tests_parallel_func = run_tests_parallel
 
@@ -649,7 +678,11 @@ def run(
 
     # Execute tests
     try:
-        if use_parallel and parallel_config is not None and run_tests_parallel_func is not None:
+        if (
+            use_parallel
+            and parallel_config is not None
+            and run_tests_parallel_func is not None
+        ):
             results = run_tests_parallel_func(
                 services_path=services_path,
                 specific_service=service,
@@ -675,7 +708,10 @@ def run(
         # Generate HTML report if requested
         if output == "html":
             try:
-                from socialseed_e2e.reporting import HTMLReportGenerator, TestResultCollector
+                from socialseed_e2e.reporting import (
+                    HTMLReportGenerator,
+                    TestResultCollector,
+                )
 
                 console.print("\n📊 [cyan]Generating HTML report...[/cyan]")
 
@@ -687,7 +723,9 @@ def run(
                 for service_name, suite_result in results.items():
                     for test_result in suite_result.results:
                         test_id = f"{service_name}.{test_result.name}"
-                        collector.record_test_start(test_id, test_result.name, service_name)
+                        collector.record_test_start(
+                            test_id, test_result.name, service_name
+                        )
                         collector.record_test_end(
                             test_id,
                             status=test_result.status,
@@ -764,10 +802,14 @@ def setup_ci(platform: str, force: bool):
         platform: Target platform (github, gitlab, jenkins, azure, circleci, travis, bitbucket, all)
         force: If True, overwrites existing files
     """
-    console.print(f"\n🚀 [bold cyan]Setting up CI/CD templates for:[/bold cyan] {platform}\n")
+    console.print(
+        f"\n🚀 [bold cyan]Setting up CI/CD templates for:[/bold cyan] {platform}\n"
+    )
 
     if not _is_e2e_project():
-        console.print("[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?")
+        console.print(
+            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+        )
         sys.exit(1)
 
     engine = TemplateEngine()
@@ -789,7 +831,9 @@ def setup_ci(platform: str, force: bool):
         ],
         "gitlab": [("ci-cd/gitlab-ci/gitlab-ci.yml.template", ".gitlab-ci.yml")],
         "jenkins": [("ci-cd/jenkins/Jenkinsfile.template", "Jenkinsfile")],
-        "azure": [("ci-cd/azure-devops/azure-pipelines.yml.template", "azure-pipelines.yml")],
+        "azure": [
+            ("ci-cd/azure-devops/azure-pipelines.yml.template", "azure-pipelines.yml")
+        ],
         "circleci": [("ci-cd/circleci/config.yml.template", ".circleci/config.yml")],
         "travis": [("ci-cd/travis/travis.yml.template", ".travis.yml")],
         "bitbucket": [
@@ -817,7 +861,9 @@ def setup_ci(platform: str, force: bool):
             except Exception as e:
                 console.print(f"  [red]❌ Error generating {output}:[/red] {e}")
 
-    console.print("\n[bold green]✅ CI/CD templates generated successfully![/bold green]\n")
+    console.print(
+        "\n[bold green]✅ CI/CD templates generated successfully![/bold green]\n"
+    )
 
 
 @cli.group()
@@ -829,7 +875,9 @@ def recorder():
 @recorder.command("record")
 @click.argument("name")
 @click.option("--port", "-p", default=8090, help="Proxy port")
-@click.option("--output", "-o", help="Output file path (default: recordings/<name>.json)")
+@click.option(
+    "--output", "-o", help="Output file path (default: recordings/<name>.json)"
+)
 def recorder_record(name: str, port: int, output: Optional[str]):
     """Record a new API session via proxy."""
     import os
@@ -912,7 +960,9 @@ def doctor():
     checks = []
 
     # Check Python
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    python_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     checks.append(("Python", python_version, sys.version_info >= (3, 9)))
 
     # Check Playwright
@@ -961,7 +1011,9 @@ def doctor():
             services_exists,
         )
     )
-    checks.append(("tests/ directory", "OK" if tests_exists else "Not found", tests_exists))
+    checks.append(
+        ("tests/ directory", "OK" if tests_exists else "Not found", tests_exists)
+    )
 
     # Show results
     table = Table(title="System Verification")
@@ -987,11 +1039,17 @@ def doctor():
         console.print("[cyan]Suggested solutions:[/cyan]")
 
         if not any(name == "Playwright" and ok for name, _, ok in checks):
-            console.print("  • Install Playwright: [white]pip install playwright[/white]")
+            console.print(
+                "  • Install Playwright: [white]pip install playwright[/white]"
+            )
         if not any(name == "Playwright CLI" and ok for name, _, ok in checks):
-            console.print("  • Install browsers: [white]playwright install chromium[/white]")
+            console.print(
+                "  • Install browsers: [white]playwright install chromium[/white]"
+            )
         if not any(name == "Pydantic" and ok for name, _, ok in checks):
-            console.print("  • Install dependencies: [white]pip install socialseed-e2e[/white]")
+            console.print(
+                "  • Install dependencies: [white]pip install socialseed-e2e[/white]"
+            )
         if not _is_e2e_project():
             console.print("  • Initialize project: [white]e2e init[/white]")
 
@@ -1279,12 +1337,16 @@ def manifest_check(directory: str):
                 if len(changed_files) > 5:
                     console.print(f"     ... and {len(changed_files) - 5} more\n")
 
-            console.print("\n[yellow]Run 'e2e manifest' to update the manifest.[/yellow]\n")
+            console.print(
+                "\n[yellow]Run 'e2e manifest' to update the manifest.[/yellow]\n"
+            )
             sys.exit(1)
         else:  # partial
             console.print("[bold orange]⚠️  Manifest is PARTIALLY FRESH[/bold orange]")
             console.print("   Some files may be outdated.\n")
-            console.print("[yellow]Run 'e2e manifest --force' for full re-scan.[/yellow]\n")
+            console.print(
+                "[yellow]Run 'e2e manifest --force' for full re-scan.[/yellow]\n"
+            )
             sys.exit(1)
 
     except Exception as e:
@@ -1425,7 +1487,9 @@ def retrieve(task: str, directory: str, max_chunks: int):
 
         for i, chunk in enumerate(chunks, 1):
             console.print(f"[bold]Chunk {i}:[/bold] {chunk.chunk_type}")
-            console.print(f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]")
+            console.print(
+                f"[dim]Tokens: {chunk.token_estimate} | ID: {chunk.chunk_id}[/dim]"
+            )
             console.print(Panel(chunk.content, border_style="green"))
             console.print()
 
@@ -1599,7 +1663,9 @@ def generate_tests(
 
     try:
         from socialseed_e2e.project_manifest import DatabaseSchema, db_parser_registry
-        from socialseed_e2e.project_manifest.flow_test_generator import FlowBasedTestSuiteGenerator
+        from socialseed_e2e.project_manifest.flow_test_generator import (
+            FlowBasedTestSuiteGenerator,
+        )
 
         # Parse database schema if available
         console.print("📊 [yellow]Step 1/5:[/yellow] Parsing database models...")
@@ -1640,7 +1706,9 @@ def generate_tests(
         if service:
             services_to_process = [s for s in services_to_process if s.name == service]
             if not services_to_process:
-                console.print(f"[red]❌ Service '{service}' not found in manifest[/red]")
+                console.print(
+                    f"[red]❌ Service '{service}' not found in manifest[/red]"
+                )
                 sys.exit(1)
 
         generated_suites = []
@@ -1648,12 +1716,16 @@ def generate_tests(
             console.print(f"   Analyzing: {svc.name}...")
 
             # Create test suite generator
-            suite_generator = FlowBasedTestSuiteGenerator(service_info=svc, db_schema=db_schema)
+            suite_generator = FlowBasedTestSuiteGenerator(
+                service_info=svc, db_schema=db_schema
+            )
 
             # Analyze flows
             flow_count = len(suite_generator.flows)
             relationship_count = len(suite_generator.analysis_result["relationships"])
-            console.print(f"     ✓ Detected {flow_count} flows, {relationship_count} relationships")
+            console.print(
+                f"     ✓ Detected {flow_count} flows, {relationship_count} relationships"
+            )
 
             generated_suites.append((svc, suite_generator))
 
@@ -1676,12 +1748,16 @@ def generate_tests(
 
             console.print(f"\n   [bold]{svc.name}:[/bold]")
             console.print(f"     📄 data_schema.py ({len(svc.dto_schemas)} DTOs)")
-            console.print(f"     📄 {svc.name}_page.py ({len(svc.endpoints)} endpoints)")
+            console.print(
+                f"     📄 {svc.name}_page.py ({len(svc.endpoints)} endpoints)"
+            )
             for flow in suite.flows_detected:
                 console.print(f"     📄 {flow.name} ({len(flow.steps)} steps)")
 
         # Show validation criteria summary
-        console.print("\n🎯 [yellow]Step 5/5:[/yellow] Extracting validation criteria...")
+        console.print(
+            "\n🎯 [yellow]Step 5/5:[/yellow] Extracting validation criteria..."
+        )
         total_validations = 0
         for svc, suite_generator in generated_suites:
             validations = suite_generator.analysis_result["validation_criteria"]
@@ -1721,7 +1797,8 @@ def generate_tests(
                             "name": flow.name,
                             "description": flow.description,
                             "steps": [
-                                {"endpoint": {"name": step.endpoint.name}} for step in flow.steps
+                                {"endpoint": {"name": step.endpoint.name}}
+                                for step in flow.steps
                             ],
                             "flow_type": flow.flow_type.value
                             if hasattr(flow.flow_type, "value")
@@ -1743,7 +1820,9 @@ def generate_tests(
         if not dry_run:
             console.print(f"\n📁 Output directory: {output_path}")
             console.print("\n[bold]Next steps:[/bold]")
-            console.print("   1. Review the AI Discovery Report in .e2e/DISCOVERY_REPORT.md")
+            console.print(
+                "   1. Review the AI Discovery Report in .e2e/DISCOVERY_REPORT.md"
+            )
             console.print("   2. Customize test data in data_schema.py")
             console.print("   3. Run tests: [cyan]e2e run[/cyan]")
         else:
@@ -1901,7 +1980,9 @@ def observe(
             table.add_column("Status", style="white")
 
             for container in results["docker_containers"]:
-                ports_str = ", ".join(f"{p['public']}->{p['private']}" for p in container["ports"])
+                ports_str = ", ".join(
+                    f"{p['public']}->{p['private']}" for p in container["ports"]
+                )
                 table.add_row(
                     container["name"],
                     container["image"],
@@ -1938,7 +2019,9 @@ def observe(
                         if setup_result["success"]:
                             console.print("   [green]✅ Setup successful![/green]")
                             if "output" in setup_result:
-                                console.print(f"   Output: {setup_result['output'][:200]}...")
+                                console.print(
+                                    f"   Output: {setup_result['output'][:200]}..."
+                                )
                         else:
                             console.print(
                                 f"   [red]❌ Setup failed:[/red] {setup_result['message']}"
@@ -2009,7 +2092,10 @@ def discover(directory: str, output: Optional[str], open: bool):
     console.print(f"   Project: {target_path}\n")
 
     try:
-        from socialseed_e2e.project_manifest import ManifestAPI, generate_discovery_report
+        from socialseed_e2e.project_manifest import (
+            ManifestAPI,
+            generate_discovery_report,
+        )
 
         # Load manifest
         api = ManifestAPI(target_path)
@@ -2017,7 +2103,9 @@ def discover(directory: str, output: Optional[str], open: bool):
         manifest = api.manifest
 
         if not manifest:
-            console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
+            console.print(
+                "[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]"
+            )
             sys.exit(1)
 
         # Generate report
@@ -2123,7 +2211,9 @@ def security_test(
         manifest = api.manifest
 
         if not manifest:
-            console.print("[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]")
+            console.print(
+                "[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]"
+            )
             sys.exit(1)
 
         # Get services to test
@@ -2176,7 +2266,9 @@ def security_test(
 
             # Summary
             total_vulns = sum(len(s.vulnerabilities_found) for s in all_sessions)
-            avg_resilience = sum(s.resilience_score for s in all_sessions) / len(all_sessions)
+            avg_resilience = sum(s.resilience_score for s in all_sessions) / len(
+                all_sessions
+            )
 
             console.print(f"{'=' * 60}")
             console.print("[bold]🔒 Security Testing Complete[/bold]")
@@ -2188,7 +2280,9 @@ def security_test(
             console.print(f"   Average resilience score: {avg_resilience:.1f}%")
 
             if total_vulns > 0:
-                console.print(f"\n   [red]⚠ {total_vulns} vulnerabilities require attention![/red]")
+                console.print(
+                    f"\n   [red]⚠ {total_vulns} vulnerabilities require attention![/red]"
+                )
                 console.print(f"   📄 See report: {output_path}")
             else:
                 console.print(f"\n   [green]✅ No vulnerabilities found![/green]")
@@ -2260,7 +2354,10 @@ def regression(
     console.print(f"   Comparing: {base_ref} → {target_ref}\n")
 
     try:
-        from socialseed_e2e.project_manifest import RegressionAgent, run_regression_analysis
+        from socialseed_e2e.project_manifest import (
+            RegressionAgent,
+            run_regression_analysis,
+        )
 
         # Run regression analysis
         agent = RegressionAgent(target_path, base_ref, target_ref)
@@ -2447,12 +2544,18 @@ def mock_analyze(directory: str, output: str, format: str):
                 if dependency.detected_calls:
                     console.print("   Files:")
                     for call in dependency.detected_calls[:3]:
-                        console.print(f"     • {call.file_path}:{call.line_number} ({call.method})")
+                        console.print(
+                            f"     • {call.file_path}:{call.line_number} ({call.method})"
+                        )
                     if len(dependency.detected_calls) > 3:
-                        console.print(f"     ... and {len(dependency.detected_calls) - 3} more")
+                        console.print(
+                            f"     ... and {len(dependency.detected_calls) - 3} more"
+                        )
 
                 if dependency.env_var_keys:
-                    console.print(f"   Environment variables: {', '.join(dependency.env_var_keys)}")
+                    console.print(
+                        f"   Environment variables: {', '.join(dependency.env_var_keys)}"
+                    )
                 console.print()
 
         else:  # JSON format
@@ -2491,7 +2594,9 @@ def mock_analyze(directory: str, output: str, format: str):
         )
 
         console.print("\n[bold]Next steps:[/bold]")
-        console.print("   1. Generate mock servers: [cyan]e2e mock-generate <service>[/cyan]")
+        console.print(
+            "   1. Generate mock servers: [cyan]e2e mock-generate <service>[/cyan]"
+        )
         console.print("   2. Run mock servers: [cyan]e2e mock-run[/cyan]")
         console.print("   3. Run E2E tests with mocks enabled\n")
 
@@ -2528,7 +2633,9 @@ def mock_analyze(directory: str, output: str, format: str):
     is_flag=True,
     help="Generate mocks for all detected services",
 )
-def mock_generate(service: str, port: int, output_dir: str, docker: bool, generate_all: bool):
+def mock_generate(
+    service: str, port: int, output_dir: str, docker: bool, generate_all: bool
+):
     """Generate mock server for external API (Issue #191).
 
     Creates a FastAPI-based mock server that mimics the behavior
@@ -2548,7 +2655,10 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
     console.print(f"   Output: {output_path.resolve()}\n")
 
     try:
-        from socialseed_e2e.ai_mocking import ExternalServiceRegistry, MockServerGenerator
+        from socialseed_e2e.ai_mocking import (
+            ExternalServiceRegistry,
+            MockServerGenerator,
+        )
 
         generator = MockServerGenerator(output_path)
 
@@ -2562,7 +2672,9 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
             servers = generator.generate_all_mock_servers(services, base_port=port)
 
             for i, server in enumerate(servers):
-                file_path = generator.save_mock_server(server, f"mock_{server.service_name}.py")
+                file_path = generator.save_mock_server(
+                    server, f"mock_{server.service_name}.py"
+                )
                 console.print(f"  [green]✓[/green] {server.service_name}: {file_path}")
 
                 if docker:
@@ -2578,7 +2690,9 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
                 compose_path.write_text(compose)
                 console.print(f"\n  [green]✓[/green] docker-compose.yml")
 
-            console.print(f"\n[bold green]✅ Generated {len(servers)} mock servers![/bold green]\n")
+            console.print(
+                f"\n[bold green]✅ Generated {len(servers)} mock servers![/bold green]\n"
+            )
 
         else:
             # Generate single service
@@ -2603,7 +2717,9 @@ def mock_generate(service: str, port: int, output_dir: str, docker: bool, genera
                 dockerfile_path.write_text(dockerfile)
                 console.print(f"  [green]✓[/green] Generated: {dockerfile_path}")
 
-            console.print("\n[bold green]✅ Mock server generated successfully![/bold green]")
+            console.print(
+                "\n[bold green]✅ Mock server generated successfully![/bold green]"
+            )
             console.print("\n[bold]To run the mock server:[/bold]")
             console.print(f"   cd {output_path}")
             console.print(f"   python mock_{service}.py")
@@ -2659,7 +2775,10 @@ def mock_run(services: str, config: str, detach: bool, port: int):
     console.print("\n🚀 [bold cyan]Starting Mock Servers[/bold cyan]\n")
 
     try:
-        from socialseed_e2e.ai_mocking import ExternalServiceRegistry, MockServerGenerator
+        from socialseed_e2e.ai_mocking import (
+            ExternalServiceRegistry,
+            MockServerGenerator,
+        )
 
         output_dir = Path(".e2e/mocks")
 
@@ -2669,10 +2788,14 @@ def mock_run(services: str, config: str, detach: bool, port: int):
         else:
             # Check for generated mocks
             if output_dir.exists():
-                service_list = [f.stem.replace("mock_", "") for f in output_dir.glob("mock_*.py")]
+                service_list = [
+                    f.stem.replace("mock_", "") for f in output_dir.glob("mock_*.py")
+                ]
             else:
                 console.print("[yellow]⚠ No mock servers found.[/yellow]")
-                console.print("   Run [cyan]e2e mock-generate <service>[/cyan] first.\n")
+                console.print(
+                    "   Run [cyan]e2e mock-generate <service>[/cyan] first.\n"
+                )
                 sys.exit(1)
 
         if not service_list:
@@ -2688,7 +2811,9 @@ def mock_run(services: str, config: str, detach: bool, port: int):
             mock_file = output_dir / f"mock_{service}.py"
 
             if not mock_file.exists():
-                console.print(f"  [yellow]⚠[/yellow] {service}: Mock not found, generating...")
+                console.print(
+                    f"  [yellow]⚠[/yellow] {service}: Mock not found, generating..."
+                )
                 generator = MockServerGenerator(output_dir)
                 try:
                     server = generator.generate_mock_server(service, port=current_port)
@@ -2718,7 +2843,9 @@ def mock_run(services: str, config: str, detach: bool, port: int):
                     try:
                         subprocess.run([sys.executable, str(mock_file)], check=True)
                     except KeyboardInterrupt:
-                        console.print(f"\n[yellow]👋 {service} mock server stopped[/yellow]\n")
+                        console.print(
+                            f"\n[yellow]👋 {service} mock server stopped[/yellow]\n"
+                        )
                     return
                 else:
                     # Multiple services - use subprocesses
@@ -2732,7 +2859,9 @@ def mock_run(services: str, config: str, detach: bool, port: int):
             current_port += 1
 
         if detach:
-            console.print("\n[bold green]✅ Mock servers running in background[/bold green]")
+            console.print(
+                "\n[bold green]✅ Mock servers running in background[/bold green]"
+            )
             console.print("   Check with: [cyan]ps aux | grep mock_[/cyan]\n")
 
         elif processes:
@@ -2815,7 +2944,9 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
 
                 if verbose:
                     for error in result.errors:
-                        console.print(f"     [red]Error:[/red] {error.field} - {error.message}")
+                        console.print(
+                            f"     [red]Error:[/red] {error.field} - {error.message}"
+                        )
                         if error.expected is not None:
                             console.print(f"       Expected: {error.expected}")
                         if error.actual is not None:
@@ -2834,7 +2965,9 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
         console.print(f"   Invalid: {total_invalid}")
 
         if total_invalid == 0:
-            console.print("\n   [bold green]✅ All contracts validated successfully![/bold green]\n")
+            console.print(
+                "\n   [bold green]✅ All contracts validated successfully![/bold green]\n"
+            )
         else:
             console.print(
                 f"\n   [bold yellow]⚠ {total_invalid} contract(s) "
@@ -2960,7 +3093,9 @@ def perf_profile(
                 regressions = analyzer.detect_regressions(report)
 
                 if regressions:
-                    console.print(f"\n[red]⚠ {len(regressions)} regression(s) detected![/red]")
+                    console.print(
+                        f"\n[red]⚠ {len(regressions)} regression(s) detected![/red]"
+                    )
 
                     # Generate smart alerts
                     alert_gen = SmartAlertGenerator(project_root=target_path)
@@ -3066,7 +3201,9 @@ def perf_report(
         latest_report = analyzer._find_baseline_file()
         if not latest_report:
             console.print("[red]Error:[/red] No performance reports found.")
-            console.print("Run [cyan]e2e perf-profile[/cyan] first to generate reports.")
+            console.print(
+                "Run [cyan]e2e perf-profile[/cyan] first to generate reports."
+            )
             sys.exit(1)
 
         # Load baseline if provided
@@ -3169,7 +3306,9 @@ def perf_report(
 
             else:
                 console.print("[green]✓ No regressions detected[/green]")
-                console.print("All endpoints are performing within expected thresholds.")
+                console.print(
+                    "All endpoints are performing within expected thresholds."
+                )
         else:
             # Just show the report without comparison
             console.print("[bold]Performance Summary:[/bold]\n")
@@ -3216,7 +3355,9 @@ def perf_report(
     help="Output path for strategy file",
     type=click.Path(),
 )
-def plan_strategy(project: str, name: str, description: str, services: str, output: str):
+def plan_strategy(
+    project: str, name: str, description: str, services: str, output: str
+):
     """Generate an AI-driven test strategy.
 
     Analyzes the codebase and creates a comprehensive testing strategy
@@ -3248,13 +3389,17 @@ def plan_strategy(project: str, name: str, description: str, services: str, outp
         saved_path = planner.save_strategy(strategy, output_path)
 
         # Display summary
-        console.print(f"[green]✓[/green] Strategy generated: [bold]{strategy.id}[/bold]")
+        console.print(
+            f"[green]✓[/green] Strategy generated: [bold]{strategy.id}[/bold]"
+        )
         console.print(f"[green]✓[/green] Saved to: {saved_path}")
         console.print()
         console.print("[bold]Strategy Summary:[/bold]")
         console.print(f"  Total test cases: {len(strategy.test_cases)}")
         console.print(f"  Services covered: {', '.join(strategy.target_services)}")
-        console.print(f"  Estimated duration: {strategy.total_estimated_duration_ms // 1000}s")
+        console.print(
+            f"  Estimated duration: {strategy.total_estimated_duration_ms // 1000}s"
+        )
         console.print(f"  Parallel groups: {len(strategy.parallelization_groups)}")
         console.print()
 
@@ -3340,7 +3485,11 @@ def autonomous_run(
         e2e autonomous-run --strategy-id abc123
         e2e autonomous-run --strategy-id abc123 --parallel 8 --auto-fix
     """
-    from socialseed_e2e.ai_orchestrator import AutonomousRunner, OrchestratorConfig, StrategyPlanner
+    from socialseed_e2e.ai_orchestrator import (
+        AutonomousRunner,
+        OrchestratorConfig,
+        StrategyPlanner,
+    )
 
     console.print("\n🚀 [bold blue]Autonomous Test Execution[/bold blue]\n")
 
@@ -3460,7 +3609,9 @@ def analyze_flaky(project: str, test_file: str):
 
         patterns = report.get("flakiness_patterns", [])
         if patterns:
-            console.print(f"[yellow]⚠ Found {len(patterns)} flakiness patterns:[/yellow]")
+            console.print(
+                f"[yellow]⚠ Found {len(patterns)} flakiness patterns:[/yellow]"
+            )
             console.print()
 
             table = Table(title="Detected Patterns")
@@ -3548,7 +3699,9 @@ def debug_execution(project: str, execution_id: str, apply_fix: bool):
 
         console.print(f"[bold]Execution ID:[/bold] {execution_id}")
         console.print(f"[bold]Total Failures:[/bold] {report['total_failures']}")
-        console.print(f"[bold]Avg Confidence:[/bold] {report['average_confidence']:.2%}")
+        console.print(
+            f"[bold]Avg Confidence:[/bold] {report['average_confidence']:.2%}"
+        )
         console.print(f"[bold]Need Review:[/bold] {report['requiring_human_review']}")
         console.print()
 
@@ -3566,7 +3719,9 @@ def debug_execution(project: str, execution_id: str, apply_fix: bool):
                 console.print("-" * 50)
                 console.print(f"[bold]Test:[/bold] {analysis['test_id']}")
                 console.print(f"[bold]Failure Type:[/bold] {analysis['failure_type']}")
-                console.print(f"[bold]Confidence:[/bold] {analysis['confidence_score']:.2%}")
+                console.print(
+                    f"[bold]Confidence:[/bold] {analysis['confidence_score']:.2%}"
+                )
                 console.print(f"[bold]Root Cause:[/bold] {analysis['root_cause']}")
                 console.print()
 
@@ -3872,7 +4027,9 @@ def shadow():
 
 @shadow.command("capture")
 @click.argument("name")
-@click.option("--target-url", "-u", required=True, help="Target API URL to capture traffic from")
+@click.option(
+    "--target-url", "-u", required=True, help="Target API URL to capture traffic from"
+)
 @click.option(
     "--output",
     "-o",
@@ -3991,7 +4148,9 @@ def shadow_capture(
 @shadow.command("generate")
 @click.argument("capture_file")
 @click.option("--service", "-s", required=True, help="Service name for generated tests")
-@click.option("--output-dir", "-o", default="services", help="Output directory for tests")
+@click.option(
+    "--output-dir", "-o", default="services", help="Output directory for tests"
+)
 @click.option("--template", "-t", default="standard", help="Test template to use")
 @click.option(
     "--group-by",
@@ -4055,11 +4214,15 @@ def shadow_generate(
         generated_tests = runner.generate_tests(session)
 
         if not generated_tests:
-            console.print("[yellow]⚠ No tests could be generated from this capture[/yellow]")
+            console.print(
+                "[yellow]⚠ No tests could be generated from this capture[/yellow]"
+            )
             return
 
         # Display results
-        console.print(f"\n[bold green]✓ Generated {len(generated_tests)} test(s):[/bold green]\n")
+        console.print(
+            f"\n[bold green]✓ Generated {len(generated_tests)} test(s):[/bold green]\n"
+        )
 
         for test in generated_tests:
             console.print(f"   📄 {test.name}")
@@ -4079,7 +4242,9 @@ def shadow_generate(
         console.print()
 
         console.print("[bold]Next steps:[/bold]")
-        console.print(f"   1. Review generated tests in: {Path(output_dir) / service / 'modules'}")
+        console.print(
+            f"   1. Review generated tests in: {Path(output_dir) / service / 'modules'}"
+        )
         console.print("   2. Customize test data as needed")
         console.print("   3. Run tests: [cyan]e2e run --service {service}[/cyan]\n")
 
@@ -4102,7 +4267,9 @@ def shadow_generate(
     help="Replay speed",
 )
 @click.option("--stop-on-error", is_flag=True, help="Stop on first error")
-@click.option("--dry-run", is_flag=True, help="Show what would be replayed without executing")
+@click.option(
+    "--dry-run", is_flag=True, help="Show what would be replayed without executing"
+)
 def shadow_replay(
     capture_file: str,
     target_url: Optional[str],
@@ -4150,7 +4317,9 @@ def shadow_replay(
         if dry_run:
             console.print("[bold]Dry run - would execute:[/bold]\n")
             for i, interaction in enumerate(session.interactions, 1):
-                console.print(f"   {i}. {interaction.request.method} {interaction.request.path}")
+                console.print(
+                    f"   {i}. {interaction.request.method} {interaction.request.path}"
+                )
             console.print()
             return
 
@@ -4224,7 +4393,9 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
             console.print(json.dumps(analysis, indent=2, default=str))
         else:
             # Display as table
-            console.print(f"[bold]Total Interactions:[/bold] {analysis['total_interactions']}")
+            console.print(
+                f"[bold]Total Interactions:[/bold] {analysis['total_interactions']}"
+            )
             console.print(f"[bold]Time Range:[/bold] {analysis['time_range']}")
             console.print()
 
@@ -4236,7 +4407,9 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
                 table.add_column("Percentage", style="yellow")
 
                 for method, stats in analysis["method_distribution"].items():
-                    table.add_row(method, str(stats["count"]), f"{stats['percentage']:.1f}%")
+                    table.add_row(
+                        method, str(stats["count"]), f"{stats['percentage']:.1f}%"
+                    )
                 console.print(table)
                 console.print()
 
@@ -4303,7 +4476,9 @@ def shadow_export_middleware(framework: str, output: Optional[str]):
         if output:
             output_path = Path(output)
             output_path.write_text(middleware_code)
-            console.print(f"[bold green]✓ Middleware saved to:[/bold green] {output_path}\n")
+            console.print(
+                f"[bold green]✓ Middleware saved to:[/bold green] {output_path}\n"
+            )
         else:
             console.print("[bold]Generated Middleware Code:[/bold]\n")
             console.print("```python")
@@ -4330,7 +4505,9 @@ def shadow_export_middleware(framework: str, output: Optional[str]):
 
 @ai_learning.command("feedback")
 @click.option("--storage-path", "-s", help="Path to feedback storage directory")
-@click.option("--limit", "-l", default=10, help="Number of recent feedback items to show")
+@click.option(
+    "--limit", "-l", default=10, help="Number of recent feedback items to show"
+)
 @click.option("--analyze", "-a", is_flag=True, help="Analyze patterns in feedback")
 def ai_feedback(storage_path: str, limit: int, analyze: bool):
     """View collected feedback from test executions.
@@ -4389,7 +4566,9 @@ def ai_feedback(storage_path: str, limit: int, analyze: bool):
         if patterns.get("top_errors"):
             console.print("[bold]Top Errors:[/bold]")
             for error_info in patterns["top_errors"][:5]:
-                console.print(f"  • {error_info['error'][:60]}... ({error_info['count']} times)")
+                console.print(
+                    f"  • {error_info['error'][:60]}... ({error_info['count']} times)"
+                )
             console.print()
     else:
         # Show recent feedback
@@ -4403,7 +4582,9 @@ def ai_feedback(storage_path: str, limit: int, analyze: bool):
 
         for feedback in reversed(recent):
             status_icon = "✓" if "success" in feedback.feedback_type.value else "✗"
-            status_color = "green" if "success" in feedback.feedback_type.value else "red"
+            status_color = (
+                "green" if "success" in feedback.feedback_type.value else "red"
+            )
 
             table.add_row(
                 feedback.feedback_type.value,
@@ -4437,14 +4618,18 @@ def ai_train(storage_path: str, output: str):
 
     # Get user corrections for training
     all_feedback = collector.load_all_feedback()
-    corrections = [f for f in all_feedback if f.feedback_type.value == "user_correction"]
+    corrections = [
+        f for f in all_feedback if f.feedback_type.value == "user_correction"
+    ]
 
     if not corrections:
         console.print("[yellow]⚠ No user corrections found for training[/yellow]")
         console.print("   Corrections are collected when users fix test assertions")
         return
 
-    console.print(f"[green]✓[/green] Found {len(corrections)} corrections for training\n")
+    console.print(
+        f"[green]✓[/green] Found {len(corrections)} corrections for training\n"
+    )
 
     # Prepare training data
     training_data = TrainingData(
@@ -4493,7 +4678,9 @@ def ai_train(storage_path: str, output: str):
     type=click.Choice(["conservative", "balanced", "aggressive"]),
     default="balanced",
 )
-@click.option("--test-name", "-t", help="Specific test to get adaptation suggestions for")
+@click.option(
+    "--test-name", "-t", help="Specific test to get adaptation suggestions for"
+)
 def ai_adapt(strategy: str, test_name: str):
     """Get adaptation suggestions based on learned patterns.
 
@@ -4507,7 +4694,11 @@ def ai_adapt(strategy: str, test_name: str):
         e2e ai-learning adapt --test-name login  # Suggestions for specific test
         e2e ai-learning adapt --strategy aggressive  # Use aggressive adaptation
     """
-    from socialseed_e2e.ai_learning import AdaptationEngine, AdaptationStrategy, FeedbackCollector
+    from socialseed_e2e.ai_learning import (
+        AdaptationEngine,
+        AdaptationStrategy,
+        FeedbackCollector,
+    )
 
     strategy_map = {
         "conservative": AdaptationStrategy.CONSERVATIVE,
@@ -4518,7 +4709,9 @@ def ai_adapt(strategy: str, test_name: str):
     engine = AdaptationEngine(strategy=strategy_map[strategy])
     collector = FeedbackCollector()
 
-    console.print(f"\n🔄 [bold cyan]AI Learning - Adaptation ({strategy})[/bold cyan]\n")
+    console.print(
+        f"\n🔄 [bold cyan]AI Learning - Adaptation ({strategy})[/bold cyan]\n"
+    )
 
     # Get feedback for analysis
     all_feedback = collector.load_all_feedback()
@@ -4535,7 +4728,9 @@ def ai_adapt(strategy: str, test_name: str):
     if test_name:
         # Get suggestions for specific test
         test_feedback = collector.get_feedback_by_test(test_name)
-        failure_count = len([f for f in test_feedback if f.feedback_type.value == "test_failure"])
+        failure_count = len(
+            [f for f in test_feedback if f.feedback_type.value == "test_failure"]
+        )
 
         if failure_count > 0:
             console.print(f"[bold]Test:[/bold] {test_name}")
@@ -4551,7 +4746,9 @@ def ai_adapt(strategy: str, test_name: str):
                 console.print("  • This test may need significant refactoring")
                 console.print("  • Consider splitting into smaller, more focused tests")
         else:
-            console.print(f"[green]✓[/green] Test '{test_name}' has no recorded failures")
+            console.print(
+                f"[green]✓[/green] Test '{test_name}' has no recorded failures"
+            )
     else:
         # Show general adaptation metrics
         metrics = engine.get_adaptation_metrics()
@@ -4562,8 +4759,12 @@ def ai_adapt(strategy: str, test_name: str):
 
         table.add_row("Total Adaptations", str(metrics["total_adaptations"]))
         table.add_row("Strategy", metrics["strategy"])
-        table.add_row("Confidence Threshold", f"{metrics.get('confidence_threshold', 0):.1%}")
-        table.add_row("Codebase Changes Tracked", str(metrics.get("codebase_changes_tracked", 0)))
+        table.add_row(
+            "Confidence Threshold", f"{metrics.get('confidence_threshold', 0):.1%}"
+        )
+        table.add_row(
+            "Codebase Changes Tracked", str(metrics.get("codebase_changes_tracked", 0))
+        )
 
         console.print(table)
         console.print()
@@ -4644,7 +4845,9 @@ def ai_optimize(service: str):
     # Calculate time savings
     original_total = sum(execution_history.values())
     console.print(f"[dim]Original total execution time: {original_total:.2f}s[/dim]")
-    console.print("[dim]Optimized order prioritizes faster tests for quicker feedback[/dim]")
+    console.print(
+        "[dim]Optimized order prioritizes faster tests for quicker feedback[/dim]"
+    )
     console.print()
 
 
@@ -4925,7 +5128,9 @@ def uninstall_plugin(plugin_name: str):
         repo = PluginRepository()
 
         if repo.uninstall_plugin(plugin_name):
-            console.print(f"[green]✓[/green] Plugin '{plugin_name}' uninstalled successfully!")
+            console.print(
+                f"[green]✓[/green] Plugin '{plugin_name}' uninstalled successfully!"
+            )
         else:
             console.print(f"[red]✗[/red] Failed to uninstall plugin '{plugin_name}'")
 
@@ -5005,7 +5210,9 @@ def dashboard(port: int, host: str, no_browser: bool):
     try:
         from socialseed_e2e.dashboard.server import launch_dashboard
 
-        console.print("\n🚀 [bold green]Launching SocialSeed E2E Dashboard...[/bold green]\n")
+        console.print(
+            "\n🚀 [bold green]Launching SocialSeed E2E Dashboard...[/bold green]\n"
+        )
         console.print(f"📊 Dashboard will be available at: http://{host}:{port}")
         console.print()
 
@@ -5036,7 +5243,9 @@ def import_cmd():
     default="./services/imported",
     help="Output directory for generated files",
 )
-@click.option("--service-name", "-s", default="imported", help="Service name for generated code")
+@click.option(
+    "--service-name", "-s", default="imported", help="Service name for generated code"
+)
 def import_postman(file_path: str, output: str, service_name: str):
     """Import Postman Collection (v2.1) into test modules.
 
@@ -5081,9 +5290,15 @@ def import_postman(file_path: str, output: str, service_name: str):
     default="./services/imported",
     help="Output directory for generated files",
 )
-@click.option("--service-name", "-s", default="imported", help="Service name for generated code")
-@click.option("--generate-scenarios", is_flag=True, help="Generate test scenarios from endpoints")
-def import_openapi(file_path: str, output: str, service_name: str, generate_scenarios: bool):
+@click.option(
+    "--service-name", "-s", default="imported", help="Service name for generated code"
+)
+@click.option(
+    "--generate-scenarios", is_flag=True, help="Generate test scenarios from endpoints"
+)
+def import_openapi(
+    file_path: str, output: str, service_name: str, generate_scenarios: bool
+):
     """Import OpenAPI/Swagger specification (3.0+) into test skeletons.
 
     Example:
@@ -5169,7 +5384,9 @@ def import_curl(command: str, output: str, name: str):
     default="./services/imported",
     help="Output directory for generated config",
 )
-@click.option("--service-name", "-s", default="imported", help="Service name for config")
+@click.option(
+    "--service-name", "-s", default="imported", help="Service name for config"
+)
 def import_environment(file_path: str, output: str, service_name: str):
     """Import Postman Environment into framework config.
 
@@ -5342,7 +5559,9 @@ def semantic_analyze(
     try:
         from socialseed_e2e.agents import SemanticAnalyzerAgent
 
-        console.print("\n🔍 [bold cyan]Semantic Regression & Logic Drift Analysis[/bold cyan]\n")
+        console.print(
+            "\n🔍 [bold cyan]Semantic Regression & Logic Drift Analysis[/bold cyan]\n"
+        )
 
         # Create agent
         agent = SemanticAnalyzerAgent(
@@ -5352,7 +5571,9 @@ def semantic_analyze(
 
         # Quick check mode
         if quick_check:
-            console.print("[yellow]Running quick check (no state capture)...[/yellow]\n")
+            console.print(
+                "[yellow]Running quick check (no state capture)...[/yellow]\n"
+            )
             results = agent.quick_check()
 
             console.print(f"[green]Total Intents:[/green] {results['total_intents']}")
@@ -5376,7 +5597,9 @@ def semantic_analyze(
             report = agent.analyze_pr(
                 pr_number=pr,
                 api_endpoints=_parse_api_endpoints(api_endpoint),
-                database_configs=_parse_database_configs(database, db_uri, db_user, db_password),
+                database_configs=_parse_database_configs(
+                    database, db_uri, db_user, db_password
+                ),
             )
         else:
             # Standard analysis
@@ -5384,7 +5607,9 @@ def semantic_analyze(
                 baseline_commit=baseline_commit,
                 target_commit=target_commit,
                 api_endpoints=_parse_api_endpoints(api_endpoint),
-                database_configs=_parse_database_configs(database, db_uri, db_user, db_password),
+                database_configs=_parse_database_configs(
+                    database, db_uri, db_user, db_password
+                ),
                 output_path=Path(output) / "SEMANTIC_DRIFT_REPORT.md",
             )
 
@@ -5396,16 +5621,22 @@ def semantic_analyze(
         console.print(f"  Total Drifts: {summary['total_drifts']}")
 
         if summary["severity_distribution"]["critical"] > 0:
-            console.print(f"  [red]Critical: {summary['severity_distribution']['critical']}[/red]")
+            console.print(
+                f"  [red]Critical: {summary['severity_distribution']['critical']}[/red]"
+            )
         if summary["severity_distribution"]["high"] > 0:
-            console.print(f"  [yellow]High: {summary['severity_distribution']['high']}[/yellow]")
+            console.print(
+                f"  [yellow]High: {summary['severity_distribution']['high']}[/yellow]"
+            )
 
         # Exit with error if critical issues found
         if report.has_critical_drifts():
             console.print("\n[red]🚨 Critical semantic drifts detected![/red]")
             sys.exit(1)
         elif summary["total_drifts"] > 0:
-            console.print("\n[yellow]⚠️  Semantic drifts detected - review recommended[/yellow]")
+            console.print(
+                "\n[yellow]⚠️  Semantic drifts detected - review recommended[/yellow]"
+            )
             sys.exit(0)
         else:
             console.print("\n[green]✅ No semantic drift detected[/green]")
@@ -5413,7 +5644,9 @@ def semantic_analyze(
 
     except ImportError as e:
         console.print(f"\n[red]❌ Error:[/red] {e}")
-        console.print("\n[yellow]Make sure the semantic analyzer is properly installed.[/yellow]")
+        console.print(
+            "\n[yellow]Make sure the semantic analyzer is properly installed.[/yellow]"
+        )
         sys.exit(1)
     except Exception as e:
         console.print(f"\n[red]❌ Error:[/red] {e}")
@@ -5571,7 +5804,9 @@ def semantic_analyze_run(
             console.print("\n[bold red]🚨 Critical issues found![/bold red]")
             sys.exit(1)
         elif report.detected_drifts:
-            console.print("\n[bold yellow]⚠️  Drifts detected - review recommended[/bold yellow]")
+            console.print(
+                "\n[bold yellow]⚠️  Drifts detected - review recommended[/bold yellow]"
+            )
         else:
             console.print("\n[bold green]✅ No semantic drift detected[/bold green]")
 
@@ -5695,7 +5930,9 @@ def semantic_analyze_server(port: int, host: str):
     console.print("\n   Press Ctrl+C to stop\n")
 
     try:
-        from socialseed_e2e.agents.semantic_analyzer.grpc_server import SemanticAnalyzerServer
+        from socialseed_e2e.agents.semantic_analyzer.grpc_server import (
+            SemanticAnalyzerServer,
+        )
 
         server = SemanticAnalyzerServer(port=port)
         server.start()
@@ -5703,6 +5940,374 @@ def semantic_analyze_server(port: int, host: str):
 
     except KeyboardInterrupt:
         console.print("\n[yellow]👋 Server stopped by user[/yellow]")
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.group()
+def red_team():
+    """Commands for adversarial AI security testing (Red Team).
+
+    Performs security assessments by simulating adversarial attacks
+    including prompt injection, privilege escalation, and hallucination
+    triggering to identify vulnerabilities.
+    """
+    pass
+
+
+@red_team.command("assess")
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--attack-type",
+    "-a",
+    multiple=True,
+    type=click.Choice(
+        [
+            "prompt_injection",
+            "privilege_escalation",
+            "hallucination_trigger",
+            "context_leakage",
+            "jailbreak",
+            "multi_step_manipulation",
+        ]
+    ),
+    help="Attack types to execute (can be specified multiple times)",
+)
+@click.option(
+    "--max-attempts",
+    "-m",
+    default=50,
+    help="Maximum number of attack attempts",
+)
+@click.option(
+    "--output",
+    "-o",
+    default="security",
+    help="Output directory for reports and logs",
+)
+@click.option(
+    "--quick",
+    is_flag=True,
+    help="Run quick scan with limited attacks",
+)
+def red_team_assess(
+    directory: str,
+    attack_type: tuple,
+    max_attempts: int,
+    output: str,
+    quick: bool,
+):
+    """Run full adversarial security assessment.
+
+    Discovers guardrails, executes adversarial attacks, and calculates
+    a resilience score for the target system.
+
+    Examples:
+        e2e red-team assess                    # Assess current directory
+        e2e red-team assess /path/to/project   # Assess specific project
+        e2e red-team assess -a prompt_injection -a jailbreak  # Specific attacks
+        e2e red-team assess --quick            # Quick scan
+    """
+    from socialseed_e2e.agents.red_team_adversary import RedTeamAgent, AttackType
+
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n🎯 [bold red]Red Team Security Assessment[/bold red]")
+    console.print(f"   Target: {target_path}\n")
+
+    try:
+        # Create agent
+        agent = RedTeamAgent(project_root=target_path)
+
+        # Convert attack types
+        attack_types = None
+        if attack_type:
+            attack_types = [AttackType(at) for at in attack_type]
+
+        if quick:
+            # Quick scan
+            results = agent.quick_scan()
+            console.print("\n📊 [bold]Quick Scan Results:[/bold]")
+            console.print(f"   Guardrails Found: {results['guardrails_found']}")
+            console.print(f"   Attacks Executed: {results['attacks_executed']}")
+            console.print(f"   Successful: {results['successful_attacks']}")
+            console.print(f"   Resilience Score: {results['resilience_score']}/100")
+            console.print(f"\n   {results['summary']}")
+        else:
+            # Full assessment
+            report = agent.run_full_assessment(attack_types=attack_types)
+
+            # Display results
+            console.print("\n" + "=" * 60)
+            console.print("[bold]Assessment Complete[/bold]")
+            console.print(f"   Report ID: {report.report_id}")
+            console.print(f"   Total Attacks: {report.total_attacks}")
+            console.print(f"   Successful: {report.successful_attacks}")
+            console.print(f"   Failed: {report.failed_attacks}")
+            console.print(
+                f"   Resilience Score: {report.resilience_score.overall_score}/100"
+            )
+
+            if report.resilience_score.overall_score < 50:
+                console.print(
+                    "\n[bold red]⚠️  Critical vulnerabilities found![/bold red]"
+                )
+            elif report.resilience_score.overall_score < 75:
+                console.print(
+                    "\n[bold yellow]⚠️  Moderate security concerns[/bold yellow]"
+                )
+            else:
+                console.print("\n[bold green]✅ Good security posture[/bold green]")
+
+            # Show recommendations
+            if report.resilience_score.recommendations:
+                console.print("\n[bold]Recommendations:[/bold]")
+                for i, rec in enumerate(report.resilience_score.recommendations[:5], 1):
+                    console.print(f"   {i}. {rec}")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@red_team.command("guardrails")
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--json-output",
+    is_flag=True,
+    help="Output as JSON",
+)
+def red_team_guardrails(directory: str, json_output: bool):
+    """Discover and analyze security guardrails.
+
+    Scans documentation and code to identify safety constraints
+    and security controls in the system.
+
+    Examples:
+        e2e red-team guardrails              # Show all guardrails
+        e2e red-team guardrails --json-output
+    """
+    from socialseed_e2e.agents.red_team_adversary import GuardrailDiscovery
+    import json
+
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n🔍 [bold cyan]Discovering Guardrails[/bold cyan]")
+    console.print(f"   Target: {target_path}\n")
+
+    try:
+        discovery = GuardrailDiscovery(target_path)
+        guardrails = discovery.discover_all()
+
+        if json_output:
+            output = [
+                {
+                    "guardrail_id": g.guardrail_id,
+                    "type": g.guardrail_type.value,
+                    "description": g.description,
+                    "location": g.location,
+                    "strength": g.strength,
+                }
+                for g in guardrails
+            ]
+            console.print(json.dumps(output, indent=2))
+        else:
+            from rich.table import Table
+
+            table = Table(title=f"Discovered Guardrails ({len(guardrails)} found)")
+            table.add_column("ID", style="dim")
+            table.add_column("Type", style="cyan")
+            table.add_column("Strength", style="yellow")
+            table.add_column("Location", style="green")
+
+            for guardrail in guardrails:
+                strength_color = (
+                    "red"
+                    if guardrail.strength < 50
+                    else "yellow"
+                    if guardrail.strength < 75
+                    else "green"
+                )
+                table.add_row(
+                    guardrail.guardrail_id[:20] + "..."
+                    if len(guardrail.guardrail_id) > 20
+                    else guardrail.guardrail_id,
+                    guardrail.guardrail_type.value,
+                    f"[{strength_color}]{guardrail.strength}/100[/{strength_color}]",
+                    guardrail.location[:50] + "..."
+                    if len(guardrail.location) > 50
+                    else guardrail.location,
+                )
+
+            console.print(table)
+
+            # Summary
+            summary = discovery.generate_summary()
+            console.print(f"\n[bold]Summary:[/bold]")
+            console.print(f"   Total: {summary['total_guardrails']}")
+            console.print(f"   Vulnerable: {summary['vulnerable_count']}")
+            console.print(f"   Average Strength: {summary['average_strength']:.1f}/100")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@red_team.command("payloads")
+@click.option(
+    "--attack-type",
+    "-a",
+    type=click.Choice(
+        [
+            "prompt_injection",
+            "privilege_escalation",
+            "hallucination_trigger",
+            "context_leakage",
+            "jailbreak",
+            "multi_step_manipulation",
+        ]
+    ),
+    help="Filter by attack type",
+)
+def red_team_payloads(attack_type: str):
+    """List available attack payloads.
+
+    Displays all adversarial payloads available for security testing.
+
+    Examples:
+        e2e red-team payloads                    # Show all payloads
+        e2e red-team payloads -a prompt_injection  # Filter by type
+    """
+    from socialseed_e2e.agents.red_team_adversary import AdversarialPayloads, AttackType
+    from rich.table import Table
+
+    console.print("\n⚔️  [bold red]Available Attack Payloads[/bold red]\n")
+
+    try:
+        if attack_type:
+            payloads = AdversarialPayloads.get_payloads_by_type(AttackType(attack_type))
+        else:
+            payloads = AdversarialPayloads.get_all_payloads()
+
+        table = Table(title=f"Attack Payloads ({len(payloads)} total)")
+        table.add_column("ID", style="dim")
+        table.add_column("Type", style="cyan")
+        table.add_column("Name", style="red")
+        table.add_column("Target", style="yellow")
+        table.add_column("Description", style="green")
+
+        for payload in payloads:
+            table.add_row(
+                payload.payload_id,
+                payload.attack_type.value,
+                payload.name,
+                payload.target_component,
+                payload.description[:60] + "..."
+                if len(payload.description) > 60
+                else payload.description,
+            )
+
+        console.print(table)
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@red_team.command("logs")
+@click.option(
+    "--session",
+    "-s",
+    help="Filter by session ID",
+)
+@click.option(
+    "--attack-type",
+    "-a",
+    help="Filter by attack type",
+)
+@click.option(
+    "--winning",
+    is_flag=True,
+    help="Show only successful exploits",
+)
+def red_team_logs(session: str, attack_type: str, winning: bool):
+    """View Red Team attack logs.
+
+    Displays logged attack attempts and successful exploits.
+
+    Examples:
+        e2e red-team logs              # Show all logs
+        e2e red-team logs --winning    # Show successful exploits only
+        e2e red-team logs -s <session_id>
+    """
+    from socialseed_e2e.agents.red_team_adversary import SecurityLogger
+    from rich.table import Table
+
+    console.print("\n📋 [bold cyan]Red Team Logs[/bold cyan]\n")
+
+    try:
+        logger = SecurityLogger()
+
+        if winning:
+            logs = logger.get_winning_payloads()
+        elif session:
+            logs = logger.get_logs_by_session(session)
+        elif attack_type:
+            logs = logger.get_logs_by_attack_type(attack_type)
+        else:
+            logs = logger.logs
+
+        if not logs:
+            console.print("[yellow]No logs found[/yellow]")
+            return
+
+        table = Table(title=f"Attack Logs ({len(logs)} entries)")
+        table.add_column("Timestamp", style="dim")
+        table.add_column("Type", style="cyan")
+        table.add_column("Attack", style="red")
+        table.add_column("Result", style="yellow")
+        table.add_column("Severity", style="green")
+
+        for log in logs[-50:]:  # Show last 50
+            log_type = log.get("type", "unknown")
+            attack = log.get("attack_type", "-")
+            result = log.get("result", "-")
+            severity = log.get("severity", "-")
+            timestamp = log.get("timestamp", "-")
+
+            table.add_row(
+                timestamp[:19] if timestamp else "-",
+                log_type,
+                attack,
+                result,
+                severity if isinstance(severity, str) else severity.get("value", "-"),
+            )
+
+        console.print(table)
+
+        # Summary
+        summary = logger.generate_summary()
+        console.print(f"\n[bold]Summary:[/bold]")
+        console.print(f"   Total Entries: {summary['total_entries']}")
+        console.print(f"   Successful Exploits: {summary['successful_exploits']}")
+        console.print(f"   Sessions: {summary['sessions']}")
+
+        console.print()
+
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
         sys.exit(1)
