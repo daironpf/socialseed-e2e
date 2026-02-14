@@ -5253,6 +5253,461 @@ def tui(config: str, service: str):
         sys.exit(1)
 
 
+@cli.command("semantic-analyze")
+@click.option(
+    "--baseline-commit",
+    help="Git commit hash for baseline (before changes)",
+)
+@click.option(
+    "--target-commit",
+    help="Git commit hash for target (after changes)",
+)
+@click.option(
+    "--pr",
+    type=int,
+    help="Pull Request number to analyze",
+)
+@click.option(
+    "--base-url",
+    default="http://localhost:8080",
+    help="Base URL for API testing",
+)
+@click.option(
+    "--api-endpoint",
+    multiple=True,
+    help="API endpoint to test (format: METHOD /path)",
+)
+@click.option(
+    "--database",
+    type=click.Choice(["neo4j", "postgresql", "mysql", "mongodb"]),
+    help="Database type to snapshot",
+)
+@click.option(
+    "--db-uri",
+    help="Database connection URI",
+)
+@click.option(
+    "--db-user",
+    help="Database username",
+)
+@click.option(
+    "--db-password",
+    help="Database password",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    default=".",
+    help="Output directory for reports",
+)
+@click.option(
+    "--quick-check",
+    is_flag=True,
+    help="Quick check without state capture",
+)
+@click.option(
+    "--project-root",
+    type=click.Path(exists=True),
+    default=".",
+    help="Project root directory",
+)
+def semantic_analyze(
+    baseline_commit: Optional[str],
+    target_commit: Optional[str],
+    pr: Optional[int],
+    base_url: str,
+    api_endpoint: Tuple[str, ...],
+    database: Optional[str],
+    db_uri: Optional[str],
+    db_user: Optional[str],
+    db_password: Optional[str],
+    output: str,
+    quick_check: bool,
+    project_root: str,
+):
+    """Run semantic regression and logic drift detection.
+
+    Analyzes whether system behavior aligns with intended business logic
+    by extracting intent baselines from documentation, capturing system
+    states, and detecting semantic drift.
+
+    Examples:
+        e2e semantic-analyze                                    # Run full analysis
+        e2e semantic-analyze --baseline-commit HEAD~1          # Compare commits
+        e2e semantic-analyze --pr 123                          # Analyze PR
+        e2e semantic-analyze --quick-check                     # Quick validation
+        e2e semantic-analyze --api-endpoint "GET /api/users"   # Test endpoints
+    """
+    try:
+        from socialseed_e2e.agents import SemanticAnalyzerAgent
+
+        console.print("\n🔍 [bold cyan]Semantic Regression & Logic Drift Analysis[/bold cyan]\n")
+
+        # Create agent
+        agent = SemanticAnalyzerAgent(
+            project_root=Path(project_root),
+            base_url=base_url,
+        )
+
+        # Quick check mode
+        if quick_check:
+            console.print("[yellow]Running quick check (no state capture)...[/yellow]\n")
+            results = agent.quick_check()
+
+            console.print(f"[green]Total Intents:[/green] {results['total_intents']}")
+            console.print(
+                f"[green]High Confidence:[/green] {len(results['high_confidence_intents'])}"
+            )
+            console.print(
+                f"[green]Low Confidence:[/green] {len(results['low_confidence_intents'])}"
+            )
+
+            if results["by_category"]:
+                console.print("\n[bold]By Category:[/bold]")
+                for cat, count in results["by_category"].items():
+                    console.print(f"  - {cat}: {count}")
+
+            return
+
+        # PR analysis
+        if pr:
+            console.print(f"[cyan]Analyzing PR #{pr}...[/cyan]\n")
+            report = agent.analyze_pr(
+                pr_number=pr,
+                api_endpoints=_parse_api_endpoints(api_endpoint),
+                database_configs=_parse_database_configs(database, db_uri, db_user, db_password),
+            )
+        else:
+            # Standard analysis
+            report = agent.analyze(
+                baseline_commit=baseline_commit,
+                target_commit=target_commit,
+                api_endpoints=_parse_api_endpoints(api_endpoint),
+                database_configs=_parse_database_configs(database, db_uri, db_user, db_password),
+                output_path=Path(output) / "SEMANTIC_DRIFT_REPORT.md",
+            )
+
+        # Display summary
+        summary = report.generate_summary()
+
+        console.print("\n[bold]Analysis Summary:[/bold]")
+        console.print(f"  Total Intents: {summary['total_intents_analyzed']}")
+        console.print(f"  Total Drifts: {summary['total_drifts']}")
+
+        if summary["severity_distribution"]["critical"] > 0:
+            console.print(f"  [red]Critical: {summary['severity_distribution']['critical']}[/red]")
+        if summary["severity_distribution"]["high"] > 0:
+            console.print(f"  [yellow]High: {summary['severity_distribution']['high']}[/yellow]")
+
+        # Exit with error if critical issues found
+        if report.has_critical_drifts():
+            console.print("\n[red]🚨 Critical semantic drifts detected![/red]")
+            sys.exit(1)
+        elif summary["total_drifts"] > 0:
+            console.print("\n[yellow]⚠️  Semantic drifts detected - review recommended[/yellow]")
+            sys.exit(0)
+        else:
+            console.print("\n[green]✅ No semantic drift detected[/green]")
+            sys.exit(0)
+
+    except ImportError as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print("\n[yellow]Make sure the semantic analyzer is properly installed.[/yellow]")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
+def _parse_api_endpoints(endpoint_specs: Tuple[str, ...]) -> List[Dict[str, str]]:
+    """Parse API endpoint specifications."""
+    endpoints = []
+    for spec in endpoint_specs:
+        parts = spec.split()
+        if len(parts) >= 2:
+            endpoints.append(
+                {
+                    "method": parts[0].upper(),
+                    "endpoint": parts[1],
+                }
+            )
+    return endpoints
+
+
+def _parse_database_configs(
+    db_type: Optional[str],
+    uri: Optional[str],
+    user: Optional[str],
+    password: Optional[str],
+) -> List[Dict[str, str]]:
+    """Parse database configurations."""
+    if not db_type:
+        return []
+
+    config = {"type": db_type}
+
+    if uri:
+        config["uri"] = uri
+    if user:
+        config["user"] = user
+    if password:
+        config["password"] = password
+
+    return [config]
+
+
+@cli.group()
+def semantic_analyze():
+    """Commands for semantic regression and logic drift detection.
+
+    Provides autonomous semantic analysis to detect logic drift
+    by comparing actual system behavior against intended business intent.
+    """
+    pass
+
+
+@semantic_analyze.command("run")
+@click.argument("directory", default=".", required=False)
+@click.option("--base-url", "-u", help="Base URL for API testing")
+@click.option("--baseline-commit", "-b", help="Baseline git commit")
+@click.option("--target-commit", "-t", help="Target git commit")
+@click.option(
+    "--database-type",
+    "-d",
+    type=click.Choice(["neo4j", "postgresql", "mongodb"]),
+    help="Database type for state capture",
+)
+@click.option("--db-uri", help="Database connection URI")
+@click.option("--db-user", help="Database username")
+@click.option("--db-password", help="Database password")
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    help="Output directory for reports",
+)
+@click.option(
+    "--no-state-capture",
+    is_flag=True,
+    help="Skip state capture (intent extraction only)",
+)
+def semantic_analyze_run(
+    directory: str,
+    base_url: str,
+    baseline_commit: str,
+    target_commit: str,
+    database_type: str,
+    db_uri: str,
+    db_user: str,
+    db_password: str,
+    output: str,
+    no_state_capture: bool,
+):
+    """Run semantic drift analysis.
+
+    Analyzes project documentation and code to extract intent baselines,
+    captures system states, and detects logic drift.
+
+    Examples:
+        e2e semantic-analyze run                    # Analyze current directory
+        e2e semantic-analyze run /path/to/project   # Analyze specific project
+        e2e semantic-analyze run -u http://localhost:8080  # With API testing
+        e2e semantic-analyze run -b HEAD~1 -t HEAD  # Compare commits
+        e2e semantic-analyze run -d neo4j --db-uri bolt://localhost:7687
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n🔍 [bold cyan]Semantic Drift Analysis[/bold cyan]")
+    console.print(f"   Project: {target_path}\n")
+
+    try:
+        from socialseed_e2e.agents.semantic_analyzer import SemanticAnalyzerAgent
+
+        # Initialize agent
+        agent = SemanticAnalyzerAgent(
+            project_root=target_path,
+            base_url=base_url,
+        )
+
+        # Build database configs if provided
+        database_configs = None
+        if database_type:
+            database_configs = [
+                {
+                    "type": database_type,
+                    "uri": db_uri or "",
+                    "user": db_user or "",
+                    "password": db_password or "",
+                }
+            ]
+
+        # Run analysis
+        output_path = Path(output) if output else None
+
+        report = agent.analyze(
+            baseline_commit=baseline_commit or None,
+            target_commit=target_commit or None,
+            capture_states=not no_state_capture,
+            database_configs=database_configs,
+            output_path=output_path,
+        )
+
+        # Display summary
+        console.print("\n" + "=" * 60)
+        console.print("[bold]Analysis Summary:[/bold]")
+        console.print(f"   Report ID: {report.report_id}")
+        console.print(f"   Intents Analyzed: {len(report.intent_baselines)}")
+        console.print(f"   Drifts Detected: {len(report.detected_drifts)}")
+
+        if report.has_critical_drifts():
+            console.print("\n[bold red]🚨 Critical issues found![/bold red]")
+            sys.exit(1)
+        elif report.detected_drifts:
+            console.print("\n[bold yellow]⚠️  Drifts detected - review recommended[/bold yellow]")
+        else:
+            console.print("\n[bold green]✅ No semantic drift detected[/bold green]")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@semantic_analyze.command("intents")
+@click.argument("directory", default=".", required=False)
+@click.option(
+    "--category",
+    "-c",
+    multiple=True,
+    help="Filter by category (can be specified multiple times)",
+)
+@click.option("--json-output", is_flag=True, help="Output as JSON")
+def semantic_analyze_intents(directory: str, category: tuple, json_output: bool):
+    """Extract and display intent baselines.
+
+    Scans documentation, GitHub issues, code comments, and test cases
+    to extract expected system behavior.
+
+    Examples:
+        e2e semantic-analyze intents              # Show all intents
+        e2e semantic-analyze intents -c auth      # Filter by category
+        e2e semantic-analyze intents --json-output
+    """
+    target_path = Path(directory).resolve()
+
+    if not target_path.exists():
+        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        sys.exit(1)
+
+    console.print("\n📚 [bold cyan]Extracting Intent Baselines[/bold cyan]")
+    console.print(f"   Project: {target_path}\n")
+
+    try:
+        from socialseed_e2e.agents.semantic_analyzer import IntentBaselineExtractor
+
+        extractor = IntentBaselineExtractor(target_path)
+        intents = extractor.extract_all()
+
+        # Filter by category if specified
+        if category:
+            intents = [i for i in intents if i.category in category]
+
+        if json_output:
+            import json
+
+            output = [
+                {
+                    "intent_id": i.intent_id,
+                    "description": i.description,
+                    "category": i.category,
+                    "expected_behavior": i.expected_behavior,
+                    "success_criteria": i.success_criteria,
+                    "confidence": i.confidence,
+                }
+                for i in intents
+            ]
+            console.print(json.dumps(output, indent=2))
+        else:
+            # Display as table
+            from rich.table import Table
+
+            table = Table(title=f"Intent Baselines ({len(intents)} found)")
+            table.add_column("ID", style="dim")
+            table.add_column("Category", style="cyan")
+            table.add_column("Description", style="green")
+            table.add_column("Confidence", style="yellow")
+
+            for intent in intents[:50]:  # Limit to 50 for display
+                conf_str = f"{intent.confidence:.0%}"
+                table.add_row(
+                    intent.intent_id[:20] + "..."
+                    if len(intent.intent_id) > 20
+                    else intent.intent_id,
+                    intent.category,
+                    intent.description[:50] + "..."
+                    if len(intent.description) > 50
+                    else intent.description,
+                    conf_str,
+                )
+
+            console.print(table)
+
+            if len(intents) > 50:
+                console.print(f"\n... and {len(intents) - 50} more")
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@semantic_analyze.command("server")
+@click.option("--port", "-p", default=50051, help="gRPC server port")
+@click.option(
+    "--host",
+    "-h",
+    default="0.0.0.0",
+    help="Host to bind the server",
+)
+def semantic_analyze_server(port: int, host: str):
+    """Start the semantic analyzer gRPC server.
+
+    Starts a gRPC server that other agents can query for semantic
+    analysis capabilities.
+
+    Examples:
+        e2e semantic-analyze server              # Start on default port 50051
+        e2e semantic-analyze server -p 50052     # Use custom port
+    """
+    console.print(f"\n🚀 [bold cyan]Starting Semantic Analyzer gRPC Server[/bold cyan]")
+    console.print(f"   Host: {host}")
+    console.print(f"   Port: {port}")
+    console.print("\n   Press Ctrl+C to stop\n")
+
+    try:
+        from socialseed_e2e.agents.semantic_analyzer.grpc_server import SemanticAnalyzerServer
+
+        server = SemanticAnalyzerServer(port=port)
+        server.start()
+        server.wait_for_termination()
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]👋 Server stopped by user[/yellow]")
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()
