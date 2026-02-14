@@ -255,23 +255,44 @@ rm -rf .e2e/dashboard.db
 - [ ] Heatmap de ejecuciones
 - [ ] Collapsible sections mejorado
 
+## 🗺️ Roadmap Completo
+
+Para ver el roadmap detallado del dashboard con todas las features planificadas:
+
+📄 **[DASHBOARD_UI_ROADMAP.md](../../DASHBOARD_UI_ROADMAP.md)**
+
+Este documento incluye:
+- 31 issues bien definidas para el dashboard
+- Priorización (Critical/High/Medium/Low)
+- Versiones planificadas (v0.2.0 a v1.0.0)
+- Guía de contribución específica
+
+**⚠️ Nota:** Este roadmap es **solo para el componente Dashboard UI**. El roadmap del framework core se maneja vía GitHub issues con label `area:core`.
+
 ## 🤝 Contribuir
 
 Para extender el dashboard:
 
-1. Crear nuevo componente en `components/`
-2. Importar en `app.py`
-3. Agregar al layout principal
-4. Documentar en este README
+1. Revisa el [DASHBOARD_UI_ROADMAP.md](../../DASHBOARD_UI_ROADMAP.md)
+2. Elige una issue abierta o propón una nueva
+3. Crear nuevo componente en `components/`
+4. Importar en `app.py`
+5. Agregar al layout principal
+6. Documentar en este README
+
+**Recuerda:** El dashboard es un componente opcional. El core CLI tiene prioridad.
 
 ## 📚 Recursos
 
 - [Streamlit Documentation](https://docs.streamlit.io/)
 - [Component Gallery](https://streamlit.io/components)
 - [Customization Guide](https://docs.streamlit.io/library/advanced-features/configuration)
+- [Dashboard Roadmap](../../DASHBOARD_UI_ROADMAP.md)
 
 ---
 
 **Versión:** 1.0.0  
 **Última actualización:** 2026-02-14  
+**Área:** Dashboard UI  
+**Ubicación:** `src/socialseed_e2e/dashboard/`  
 **Mantenido por:** SocialSeed E2E Team
