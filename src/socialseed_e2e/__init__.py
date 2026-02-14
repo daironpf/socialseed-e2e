@@ -95,7 +95,11 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
+    from socialseed_e2e.core.base_grpc_page import (
+        BaseGrpcPage,
+        GrpcCallLog,
+        GrpcRetryConfig,
+    )
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -228,6 +232,12 @@ from socialseed_e2e.ai_learning import (
     TestFeedback,
     TrainingData,
 )
+
+# Dashboard (optional dependency)
+try:
+    from socialseed_e2e.dashboard.server import DashboardServer
+except ImportError:
+    pass
 
 # Core - Interactive Doctor
 from socialseed_e2e.core.interactive_doctor import (
@@ -462,4 +472,6 @@ __all__ = [
     "LearningMetrics",
     "AdaptationEngine",
     "AdaptationStrategy",
+    # Dashboard
+    "DashboardServer",
 ]
