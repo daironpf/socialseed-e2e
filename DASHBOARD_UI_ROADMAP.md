@@ -1,20 +1,53 @@
-# 🗺️ SocialSeed E2E - Roadmap y Planificación
+# 🎛️ DASHBOARD & UI - Roadmap Específico
 
-Este documento define el roadmap futuro del proyecto y las issues propuestas para su implementación.
+**⚠️ NOTA IMPORTANTE:** Este roadmap es **ESPECÍFICO para el Dashboard Web UI** de SocialSeed E2E. No representa el roadmap completo del proyecto.
 
-## 📋 Índice
+## 🎯 Contexto y Alcance
 
-1. [Dashboard y UI (Alta Prioridad)](#1-dashboard-y-ui-alta-prioridad)
-2. [Testing Avanzado](#2-testing-avanzado)
-3. [Integraciones y Extensibilidad](#3-integraciones-y-extensibilidad)
-4. [Performance y Escalabilidad](#4-performance-y-escalabilidad)
-5. [Seguridad y Cumplimiento](#5-seguridad-y-cumplimiento)
-6. [Experiencia de Desarrollador](#6-experiencia-de-desarrollador)
-7. [Documentación y Comunidad](#7-documentación-y-comunidad)
+### 📍 Ubicación del Código
+```
+src/socialseed_e2e/dashboard/
+├── __init__.py         # Exporta DashboardServer
+├── app.py              # Aplicación Streamlit principal
+├── server.py           # Gestión del servidor
+└── README.md           # Documentación
+```
+
+### 🧬 Núcleo del Proyecto
+**SocialSeed E2E es fundamentalmente un framework CLI diseñado para AGENTES DE IA.**
+
+- **Interfaz Principal:** Línea de comandos (CLI)
+- **Público Objetivo Principal:** Agentes de IA y desarrolladores técnicos
+- **Filosofía:** Testing E2E automatizado, generación automática de tests, integración CI/CD
+
+### 👥 Propósito del Dashboard Web
+El dashboard web es una **funcionalidad adicional opcional** diseñada para:
+- **Desarrolladores humanos** que prefieren interfaces visuales
+- **Debugging manual** de tests
+- **Exploración visual** de la suite de tests
+- **Demos y presentaciones** a stakeholders no técnicos
+
+**NO es el método principal de uso del framework.**
 
 ---
 
-## 1. Dashboard y UI (Alta Prioridad)
+## 📋 Índice de Mejoras del Dashboard
+
+1. [Dashboard y UI (Alta Prioridad)](#1-dashboard-y-ui-alta-prioridad)
+2. [Testing Avanzado vía UI](#2-testing-avanzado-vía-ui)
+3. [Integraciones del Dashboard](#3-integraciones-del-dashboard)
+4. [Performance de la UI](#4-performance-de-la-ui)
+5. [Seguridad en el Dashboard](#5-seguridad-en-el-dashboard)
+6. [Mejoras UX para Desarrolladores](#6-mejoras-ux-para-desarrolladores)
+7. [Documentación Visual](#7-documentación-visual)
+
+---
+
+## 1. Funcionalidades Core del Dashboard (Alta Prioridad)
+
+> **Área:** `src/socialseed_e2e/dashboard/`
+> 
+> Mejoras fundamentales para la interfaz web del dashboard.
 
 ### Issue #135: Dashboard Dark Mode
 **Prioridad:** 🟡 Medium  
@@ -116,7 +149,13 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 2. Testing Avanzado
+## 2. Testing Avanzado vía UI
+
+> **Área:** `src/socialseed_e2e/dashboard/`
+> 
+> Capacidades de testing avanzadas expuestas a través de la interfaz web.
+> 
+> **Nota:** Estas funcionalidades son wrappers UI sobre capacidades del core CLI.
 
 ### Issue #140: Visual Regression Testing
 **Prioridad:** 🔴 High  
@@ -218,7 +257,13 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 3. Integraciones y Extensibilidad
+## 3. Integraciones del Dashboard
+
+> **Área:** `src/socialseed_e2e/dashboard/`  
+> 
+> Integraciones externas específicas para el dashboard web.
+>
+> **Nota:** Las integraciones core del framework (CI/CD, reportes) se manejan vía CLI.
 
 ### Issue #145: OpenAPI/Swagger Import
 **Prioridad:** 🔴 High  
@@ -320,7 +365,13 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 4. Performance y Escalabilidad
+## 4. Performance de la UI
+
+> **Área:** `src/socialseed_e2e/dashboard/`
+>
+> Optimizaciones de performance específicas para la interfaz web.
+>
+> **Nota:** La performance del framework de testing es responsabilidad del core CLI.
 
 ### Issue #150: Distributed Test Execution
 **Prioridad:** 🔴 High  
@@ -402,7 +453,13 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 5. Seguridad y Cumplimiento
+## 5. Seguridad en el Dashboard
+
+> **Área:** `src/socialseed_e2e/dashboard/`
+>
+> Medidas de seguridad específicas para el dashboard web.
+>
+> **Nota:** La seguridad del framework core (manejo de secrets, autenticación de servicios) se maneja vía CLI.
 
 ### Issue #154: Secrets Management
 **Prioridad:** 🔴 Critical  
@@ -464,7 +521,13 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 6. Experiencia de Desarrollador
+## 6. Mejoras UX para Desarrolladores
+
+> **Área:** `src/socialseed_e2e/dashboard/`
+>
+> Mejoras de experiencia de usuario para desarrolladores humanos usando el dashboard.
+>
+> **Nota:** La experiencia de desarrollador para agentes de IA se optimiza vía CLI y documentación técnica.
 
 ### Issue #157: VS Code Extension
 **Prioridad:** 🔴 High  
@@ -566,7 +629,13 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 7. Documentación y Comunidad
+## 7. Documentación Visual
+
+> **Área:** `docs/` y `src/socialseed_e2e/dashboard/`
+>
+> Recursos de documentación enfocados en el uso del dashboard web.
+>
+> **Nota:** La documentación técnica del framework core está optimizada para agentes de IA.
 
 ### Issue #162: Interactive Documentation
 **Prioridad:** 🟡 Medium  
@@ -648,36 +717,29 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 📊 Priorización
+## 📊 Priorización del Dashboard
 
-### 🔴 Critical (MVP)
-- #154 Secrets Management
-- #160 Debug Mode
-- #161 AI Test Assistant
+### 🔴 Critical (Para estabilidad del dashboard)
+- #154 Secrets Management (credenciales en UI)
+- #155 RBAC and Authentication (acceso seguro)
+- #160 Debug Mode (desde el dashboard)
 
-### 🔴 High (Next Quarter)
-- #136 Test Suite Management
-- #140 Visual Regression Testing
-- #141 Contract Testing
-- #145 OpenAPI Import
-- #146 Postman Import
-- #150 Distributed Execution
-- #151 Parallelization v2
-- #155 RBAC and Auth
-- #157 VS Code Extension
+### 🔴 High (Mejoras importantes UX)
+- #136 Test Suite Management (core feature)
+- #137 Result Comparison View (debugging visual)
+- #139 Real-time Collaboration (equipos)
+- #145 OpenAPI Import (onboarding rápido)
+- #146 Postman Collection Import (migración)
+- #155 RBAC and Auth (multi-usuario)
+- #157 VS Code Extension (integración IDE)
 
-### 🟡 Medium (This Year)
-- #135 Dark Mode
-- #137 Result Comparison
-- #142 Chaos Engineering
-- #143 Property-Based Testing
-- #148 Slack Integration
-- #149 Jira Integration
-- #152 Performance Metrics
-- #162 Interactive Docs
-- #163 Video Tutorials
+### 🟡 Medium (Mejoras de experiencia)
+- #135 Dark Mode (accesibilidad)
+- #140 Visual Regression Testing (UI testing)
+- #148 Slack Integration (notificaciones)
+- #152 Performance Metrics (monitoreo)
 
-### 🟢 Low (Backlog)
+### 🟢 Low (Nice-to-have)
 - #138 Keyboard Shortcuts
 - #144 Mutation Testing
 - #153 Caching Layer
@@ -688,47 +750,105 @@ Este documento define el roadmap futuro del proyecto y las issues propuestas par
 
 ---
 
-## 🎯 Metas de Lanzamiento
+## 🎯 Metas de Lanzamiento del Dashboard
 
-### v0.2.0 - Dashboard Improvements
-- [ ] #135 Dark Mode
-- [ ] #136 Test Suite Management
-- [ ] #139 Real-time Collaboration
+> **Nota:** Estas versiones son específicas para el módulo `dashboard/`.  
+> El framework core tiene su propio ciclo de versiones independiente.
 
-### v0.3.0 - Advanced Testing
-- [ ] #140 Visual Regression
-- [ ] #141 Contract Testing
-- [ ] #142 Chaos Engineering
-
-### v0.4.0 - Enterprise Features
-- [ ] #150 Distributed Execution
+### Dashboard v0.2.0 - Mejoras Fundamentales
+**Focus:** Estabilidad y funcionalidad core
+- [ ] #136 Test Suite Management (feature principal)
+- [ ] #137 Result Comparison View
 - [ ] #154 Secrets Management
-- [ ] #155 RBAC
+- [ ] #155 RBAC and Authentication
 
-### v1.0.0 - Stable Release
-- [ ] Todas las features Critical y High
-- [ ] Documentación completa
-- [ ] Certificación GA
+### Dashboard v0.3.0 - Testing Avanzado
+**Focus:** Capacidades de testing desde UI
+- [ ] #140 Visual Regression Testing
+- [ ] #145 OpenAPI Import
+- [ ] #146 Postman Collection Import
+- [ ] #160 Debug Mode
+
+### Dashboard v0.4.0 - Enterprise
+**Focus:** Multi-usuario y colaboración
+- [ ] #139 Real-time Collaboration
+- [ ] #148 Slack Integration
+- [ ] #157 VS Code Extension
+- [ ] Performance optimizations
+
+### Dashboard v1.0.0 - Producción
+**Focus:** Ready for production use
+- [ ] Todas las features Critical y High implementadas
+- [ ] Documentación visual completa
+- [ ] Testing de seguridad (pentest)
+- [ ] GA (General Availability)
 
 ---
 
-## 🤝 Cómo Contribuir
+## 🤝 Cómo Contribuir al Dashboard
 
-1. **Elige una issue** del roadmap
+1. **Elige una issue** de este roadmap específico
 2. **Comenta en la issue** para asignación
-3. **Crea un PR** siguiendo las guidelines
-4. **Revisión** por mantenedores
-5. **Merge** y celebración 🎉
+3. **Trabaja en** `src/socialseed_e2e/dashboard/`
+4. **Crea un PR** siguiendo las guidelines
+5. **Revisión** por mantenedores
+6. **Merge** y celebración 🎉
 
-## 📝 Notas
+**Recuerda:** Este es un componente opcional. El core CLI (`src/socialseed_e2e/core/`) siempre tiene prioridad.
 
-- Este roadmap es vivo y evoluciona con el proyecto
-- Las prioridades pueden cambiar basadas en feedback de usuarios
-- Las fechas son estimaciones sujetas a cambios
-- Cualquier miembro de la comunidad puede proponer nuevas features
+---
+
+## 📝 Notas Importantes
+
+### ⚠️ Scope Delimitado
+- Este roadmap **solo cubre el dashboard web UI**
+- No incluye mejoras al core CLI
+- No incluye funcionalidades de agentes de IA
+- Es un complemento visual, no el producto principal
+
+### 🔄 Relación con el Core
+- El dashboard **consume** la API del core
+- No implementa lógica de testing propia
+- Es un "cliente" del framework
+- Las mejoras al core benefician al dashboard automáticamente
+
+### 👥 Audiencias Diferentes
+- **Dashboard:** Desarrolladores humanos, demos, debugging
+- **CLI:** Agentes de IA, CI/CD, automatización
+- Ambos son válidos y se mantienen en paralelo
+
+### 📚 Recursos
+- **Código del dashboard:** `src/socialseed_e2e/dashboard/`
+- **Documentación:** `src/socialseed_e2e/dashboard/README.md`
+- **Issues:** Buscar label `area:dashboard`
+
+---
+
+## 🌱 Contexto: SocialSeed E2E
+
+Este roadmap cubre **solo una parte** del proyecto SocialSeed E2E:
+
+### 🎯 Proyecto Completo
+- **Core:** Framework CLI para testing E2E de APIs
+- **Audiencia Principal:** Agentes de IA y desarrolladores técnicos
+- **Interfaz Principal:** Línea de comandos (CLI)
+- **Casos de Uso:** CI/CD, automatización, generación automática de tests
+
+### 🎛️ Dashboard (Este roadmap)
+- **Componente:** Interfaz web opcional
+- **Audiencia:** Desarrolladores humanos, demos, debugging
+- **Ubicación:** `src/socialseed_e2e/dashboard/`
+- **Estado:** Funcionalidad adicional, no core
+
+### 📖 Otros Roadmaps
+- **Roadmap Core CLI:** Ver issues con label `area:core`
+- **Roadmap Playground:** `playground/` (ejemplos educativos)
+- **Roadmap Manifest:** `project_manifest/` (AI features)
 
 ---
 
 **Última actualización:** 2026-02-14  
+**Área:** Dashboard UI  
+**Ubicación:** `src/socialseed_e2e/dashboard/`  
 **Mantenido por:** SocialSeed E2E Team  
-**Discusiones:** [GitHub Discussions](https://github.com/daironpf/socialseed-e2e/discussions)
+**Discusiones:** [GitHub Discussions - Dashboard](https://github.com/daironpf/socialseed-e2e/discussions)
