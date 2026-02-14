@@ -1,0 +1,203 @@
+syntax = "proto3";
+
+package semantic_analyzer;
+
+option go_package = "github.com/socialseed-e2e/agents/semantic_analyzer/proto";
+option python_package = "socialseed_e2e.agents.semantic_analyzer.proto";
+
+// Semantic Analyzer Service
+service SemanticAnalyzer {
+  // Run complete semantic drift analysis
+  rpc Analyze(AnalyzeRequest) returns (AnalyzeResponse);
+  
+  // Extract intent baselines only
+  rpc ExtractIntents(ExtractIntentsRequest) returns (ExtractIntentsResponse);
+  
+  // Capture state snapshots
+  rpc CaptureState(CaptureStateRequest) returns (CaptureStateResponse);
+  
+  // Detect drift between states
+  rpc DetectDrift(DetectDriftRequest) returns (DetectDriftResponse);
+  
+  // Get analysis status
+  rpc GetAnalysisStatus(StatusRequest) returns (StatusResponse);
+  
+  // Stream analysis progress
+  rpc StreamAnalysisProgress(StreamRequest) returns (stream ProgressUpdate);
+}
+
+// Request messages
+message AnalyzeRequest {
+  string project_root = 1;
+  string project_name = 2;
+  string baseline_commit = 3;
+  string target_commit = 4;
+  string base_url = 5;
+  repeated ApiEndpoint api_endpoints = 6;
+  repeated DatabaseConfig database_configs = 7;
+  bool capture_states = 8;
+  string output_path = 9;
+}
+
+message ExtractIntentsRequest {
+  string project_root = 1;
+  repeated string categories = 2;
+}
+
+message CaptureStateRequest {
+  string project_root = 1;
+  string snapshot_id = 2;
+  string commit_hash = 3;
+  string branch = 4;
+  repeated ApiEndpoint api_endpoints = 5;
+  repeated DatabaseConfig database_configs = 6;
+}
+
+message DetectDriftRequest {
+  string baseline_snapshot_id = 1;
+  string current_snapshot_id = 2;
+  string code_diff = 3;
+}
+
+message StatusRequest {
+  string analysis_id = 1;
+}
+
+message StreamRequest {
+  string analysis_id = 1;
+}
+
+// Configuration messages
+message ApiEndpoint {
+  string endpoint = 1;
+  string method = 2;
+  map<string, string> params = 3;
+  string body = 4;
+  map<string, string> headers = 5;
+}
+
+message DatabaseConfig {
+  string database_type = 1;  // "neo4j", "postgresql", "mongodb", etc.
+  string connection_string = 2;
+  string uri = 3;
+  string user = 4;
+  string password = 5;
+  string database = 6;
+}
+
+// Response messages
+message AnalyzeResponse {
+  string report_id = 1;
+  string report_path = 2;
+  string json_path = 3;
+  AnalysisSummary summary = 4;
+  bool success = 5;
+  string error_message = 6;
+}
+
+message ExtractIntentsResponse {
+  repeated IntentBaseline intents = 1;
+  int32 total_count = 2;
+  bool success = 3;
+  string error_message = 4;
+}
+
+message CaptureStateResponse {
+  string snapshot_id = 1;
+  int32 api_snapshot_count = 2;
+  int32 database_snapshot_count = 3;
+  bool success = 4;
+  string error_message = 5;
+}
+
+message DetectDriftResponse {
+  repeated LogicDrift drifts = 1;
+  int32 total_drifts = 2;
+  bool has_critical_drifts = 3;
+  bool success = 4;
+  string error_message = 5;
+}
+
+message StatusResponse {
+  string analysis_id = 1;
+  AnalysisStatus status = 2;
+  string current_step = 3;
+  float progress_percent = 4;
+  string message = 5;
+}
+
+message ProgressUpdate {
+  string analysis_id = 1;
+  AnalysisStatus status = 2;
+  string step = 3;
+  float progress_percent = 4;
+  string message = 5;
+  int64 timestamp = 6;
+}
+
+// Data model messages
+message IntentBaseline {
+  string intent_id = 1;
+  string description = 2;
+  string category = 3;
+  string expected_behavior = 4;
+  repeated string success_criteria = 5;
+  repeated string related_entities = 6;
+  repeated string preconditions = 7;
+  repeated string postconditions = 8;
+  repeated IntentSource sources = 9;
+  float confidence = 10;
+}
+
+message IntentSource {
+  string source_type = 1;
+  string source_path = 2;
+  int32 line_number = 3;
+  string url = 4;
+  string title = 5;
+  string content = 6;
+  int64 extracted_at = 7;
+}
+
+message LogicDrift {
+  string drift_id = 1;
+  string drift_type = 2;  // BEHAVIORAL, RELATIONSHIP, etc.
+  string severity = 3;    // CRITICAL, HIGH, MEDIUM, LOW, INFO
+  string intent_id = 4;
+  string intent_description = 5;
+  string description = 6;
+  string reasoning = 7;
+  string recommendation = 8;
+  float confidence = 9;
+  repeated string affected_endpoints = 10;
+  repeated string affected_entities = 11;
+  repeated DriftEvidence evidence = 12;
+  int64 detected_at = 13;
+}
+
+message DriftEvidence {
+  string key = 1;
+  string value = 2;
+  string type = 3;  // "json", "text", "diff"
+}
+
+message AnalysisSummary {
+  int32 total_drifts = 1;
+  int32 total_intents = 2;
+  bool has_critical_issues = 3;
+  map<string, int32> severity_distribution = 4;
+  map<string, int32> type_distribution = 5;
+}
+
+// Enums
+enum AnalysisStatus {
+  PENDING = 0;
+  EXTRACTING_INTENTS = 1;
+  CAPTURING_BASELINE = 2;
+  CAPTURING_CURRENT = 3;
+  DETECTING_DRIFT = 4;
+  GENERATING_REPORT = 5;
+  COMPLETED = 6;
+  FAILED = 7;
+  CANCELLED = 8;
+}
