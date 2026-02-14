@@ -6313,6 +6313,377 @@ def red_team_logs(session: str, attack_type: str, winning: bool):
         sys.exit(1)
 
 
+@cli.group()
+def telemetry():
+    """Commands for token-centric performance testing and cost optimization.
+
+    Monitors LLM token usage, detects cost regressions, identifies
+    reasoning loops, and provides optimization recommendations.
+    """
+    pass
+
+
+@telemetry.command("monitor")
+@click.option(
+    "--output",
+    "-o",
+    default="telemetry",
+    help="Output directory for reports",
+)
+@click.option(
+    "--baseline",
+    "-b",
+    help="Path to baseline file for regression comparison",
+)
+@click.option(
+    "--threshold",
+    "-t",
+    default=15.0,
+    help="Cost regression threshold percentage",
+)
+@click.option(
+    "--budget",
+    type=float,
+    help="Max token budget in USD",
+)
+def telemetry_monitor(output: str, baseline: str, threshold: float, budget: float):
+    """Start monitoring LLM calls for cost and performance.
+
+    Intercepts LLM calls to track tokens, latency, and costs.
+    Generates COST_EFFICIENCY_REPORT.json after execution.
+
+    Examples:
+        e2e telemetry monitor                    # Start monitoring
+        e2e telemetry monitor -b baseline.json   # Compare with baseline
+        e2e telemetry monitor --budget 10.0      # Set $10 budget
+    """
+    from socialseed_e2e.telemetry import TelemetryManager, TokenMonitorConfig
+
+    console.print("\n📊 [bold cyan]Token Telemetry Monitor[/bold cyan]")
+    console.print("   Tracking LLM calls for cost optimization...\n")
+
+    try:
+        # Configure telemetry
+        config = TokenMonitorConfig(
+            report_output_dir=output,
+            baseline_file=baseline,
+            regression_threshold_percentage=threshold,
+        )
+
+        if budget:
+            config.global_budget_enabled = True
+            config.global_max_cost_usd = budget
+
+        # Create manager and start session
+        manager = TelemetryManager(config)
+        manager.start_session()
+
+        console.print("✅ Telemetry session started")
+        console.print(f"   Output directory: {output}")
+        if baseline:
+            console.print(f"   Baseline: {baseline}")
+        console.print(f"   Regression threshold: {threshold}%")
+        if budget:
+            console.print(f"   Budget: ${budget:.2f}")
+        console.print("\n   Press Ctrl+C to stop and generate report\n")
+
+        # Keep running until interrupted
+        import time
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+
+        # End session and generate report
+        console.print("\n📝 Generating report...")
+        report = manager.end_session()
+
+        # Display summary
+        console.print("\n" + "=" * 60)
+        console.print("[bold]Telemetry Report Summary[/bold]")
+        console.print(f"   Report ID: {report.report_id}")
+        console.print(f"   Total Calls: {report.total_llm_calls}")
+        console.print(f"   Total Tokens: {report.total_tokens:,}")
+        console.print(f"   Total Cost: ${report.total_cost_usd:.4f}")
+        console.print(f"   Health Score: {report.health_score}/100")
+        console.print(f"   Status: {report.status.upper()}")
+
+        if report.reasoning_loops:
+            console.print(
+                f"\n[bold yellow]⚠️  {len(report.reasoning_loops)} reasoning loop(s) detected[/bold yellow]"
+            )
+
+        if report.cost_regressions:
+            console.print(
+                f"\n[bold red]🚨 {len(report.cost_regressions)} cost regression(s) detected[/bold red]"
+            )
+            console.print(manager.get_ci_message())
+
+        if report.optimization_recommendations:
+            console.print(
+                f"\n[bold green]💡 {len(report.optimization_recommendations)} optimization recommendation(s)[/bold green]"
+            )
+
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@telemetry.command("baseline")
+@click.option(
+    "--output",
+    "-o",
+    default="telemetry/cost_baseline.json",
+    help="Output path for baseline file",
+)
+@click.option(
+    "--reset",
+    is_flag=True,
+    help="Reset existing baseline",
+)
+def telemetry_baseline(output: str, reset: bool):
+    """Save current metrics as cost baseline.
+
+    Creates a baseline for cost regression detection.
+
+    Examples:
+        e2e telemetry baseline              # Save baseline
+        e2e telemetry baseline --reset      # Reset and create new
+    """
+    from socialseed_e2e.telemetry import CostRegressionDetector
+
+    console.print("\n📊 [bold cyan]Cost Baseline Management[/bold cyan]\n")
+
+    try:
+        detector = CostRegressionDetector(
+            baseline_file=output,
+        )
+
+        if reset and detector.baseline_file.exists():
+            detector.reset_baseline()
+            console.print(f"✅ Baseline reset: {output}")
+        elif detector.baseline_file.exists():
+            info = detector.get_baseline_info()
+            if info:
+                console.print(f"[yellow]Baseline already exists:[/yellow] {output}")
+                console.print(f"   Created: {info.get('created_at')}")
+                console.print(f"   Test cases: {info.get('test_cases')}")
+                console.print(f"   Total cost: ${info.get('total_cost_usd', 0):.4f}")
+                console.print("\nUse --reset to overwrite")
+        else:
+            console.print(f"ℹ️  No baseline found at: {output}")
+            console.print("   Run tests with telemetry to create a baseline")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@telemetry.command("report")
+@click.argument("report_file", required=False)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["json", "markdown"]),
+    default="json",
+    help="Output format",
+)
+def telemetry_report(report_file: str, format: str):
+    """View or convert telemetry report.
+
+    Displays COST_EFFICIENCY_REPORT.json contents or converts to markdown.
+
+    Examples:
+        e2e telemetry report                              # Latest report
+        e2e telemetry report telemetry/report.json        # Specific file
+        e2e telemetry report -f markdown > report.md      # Convert to MD
+    """
+    import json
+    from pathlib import Path
+
+    console.print("\n📊 [bold cyan]Telemetry Report[/bold cyan]\n")
+
+    try:
+        # Find report file
+        if not report_file:
+            telemetry_dir = Path("telemetry")
+            if telemetry_dir.exists():
+                reports = sorted(
+                    telemetry_dir.glob("COST_EFFICIENCY_REPORT_*.json"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                )
+                if reports:
+                    report_file = str(reports[0])
+
+        if not report_file or not Path(report_file).exists():
+            console.print("[red]❌ Error:[/red] No report file found")
+            console.print("   Run 'e2e telemetry monitor' first or specify a file")
+            sys.exit(1)
+
+        # Load report
+        with open(report_file, "r") as f:
+            report_data = json.load(f)
+
+        if format == "json":
+            console.print(json.dumps(report_data, indent=2))
+        else:
+            # Generate markdown
+            from socialseed_e2e.telemetry import CostEfficiencyReport
+            from socialseed_e2e.telemetry.report_generator import ReportGenerator
+
+            report = CostEfficiencyReport(**report_data)
+            generator = ReportGenerator()
+            markdown = generator.generate_markdown_report(report)
+            console.print(markdown)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@telemetry.command("budget")
+@click.argument("action", type=click.Choice(["create", "status", "list"]))
+@click.option(
+    "--name",
+    "-n",
+    help="Budget name",
+)
+@click.option(
+    "--scope",
+    "-s",
+    type=click.Choice(["global", "issue", "task", "test_case", "agent"]),
+    help="Budget scope type",
+)
+@click.option(
+    "--scope-id",
+    help="Scope ID (e.g., issue #123)",
+)
+@click.option(
+    "--max-cost",
+    type=float,
+    help="Maximum cost in USD",
+)
+@click.option(
+    "--max-tokens",
+    type=int,
+    help="Maximum total tokens",
+)
+@click.option(
+    "--on-breach",
+    type=click.Choice(["warn", "block", "alert"]),
+    default="warn",
+    help="Action on budget breach",
+)
+def telemetry_budget(
+    action: str,
+    name: str,
+    scope: str,
+    scope_id: str,
+    max_cost: float,
+    max_tokens: int,
+    on_breach: str,
+):
+    """Manage token budgets.
+
+    Create and monitor budgets to prevent runaway costs.
+
+    Examples:
+        e2e telemetry budget create -n "Issue #165" -s issue --scope-id 165 --max-cost 5.0
+        e2e telemetry budget status
+        e2e telemetry budget list
+    """
+    from socialseed_e2e.telemetry import BudgetManager
+
+    console.print("\n💰 [bold cyan]Token Budget Management[/bold cyan]\n")
+
+    try:
+        manager = BudgetManager()
+
+        if action == "create":
+            if not name or not scope:
+                console.print("[red]❌ Error:[/red] --name and --scope are required")
+                sys.exit(1)
+
+            budget = manager.create_budget(
+                name=name,
+                scope_type=scope,
+                scope_id=scope_id,
+                max_cost_usd=max_cost,
+                max_total_tokens=max_tokens,
+                on_budget_breach=on_breach,
+            )
+
+            console.print(f"✅ Budget created: {budget.budget_id}")
+            console.print(f"   Name: {name}")
+            console.print(f"   Scope: {scope}:{scope_id or 'all'}")
+            if max_cost:
+                console.print(f"   Max cost: ${max_cost:.2f}")
+            if max_tokens:
+                console.print(f"   Max tokens: {max_tokens:,}")
+            console.print(f"   On breach: {on_breach}")
+
+        elif action == "status":
+            statuses = manager.get_all_budgets_status()
+
+            if not statuses:
+                console.print("ℹ️  No active budgets")
+            else:
+                from rich.table import Table
+
+                table = Table(title="Token Budgets")
+                table.add_column("Budget", style="cyan")
+                table.add_column("Scope", style="green")
+                table.add_column("Usage", style="yellow")
+                table.add_column("Limit", style="red")
+                table.add_column("Status", style="bold")
+
+                for status in statuses:
+                    budget_name = status["name"]
+                    scope_str = status["scope"]
+                    usage = f"${status['usage']['cost_usd']:.2f} / {status['usage']['total_tokens']:,}t"
+                    limit = ""
+                    if status["limits"]["max_cost_usd"]:
+                        limit += f"${status['limits']['max_cost_usd']:.2f} "
+                    if status["limits"]["max_total_tokens"]:
+                        limit += f"{status['limits']['max_total_tokens']:,}t"
+
+                    if status["breached"]:
+                        status_str = "[red]BREACHED[/red]"
+                    else:
+                        pct = (
+                            status["percentages"]["cost"]
+                            or status["percentages"]["total"]
+                            or 0
+                        )
+                        if pct > 80:
+                            status_str = f"[yellow]{pct:.0f}%[/yellow]"
+                        else:
+                            status_str = f"[green]{pct:.0f}%[/green]"
+
+                    table.add_row(budget_name, scope_str, usage, limit, status_str)
+
+                console.print(table)
+
+        elif action == "list":
+            budgets = list(manager.budgets.values())
+
+            if not budgets:
+                console.print("ℹ️  No budgets defined")
+            else:
+                for budget in budgets:
+                    status = "🟢 Active" if budget.is_active else "🔴 Inactive"
+                    console.print(f"{budget.budget_id}: {budget.name} ({status})")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
 def main():
     """Entry point for the CLI."""
     cli()
