@@ -2,6 +2,7 @@
 Feedback collection system for AI learning.
 Collects test execution results, user corrections, and patterns for learning.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -79,6 +80,8 @@ class FeedbackCollector:
             self._feedback_cache.pop(0)
 
         # Persist to disk (JSONL format for streaming)
+        # Ensure directory exists (it might have been deleted if running in temp dirs)
+        self.storage_path.mkdir(parents=True, exist_ok=True)
         with open(self.feedback_file, "a") as f:
             feedback_dict = feedback.model_dump()
             # Convert datetime to ISO format
@@ -86,7 +89,9 @@ class FeedbackCollector:
                 feedback_dict["timestamp"] = feedback_dict["timestamp"].isoformat()
             f.write(json.dumps(feedback_dict) + "\n")
 
-        logger.info(f"Collected feedback: {feedback.feedback_type} for {feedback.test_name}")
+        logger.info(
+            f"Collected feedback: {feedback.feedback_type} for {feedback.test_name}"
+        )
 
     def collect_test_result(
         self,
@@ -100,7 +105,9 @@ class FeedbackCollector:
         """Convenience method to collect test execution results."""
         feedback = TestFeedback(
             feedback_id=f"{test_name}_{datetime.now().timestamp()}",
-            feedback_type=FeedbackType.TEST_SUCCESS if success else FeedbackType.TEST_FAILURE,
+            feedback_type=FeedbackType.TEST_SUCCESS
+            if success
+            else FeedbackType.TEST_FAILURE,
             test_name=test_name,
             execution_time=execution_time,
             error_message=error_message,
@@ -156,13 +163,19 @@ class FeedbackCollector:
         # Calculate success rate
         successes = type_counts.get(FeedbackType.TEST_SUCCESS.value, 0)
         failures = type_counts.get(FeedbackType.TEST_FAILURE.value, 0)
-        success_rate = successes / (successes + failures) if (successes + failures) > 0 else 0
+        success_rate = (
+            successes / (successes + failures) if (successes + failures) > 0 else 0
+        )
 
         # Average execution time
         execution_times = [
-            f.execution_time for f in self._feedback_cache if f.execution_time is not None
+            f.execution_time
+            for f in self._feedback_cache
+            if f.execution_time is not None
         ]
-        avg_execution_time = sum(execution_times) / len(execution_times) if execution_times else 0
+        avg_execution_time = (
+            sum(execution_times) / len(execution_times) if execution_times else 0
+        )
 
         # Most common errors
         error_counts: Dict[str, int] = {}
