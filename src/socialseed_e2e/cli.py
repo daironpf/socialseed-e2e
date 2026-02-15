@@ -22,6 +22,97 @@ from socialseed_e2e.utils import TemplateEngine, to_class_name, to_snake_case
 
 console = Console()
 
+# Map of extra dependencies for better error messages
+EXTRA_DEPENDENCIES = {
+    "tui": {
+        "packages": ["textual>=0.41.0"],
+        "pip_extra": "tui",
+        "description": "Terminal User Interface",
+    },
+    "rag": {
+        "packages": ["sentence-transformers>=2.2.0", "numpy>=1.24.0"],
+        "pip_extra": "rag",
+        "description": "Semantic search and RAG features",
+    },
+    "grpc": {
+        "packages": ["grpcio>=1.59.0", "grpcio-tools>=1.59.0", "protobuf>=4.24.0"],
+        "pip_extra": "grpc",
+        "description": "gRPC protocol support",
+    },
+    "full": {
+        "packages": [],  # Special case - installs all extras
+        "pip_extra": "tui,rag,grpc,test-data",
+        "description": "All optional features",
+    },
+}
+
+
+def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool:
+    """Check if extra dependencies are installed, optionally install them.
+
+    Args:
+        extra_name: Name of the extra (tui, rag, grpc, etc.)
+        auto_install: If True, automatically install missing dependencies
+
+    Returns:
+        True if dependencies are available, False otherwise
+    """
+    if extra_name not in EXTRA_DEPENDENCIES:
+        console.print(f"[red]❌ Unknown extra: {extra_name}[/red]")
+        return False
+
+    extra_info = EXTRA_DEPENDENCIES[extra_name]
+
+    # Try to import a module specific to this extra to check if it's installed
+    test_modules = {
+        "tui": "textual",
+        "rag": "sentence_transformers",
+        "grpc": "grpc",
+    }
+
+    if extra_name in test_modules:
+        try:
+            __import__(test_modules[extra_name])
+            return True
+        except ImportError:
+            pass
+    elif extra_name == "full":
+        # For full, check if all main extras are installed
+        all_installed = all(
+            check_and_install_extra(name) for name in ["tui", "rag", "grpc"]
+        )
+        return all_installed
+
+    if auto_install:
+        console.print(f"[yellow]📦 Installing {extra_info['description']}...[/yellow]")
+        pip_extra = extra_info["pip_extra"]
+        cmd = [sys.executable, "-m", "pip", "install", f"socialseed-e2e[{pip_extra}]"]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                console.print(
+                    f"[green]✅ {extra_info['description']} installed successfully![/green]"
+                )
+                return True
+            else:
+                console.print(f"[red]❌ Installation failed:[/red] {result.stderr}")
+                return False
+        except Exception as e:
+            console.print(f"[red]❌ Installation error:[/red] {e}")
+            return False
+    else:
+        # Just show helpful message
+        pip_extra = extra_info["pip_extra"]
+        console.print(
+            f"\n[yellow]📦 Missing dependency:[/yellow] {extra_info['description']}"
+        )
+        console.print(f"[cyan]Install with:[/cyan]")
+        console.print(f"   pip install socialseed-e2e[{pip_extra}]")
+        console.print(f"\n[dim]Or run:[/dim] e2e install-extras {extra_name}")
+        console.print()
+        return False
+
 
 @click.group()
 @click.version_option(version=str(__version__), prog_name="socialseed-e2e")
@@ -290,16 +381,147 @@ email-validator>=2.0.0
 
 
 @cli.command()
+@click.argument("extra", nargs=-1, required=False)
+@click.option("--list", "list_extras", is_flag=True, help="List available extras")
+@click.option("--all", "install_all", is_flag=True, help="Install all extras")
+def install_extras(extra, list_extras: bool, install_all: bool):
+    """Install optional dependencies (extras).
+
+    Installs optional feature packages like TUI, RAG, gRPC support, etc.
+
+    Available extras:
+        tui       - Terminal User Interface (textual)
+        rag       - Semantic search and embeddings (sentence-transformers)
+        grpc      - gRPC protocol support (grpcio)
+        full      - All extras combined
+
+    Examples:
+        e2e install-extras              # Interactive mode
+        e2e install-extras tui          # Install TUI only
+        e2e install-extras rag grpc     # Install RAG and gRPC
+        e2e install-extras --all        # Install all extras
+        e2e install-extras --list       # Show available extras
+    """
+    if list_extras:
+        console.print("\n[bold cyan]📦 Available Optional Dependencies[/bold cyan]\n")
+        table = Table(title="Install with: pip install socialseed-e2e[extra]")
+        table.add_column("Extra", style="green", no_wrap=True)
+        table.add_column("Description", style="white")
+        table.add_column("Packages", style="dim")
+
+        for name, info in EXTRA_DEPENDENCIES.items():
+            packages = (
+                ", ".join(info["packages"][:2]) + "..."
+                if len(info["packages"]) > 2
+                else ", ".join(info["packages"])
+            )
+            if name == "full":
+                packages = "All extras"
+            table.add_row(name, info["description"], packages)
+
+        console.print(table)
+        console.print("\n[cyan]Usage:[/cyan]")
+        console.print("  e2e install-extras tui")
+        console.print("  e2e install-extras rag grpc")
+        console.print("  pip install socialseed-e2e[tui,rag]")
+        console.print()
+        return
+
+    # Determine which extras to install
+    extras_to_install = []
+
+    if install_all:
+        extras_to_install = ["tui", "rag", "grpc"]
+    elif extra:
+        extras_to_install = list(extra)
+    else:
+        # Interactive mode
+        console.print("\n[bold cyan]📦 Install Optional Dependencies[/bold cyan]\n")
+        console.print("Select extras to install (space-separated, or 'all'):\n")
+
+        for name, info in EXTRA_DEPENDENCIES.items():
+            if name != "full":
+                status = "✅" if check_extra_installed(name) else "❌"
+                console.print(
+                    f"  {status} [green]{name:<10}[/green] - {info['description']}"
+                )
+
+        console.print()
+        user_input = click.prompt("Extras to install", default="", show_default=False)
+
+        if user_input.lower() == "all":
+            extras_to_install = ["tui", "rag", "grpc"]
+        elif user_input.strip():
+            extras_to_install = user_input.strip().split()
+        else:
+            console.print("[yellow]No extras selected. Nothing to install.[/yellow]")
+            return
+
+    # Validate extras
+    invalid_extras = [e for e in extras_to_install if e not in EXTRA_DEPENDENCIES]
+    if invalid_extras:
+        console.print(f"[red]❌ Unknown extras: {', '.join(invalid_extras)}[/red]")
+        console.print(
+            f"[yellow]Run 'e2e install-extras --list' to see available extras[/yellow]"
+        )
+        sys.exit(1)
+
+    # Install extras
+    console.print(f"\n[bold]Installing {len(extras_to_install)} extra(s)...[/bold]\n")
+
+    success_count = 0
+    for extra_name in extras_to_install:
+        if check_and_install_extra(extra_name, auto_install=True):
+            success_count += 1
+
+    console.print()
+    if success_count == len(extras_to_install):
+        console.print(
+            f"[bold green]✅ All {success_count} extra(s) installed successfully![/bold green]"
+        )
+    else:
+        console.print(
+            f"[yellow]⚠️  {success_count}/{len(extras_to_install)} extra(s) installed[/yellow]"
+        )
+        sys.exit(1)
+
+
+def check_extra_installed(extra_name: str) -> bool:
+    """Check if an extra is already installed."""
+    test_modules = {
+        "tui": "textual",
+        "rag": "sentence_transformers",
+        "grpc": "grpc",
+    }
+
+    if extra_name in test_modules:
+        try:
+            __import__(test_modules[extra_name])
+            return True
+        except ImportError:
+            return False
+    return False
+
+
+@cli.command()
 @click.argument("name")
 @click.option("--base-url", default="http://localhost:8080", help="Service base URL")
 @click.option("--health-endpoint", default="/health", help="Health check endpoint")
 def new_service(name: str, base_url: str, health_endpoint: str):
     """Create a new service with scaffolding.
 
+    Creates the complete directory structure and template files for a new
+    service, including data_schema.py, service_page.py, and the modules directory.
+
     Args:
-        name: Service name (e.g.: users-api)
-        base_url: Service base URL
-        health_endpoint: Health check endpoint
+        name: Service name (e.g.: users-api, auth_service)
+        base_url: Service base URL (default: http://localhost:8080)
+        health_endpoint: Health check endpoint path (default: /health)
+
+    Examples:
+        e2e new-service users-api                                    # Create with defaults
+        e2e new-service payment-service --base-url http://localhost:8081
+        e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
     """
     console.print(f"\n🔧 [bold blue]Creating service:[/bold blue] {name}\n")
 
@@ -575,6 +797,16 @@ def run(
         trace: If True, enable visual traceability with sequence diagrams
         trace_output: Directory for traceability reports
         trace_format: Format for sequence diagrams (mermaid, plantuml, both)
+
+    Examples:
+        e2e run                                              # Run all tests
+        e2e run --service auth_service                       # Run tests for specific service
+        e2e run --service auth_service --module 01_login     # Run specific test module
+        e2e run --verbose                                    # Run with detailed output
+        e2e run --output html --report-dir ./reports         # Generate HTML report
+        e2e run --parallel 4                                 # Run with 4 parallel workers
+        e2e run --trace                                      # Enable traceability
+        e2e run -c /path/to/e2e.conf                         # Use custom config file
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -1030,6 +1262,34 @@ def doctor():
 
     console.print(table)
 
+    # Check service connectivity if in an E2E project
+    if _is_e2e_project():
+        console.print()
+        console.print("[bold cyan]🌐 Service Connectivity Check[/bold cyan]")
+
+        try:
+            loader = ApiConfigLoader()
+            config = loader.load()
+
+            if config.services:
+                connectivity_table = Table(title="Service Health Status")
+                connectivity_table.add_column("Service", style="cyan")
+                connectivity_table.add_column("URL", style="green")
+                connectivity_table.add_column("Status", style="bold")
+
+                for name, svc in config.services.items():
+                    is_healthy, status_msg = _check_service_health(
+                        svc.base_url, svc.health_endpoint or "/actuator/health"
+                    )
+                    connectivity_table.add_row(name, svc.base_url, status_msg)
+
+                console.print(connectivity_table)
+            else:
+                console.print("[yellow]  ℹ No services configured[/yellow]")
+
+        except Exception as e:
+            console.print(f"[yellow]  ⚠ Could not check services: {e}[/yellow]")
+
     console.print()
     if all_ok:
         console.print("[bold green]✅ Everything is configured correctly![/bold green]")
@@ -1094,6 +1354,29 @@ def config():
             console.print("[yellow]⚠ No services configured[/yellow]")
             console.print("   Use: [cyan]e2e new-service <name>[/cyan]")
 
+        # Check service connectivity
+        if config.services:
+            console.print()
+            console.print("[bold cyan]🌐 Checking Service Health...[/bold cyan]")
+
+            health_table = Table(title="Live Service Status")
+            health_table.add_column("Service", style="cyan")
+            health_table.add_column("Health Endpoint", style="yellow")
+            health_table.add_column("Status", style="bold")
+
+            healthy_count = 0
+            for name, svc in config.services.items():
+                health_url = svc.health_endpoint or "/actuator/health"
+                is_healthy, status_msg = _check_service_health(svc.base_url, health_url)
+                if is_healthy:
+                    healthy_count += 1
+                health_table.add_row(name, health_url, status_msg)
+
+            console.print(health_table)
+            console.print(
+                f"\n[bold]{healthy_count}/{len(config.services)} services healthy[/bold]"
+            )
+
         console.print()
         console.print("[bold green]✅ Valid configuration[/bold green]")
 
@@ -1106,6 +1389,39 @@ def config():
 
 
 # Funciones auxiliares
+
+
+def _check_service_health(
+    base_url: str, health_endpoint: str, timeout: int = 5
+) -> Tuple[bool, str]:
+    """Check if a service health endpoint is accessible.
+
+    Args:
+        base_url: Service base URL
+        health_endpoint: Health check endpoint path
+        timeout: Request timeout in seconds
+
+    Returns:
+        Tuple of (is_healthy, status_message)
+    """
+    import requests
+
+    if not health_endpoint or health_endpoint == "N/A":
+        return False, "No health endpoint configured"
+
+    try:
+        url = f"{base_url}{health_endpoint}"
+        response = requests.get(url, timeout=timeout)
+        if response.status_code == 200:
+            return True, f"✅ Healthy (200)"
+        else:
+            return False, f"⚠️  Status {response.status_code}"
+    except requests.exceptions.ConnectionError:
+        return False, "❌ Connection refused"
+    except requests.exceptions.Timeout:
+        return False, "⏱️  Timeout"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)[:30]}"
 
 
 def _is_e2e_project() -> bool:
@@ -1451,8 +1767,7 @@ def search(query: str, directory: str, top_k: int, type: str):
         console.print(table)
 
     except ImportError as e:
-        console.print(f"[red]❌ Missing dependency:[/red] {e}")
-        console.print("Install with: pip install sentence-transformers")
+        check_and_install_extra("rag", auto_install=False)
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
 
@@ -1494,8 +1809,7 @@ def retrieve(task: str, directory: str, max_chunks: int):
             console.print()
 
     except ImportError as e:
-        console.print(f"[red]❌ Missing dependency:[/red] {e}")
-        console.print("Install with: pip install sentence-transformers")
+        check_and_install_extra("rag", auto_install=False)
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
 
@@ -1537,8 +1851,8 @@ def build_index(directory: str):
         console.print(f"   📄 Location: {store.index_dir}\n")
 
     except ImportError as e:
-        console.print(f"[red]❌ Missing dependency:[/red] {e}")
-        console.print("Install with: pip install sentence-transformers")
+        check_and_install_extra("rag", auto_install=False)
+        sys.exit(1)
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
         sys.exit(1)
@@ -1668,8 +1982,11 @@ def generate_tests(
         )
 
         # Parse database schema if available
-        console.print("📊 [yellow]Step 1/5:[/yellow] Parsing database models...")
-        db_schema = db_parser_registry.parse_project(target_path)
+        with console.status(
+            "[bold yellow]Step 1/5:[/bold yellow] Parsing database models...",
+            spinner="dots",
+        ) as status:
+            db_schema = db_parser_registry.parse_project(target_path)
         if db_schema.entities:
             console.print(f"   ✓ Found {len(db_schema.entities)} entities")
             for entity in db_schema.entities[:3]:
@@ -1680,20 +1997,24 @@ def generate_tests(
             console.print("   ⚠ No database models found")
 
         # Load project manifest
-        console.print("\n📚 [yellow]Step 2/5:[/yellow] Loading project manifest...")
-        manifest_path = target_path / "project_knowledge.json"
-        if not manifest_path.exists():
-            console.print("   ⚠ Manifest not found, generating...")
-            from socialseed_e2e.project_manifest import ManifestGenerator
+        console.print()
+        with console.status(
+            "[bold yellow]Step 2/5:[/bold yellow] Loading project manifest...",
+            spinner="dots",
+        ) as status:
+            manifest_path = target_path / "project_knowledge.json"
+            if not manifest_path.exists():
+                from socialseed_e2e.project_manifest import ManifestGenerator
 
-            generator = ManifestGenerator(target_path)
-            generator.generate()
+                generator = ManifestGenerator(target_path)
+                generator.generate()
 
-        from socialseed_e2e.project_manifest import ManifestAPI
+            from socialseed_e2e.project_manifest import ManifestAPI
 
-        api = ManifestAPI(target_path)
-        api._load_manifest()
-        manifest = api.manifest
+            api = ManifestAPI(target_path)
+            api._load_manifest()
+            manifest = api.manifest
+
         if manifest is None:
             console.print("[red]❌ Error:[/red] Could not load project manifest")
             sys.exit(1)
@@ -2108,11 +2429,15 @@ def discover(directory: str, output: Optional[str], open: bool):
             )
             sys.exit(1)
 
-        # Generate report
+        # Generate report with spinner
         output_dir = Path(output) if output else None
-        report_path = generate_discovery_report(
-            project_root=target_path, manifest=manifest, output_dir=output_dir
-        )
+        with console.status(
+            "[bold cyan]🔍 Analyzing project and generating report...[/bold cyan]",
+            spinner="dots",
+        ):
+            report_path = generate_discovery_report(
+                project_root=target_path, manifest=manifest, output_dir=output_dir
+            )
 
         console.print(f"\n✅ [bold green]Discovery Report generated![/bold green]")
         console.print(f"   📄 Location: {report_path}\n")
@@ -5460,10 +5785,7 @@ def tui(config: str, service: str):
         app.run()
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Error launching TUI:[/red] {e}")
-        console.print("\n[yellow]📦 Required dependencies:[/yellow]")
-        console.print("   pip install textual")
-        console.print()
+        check_and_install_extra("tui", auto_install=False)
         sys.exit(1)
     except Exception as e:
         console.print(f"\n[red]❌ Unexpected error:[/red] {e}")
