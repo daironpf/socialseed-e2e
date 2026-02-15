@@ -20,7 +20,11 @@ from rich.table import Table
 
 from socialseed_e2e.ai_learning import FeedbackCollector, FeedbackType
 from socialseed_e2e.core.base_page import BasePage
-from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig, get_service_config
+from socialseed_e2e.core.config_loader import (
+    ApiConfigLoader,
+    ServiceConfig,
+    get_service_config,
+)
 from socialseed_e2e.core.organization import Priority, TestOrganizationManager
 
 # Global feedback collector instance
@@ -83,6 +87,12 @@ class TestDiscoveryError(Exception):
 
 class TestExecutionError(Exception):
     """Error during test execution."""
+
+    pass
+
+
+class SetupError(Exception):
+    """Error during test setup/validation."""
 
     pass
 
@@ -170,7 +180,138 @@ def load_test_module(module_path: Path) -> Optional[Callable]:
         return None
 
 
-def create_page_class(service_name: str, service_path: Path) -> Optional[Type[BasePage]]:
+def _to_snake_case(name: str) -> str:
+    """Convert a name to snake_case.
+
+    Args:
+        name: The name to convert
+
+    Returns:
+        snake_case version of the name
+    """
+    import re
+
+    # Insert underscore between lowercase and uppercase
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    # Insert underscore between lowercase/number and uppercase
+    s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
+    # Replace hyphens with underscores
+    s3 = s2.replace("-", "_")
+    # Replace spaces with underscores
+    s4 = s3.replace(" ", "_")
+    return s4.lower()
+
+
+def validate_service_setup(service_name: str, service_path: Path) -> None:
+    """Validate that a service is properly configured before running tests.
+
+    This function checks that:
+    1. A file matching {service_name}_page.py exists in the service directory
+    2. The file contains a class that inherits from BasePage
+
+    Args:
+        service_name: Name of the service
+        service_path: Path to service directory
+
+    Raises:
+        SetupError: If validation fails with detailed error message
+    """
+    # Try exact service name first, then snake_case
+    page_file = service_path / f"{service_name}_page.py"
+    checked_path = f"services/{service_name}/{service_name}_page.py"
+
+    # If not found with exact name, try snake_case (for backward compatibility)
+    if not page_file.exists():
+        snake_name = _to_snake_case(service_name)
+        snake_page_file = service_path / f"{snake_name}_page.py"
+        if snake_page_file.exists():
+            page_file = snake_page_file
+            checked_path = f"services/{service_name}/{snake_name}_page.py"
+
+    # Check if file exists
+    if not page_file.exists():
+        raise SetupError(
+            f"❌ ERROR: No Page class found for '{service_name}'\n"
+            f"   Checked: {checked_path}\n\n"
+            f"   Issues found:\n"
+            f"   - File '{service_name}_page.py' not found.\n\n"
+            f"   Solution:\n"
+            f"   1. Rename your file to: {service_name}_page.py\n"
+            f"   2. Ensure class inherits from BasePage:\n"
+            f"      class YourServicePage(BasePage):\n"
+        )
+
+    # Add project root to sys.path for imports
+    project_root = service_path.parent.parent.absolute()
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
+    try:
+        # Use AST parsing to check for BasePage subclass without executing the module
+        # This avoids issues with import errors (e.g., relative imports)
+        import ast
+
+        with open(page_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        tree = ast.parse(content)
+
+        # Check for class inheriting from BasePage
+        found_page_class = False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                # Check if any base is 'BasePage'
+                for base in node.bases:
+                    if isinstance(base, ast.Name) and base.id == "BasePage":
+                        found_page_class = True
+                        break
+                    elif isinstance(base, ast.Attribute):
+                        # Handle cases like BasePage or module.BasePage
+                        if base.attr == "BasePage":
+                            found_page_class = True
+                            break
+            if found_page_class:
+                break
+
+        if not found_page_class:
+            raise SetupError(
+                f"❌ ERROR: No Page class found for '{service_name}'\n"
+                f"   Checked: {checked_path}\n\n"
+                f"   Issues found:\n"
+                f"   - No class inheriting from BasePage found in the file.\n\n"
+                f"   Solution:\n"
+                f"   1. Rename your file to: {service_name}_page.py\n"
+                f"   2. Ensure class inherits from BasePage:\n"
+                f"      class YourServicePage(BasePage):\n"
+            )
+
+    except SyntaxError as e:
+        raise SetupError(
+            f"❌ ERROR: No Page class found for '{service_name}'\n"
+            f"   Checked: {checked_path}\n\n"
+            f"   Issues found:\n"
+            f"   - Syntax error in file: {e}\n\n"
+            f"   Solution:\n"
+            f"   1. Rename your file to: {service_name}_page.py\n"
+            f"   2. Ensure class inherits from BasePage:\n"
+            f"      class YourServicePage(BasePage):\n"
+        )
+    except SetupError:
+        raise
+    except Exception as e:
+        raise SetupError(
+            f"❌ ERROR: No Page class found for '{service_name}'\n"
+            f"   Checked: {checked_path}\n\n"
+            f"   Issues found:\n"
+            f"   - Error checking file: {e}\n\n"
+            f"   Solution:\n"
+            f"   1. Rename your file to: {service_name}_page.py\n"
+            f"   2. Ensure class inherits from BasePage:\n"
+            f"      class YourServicePage(BasePage):\n"
+        )
+
+
+def create_page_class(service_name: str, service_path: Path) -> Type[BasePage]:
     """Create or find the Page class for a service.
 
     Args:
@@ -178,49 +319,111 @@ def create_page_class(service_name: str, service_path: Path) -> Optional[Type[Ba
         service_path: Path to service directory
 
     Returns:
-        Page class, or None if not found
+        Page class
+
+    Raises:
+        SetupError: If the page class cannot be found or doesn't inherit from BasePage
     """
     # Add project root to sys.path for imports
     project_root = service_path.parent.parent.absolute()
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 
-    # Try to find page file
-    page_files = list(service_path.glob("*_page.py"))
-    if not page_files:
-        # Try with service name
-        page_file = service_path / f"{service_name}_page.py"
-        if not page_file.exists():
-            return None
-        page_files = [page_file]
-
-    page_file = page_files[0]
+    # Load the page file - we assume validation already passed
+    # Try exact service name first, then snake_case (same logic as validation)
+    page_file = service_path / f"{service_name}_page.py"
+    if not page_file.exists():
+        snake_name = _to_snake_case(service_name)
+        snake_page_file = service_path / f"{snake_name}_page.py"
+        if snake_page_file.exists():
+            page_file = snake_page_file
 
     try:
+        # Set up the service package to allow relative imports
+        # The service should be importable as services.{snake_case_name}
+        snake_name = _to_snake_case(service_name)
+
+        # Create a unique package name based on service path to avoid conflicts
+        # between tests with the same service name in different directories
+        import hashlib
+
+        path_hash = hashlib.md5(str(service_path).encode()).hexdigest()[:8]
+        package_name = f"services_{path_hash}.{snake_name}"
+
+        # Ensure the services package exists in sys.modules
+        services_pkg_name = f"services_{path_hash}"
+        if services_pkg_name not in sys.modules:
+            services_spec = importlib.util.spec_from_file_location(
+                services_pkg_name,
+                service_path.parent / "__init__.py",
+                submodule_search_locations=[str(service_path.parent)],
+            )
+            if services_spec:
+                services_module = importlib.util.module_from_spec(services_spec)
+                sys.modules[services_pkg_name] = services_module
+
+        # Create the service package
+        service_spec = importlib.util.spec_from_file_location(
+            package_name,
+            service_path / "__init__.py",
+            submodule_search_locations=[str(service_path)],
+        )
+        if service_spec:
+            service_module = importlib.util.module_from_spec(service_spec)
+            sys.modules[package_name] = service_module
+
         # Load the page module
-        module_name = f"page_{service_name}"
-        spec = importlib.util.spec_from_file_location(module_name, page_file)
+        module_name = f"{package_name}.{snake_name}_page"
+        spec = importlib.util.spec_from_file_location(
+            module_name, page_file, submodule_search_locations=None
+        )
 
         if spec is None or spec.loader is None:
-            return None
+            raise SetupError(
+                f"❌ ERROR: Could not load module for '{service_name}'\n"
+                f"   File: {page_file}\n"
+                f"   Error: Failed to create module spec"
+            )
 
         module = importlib.util.module_from_spec(spec)
+        module.__package__ = package_name  # Set package for relative imports
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
 
         # Find the Page class (should be the one inheriting from BasePage)
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if isinstance(attr, type) and issubclass(attr, BasePage) and attr is not BasePage:
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, BasePage)
+                and attr is not BasePage
+            ):
                 return attr
 
-        return None
+        # This should not happen if validation passed, but handle it just in case
+        raise SetupError(
+            f"❌ ERROR: No Page class found for '{service_name}'\n"
+            f"   Checked: services/{service_name}/{service_name}_page.py\n\n"
+            f"   Issues found:\n"
+            f"   - No class inheriting from BasePage found in the file.\n\n"
+            f"   Solution:\n"
+            f"   1. Rename your file to: {service_name}_page.py\n"
+            f"   2. Ensure class inherits from BasePage:\n"
+            f"      class YourServicePage(BasePage):\n"
+        )
+    except SetupError:
+        raise
     except Exception as e:
-        console.print(f"[red]Error loading page class from {page_file}: {e}[/red]")
-        return None
+        raise SetupError(
+            f"❌ ERROR: Failed to load Page class for '{service_name}'\n"
+            f"   File: {page_file}\n"
+            f"   Error: {e}"
+        )
 
 
-def execute_single_test(module_path: Path, page: BasePage, service_name: str) -> TestResult:
+def execute_single_test(
+    module_path: Path, page: BasePage, service_name: str
+) -> TestResult:
     """Execute a single test module.
 
     Args:
@@ -398,6 +601,9 @@ def run_service_tests(
     service_path = services_path / service_name
     suite_result = TestSuiteResult()
 
+    # Validate service setup before running tests
+    validate_service_setup(service_name, service_path)
+
     # Discover test modules
     if specific_module:
         # Find specific module
@@ -413,7 +619,9 @@ def run_service_tests(
         test_modules = discover_test_modules(service_path)
 
     if not test_modules:
-        console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
+        console.print(
+            f"[yellow]No test modules found for service '{service_name}'[/yellow]"
+        )
         return suite_result
 
     # Advanced Organization: Filtering and Sorting
@@ -429,27 +637,32 @@ def run_service_tests(
                 self.run = load_test_module(path)
 
         stubs = [ModuleStub(p) for p in test_modules]
-        filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
+        filtered_stubs = TestOrganizationManager.filter_tests(
+            stubs, include_set, exclude_set
+        )
         test_modules = [s.path for s in filtered_stubs]
 
         # Sort by dependencies and priority
-        test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
+        test_modules = TestOrganizationManager.sort_tests(
+            test_modules, load_test_module
+        )
 
     if not test_modules:
         if include_tags or exclude_tags:
-            console.print(f"[yellow]No tests matched tags for service '{service_name}'[/yellow]")
+            console.print(
+                f"[yellow]No tests matched tags for service '{service_name}'[/yellow]"
+            )
         else:
-            console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
+            console.print(
+                f"[yellow]No test modules found for service '{service_name}'[/yellow]"
+            )
         return suite_result
 
     # Get base URL
     base_url = service_config.base_url if service_config else f"http://localhost:8080"
 
-    # Create page class
+    # Create page class (validation already passed, so this will not fail)
     PageClass = create_page_class(service_name, service_path)
-    if PageClass is None:
-        console.print(f"[yellow]No Page class found for '{service_name}', using BasePage[/yellow]")
-        PageClass = BasePage
 
     console.print(f"\n[bold cyan]Running tests for service: {service_name}[/bold cyan]")
     console.print(f"[dim]Base URL: {base_url}[/dim]")
@@ -469,10 +682,14 @@ def run_service_tests(
 
                 if result.status == "passed":
                     suite_result.passed += 1
-                    console.print(f"  [green]✓[/green] {result.name} ({result.duration_ms:.0f}ms)")
+                    console.print(
+                        f"  [green]✓[/green] {result.name} ({result.duration_ms:.0f}ms)"
+                    )
                 elif result.status == "failed":
                     suite_result.failed += 1
-                    console.print(f"  [red]✗[/red] {result.name} - {result.error_message[:50]}")
+                    console.print(
+                        f"  [red]✗[/red] {result.name} - {result.error_message[:50]}"
+                    )
                     if verbose and result.error_message:
                         console.print(f"    [dim]{result.error_message}[/dim]")
                 elif result.status == "error":
@@ -583,9 +800,13 @@ def run_all_tests(
             summary = report.summary
             console.print(f"\n[dim]Trace Summary:[/dim]")
             console.print(f"  Total Tests: {summary.get('total_tests', 0)}")
-            console.print(f"  Total Interactions: {summary.get('total_interactions', 0)}")
+            console.print(
+                f"  Total Interactions: {summary.get('total_interactions', 0)}"
+            )
             console.print(f"  Total Components: {summary.get('total_components', 0)}")
-            console.print(f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}")
+            console.print(
+                f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}"
+            )
 
     except ImportError:
         pass  # Traceability not available
@@ -617,7 +838,9 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
         total_failed += suite_result.failed
         total_errors += suite_result.errors
 
-        status_color = "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
+        status_color = (
+            "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
+        )
         console.print(
             f"\n[{status_color}]{service_name}[/{status_color}]: "
             f"{suite_result.passed}/{suite_result.total} passed "
