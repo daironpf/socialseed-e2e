@@ -1,4 +1,4 @@
-# 🌱 socialseed-e2e
+# 🌱 SocialSeed E2E
 
 [![PyPI](https://img.shields.io/pypi/v/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 [![Python](https://img.shields.io/pypi/pyversions/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
@@ -6,9 +6,36 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 
-> **The ultimate E2E testing framework for REST APIs - Built for developers and AI agents**
+## The Problem: Your E2E Tests Are Brittle and Slow
 
-**One-liner:** Test your REST APIs with 10x less code using intelligent scaffolding, automatic test discovery, and stateful test chaining. Perfect for both manual testing and AI-generated test suites.
+If you're a QA engineer or developer, you know the pain:
+
+- **Fragile tests** that break with every minor UI or API change
+- **Complex setup** requiring multiple tools and configurations  
+- **Slow feedback loops** waiting hours for test suites to run
+- **Unreliable CI/CD** with flaky tests causing false positives
+- **Repetitive boilerplate** writing the same test patterns over and over
+
+## The Solution: Reliable E2E Testing That Scales
+
+SocialSeed E2E is a testing platform designed for **production reliability** with optional AI acceleration.
+
+### Who is this for?
+
+- **QA Engineers** who need stable, maintainable API tests without writing boilerplate
+- **Developers** who want fast feedback on API changes without the overhead
+- **Teams** transitioning from experimental AI testing to a production-ready solution
+
+### Why we built this?
+
+Most AI-driven testing frameworks promise the world but deliver unreliable, flaky tests. We wanted something different:
+
+1. **Reliability First** - Tests that pass when they should, fail when they must
+2. **Optional AI Acceleration** - Use AI to generate tests faster when you want it, but never required
+3. **Developer Experience** - CLI that gets out of your way and lets you focus on testing
+4. **Production Ready** - Built for CI/CD pipelines from day one
+
+> **"Write tests that survive your API changing, not tests that break on every update."**
 
 📚 **[Full Documentation](https://daironpf.github.io/socialseed-e2e/)**
 
