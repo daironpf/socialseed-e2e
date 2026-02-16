@@ -1,0 +1,53 @@
+"""Example E2E Test using Mock API Server.
+
+This file demonstrates how to write end-to-end tests using the socialseed-e2e framework.
+It uses the built-in mock server which runs on http://localhost:8765 by default.
+
+For more information, see the README.md file or visit:
+https://github.com/daironpf/socialseed-e2e
+"""
+
+from playwright.sync_api import APIResponse, Page
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from socialseed_e2e.core.base_page import BasePage
+
+
+def run(page: "BasePage") -> APIResponse:
+    """Execute example test with mock server.
+
+    This test demonstrates the basic structure of an E2E test using the framework.
+    It connects to the mock API server (http://localhost:8765) which must be running.
+
+    To start the mock server:
+        python -m socialseed_e2e.mock_server
+
+    Or the mock server will start automatically when running:
+        e2e run
+
+    The test follows the Arrange-Act-Assert pattern:
+    1. Arrange: Set up test data and preconditions
+    2. Act: Execute the operation being tested
+    3. Assert: Verify the results
+
+    Args:
+        page: Instance of BasePage (or service-specific page)
+
+    Returns:
+        APIResponse: HTTP response from the API
+
+    Raises:
+        AssertionError: If test assertions fail
+    """
+    print("Running example test with mock server...")
+
+    response = page.get("/health")
+
+    assert response.ok, f"Health check failed: {response.text()}"
+
+    data = response.json()
+    print(f"Mock server response: {data}")
+
+    print("✓ Example test completed successfully")
+    return response

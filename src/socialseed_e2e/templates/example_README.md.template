@@ -1,0 +1,146 @@
+# ${project_name} - E2E Tests
+
+End-to-end tests for APIs using **socialseed-e2e** framework.
+
+## 🚀 Quick Start (Works Out of the Box!)
+
+This project includes a working example that uses the built-in mock server.
+
+### Option 1: Using e2e CLI
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+playwright install chromium
+
+# Run tests - the mock server will start automatically
+e2e run
+
+# Or run with the example service specifically
+e2e run --service example
+```
+
+### Option 2: Using pytest directly
+
+```bash
+# Run tests with pytest
+pytest tests/ -v
+
+# Or run specific test
+pytest tests/example_test.py -v
+```
+
+### What happens next?
+
+1. The mock API server starts automatically on `http://localhost:8765`
+2. Tests run against the mock server
+3. Results are displayed in the console
+
+## 📁 Project Structure
+
+```
+${project_name}/
+├── e2e.conf                   # Main configuration file
+├── socialseed.config.yaml     # Alternative YAML config
+├── pyproject.toml            # Project metadata & pytest config
+├── conftest.py               # Pytest fixtures (mock server)
+├── requirements.txt          # Python dependencies
+├── tests/
+│   ├── __init__.py
+│   └── example_test.py       # Example test (runs with mock server)
+├── services/
+│   └── example/              # Example service
+│       ├── example_page.py   # Service page class
+│       ├── data_schema.py    # DTOs and constants
+│       └── modules/          # Test modules
+│           ├── 01_health.py
+│           └── 02_create.py
+├── .github/workflows/
+│   └── e2e.yml              # GitHub Actions workflow
+└── README.md                 # This file
+```
+
+## 🔧 Configuration
+
+### Mock Server
+
+The project is pre-configured to use the mock server at `http://localhost:8765`.
+
+Default endpoints:
+- `GET /health` - Health check
+- `GET /api/users` - List users
+- `POST /api/users` - Create user
+- `GET /api/users/{id}` - Get user
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Register
+
+Default credentials:
+- Admin: `admin@example.com` / `admin123`
+- User: `user@example.com` / `user123`
+
+### Custom Configuration
+
+Edit `e2e.conf` to change the API base URL:
+
+```yaml
+services:
+  example:
+    base_url: http://your-api:8080
+    health_endpoint: /health
+```
+
+## 📝 Writing Tests
+
+### Create a New Service
+
+```bash
+e2e new-service my-api --base-url http://localhost:8080
+```
+
+### Create a New Test
+
+```bash
+e2e new-test login --service my-api
+```
+
+### Test Template
+
+```python
+from playwright.sync_api import APIResponse
+
+def run(page: 'MyApiPage') -> APIResponse:
+    # Your test logic here
+    response = page.get("/health")
+    assert response.ok
+    return response
+```
+
+## 🔄 CI/CD
+
+The project includes a GitHub Actions workflow (`.github/workflows/e2e.yml`).
+
+Push to GitHub and the workflow will automatically run tests on:
+- Every push to main/master
+- Every pull request
+
+## 🐳 Docker
+
+```bash
+docker build -t ${project_name}-e2e .
+docker run --rm ${project_name}-e2e e2e run
+```
+
+## 📚 Documentation
+
+- [socialseed-e2e Docs](https://daironpf.github.io/socialseed-e2e/)
+- [CLI Reference](https://daironpf.github.io/socialseed-e2e/cli-reference.html)
+- [GitHub](https://github.com/daironpf/socialseed-e2e)
+
+## 🤖 AI Agent Support
+
+This project includes AI documentation in the `.agent/` folder:
+- `AGENT_GUIDE.md` - Guide for AI agents
+- `FRAMEWORK_CONTEXT.md` - Framework context
+- `WORKFLOW_GENERATION.md` - Test generation workflows

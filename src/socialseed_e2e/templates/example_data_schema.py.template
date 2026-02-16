@@ -1,0 +1,62 @@
+"""Data models and constants for the Example API.
+
+This module defines DTOs (Data Transfer Objects) and endpoint constants
+for the example service.
+"""
+
+from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+
+
+# API Endpoints
+ENDPOINTS = {
+    "health": "/health",
+    "list": "/api/users",
+    "get": "/api/users/{id}",
+    "create": "/api/users",
+    "update": "/api/users/{id}",
+    "delete": "/api/users/{id}",
+    "login": "/api/auth/login",
+    "register": "/api/auth/register",
+}
+
+
+class UserDTO(BaseModel):
+    """DTO representing a user in the system."""
+    
+    model_config = ConfigDict(populate_by_name=True)
+    
+    id: str = Field(..., description="Unique identifier")
+    email: EmailStr = Field(..., description="User email")
+    name: str = Field(..., description="User name")
+    role: str = Field(default="user", description="User role")
+    created_at: Optional[str] = Field(None, description="Creation timestamp")
+
+
+class UserCreateDTO(BaseModel):
+    """DTO for creating a new user."""
+    
+    model_config = ConfigDict(populate_by_name=True)
+    
+    email: EmailStr = Field(..., description="User email")
+    name: str = Field(..., min_length=1, max_length=100, description="User name")
+    password: str = Field(..., min_length=6, description="User password")
+    role: str = Field(default="user", description="User role")
+
+
+class UserUpdateDTO(BaseModel):
+    """DTO for updating an existing user."""
+    
+    model_config = ConfigDict(populate_by_name=True)
+    
+    email: Optional[EmailStr] = Field(None, description="User email")
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="User name")
+    role: Optional[str] = Field(None, description="User role")
+
+
+# Constants for testing
+TEST_USER = {
+    "email": "test@example.com",
+    "name": "Test User",
+    "password": "testpass123"
+}
