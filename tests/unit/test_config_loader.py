@@ -12,7 +12,14 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-from socialseed_e2e.core.config_loader import ApiConfigLoader, AppConfig, ConfigError, ServiceConfig
+from socialseed_e2e.core.config_loader import (
+    ApiConfigLoader,
+    AppConfig,
+    ConfigError,
+    ServiceConfig,
+    get_service_config,
+    normalize_service_name,
+)
 
 
 class TestFindConfigFile:
@@ -334,7 +341,8 @@ services:
         assert isinstance(config, AppConfig)
         assert config.environment == "test"
         assert config.timeout == 5000
-        assert "test-api" in config.services
+        # Service names are normalized (hyphens to underscores)
+        assert "test_api" in config.services
 
     def test_load_invalid_config_raises_error(self, tmp_path, monkeypatch):
         """Test that loading invalid config raises ConfigError."""
@@ -692,7 +700,8 @@ class TestJsonConfiguration:
         assert isinstance(config, AppConfig)
         assert config.environment == "test"
         assert config.timeout == 5000
-        assert "test-api" in config.services
+        # Service names are normalized (hyphens to underscores)
+        assert "test_api" in config.services
 
     def test_json_config_with_env_vars(self, tmp_path, monkeypatch):
         """Test JSON config with environment variable substitution."""
@@ -718,7 +727,8 @@ class TestJsonConfiguration:
 
         config = ApiConfigLoader.load()
 
-        assert config.services["test-api"].base_url == "http://api.example.com:8080"
+        # Service names are normalized (hyphens to underscores)
+        assert config.services["test_api"].base_url == "http://api.example.com:8080"
 
     def test_json_invalid_syntax_raises_error(self, tmp_path, monkeypatch):
         """Test that invalid JSON syntax raises appropriate error."""
@@ -785,9 +795,10 @@ services:
 
         config = ApiConfigLoader.load()
 
-        service = config.services["minimal-api"]
+        # Service names are normalized (hyphens to underscores)
+        service = config.services["minimal_api"]
         assert service.base_url == "http://localhost:8080"
-        assert service.name == "minimal-api"  # Defaults to service key
+        assert service.name == "minimal-api"  # Original name preserved
         assert service.port == 8080  # Default value
         assert service.required is True  # Default value
 
@@ -934,7 +945,8 @@ services:
         ApiConfigLoader._instance = None
 
         config = ApiConfigLoader.load()
-        service = config.services["full-api"]
+        # Service names are normalized (hyphens to underscores)
+        service = config.services["full_api"]
 
         assert service.name == "Full API Service"
         assert service.base_url == "http://localhost:9090"
@@ -1089,7 +1101,10 @@ services:
         assert security.ssl_cert == "/path/to/cert.pem"
         assert security.ssl_key == "/path/to/key.pem"
         assert security.ssl_ca == "/path/to/ca.pem"
-        assert security.test_tokens == {"admin": "admin-token-123", "user": "user-token-456"}
+        assert security.test_tokens == {
+            "admin": "admin-token-123",
+            "user": "user-token-456",
+        }
 
     def test_full_reporting_configuration(self, tmp_path, monkeypatch):
         """Test reporting configuration with all optional fields."""
@@ -1214,3 +1229,152 @@ services:
             # Should generate at least one warning about empty base_url
             assert len(w) >= 1
             assert any("empty base_url" in str(warning.message) for warning in w)
+
+
+class TestServiceNameNormalization:
+    """Test cases for service name normalization (Issue #178)."""
+
+    def test_normalize_service_name_with_hyphens(self):
+        """Test that hyphens are converted to underscores."""
+        assert normalize_service_name("auth-service") == "auth_service"
+        assert normalize_service_name("user-api") == "user_api"
+        assert normalize_service_name("my-service-name") == "my_service_name"
+
+    def test_normalize_service_name_with_underscores(self):
+        """Test that underscores remain unchanged."""
+        assert normalize_service_name("auth_service") == "auth_service"
+        assert normalize_service_name("user_api") == "user_api"
+
+    def test_normalize_service_name_mixed(self):
+        """Test normalization with mixed hyphens and underscores."""
+        assert normalize_service_name("auth-service_v2") == "auth_service_v2"
+        assert normalize_service_name("my-api-service") == "my_api_service"
+
+    def test_service_config_stored_with_normalized_name(self, tmp_path, monkeypatch):
+        """Test that services are stored with normalized names in config."""
+        config_file = tmp_path / "e2e.conf"
+        config_file.write_text(
+            """
+general:
+  environment: test
+services:
+  auth-service:
+    name: Auth Service
+    base_url: http://localhost:8085
+    port: 8085
+"""
+        )
+
+        monkeypatch.chdir(tmp_path)
+        ApiConfigLoader._instance = None
+
+        config = ApiConfigLoader.load()
+
+        # Service should be stored with normalized name (auth_service)
+        assert "auth_service" in config.services
+        assert "auth-service" not in config.services
+
+        # But the original name should be preserved in the service config
+        service = config.services["auth_service"]
+        assert service.name == "Auth Service"
+        assert service.base_url == "http://localhost:8085"
+        assert service.port == 8085
+
+    def test_get_service_config_with_hyphenated_name(self, tmp_path, monkeypatch):
+        """Test that get_service_config works with hyphenated service names."""
+        config_file = tmp_path / "e2e.conf"
+        config_file.write_text(
+            """
+general:
+  environment: test
+services:
+  auth-service:
+    name: Auth Service
+    base_url: http://localhost:8085
+"""
+        )
+
+        monkeypatch.chdir(tmp_path)
+        ApiConfigLoader._instance = None
+
+        # Should find the service using hyphenated name
+        service = get_service_config("auth-service")
+        assert service is not None
+        assert service.base_url == "http://localhost:8085"
+
+        # Should also find it using underscore name
+        service = get_service_config("auth_service")
+        assert service is not None
+        assert service.base_url == "http://localhost:8085"
+
+    def test_multiple_services_with_various_naming(self, tmp_path, monkeypatch):
+        """Test config with multiple services using different naming conventions."""
+        config_file = tmp_path / "e2e.conf"
+        config_file.write_text(
+            """
+general:
+  environment: test
+services:
+  auth-service:
+    name: Auth Service
+    base_url: http://localhost:8081
+  user_api:
+    name: User API
+    base_url: http://localhost:8082
+  payment-service-v2:
+    name: Payment Service V2
+    base_url: http://localhost:8083
+"""
+        )
+
+        monkeypatch.chdir(tmp_path)
+        ApiConfigLoader._instance = None
+
+        config = ApiConfigLoader.load()
+
+        # All services should be stored with normalized names
+        assert "auth_service" in config.services
+        assert "user_api" in config.services
+        assert "payment_service_v2" in config.services
+
+        # Should be accessible using various naming conventions
+        assert get_service_config("auth-service").base_url == "http://localhost:8081"
+        assert get_service_config("auth_service").base_url == "http://localhost:8081"
+        assert get_service_config("user_api").base_url == "http://localhost:8082"
+        assert (
+            get_service_config("payment-service-v2").base_url == "http://localhost:8083"
+        )
+        assert (
+            get_service_config("payment_service_v2").base_url == "http://localhost:8083"
+        )
+
+    def test_service_name_collision_raises_error(self, tmp_path, monkeypatch):
+        """Test that services with same normalized name cause collision."""
+        config_file = tmp_path / "e2e.conf"
+        # This config has both auth-service and auth_service
+        # The second one should overwrite the first (YAML behavior)
+        config_file.write_text(
+            """
+general:
+  environment: test
+services:
+  auth-service:
+    name: Auth Service with hyphens
+    base_url: http://localhost:8081
+  auth_service:
+    name: Auth Service with underscores
+    base_url: http://localhost:8082
+"""
+        )
+
+        monkeypatch.chdir(tmp_path)
+        ApiConfigLoader._instance = None
+
+        config = ApiConfigLoader.load()
+
+        # Both services normalize to auth_service, so the last one wins
+        assert "auth_service" in config.services
+        # The service should have the values from the second definition
+        service = config.services["auth_service"]
+        assert service.base_url == "http://localhost:8082"
+        assert service.name == "Auth Service with underscores"

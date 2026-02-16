@@ -1342,8 +1342,10 @@ def config():
             table.add_column("Required", style="white")
 
             for name, svc in config.services.items():
+                # Use svc.name (original name from config) instead of normalized key
+                display_name = svc.name if svc.name else name
                 table.add_row(
-                    name,
+                    display_name,
                     svc.base_url,
                     svc.health_endpoint or "N/A",
                     "✓" if svc.required else "✗",

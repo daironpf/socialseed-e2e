@@ -26,6 +26,29 @@ except ImportError:
 from socialseed_e2e.utils import TemplateEngine
 
 
+def normalize_service_name(name: str) -> str:
+    """Normalize service name by converting hyphens to underscores.
+
+    This ensures that service names like 'auth-service' and 'auth_service'
+    are treated as identical for matching purposes.
+
+    Args:
+        name: Service name (may contain hyphens or underscores)
+
+    Returns:
+        str: Normalized service name with underscores
+
+    Examples:
+        >>> normalize_service_name("auth-service")
+        'auth_service'
+        >>> normalize_service_name("auth_service")
+        'auth_service'
+        >>> normalize_service_name("user-api-v2")
+        'user_api_v2'
+    """
+    return name.replace("-", "_")
+
+
 @dataclass
 class ServiceEndpoint:
     """Represents a single API endpoint configuration."""
@@ -331,7 +354,9 @@ class ApiConfigLoader:
         )
 
     @classmethod
-    def create_default_config(cls, path: Union[str, Path], overwrite: bool = False) -> str:
+    def create_default_config(
+        cls, path: Union[str, Path], overwrite: bool = False
+    ) -> str:
         """Create a default e2e.conf configuration file.
 
         Creates a default configuration file at the specified path using
@@ -447,7 +472,9 @@ class ApiConfigLoader:
                     continue
 
                 if "base_url" not in service_data:
-                    errors.append(f"Service '{service_name}' missing required field: base_url")
+                    errors.append(
+                        f"Service '{service_name}' missing required field: base_url"
+                    )
                 elif not service_data.get("base_url"):
                     warnings.append(f"Service '{service_name}' has empty base_url")
 
@@ -460,11 +487,15 @@ class ApiConfigLoader:
                                 f"Service '{service_name}' port must be between 1 and 65535"
                             )
                     except (ValueError, TypeError):
-                        errors.append(f"Service '{service_name}' port must be a valid integer")
+                        errors.append(
+                            f"Service '{service_name}' port must be a valid integer"
+                        )
 
         # Raise error if there are validation errors
         if errors:
-            raise ConfigError("Configuration validation failed:\n  - " + "\n  - ".join(errors))
+            raise ConfigError(
+                "Configuration validation failed:\n  - " + "\n  - ".join(errors)
+            )
 
         # Print warnings if strict mode
         if strict and warnings:
@@ -509,12 +540,16 @@ class ApiConfigLoader:
         # Services
         services_data = data.get("services", {})
         for service_name, service_data in services_data.items():
-            config.services[service_name] = ServiceConfig(
+            # Normalize service name (convert hyphens to underscores)
+            normalized_name = normalize_service_name(service_name)
+            config.services[normalized_name] = ServiceConfig(
                 name=service_data.get("name", service_name),
                 base_url=service_data.get("base_url", ""),
                 health_endpoint=service_data.get("health_endpoint", "/actuator/health"),
                 port=service_data.get("port", 8080),
-                maven_module=service_data.get("maven_module", f"services/{service_name}"),
+                maven_module=service_data.get(
+                    "maven_module", f"services/{service_name}"
+                ),
                 timeout=service_data.get("timeout", config.timeout),
                 headers=service_data.get("headers", {}),
                 auto_start=service_data.get("auto_start", True),
@@ -581,7 +616,9 @@ class ApiConfigLoader:
         return config
 
     @classmethod
-    def get_service_url(cls, service_name: str, use_gateway: Optional[bool] = None) -> str:
+    def get_service_url(
+        cls, service_name: str, use_gateway: Optional[bool] = None
+    ) -> str:
         """
         Get the effective URL for a service.
 
@@ -596,13 +633,16 @@ class ApiConfigLoader:
             str: Full URL for the service
         """
         config = cls.load()
-        service = config.services.get(service_name)
+        normalized_name = normalize_service_name(service_name)
+        service = config.services.get(normalized_name)
 
         if not service:
             raise ValueError(f"Service '{service_name}' not found in configuration")
 
         # Determine if we should use gateway
-        should_use_gateway = use_gateway if use_gateway is not None else config.api_gateway.enabled
+        should_use_gateway = (
+            use_gateway if use_gateway is not None else config.api_gateway.enabled
+        )
 
         if should_use_gateway and config.api_gateway.url:
             gateway_url = config.api_gateway.url.rstrip("/")
@@ -640,9 +680,21 @@ def get_config() -> AppConfig:
 
 
 def get_service_config(service_name: str) -> Optional[ServiceConfig]:
-    """Get configuration for a specific service."""
+    """Get configuration for a specific service.
+
+    Args:
+        service_name: Name of the service (hyphens or underscores allowed)
+
+    Returns:
+        Optional[ServiceConfig]: Service configuration if found, None otherwise
+
+    Example:
+        >>> get_service_config("auth-service")  # Matches auth_service in config
+        >>> get_service_config("auth_service")  # Matches auth_service in config
+    """
     config = ApiConfigLoader.load()
-    return config.services.get(service_name)
+    normalized_name = normalize_service_name(service_name)
+    return config.services.get(normalized_name)
 
 
 def get_service_url(service_name: str) -> str:
