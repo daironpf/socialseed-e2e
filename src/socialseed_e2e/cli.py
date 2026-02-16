@@ -726,7 +726,7 @@ def new_test(name: str, service: str, description: str):
 )
 @click.option(
     "--trace",
-    "-t",
+    "-T",
     is_flag=True,
     help="Enable visual traceability and generate sequence diagrams",
 )
