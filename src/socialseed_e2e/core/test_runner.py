@@ -5,6 +5,7 @@ This module provides the actual test execution logic for the e2e run command.
 
 import importlib
 import importlib.util
+import json
 import sys
 import time
 import traceback
@@ -59,6 +60,7 @@ class TestResult:
     duration_ms: float = 0.0
     error_message: str = ""
     error_traceback: str = ""
+    debug_info: Optional[Dict[str, Any]] = None  # Debug info for failed tests
 
 
 @dataclass
@@ -423,7 +425,7 @@ def create_page_class(service_name: str, service_path: Path) -> Type[BasePage]:
 
 
 def execute_single_test(
-    module_path: Path, page: BasePage, service_name: str
+    module_path: Path, page: BasePage, service_name: str, debug: bool = False
 ) -> TestResult:
     """Execute a single test module.
 
@@ -526,12 +528,26 @@ def execute_single_test(
         if trace_collector:
             trace_collector.end_trace("failed", str(e))
 
+        # Collect debug info if debug mode is enabled
+        debug_info = None
+        if debug and page.request_history:
+            last_request = page.request_history[-1]
+            debug_info = {
+                "method": last_request.method,
+                "url": last_request.url,
+                "request_payload": last_request.body,
+                "response_status": last_request.status,
+                "response_body": last_request.response_body,
+                "expected": str(e),  # The assertion message contains expected vs actual
+            }
+
         result = TestResult(
             name=test_name,
             service=service_name,
             status="failed",
             duration_ms=duration,
             error_message=str(e),
+            debug_info=debug_info,
         )
 
         # Collect feedback for failed test
@@ -553,6 +569,19 @@ def execute_single_test(
         if trace_collector:
             trace_collector.end_trace("error", str(e))
 
+        # Collect debug info if debug mode is enabled
+        debug_info = None
+        if debug and page.request_history:
+            last_request = page.request_history[-1]
+            debug_info = {
+                "method": last_request.method,
+                "url": last_request.url,
+                "request_payload": last_request.body,
+                "response_status": last_request.status,
+                "response_body": last_request.response_body,
+                "error": str(e),
+            }
+
         error_traceback_str = traceback.format_exc()
         result = TestResult(
             name=test_name,
@@ -561,6 +590,7 @@ def execute_single_test(
             duration_ms=duration,
             error_message=str(e),
             error_traceback=error_traceback_str,
+            debug_info=debug_info,
         )
 
         # Collect feedback for test with error
@@ -584,6 +614,7 @@ def run_service_tests(
     services_path: Path = Path("services"),
     specific_module: Optional[str] = None,
     verbose: bool = False,
+    debug: bool = False,
     include_tags: Optional[List[str]] = None,
     exclude_tags: Optional[List[str]] = None,
 ) -> TestSuiteResult:
@@ -677,7 +708,9 @@ def run_service_tests(
 
         try:
             for module_path in test_modules:
-                result = execute_single_test(module_path, page, service_name)
+                result = execute_single_test(
+                    module_path, page, service_name, debug=debug
+                )
                 suite_result.results.append(result)
                 suite_result.total += 1
 
@@ -693,6 +726,9 @@ def run_service_tests(
                     )
                     if verbose and result.error_message:
                         console.print(f"    [dim]{result.error_message}[/dim]")
+                    # Print debug info if debug mode is enabled
+                    if debug and result.debug_info:
+                        _print_debug_info(result.debug_info)
                 elif result.status == "error":
                     suite_result.errors += 1
                     console.print(
@@ -700,10 +736,83 @@ def run_service_tests(
                     )
                     if verbose:
                         console.print(f"    [dim]{result.error_traceback[:200]}[/dim]")
+                    # Print debug info if debug mode is enabled
+                    if debug and result.debug_info:
+                        _print_debug_info(result.debug_info)
         finally:
             page.teardown()
 
     return suite_result
+
+
+def _print_debug_info(debug_info: Dict[str, Any]) -> None:
+    """Print structured debug information for a failed test.
+
+    Args:
+        debug_info: Dictionary containing debug information about the failed request
+    """
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+
+    console.print("\n")
+    console.print(Panel("[bold red]DEBUG INFORMATION[/bold red]", border_style="red"))
+
+    # HTTP Method and URL
+    method = debug_info.get("method", "UNKNOWN")
+    url = debug_info.get("url", "N/A")
+    console.print(f"\n[bold cyan]HTTP Method:[/bold cyan] {method}")
+    console.print(f"[bold cyan]URL:[/bold cyan] {url}")
+
+    # Request Payload
+    request_payload = debug_info.get("request_payload")
+    if request_payload:
+        console.print(f"\n[bold cyan]Request Payload:[/bold cyan]")
+        try:
+            # Try to format as JSON
+            payload_json = (
+                json.loads(request_payload)
+                if isinstance(request_payload, str)
+                else request_payload
+            )
+            payload_str = json.dumps(payload_json, indent=2)
+            console.print(Syntax(payload_str, "json", theme="monokai"))
+        except (json.JSONDecodeError, TypeError):
+            console.print(f"[dim]{request_payload}[/dim]")
+
+    # Response Status
+    response_status = debug_info.get("response_status")
+    status_color = (
+        "green" if response_status and 200 <= response_status < 300 else "red"
+    )
+    console.print(
+        f"\n[bold cyan]Response Status:[/bold cyan] [{status_color}]{response_status}[/{status_color}]"
+    )
+
+    # Response Body
+    response_body = debug_info.get("response_body")
+    if response_body:
+        console.print(f"\n[bold cyan]Response Body:[/bold cyan]")
+        try:
+            # Try to format as JSON
+            body_json = (
+                json.loads(response_body)
+                if isinstance(response_body, str)
+                else response_body
+            )
+            body_str = json.dumps(body_json, indent=2)
+            console.print(Syntax(body_str, "json", theme="monokai"))
+        except (json.JSONDecodeError, TypeError):
+            console.print(f"[dim]{response_body[:500]}[/dim]")
+            if len(response_body) > 500:
+                console.print("[dim]... (truncated)[/dim]")
+
+    # Expected vs Actual (for assertion failures)
+    expected = debug_info.get("expected")
+    if expected:
+        console.print(f"\n[bold cyan]Assertion Details:[/bold cyan]")
+        console.print(f"[dim]{expected}[/dim]")
+
+    console.print("\n" + "─" * 60)
 
 
 def run_all_tests(
@@ -711,6 +820,7 @@ def run_all_tests(
     specific_service: Optional[str] = None,
     specific_module: Optional[str] = None,
     verbose: bool = False,
+    debug: bool = False,
     include_tags: Optional[List[str]] = None,
     exclude_tags: Optional[List[str]] = None,
 ) -> Dict[str, TestSuiteResult]:
@@ -721,6 +831,7 @@ def run_all_tests(
         specific_service: If specified, only run tests for this service
         specific_module: If specified, only run this module
         verbose: Whether to show verbose output
+        debug: Whether to enable debug mode with verbose HTTP logging
 
     Returns:
         Dictionary mapping service names to their TestSuiteResults
@@ -798,6 +909,7 @@ def run_all_tests(
             services_path=services_path,
             specific_module=specific_module,
             verbose=verbose,
+            debug=debug,
             include_tags=include_tags,
             exclude_tags=exclude_tags,
         )
@@ -913,30 +1025,29 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
 
 
 def generate_junit_report(
-    results: Dict[str, TestSuiteResult], 
-    output_path: str = "./reports/junit.xml"
+    results: Dict[str, TestSuiteResult], output_path: str = "./reports/junit.xml"
 ) -> str:
     """Generate a JUnit XML report from test results.
-    
+
     Args:
         results: Dictionary mapping service names to their TestSuiteResults
         output_path: Path where the JUnit XML file should be written
-        
+
     Returns:
         The path to the generated JUnit XML file
     """
     import xml.etree.ElementTree as ET
     from datetime import datetime
-    
+
     # Create the root testsuites element
     testsuites = ET.Element("testsuites")
-    
+
     # Calculate totals
     total_tests = 0
     total_failures = 0
     total_errors = 0
     total_time = 0.0
-    
+
     for service_name, suite_result in results.items():
         # Create a testsuite element for each service
         testsuite = ET.SubElement(testsuites, "testsuite")
@@ -946,19 +1057,19 @@ def generate_junit_report(
         testsuite.set("errors", str(suite_result.errors))
         testsuite.set("skipped", str(suite_result.skipped))
         testsuite.set("time", str(suite_result.total_duration_ms / 1000.0))
-        
+
         total_tests += suite_result.total
         total_failures += suite_result.failed
         total_errors += suite_result.errors
         total_time += suite_result.total_duration_ms / 1000.0
-        
+
         # Add individual test cases
         for result in suite_result.results:
             testcase = ET.SubElement(testsuite, "testcase")
             testcase.set("name", result.name)
             testcase.set("classname", f"{service_name}.{result.name}")
             testcase.set("time", str(result.duration_ms / 1000.0))
-            
+
             # Add failure/error elements if applicable
             if result.status == "failed":
                 failure = ET.SubElement(testcase, "failure")
@@ -970,7 +1081,7 @@ def generate_junit_report(
                 error.text = result.error_traceback or result.error_message
             elif result.status == "skipped":
                 ET.SubElement(testcase, "skipped")
-    
+
     # Set attributes on root element
     testsuites.set("name", "socialseed-e2e")
     testsuites.set("tests", str(total_tests))
@@ -978,37 +1089,37 @@ def generate_junit_report(
     testsuites.set("errors", str(total_errors))
     testsuites.set("time", str(total_time))
     testsuites.set("timestamp", datetime.now().isoformat())
-    
+
     # Create output directory if it doesn't exist
     output_file = Path(output_path)
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Write the XML file
     tree = ET.ElementTree(testsuites)
     ET.indent(tree, space="  ")
     tree.write(output_path, encoding="utf-8", xml_declaration=True)
-    
+
     return output_path
 
 
 def generate_json_report(
     results: Dict[str, TestSuiteResult],
     output_path: str = "./reports/report.json",
-    include_payloads: bool = True
+    include_payloads: bool = True,
 ) -> str:
     """Generate a JSON report from test results.
-    
+
     Args:
         results: Dictionary mapping service names to their TestSuiteResults
         output_path: Path where the JSON file should be written
         include_payloads: Whether to include request/response payloads (if available)
-        
+
     Returns:
         The path to the generated JSON file
     """
     import json
     from datetime import datetime
-    
+
     # Build the report structure
     report = {
         "framework": "socialseed-e2e",
@@ -1021,14 +1132,14 @@ def generate_json_report(
             "skipped": 0,
             "errors": 0,
             "success_rate": 0.0,
-            "total_duration_ms": 0.0
+            "total_duration_ms": 0.0,
         },
-        "services": {}
+        "services": {},
     }
-    
+
     # Calculate totals and populate services
     total_duration = 0.0
-    
+
     for service_name, suite_result in results.items():
         # Update summary
         report["summary"]["total"] += suite_result.total
@@ -1037,7 +1148,7 @@ def generate_json_report(
         report["summary"]["skipped"] += suite_result.skipped
         report["summary"]["errors"] += suite_result.errors
         total_duration += suite_result.total_duration_ms
-        
+
         # Add service details
         report["services"][service_name] = {
             "total": suite_result.total,
@@ -1047,47 +1158,47 @@ def generate_json_report(
             "errors": suite_result.errors,
             "success_rate": suite_result.success_rate,
             "total_duration_ms": suite_result.total_duration_ms,
-            "tests": []
+            "tests": [],
         }
-        
+
         # Add individual test results
         for result in suite_result.results:
             test_info = {
                 "name": result.name,
                 "status": result.status,
                 "duration_ms": result.duration_ms,
-                "duration_seconds": result.duration_ms / 1000.0
+                "duration_seconds": result.duration_ms / 1000.0,
             }
-            
+
             # Add error details for failed tests
             if result.status in ("failed", "error"):
                 test_info["error"] = {
                     "message": result.error_message,
-                    "traceback": result.error_traceback
+                    "traceback": result.error_traceback,
                 }
-                
+
                 # Include payloads if available (placeholder for future enhancement)
                 if include_payloads:
                     test_info["error"]["request_payload"] = None
                     test_info["error"]["response_payload"] = None
-            
+
             report["services"][service_name]["tests"].append(test_info)
-    
+
     # Calculate overall success rate
     if report["summary"]["total"] > 0:
         passed = report["summary"]["passed"]
         total = report["summary"]["total"]
         report["summary"]["success_rate"] = (passed / total) * 100.0
-    
+
     report["summary"]["total_duration_ms"] = total_duration
     report["summary"]["total_duration_seconds"] = total_duration / 1000.0
-    
+
     # Create output directory if it doesn't exist
     output_file = Path(output_path)
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Write the JSON file
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
-    
+
     return output_path
