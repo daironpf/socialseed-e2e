@@ -1,0 +1,43 @@
+"""Test module for Health Check.
+
+This test verifies that the Example API is running and healthy.
+This is typically the first test to run to ensure the service is available.
+"""
+
+from playwright.sync_api import APIResponse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.example.example_page import ExamplePage
+
+
+def run(page: 'ExamplePage') -> APIResponse:
+    """Execute health check test.
+    
+    This test verifies that the Example API health endpoint returns
+    a successful response, indicating the service is available.
+    
+    Args:
+        page: Instance of ExamplePage
+        
+    Returns:
+        APIResponse: HTTP response from the health endpoint
+        
+    Raises:
+        AssertionError: If health check fails
+    """
+    print("Running health check test...")
+    
+    # Act: Call the health endpoint
+    response = page.check_health()
+    
+    # Assert: Verify the service is healthy
+    assert response.ok, f"Health check failed with status {response.status}: {response.text()}"
+    
+    # Optionally verify response content
+    data = response.json()
+    assert "status" in data or "healthy" in str(data).lower(), \
+        f"Expected health indicator in response, got: {data}"
+    
+    print("✓ Health check test passed")
+    return response

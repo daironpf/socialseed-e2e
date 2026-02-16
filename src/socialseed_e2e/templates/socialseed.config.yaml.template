@@ -1,0 +1,75 @@
+# socialseed-e2e Configuration File
+# Alternative configuration format (YAML)
+# 
+# This file can be used instead of e2e.conf
+# Documentation: https://github.com/daironpf/socialseed-e2e
+
+# General Settings
+general:
+  # Environment: dev, staging, production
+  environment: dev
+  
+  # Request timeout in milliseconds
+  timeout: 30000
+  
+  # HTTP User Agent
+  user_agent: "socialseed-e2e/1.0"
+  
+  # Enable verbose output
+  verbose: true
+  
+  # Enable/disable mock server auto-start
+  auto_start_mock: true
+
+# Service Configurations
+services:
+  example:
+    # Base URL for the API (mock server: http://localhost:8765)
+    base_url: http://localhost:8765
+    
+    # Health check endpoint
+    health_endpoint: /health
+    
+    # Optional: Authentication settings
+    # auth:
+    #   type: bearer
+    #   token_header: Authorization
+    
+    # Optional: Custom headers
+    # headers:
+    #   X-Custom-Header: "value"
+
+# Mock Server Settings (optional)
+mock_server:
+  # Port for mock server (default: 8765)
+  port: 8765
+  
+  # Enable debug mode
+  debug: false
+
+# Reporting Settings
+reporting:
+  # Output directory for reports
+  output_dir: .e2e/reports
+  
+  # Report formats: html, json, csv
+  formats:
+    - html
+    - json
+  
+  # Include trace files
+  trace: true
+
+# Test Execution Settings
+testing:
+  # Parallel execution
+  parallel: false
+  
+  # Max workers when parallel
+  max_workers: 4
+  
+  # Retry failed tests
+  retry: 0
+  
+  # Stop on first failure
+  fail_fast: false

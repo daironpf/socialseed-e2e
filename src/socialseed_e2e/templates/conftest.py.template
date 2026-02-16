@@ -1,0 +1,155 @@
+"""Pytest configuration and fixtures for E2E tests.
+
+This file provides fixtures for running tests with the mock API server.
+The mock server is automatically started before tests and stopped after.
+
+Usage:
+    # The mock server is automatically available at http://localhost:8765
+    # Tests can use the fixtures below:
+    
+    def test_example(mock_api_url):
+        response = requests.get(f"{mock_api_url}/health")
+        assert response.status_code == 200
+"""
+
+import subprocess
+import time
+import os
+import sys
+from typing import Generator
+import pytest
+import requests
+
+
+MOCK_SERVER_PORT = 8765
+MOCK_SERVER_URL = f"http://localhost:{MOCK_SERVER_PORT}"
+
+
+@pytest.fixture(scope="session")
+def mock_api_server() -> Generator[str, None, None]:
+    """Start the mock API server for the test session.
+    
+    Yields:
+        str: The base URL of the mock server
+    """
+    # Check if mock server is already running
+    try:
+        response = requests.get(f"{MOCK_SERVER_URL}/health", timeout=2)
+        if response.status_code == 200:
+            yield MOCK_SERVER_URL
+            return
+    except requests.exceptions.RequestException:
+        pass
+    
+    # Start mock server
+    mock_server_process = subprocess.Popen(
+        [
+            sys.executable, "-m", 
+            "socialseed_e2e.mock_server",
+            "--port", str(MOCK_SERVER_PORT)
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=os.getcwd(),
+    )
+    
+    # Wait for server to start
+    max_retries = 30
+    for _ in range(max_retries):
+        try:
+            response = requests.get(f"{MOCK_SERVER_URL}/health", timeout=1)
+            if response.status_code == 200:
+                break
+        except requests.exceptions.RequestException:
+            time.sleep(0.5)
+    else:
+        mock_server_process.kill()
+        raise RuntimeError("Mock server failed to start")
+    
+    yield MOCK_SERVER_URL
+    
+    # Cleanup: stop mock server
+    mock_server_process.terminate()
+    try:
+        mock_server_process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        mock_server_process.kill()
+
+
+@pytest.fixture(scope="session")
+def mock_api_url(mock_api_server: str) -> str:
+    """Fixture providing the mock API server URL.
+    
+    Args:
+        mock_api_server: The running mock server URL
+        
+    Returns:
+        str: The base URL of the mock API server
+    """
+    return mock_api_server
+
+
+@pytest.fixture
+def mock_api_reset(mock_api_url: str) -> None:
+    """Reset the mock API server state before each test.
+    
+    This fixture ensures a clean state before each test by calling
+    the reset endpoint if available.
+    
+    Args:
+        mock_api_url: The base URL of the mock server
+    """
+    try:
+        requests.post(f"{mock_api_url}/_reset", timeout=5)
+    except requests.exceptions.RequestException:
+        pass
+
+
+@pytest.fixture
+def sample_user_data() -> dict:
+    """Fixture providing sample user data for tests.
+    
+    Returns:
+        dict: Sample user data including email, name, and password
+    """
+    return {
+        "email": "test@example.com",
+        "name": "Test User",
+        "password": "testpass123"
+    }
+
+
+@pytest.fixture
+def admin_credentials() -> dict:
+    """Fixture providing admin credentials for tests.
+    
+    Returns:
+        dict: Admin credentials with email and password
+    """
+    return {
+        "email": "admin@example.com",
+        "password": "admin123"
+    }
+
+
+@pytest.fixture
+def user_credentials() -> dict:
+    """Fixture providing regular user credentials for tests.
+    
+    Returns:
+        dict: User credentials with email and password
+    """
+    return {
+        "email": "user@example.com",
+        "password": "user123"
+    }
+
+
+def pytest_configure(config):
+    """Configure pytest with custom markers."""
+    config.addinivalue_line(
+        "markers", "e2e: mark test as end-to-end test"
+    )
+    config.addinivalue_line(
+        "markers", "mock: mark test as using mock server"
+    )

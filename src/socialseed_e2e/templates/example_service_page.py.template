@@ -1,0 +1,117 @@
+"""Service page for the Example API.
+
+This module provides a simple example of how to create a service page
+for testing REST APIs with socialseed-e2e.
+"""
+
+from typing import Optional, Dict, Any
+from playwright.sync_api import APIResponse
+
+from socialseed_e2e.core.base_page import BasePage
+
+from .data_schema import (
+    ENDPOINTS,
+    UserCreateDTO,
+    UserUpdateDTO,
+)
+
+
+class ExamplePage(BasePage):
+    """Service page for Example API.
+    
+    This is a simple example service that demonstrates how to:
+    - Create a service page
+    - Define API methods
+    - Share state between tests
+    
+    Attributes:
+        current_user: The user created in previous tests
+        access_token: Authentication token (if needed)
+    """
+    
+    def __init__(self, base_url: str, **kwargs):
+        """.
+        
+        Args:
+            base_url: Service base URLInitialize the Example page (e.g., http://localhost:8080)
+            **kwargs: Additional arguments for BasePage
+        """
+        super().__init__(base_url=base_url, **kwargs)
+        
+        # Shared state between test modules
+        self.current_user: Optional[dict] = None
+        self.access_token: Optional[str] = None
+        self.user_id: Optional[str] = None
+    
+    def check_health(self) -> APIResponse:
+        """Check if the service is healthy.
+        
+        Returns:
+            APIResponse: Health check response
+        """
+        return self.get(ENDPOINTS["health"])
+    
+    def list_users(self) -> APIResponse:
+        """List all users.
+        
+        Returns:
+            APIResponse: Response containing list of users
+        """
+        return self.get(ENDPOINTS["list"])
+    
+    def get_user(self, user_id: str) -> APIResponse:
+        """Get a specific user by ID.
+        
+        Args:
+            user_id: ID of the user to retrieve
+            
+        Returns:
+            APIResponse: Response containing user data
+        """
+        path = ENDPOINTS["get"].format(id=user_id)
+        return self.get(path)
+    
+    def create_user(self, data: UserCreateDTO) -> APIResponse:
+        """Create a new user.
+        
+        Args:
+            data: User data to create
+            
+        Returns:
+            APIResponse: Response from create operation
+            
+        Note:
+            Always use model_dump(by_alias=True) when serializing Pydantic models
+        """
+        return self.post(
+            ENDPOINTS["create"],
+            data=data.model_dump(by_alias=True)
+        )
+    
+    def update_user(self, user_id: str, data: UserUpdateDTO) -> APIResponse:
+        """Update an existing user.
+        
+        Args:
+            user_id: ID of the user to update
+            data: Updated user data
+            
+        Returns:
+            APIResponse: Response from update operation
+        """
+        path = ENDPOINTS["update"].format(id=user_id)
+        return self.put(
+            path,
+            data=data.model_dump(by_alias=True)
+        )
+    
+    def delete_user(self, user_id: str) -> APIResponse:
+        """Delete a user.
+        
+        Args:
+            user_id: ID of the user to delete
+            
+        Returns:
+            APIResponse: Response from delete operation
+        """
+        path = ENDPOINTS["delete"].format(id=user_id)
+        return self.delete(path)

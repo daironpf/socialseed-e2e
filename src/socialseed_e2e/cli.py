@@ -6,6 +6,7 @@ enabling developers and AI agents to create, manage, and run API tests.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -168,27 +169,26 @@ def init(directory: str, force: bool):
                 f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
             )
 
-    # Create configuration file
-    config_path = target_path / "e2e.conf"
-    if not config_path.exists() or force:
-        engine = TemplateEngine()
+    # Initialize template engine
+    engine = TemplateEngine()
+
+    # Create example test file in tests/
+    example_test_path = target_path / "tests" / "example_test.py"
+    if not example_test_path.exists() or force:
         engine.render_to_file(
-            "e2e.conf.template",
-            {
-                "environment": "dev",
-                "timeout": "30000",
-                "user_agent": "socialseed-e2e/1.0",
-                "verbose": "true",
-                "services_config": "",
-            },
-            str(config_path),
+            "example_test.py.template",
+            {},
+            str(example_test_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: e2e.conf")
-    else:
-        console.print(
-            "  [yellow]⚠[/yellow] Already exists: e2e.conf (use --force to overwrite)"
-        )
+        console.print("  [green]✓[/green] Created: tests/example_test.py")
+
+    # Create __init__.py for tests package
+    tests_init_path = target_path / "tests" / "__init__.py"
+    if not tests_init_path.exists():
+        tests_init_path.write_text("")
+
+    # Configuration file will be created later with example service
 
     # Create .gitignore
     gitignore_path = target_path / ".gitignore"
@@ -234,6 +234,150 @@ email-validator>=2.0.0
         console.print("  [green]✓[/green] Created: requirements.txt")
     else:
         console.print("  [yellow]⚠[/yellow] Already exists: requirements.txt")
+
+    # Create example service with working tests
+    example_service_path = target_path / "services" / "example"
+    example_modules_path = example_service_path / "modules"
+
+    if not example_service_path.exists() or force:
+        example_service_path.mkdir(parents=True, exist_ok=True)
+        example_modules_path.mkdir(exist_ok=True)
+
+        # Create __init__.py
+        (example_service_path / "__init__.py").write_text("")
+        (example_modules_path / "__init__.py").write_text("")
+
+        # Create data_schema.py
+        engine.render_to_file(
+            "example_data_schema.py.template",
+            {},
+            str(example_service_path / "data_schema.py"),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: services/example/data_schema.py")
+
+        # Create example_page.py
+        engine.render_to_file(
+            "example_service_page.py.template",
+            {},
+            str(example_service_path / "example_page.py"),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: services/example/example_page.py")
+
+        # Create test modules
+        engine.render_to_file(
+            "example_test_health.py.template",
+            {},
+            str(example_modules_path / "01_health.py"),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: services/example/modules/01_health.py"
+        )
+
+        engine.render_to_file(
+            "example_test_create.py.template",
+            {},
+            str(example_modules_path / "02_create.py"),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: services/example/modules/02_create.py"
+        )
+    else:
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: services/example/ (use --force to overwrite)"
+        )
+
+    # Create/update e2e.conf with example service
+    config_path = target_path / "e2e.conf"
+    if not config_path.exists() or force:
+        engine.render_to_file(
+            "e2e.conf.template",
+            {
+                "environment": "dev",
+                "timeout": "30000",
+                "user_agent": "socialseed-e2e/1.0",
+                "verbose": "true",
+                "services_config": """  example:
+    base_url: http://localhost:8765
+    health_endpoint: /health
+""",
+            },
+            str(config_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: e2e.conf (with example service)")
+
+    # Create socialseed.config.yaml (alternative config format)
+    config_yaml_path = target_path / "socialseed.config.yaml"
+    if not config_yaml_path.exists() or force:
+        engine.render_to_file(
+            "socialseed.config.yaml.template",
+            {},
+            str(config_yaml_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: socialseed.config.yaml")
+
+    # Create pyproject.toml for pytest and project metadata
+    pyproject_path = target_path / "pyproject.toml"
+    if not pyproject_path.exists() or force:
+        engine.render_to_file(
+            "pyproject.toml.template",
+            {"project_name": target_path.name},
+            str(pyproject_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: pyproject.toml")
+
+    # Create conftest.py with mock server fixtures
+    conftest_path = target_path / "conftest.py"
+    if not conftest_path.exists() or force:
+        engine.render_to_file(
+            "conftest.py.template",
+            {},
+            str(conftest_path),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: conftest.py (with mock server fixtures)"
+        )
+
+    # Create localized README.md
+    readme_path = target_path / "README.md"
+    if not readme_path.exists() or force:
+        engine.render_to_file(
+            "example_README.md.template",
+            {"project_name": target_path.name},
+            str(readme_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: README.md")
+    else:
+        console.print("  [yellow]⚠[/yellow] Already exists: README.md")
+
+    # Copy GitHub Actions workflow
+    github_workflows_path = target_path / ".github" / "workflows"
+    e2e_yml_path = github_workflows_path / "e2e.yml"
+    if not e2e_yml_path.exists() or force:
+        try:
+            from socialseed_e2e.templates import __file__ as templates_init
+
+            templates_dir = Path(templates_init).parent
+            source_workflow = (
+                templates_dir
+                / "ci-cd"
+                / "github-actions"
+                / "basic-workflow.yml.template"
+            )
+            if source_workflow.exists():
+                shutil.copy(str(source_workflow), str(e2e_yml_path))
+                console.print("  [green]✓[/green] Created: .github/workflows/e2e.yml")
+        except Exception:
+            # If it fails, it's not critical
+            pass
 
     # Show success message
     console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
@@ -285,10 +429,12 @@ email-validator>=2.0.0
     console.print(
         Panel(
             "[bold]Next steps:[/bold]\n\n"
-            "1. Edit [cyan]e2e.conf[/cyan] to configure your API\n"
-            '2. Ask your AI Agent: [italic]"Read the AGENT_GUIDE.md and '
+            "1. Review the [cyan]example service[/cyan] in services/example/\n"
+            "2. Edit [cyan]e2e.conf[/cyan] to configure your API endpoints\n"
+            "3. Read [cyan]README.md[/cyan] for detailed instructions\n"
+            '4. Ask your AI Agent: [italic]"Read the AGENT_GUIDE.md and '
             'generate tests for my API"[/italic]\n'
-            "3. Or do it manually: [cyan]e2e new-service <name>[/cyan]",
+            "5. Or create a new service: [cyan]e2e new-service <name>[/cyan]",
             title="🚀 Getting Started",
             border_style="green",
         )

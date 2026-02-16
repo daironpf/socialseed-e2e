@@ -1,0 +1,62 @@
+"""Test module for Create User flow.
+
+This test demonstrates how to create a new user using the Example API.
+It shows the complete flow: setup test data, execute the API call, and verify results.
+"""
+
+import uuid
+from playwright.sync_api import APIResponse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.example.example_page import ExamplePage
+
+
+def run(page: 'ExamplePage') -> APIResponse:
+    """Execute create user test.
+    
+    This test creates a new user and verifies it was created successfully.
+    The created user ID is stored in page.user_id for use in subsequent tests.
+    
+    Args:
+        page: Instance of ExamplePage
+        
+    Returns:
+        APIResponse: Response from the create operation
+        
+    Raises:
+        AssertionError: If user creation fails or response is invalid
+    """
+    print("Running create user test...")
+    
+    # Arrange: Setup test data using Pydantic DTO
+    # Use unique email to avoid conflicts with existing users
+    unique_id = uuid.uuid4().hex[:8]
+    test_email = f"testuser_{unique_id}@example.com"
+    
+    from services.example.data_schema import UserCreateDTO
+    
+    create_data = UserCreateDTO(
+        email=test_email,
+        name=f"Test User {unique_id}",
+        password="testpass123"
+    )
+    
+    # Act: Execute the create operation
+    response = page.create_user(create_data)
+    
+    # Assert: Verify the user was created successfully
+    assert response.ok, f"Create user failed with status {response.status}: {response.text()}"
+    
+    # Verify response contains expected data
+    data = response.json()
+    assert "id" in data, f"Expected 'id' in response, got: {data}"
+    assert data["email"] == test_email, \
+        f"Expected email '{test_email}', got '{data.get('email')}'"
+    
+    # Store the user ID for subsequent tests
+    page.user_id = data["id"]
+    page.current_user = data
+    
+    print(f"✓ Create user test passed (ID: {page.user_id})")
+    return response
