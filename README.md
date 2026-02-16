@@ -251,6 +251,7 @@ e2e watch                   # Auto-update on changes
 
 All guides at **[daironpf.github.io/socialseed-e2e](https://daironpf.github.io/socialseed-e2e/)**
 
+- **[How it Works](https://daironpf.github.io/socialseed-e2e/how-it-works.html)** - Understanding the core concepts (Service, Endpoint, Scenario, Test)
 - [Quick Start](https://daironpf.github.io/socialseed-e2e/quickstart.html)
 - [Writing Tests](https://daironpf.github.io/socialseed-e2e/writing-tests.html)
 - [CI/CD Integration](https://daironpf.github.io/socialseed-e2e/ci-cd.html)
