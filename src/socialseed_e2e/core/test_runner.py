@@ -24,6 +24,7 @@ from socialseed_e2e.core.config_loader import (
     ApiConfigLoader,
     ServiceConfig,
     get_service_config,
+    normalize_service_name,
 )
 from socialseed_e2e.core.organization import Priority, TestOrganizationManager
 
@@ -748,12 +749,48 @@ def run_all_tests(
     except Exception:
         config = None
 
+    # Normalize service names and validate against configuration
+    normalized_services = []
+    unconfigured_services = []
+
+    for service_name in services:
+        normalized_name = normalize_service_name(service_name)
+        normalized_services.append(normalized_name)
+
+        # Check if service has configuration (using normalized name)
+        if config and normalized_name not in config.services:
+            unconfigured_services.append(service_name)
+
+    # Warn about unconfigured services
+    if unconfigured_services and config:
+        console.print(
+            "\n[yellow]⚠️  WARNING: The following services lack configuration in e2e.conf:[/yellow]"
+        )
+        for svc in unconfigured_services:
+            console.print(f"   - [yellow]{svc}[/yellow] (will use defaults)")
+        console.print(
+            "\n   [dim]Add these services to e2e.conf to configure base_url, port, etc.[/dim]\n"
+        )
+
+    # Print services summary
+    configured_services = [
+        svc for svc in normalized_services if config and svc in config.services
+    ]
+    console.print("\n[bold]Services Summary:[/bold]")
+    console.print(f"   Detected:    [{', '.join(services)}]")
+    if config:
+        console.print(f"   Configured:  [{', '.join(configured_services)}]")
+        if unconfigured_services:
+            console.print(f"   Unconfigured: [{', '.join(unconfigured_services)}]")
+    console.print()
+
     # Run tests for each service
     for service_name in services:
-        # Get service configuration
+        # Get service configuration (using normalized name for lookup)
         service_config = None
-        if config and service_name in config.services:
-            service_config = config.services[service_name]
+        if config:
+            normalized_name = normalize_service_name(service_name)
+            service_config = config.services.get(normalized_name)
 
         suite_result = run_service_tests(
             service_name=service_name,

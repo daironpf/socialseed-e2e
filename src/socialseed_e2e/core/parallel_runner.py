@@ -16,7 +16,11 @@ from typing import Any, Callable, Dict, List, Optional, Type
 from playwright.sync_api import sync_playwright
 
 from socialseed_e2e.core.base_page import BasePage
-from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
+from socialseed_e2e.core.config_loader import (
+    ApiConfigLoader,
+    ServiceConfig,
+    normalize_service_name,
+)
 from socialseed_e2e.core.test_runner import (
     TestResult,
     TestSuiteResult,
@@ -115,7 +119,11 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
 
     try:
         # Get base URL
-        base_url = task.service_config.base_url if task.service_config else f"http://localhost:8080"
+        base_url = (
+            task.service_config.base_url
+            if task.service_config
+            else f"http://localhost:8080"
+        )
 
         # Create page class
         service_path = Path("services") / service_name
@@ -130,7 +138,9 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
 
             try:
                 for module_path in task.module_paths:
-                    result = execute_single_test_in_worker(module_path, page, service_name)
+                    result = execute_single_test_in_worker(
+                        module_path, page, service_name
+                    )
                     suite_result.results.append(result)
                     suite_result.total += 1
 
@@ -148,7 +158,9 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
 
     except Exception as e:
         error_msg = f"Worker failed for service {service_name}: {str(e)}\n{traceback.format_exc()}"
-        return WorkerResult(service_name=service_name, suite_result=suite_result, error=error_msg)
+        return WorkerResult(
+            service_name=service_name, suite_result=suite_result, error=error_msg
+        )
 
 
 def execute_single_test_in_worker(
@@ -254,6 +266,41 @@ def run_tests_parallel(
     except Exception:
         config = None
 
+    # Normalize service names and validate against configuration
+    normalized_services = []
+    unconfigured_services = []
+
+    for service_name in services:
+        normalized_name = normalize_service_name(service_name)
+        normalized_services.append(normalized_name)
+
+        # Check if service has configuration (using normalized name)
+        if config and normalized_name not in config.services:
+            unconfigured_services.append(service_name)
+
+    # Warn about unconfigured services
+    if unconfigured_services and config:
+        print(
+            "\n[yellow]⚠️  WARNING: The following services lack configuration in e2e.conf:[/yellow]"
+        )
+        for svc in unconfigured_services:
+            print(f"   - [yellow]{svc}[/yellow] (will use defaults)")
+        print(
+            "\n   [dim]Add these services to e2e.conf to configure base_url, port, etc.[/dim]\n"
+        )
+
+    # Print services summary
+    configured_services = [
+        svc for svc in normalized_services if config and svc in config.services
+    ]
+    print("\n[bold]Services Summary:[/bold]")
+    print(f"   Detected:    [{', '.join(services)}]")
+    if config:
+        print(f"   Configured:  [{', '.join(configured_services)}]")
+        if unconfigured_services:
+            print(f"   Unconfigured: [{', '.join(unconfigured_services)}]")
+    print()
+
     # Prepare worker tasks
     tasks: List[WorkerTask] = []
     for service_name in services:
@@ -279,26 +326,31 @@ def run_tests_parallel(
             # Filter
             include_set = set(include_tags) if include_tags else None
             exclude_set = set(exclude_tags) if exclude_tags else None
-            
+
             class ModuleStub:
                 def __init__(self, path):
                     self.path = path
                     self.run = load_test_module(path)
-            
+
             stubs = [ModuleStub(p) for p in test_modules]
-            filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
+            filtered_stubs = TestOrganizationManager.filter_tests(
+                stubs, include_set, exclude_set
+            )
             test_modules = [s.path for s in filtered_stubs]
-            
+
             # Sort
-            test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
+            test_modules = TestOrganizationManager.sort_tests(
+                test_modules, load_test_module
+            )
 
         if not test_modules:
             continue
 
-        # Get service configuration
+        # Get service configuration (using normalized name for lookup)
         service_config = None
-        if config and service_name in config.services:
-            service_config = config.services[service_name]
+        if config:
+            normalized_name = normalize_service_name(service_name)
+            service_config = config.services.get(normalized_name)
 
         task = WorkerTask(
             service_name=service_name,
