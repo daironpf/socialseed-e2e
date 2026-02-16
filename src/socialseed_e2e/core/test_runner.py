@@ -425,7 +425,11 @@ def create_page_class(service_name: str, service_path: Path) -> Type[BasePage]:
 
 
 def execute_single_test(
-    module_path: Path, page: BasePage, service_name: str, debug: bool = False
+    module_path: Path,
+    page: BasePage,
+    service_name: str,
+    debug: bool = False,
+    no_agent: bool = False,
 ) -> TestResult:
     """Execute a single test module.
 
@@ -509,15 +513,16 @@ def execute_single_test(
             name=test_name, service=service_name, status="passed", duration_ms=duration
         )
 
-        # Collect feedback for successful test
-        collector = get_feedback_collector()
-        collector.collect_test_result(
-            test_name=test_name,
-            success=True,
-            execution_time=duration,
-            endpoint=getattr(page, "base_url", None),
-            metadata={"service": service_name},
-        )
+        # Collect feedback for successful test (unless no_agent mode is enabled)
+        if not no_agent:
+            collector = get_feedback_collector()
+            collector.collect_test_result(
+                test_name=test_name,
+                success=True,
+                execution_time=duration,
+                endpoint=getattr(page, "base_url", None),
+                metadata={"service": service_name},
+            )
 
         return result
 
@@ -550,16 +555,17 @@ def execute_single_test(
             debug_info=debug_info,
         )
 
-        # Collect feedback for failed test
-        collector = get_feedback_collector()
-        collector.collect_test_result(
-            test_name=test_name,
-            success=False,
-            execution_time=duration,
-            error_message=str(e),
-            endpoint=getattr(page, "base_url", None),
-            metadata={"service": service_name, "error_type": "assertion"},
-        )
+        # Collect feedback for failed test (unless no_agent mode is enabled)
+        if not no_agent:
+            collector = get_feedback_collector()
+            collector.collect_test_result(
+                test_name=test_name,
+                success=False,
+                execution_time=duration,
+                error_message=str(e),
+                endpoint=getattr(page, "base_url", None),
+                metadata={"service": service_name, "error_type": "assertion"},
+            )
 
         return result
     except Exception as e:
@@ -593,17 +599,18 @@ def execute_single_test(
             debug_info=debug_info,
         )
 
-        # Collect feedback for test with error
-        collector = get_feedback_collector()
-        collector.collect_test_result(
-            test_name=test_name,
-            success=False,
-            execution_time=duration,
-            error_message=str(e),
-            stack_trace=error_traceback_str[:500],  # Limit stack trace size
-            endpoint=getattr(page, "base_url", None),
-            metadata={"service": service_name, "error_type": "exception"},
-        )
+        # Collect feedback for test with error (unless no_agent mode is enabled)
+        if not no_agent:
+            collector = get_feedback_collector()
+            collector.collect_test_result(
+                test_name=test_name,
+                success=False,
+                execution_time=duration,
+                error_message=str(e),
+                stack_trace=error_traceback_str[:500],  # Limit stack trace size
+                endpoint=getattr(page, "base_url", None),
+                metadata={"service": service_name, "error_type": "exception"},
+            )
 
         return result
 
@@ -615,6 +622,7 @@ def run_service_tests(
     specific_module: Optional[str] = None,
     verbose: bool = False,
     debug: bool = False,
+    no_agent: bool = False,
     include_tags: Optional[List[str]] = None,
     exclude_tags: Optional[List[str]] = None,
 ) -> TestSuiteResult:
@@ -709,7 +717,7 @@ def run_service_tests(
         try:
             for module_path in test_modules:
                 result = execute_single_test(
-                    module_path, page, service_name, debug=debug
+                    module_path, page, service_name, debug=debug, no_agent=no_agent
                 )
                 suite_result.results.append(result)
                 suite_result.total += 1
@@ -821,6 +829,7 @@ def run_all_tests(
     specific_module: Optional[str] = None,
     verbose: bool = False,
     debug: bool = False,
+    no_agent: bool = False,
     include_tags: Optional[List[str]] = None,
     exclude_tags: Optional[List[str]] = None,
 ) -> Dict[str, TestSuiteResult]:
@@ -832,6 +841,7 @@ def run_all_tests(
         specific_module: If specified, only run this module
         verbose: Whether to show verbose output
         debug: Whether to enable debug mode with verbose HTTP logging
+        no_agent: Whether to disable AI agent features (boring mode)
 
     Returns:
         Dictionary mapping service names to their TestSuiteResults
@@ -910,6 +920,7 @@ def run_all_tests(
             specific_module=specific_module,
             verbose=verbose,
             debug=debug,
+            no_agent=no_agent,
             include_tags=include_tags,
             exclude_tags=exclude_tags,
         )

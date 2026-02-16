@@ -786,6 +786,11 @@ def new_test(name: str, service: str, description: str):
     is_flag=True,
     help="Enable debug mode with verbose HTTP request/response logging for failed tests",
 )
+@click.option(
+    "--no-agent",
+    is_flag=True,
+    help="Disable AI agent features (boring mode). No external LLM calls will be made",
+)
 def run(
     service: Optional[str],
     module: Optional[str],
@@ -803,6 +808,7 @@ def run(
     report: Optional[str],
     report_output: str,
     debug: bool,
+    no_agent: bool,
 ):
     """Execute E2E tests.
 
@@ -819,6 +825,7 @@ def run(
         trace_output: Directory for traceability reports
         trace_format: Format for sequence diagrams (mermaid, plantuml, both)
         debug: If True, enable debug mode with verbose HTTP logging for failed tests
+        no_agent: If True, disable AI agent features (boring mode)
 
     Examples:
         e2e run                                              # Run all tests
@@ -833,6 +840,7 @@ def run(
         e2e run --report json                                # Generate JSON report
         e2e run --report junit --report-output ./reports     # Custom report directory
         e2e run --debug                                      # Enable debug mode
+        e2e run --no-agent                                   # Run in boring mode (no AI)
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -910,6 +918,10 @@ def run(
         console.print(
             "🐛 [yellow]Debug mode activated - verbose HTTP logging for failures[/yellow]"
         )
+    if no_agent:
+        console.print(
+            "🔄 [yellow]Boring mode activated - AI features disabled[/yellow]"
+        )
     if include_tags:
         console.print(f"🏷️ [yellow]Including tags:[/yellow] {', '.join(include_tags)}")
     if exclude_tags:
@@ -957,6 +969,7 @@ def run(
                 parallel_config=parallel_config,
                 verbose=verbose,
                 debug=debug,
+                no_agent=no_agent,
                 include_tags=list(include_tags) if include_tags else None,
                 exclude_tags=list(exclude_tags) if exclude_tags else None,
             )
@@ -967,6 +980,7 @@ def run(
                 specific_module=module,
                 verbose=verbose,
                 debug=debug,
+                no_agent=no_agent,
                 include_tags=list(include_tags) if include_tags else None,
                 exclude_tags=list(exclude_tags) if exclude_tags else None,
             )

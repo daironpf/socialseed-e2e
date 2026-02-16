@@ -76,6 +76,7 @@ class WorkerTask:
         module_paths: List of test module paths to execute
         project_root: Root directory of the project
         debug: Whether to enable debug mode with verbose HTTP logging
+        no_agent: Whether to disable AI agent features (boring mode)
     """
 
     service_name: str
@@ -83,6 +84,7 @@ class WorkerTask:
     module_paths: List[Path]
     project_root: Path
     debug: bool = False
+    no_agent: bool = False
 
 
 @dataclass
@@ -141,7 +143,11 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
             try:
                 for module_path in task.module_paths:
                     result = execute_single_test_in_worker(
-                        module_path, page, service_name, debug=task.debug
+                        module_path,
+                        page,
+                        service_name,
+                        debug=task.debug,
+                        no_agent=task.no_agent,
                     )
                     suite_result.results.append(result)
                     suite_result.total += 1
@@ -166,7 +172,11 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
 
 
 def execute_single_test_in_worker(
-    module_path: Path, page: BasePage, service_name: str, debug: bool = False
+    module_path: Path,
+    page: BasePage,
+    service_name: str,
+    debug: bool = False,
+    no_agent: bool = False,
 ) -> TestResult:
     """Execute a single test module within a worker.
 
@@ -175,6 +185,7 @@ def execute_single_test_in_worker(
         page: Page instance to pass to test
         service_name: Name of the service
         debug: Whether to enable debug mode with verbose HTTP logging
+        no_agent: Whether to disable AI agent features (boring mode)
 
     Returns:
         TestResult with execution details
@@ -251,6 +262,30 @@ def execute_single_test_in_worker(
             status="error",
             duration_ms=duration,
             error_message=str(e),
+            debug_info=debug_info,
+        )
+    except Exception as e:
+        duration = (time.time() - start_time) * 1000
+
+        # Collect debug info if debug mode is enabled
+        debug_info = None
+        if debug and page.request_history:
+            last_request = page.request_history[-1]
+            debug_info = {
+                "method": last_request.method,
+                "url": last_request.url,
+                "request_payload": last_request.body,
+                "response_status": last_request.status,
+                "response_body": last_request.response_body,
+                "error": str(e),
+            }
+
+        return TestResult(
+            name=test_name,
+            service=service_name,
+            status="error",
+            duration_ms=duration,
+            error_message=str(e),
             error_traceback=traceback.format_exc(),
         )
 
@@ -262,6 +297,7 @@ def run_tests_parallel(
     parallel_config: Optional[ParallelConfig] = None,
     verbose: bool = False,
     debug: bool = False,
+    no_agent: bool = False,
     include_tags: Optional[List[str]] = None,
     exclude_tags: Optional[List[str]] = None,
 ) -> Dict[str, TestSuiteResult]:
@@ -271,6 +307,7 @@ def run_tests_parallel(
         services_path: Path to services directory
         specific_service: If specified, only run tests for this service
         specific_module: If specified, only run this module
+        no_agent: Whether to disable AI agent features (boring mode)
         parallel_config: Configuration for parallel execution
         verbose: Whether to show verbose output
         debug: Whether to enable debug mode with verbose HTTP logging
@@ -394,6 +431,7 @@ def run_tests_parallel(
             module_paths=test_modules,
             project_root=project_root,
             debug=debug,
+            no_agent=no_agent,
         )
         tasks.append(task)
 
