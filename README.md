@@ -86,6 +86,71 @@ async def run(page):
 
 ---
 
+## ✅ Checklist for Creating Tests
+
+Before creating tests, ensure your service setup follows these conventions:
+
+### Directory Structure
+```
+services/{service_name}/
+├── __init__.py
+├── {service_name}_page.py      # Must be named EXACTLY like this
+├── data_schema.py               # Optional: Data models and constants
+└── modules/                     # Test modules directory
+    ├── 01_login.py
+    └── __init__.py
+```
+
+### Requirements
+
+- [ ] **Directory**: `services/{service_name}/` - Use underscores (e.g., `auth_service`)
+- [ ] **Page File**: `{service_name}_page.py` - Must be named exactly like the directory + `_page.py`
+- [ ] **Inheritance**: Class must inherit from `BasePage`
+- [ ] **Constructor**: Must accept `base_url: str` and call `super().__init__(base_url=base_url)`
+- [ ] **Configuration**: The `services` block in `e2e.conf` must match the directory name (hyphens/underscores are normalized)
+
+### Boilerplate: `{service_name}_page.py`
+
+```python
+"""Page class for {service_name} API."""
+
+from socialseed_e2e.core.base_page import BasePage
+from typing import Optional
+
+
+class AuthServicePage(BasePage):  # Replace AuthService with your service name
+    """Page object for auth-service API interactions."""
+    
+    def __init__(self, base_url: str, **kwargs):
+        """Initialize the page with base URL.
+        
+        Args:
+            base_url: Base URL for the API (e.g., http://localhost:8080)
+            **kwargs: Additional arguments passed to BasePage
+        """
+        super().__init__(base_url=base_url, **kwargs)
+    
+    def do_login(self, email: str, password: str):
+        """Execute login request."""
+        return self.post("/auth/login", json={
+            "email": email,
+            "password": password
+        })
+```
+
+### Configuration Example (`e2e.conf`)
+
+```yaml
+services:
+  auth_service:  # Matches services/auth_service/ directory
+    base_url: http://localhost:8080
+    health_endpoint: /health
+```
+
+**Note**: Service names with hyphens (e.g., `auth-service`) are automatically normalized to underscores (`auth_service`) for matching.
+
+---
+
 ## 🎯 CLI Commands
 
 ```bash
