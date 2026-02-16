@@ -14,16 +14,96 @@
 
 ---
 
-## 🚀 Get Started in 30 Seconds
+## 🚀 Quick Start
+
+Get up and running in under 5 minutes with this minimal setup:
+
+### 1. Install
 
 ```bash
 pip install socialseed-e2e
-playwright install chromium
+```
 
-e2e init my-tests && cd my-tests
-e2e new-service users-api
-e2e new-test login --service users-api
+### 2. Initialize Project
+
+```bash
+e2e init demo
+cd demo
+```
+
+**Output:**
+```
+🌱 Initializing E2E project at: /path/to/demo
+
+  ✓ Created: services
+  ✓ Created: tests
+  ✓ Created: .github/workflows
+  ✓ Created: e2e.conf
+  ✓ Created: .gitignore
+  ✓ Created: requirements.txt
+  ✓ Created: .agent/ (AI Documentation)
+
+✅ Project initialized successfully!
+```
+
+### 3. Create Your First Service
+
+```bash
+e2e new-service demo-api --base-url http://localhost:8080
+```
+
+**Generated Folder Structure:**
+```
+demo/
+├── e2e.conf                    # Configuration file
+├── services/
+│   └── demo-api/
+│       ├── __init__.py
+│       ├── demo_api_page.py    # Service Page class
+│       ├── data_schema.py      # Data models
+│       └── modules/            # Test modules
+├── tests/                      # Additional tests
+└── .github/workflows/          # CI/CD templates
+```
+
+### 4. Create Your First Test
+
+```bash
+e2e new-test health --service demo-api
+```
+
+This creates `services/demo-api/modules/01_health_flow.py` with a test template.
+
+### 5. Run Tests
+
+```bash
 e2e run
+```
+
+**Expected Output:**
+```
+🚀 socialseed-e2e v0.1.2
+══════════════════════════════════════════════════
+
+📋 Configuration: e2e.conf
+🌍 Environment: dev
+
+Services Summary:
+   Detected:    [demo-api]
+   Configured:  [demo-api]
+
+Running tests for service: demo-api
+══════════════════════════════════════════════════
+
+✓ demo-api tests completed
+
+════════════════════════════════════════════════════════════
+Test Execution Summary
+════════════════════════════════════════════════════════════
+
+demo-api: 1/1 passed (100.0%)
+
+✅ All tests passed!
 ```
 
 ---
