@@ -391,6 +391,271 @@ e2e setup-ci travis      # Travis CI
 
 ---
 
+## 🎯 CLI Reference
+
+Complete reference for all CLI commands and flags.
+
+### Global Options
+
+```bash
+e2e --help          # Show help message and exit
+e2e --version       # Show version information
+```
+
+### Core Commands
+
+#### `e2e init` - Initialize Project
+
+Initialize a new E2E testing project with directory structure and configuration files.
+
+```bash
+e2e init [DIRECTORY] [OPTIONS]
+
+Options:
+  --force    Overwrite existing files
+```
+
+**Examples:**
+```bash
+e2e init                      # Initialize in current directory
+e2e init my-project           # Initialize in specific directory
+e2e init --force              # Overwrite existing files
+```
+
+#### `e2e new-service` - Create Service
+
+Create a new service with complete scaffolding (page class, data schema, and modules directory).
+
+```bash
+e2e new-service NAME [OPTIONS]
+
+Arguments:
+  NAME    Service name (e.g., users-api, auth_service)
+
+Options:
+  --base-url TEXT          Service base URL (default: http://localhost:8080)
+  --health-endpoint TEXT   Health check endpoint path (default: /health)
+```
+
+**Examples:**
+```bash
+e2e new-service users-api
+e2e new-service payment-service --base-url http://localhost:8081
+e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
+```
+
+#### `e2e new-test` - Create Test
+
+Create a new test module for an existing service.
+
+```bash
+e2e new-test NAME --service SERVICE
+
+Required:
+  --service TEXT    Service name to create test for
+```
+
+**Examples:**
+```bash
+e2e new-test login --service auth-api
+e2e new-test create-user --service users-api
+```
+
+#### `e2e run` - Execute Tests
+
+Run E2E tests with various filtering and output options.
+
+```bash
+e2e run [OPTIONS]
+
+Filtering Options:
+  -s, --service TEXT              Run tests for specific service only
+  -m, --module TEXT               Run specific test module
+  -t, --tag TEXT                  Only run tests with these tags (can be used multiple times)
+  -x, --exclude-tag TEXT          Exclude tests with these tags (can be used multiple times)
+
+Configuration Options:
+  -c, --config TEXT               Path to configuration file (default: e2e.conf)
+  -v, --verbose                   Enable verbose output with detailed information
+
+Output Options:
+  -o, --output [text|json|html]   Output format (default: text)
+  --report-dir PATH               Directory for HTML reports (default: .e2e/reports)
+
+Report Generation:
+  --report [junit|json]           Generate machine-readable test report
+  --report-output PATH            Directory for reports (default: ./reports)
+
+Debugging:
+  -d, --debug                     Enable debug mode with verbose HTTP request/response logging for failed tests
+
+Parallel Execution:
+  -j, --parallel INTEGER          Enable parallel execution with N workers (0=disabled)
+  --parallel-mode [service|test]  Parallel execution mode
+
+Traceability:
+  -T, --trace                     Enable visual traceability and generate sequence diagrams
+  --trace-output PATH             Directory for traceability reports
+  --trace-format [mermaid|plantuml|both]  Format for sequence diagrams
+```
+
+**Examples:**
+```bash
+e2e run                                              # Run all tests
+e2e run --service auth_service                       # Run tests for specific service
+e2e run --service auth_service --module 01_login     # Run specific test module
+e2e run --verbose                                    # Run with detailed output
+e2e run --output html --report-dir ./reports         # Generate HTML report
+e2e run --parallel 4                                 # Run with 4 parallel workers
+e2e run --trace                                      # Enable traceability
+e2e run -c /path/to/e2e.conf                         # Use custom config file
+e2e run --report junit                               # Generate JUnit XML report
+e2e run --report json                                # Generate JSON report
+e2e run --report junit --report-output ./reports     # Custom report directory
+e2e run --debug                                      # Enable debug mode with HTTP logging
+```
+
+### AI-Powered Commands
+
+#### `e2e manifest` - Generate AI Project Manifest
+
+Generate structured API knowledge from your codebase for AI agents.
+
+```bash
+e2e manifest [DIRECTORY]
+```
+
+#### `e2e search` - Semantic Search
+
+Search your API endpoints and DTOs using natural language (RAG-ready).
+
+```bash
+e2e search QUERY
+
+e2e search "authentication endpoints"
+e2e search "user DTO" --type dto
+```
+
+#### `e2e build-index` - Build Vector Index
+
+Build vector embeddings index for semantic search.
+
+```bash
+e2e build-index
+```
+
+#### `e2e deep-scan` - Auto-Discover Project
+
+Zero-config deep scan for automatic project mapping and configuration.
+
+```bash
+e2e deep-scan [DIRECTORY]
+
+Options:
+  --auto-config    Automatically configure e2e.conf based on scan results
+```
+
+#### `e2e generate-tests` - AI Test Generation
+
+Autonomous test suite generation based on code intent.
+
+```bash
+e2e generate-tests [OPTIONS]
+
+Options:
+  --service TEXT    Target service for test generation
+  --module TEXT     Specific module to generate tests for
+```
+
+#### `e2e translate` - Natural Language to Test Code
+
+Translate natural language descriptions to test code.
+
+```bash
+e2e translate "Create a test that logs in and verifies the token"
+```
+
+### CI/CD Commands
+
+#### `e2e setup-ci` - Generate CI/CD Templates
+
+Generate CI/CD pipeline templates for various platforms.
+
+```bash
+e2e setup-ci PLATFORM
+
+Platforms:
+  github       GitHub Actions
+  gitlab       GitLab CI
+  jenkins      Jenkins
+  azure        Azure DevOps
+  circleci     CircleCI
+  travis       Travis CI
+  bitbucket    Bitbucket Pipelines
+```
+
+**Examples:**
+```bash
+e2e setup-ci github      # Generate GitHub Actions workflow
+e2e setup-ci gitlab      # Generate GitLab CI configuration
+e2e setup-ci jenkins     # Generate Jenkinsfile
+```
+
+### Utility Commands
+
+#### `e2e config` - Show Configuration
+
+Show and validate current configuration.
+
+```bash
+e2e config
+```
+
+#### `e2e doctor` - Verify Installation
+
+Verify installation and check dependencies.
+
+```bash
+e2e doctor
+```
+
+#### `e2e watch` - File Watcher
+
+Watch project files and auto-update manifest on changes.
+
+```bash
+e2e watch [DIRECTORY]
+```
+
+#### `e2e observe` - Service Discovery
+
+Auto-detect running services and ports.
+
+```bash
+e2e observe [DIRECTORY]
+
+Options:
+  -h, --host TEXT         Hosts to scan
+  -p, --ports TEXT        Port range (e.g., 8000-9000)
+  -t, --timeout FLOAT     Timeout for port scanning in seconds
+  --docker / --no-docker  Scan Docker containers
+  --auto-setup            Auto-setup environment using Docker
+  --dry-run               Show what would be done without executing
+```
+
+### Getting Help
+
+Use `--help` with any command for detailed information:
+
+```bash
+e2e --help
+e2e run --help
+e2e new-service --help
+e2e generate-tests --help
+```
+
+---
+
 ## 📚 Documentation
 
 All guides at **[daironpf.github.io/socialseed-e2e](https://daironpf.github.io/socialseed-e2e/)**
