@@ -176,6 +176,92 @@ docker run --rm -v $(pwd):/app socialseed-e2e e2e run
 
 ---
 
+## 🐳 Docker Usage
+
+SocialSeed E2E provides an official Docker image for containerized test execution. This is ideal for CI/CD pipelines and environments where you want to avoid installing Python dependencies locally.
+
+### Building the Docker Image
+
+```bash
+# Clone or navigate to the project directory
+cd socialseed-e2e
+
+# Build the Docker image
+docker build -t socialseed-e2e .
+```
+
+### Running Tests with Docker
+
+#### Basic Usage
+
+```bash
+# Show help
+docker run --rm socialseed-e2e --help
+
+# Run all tests (mount your project directory)
+docker run --rm -v $(pwd):/app socialseed-e2e run
+
+# Run tests for a specific service
+docker run --rm -v $(pwd):/app socialseed-e2e run --service users-api
+
+# Run with verbose output
+docker run --rm -v $(pwd):/app socialseed-e2e run --verbose
+```
+
+#### Advanced Usage
+
+```bash
+# Run with debug mode
+docker run --rm -v $(pwd):/app socialseed-e2e run --debug
+
+# Run in boring mode (disable AI features)
+docker run --rm -v $(pwd):/app socialseed-e2e run --no-agent
+
+# Generate JUnit report
+docker run --rm -v $(pwd):/app -v $(pwd)/reports:/app/reports socialseed-e2e run --report junit
+
+# Run specific test module
+docker run --rm -v $(pwd):/app socialseed-e2e run --service auth --module 01_login
+```
+
+### Docker in CI/CD
+
+Example GitHub Actions workflow using Docker:
+
+```yaml
+name: E2E Tests with Docker
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -t socialseed-e2e .
+      
+      - name: Run E2E tests
+        run: docker run --rm -v $(pwd):/app socialseed-e2e run --report junit
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./reports/junit.xml
+```
+
+### Benefits of Docker Usage
+
+- **No local installation**: No need to install Python, Playwright, or dependencies
+- **Consistent environment**: Same environment across dev, CI, and production
+- **Isolated execution**: Tests run in a clean, isolated container
+- **Easy CI/CD integration**: Simple to integrate with any CI/CD platform
+- **Version pinning**: Use specific versions of the framework via Docker tags
+
+---
+
 ## 🤖 Built for AI Agents (Recommended)
 
 **This framework was designed from the ground up for AI agents.**
