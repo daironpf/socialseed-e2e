@@ -5,6 +5,7 @@ This module provides the command-line interface for the E2E testing framework,
 enabling developers and AI agents to create, manage, and run API tests.
 """
 
+import os
 import subprocess
 import sys
 import time
@@ -768,6 +769,17 @@ def new_test(name: str, service: str, description: str):
     multiple=True,
     help="Exclude tests with these tags",
 )
+@click.option(
+    "--report",
+    type=click.Choice(["junit", "json"]),
+    help="Generate machine-readable test report (junit or json format)",
+)
+@click.option(
+    "--report-output",
+    type=click.Path(),
+    default="./reports",
+    help="Directory for machine-readable reports (default: ./reports)",
+)
 def run(
     service: Optional[str],
     module: Optional[str],
@@ -782,6 +794,8 @@ def run(
     parallel_mode: str,
     include_tags: Tuple[str, ...],
     exclude_tags: Tuple[str, ...],
+    report: Optional[str],
+    report_output: str,
 ):
     """Execute E2E tests.
 
@@ -807,6 +821,9 @@ def run(
         e2e run --parallel 4                                 # Run with 4 parallel workers
         e2e run --trace                                      # Enable traceability
         e2e run -c /path/to/e2e.conf                         # Use custom config file
+        e2e run --report junit                               # Generate JUnit XML report
+        e2e run --report json                                # Generate JSON report
+        e2e run --report junit --report-output ./reports     # Custom report directory
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -830,7 +847,12 @@ def run(
         sys.exit(1)
 
     # Import test runner
-    from .core.test_runner import print_summary, run_all_tests
+    from .core.test_runner import (
+        generate_junit_report,
+        generate_json_report,
+        print_summary,
+        run_all_tests,
+    )
 
     # Initialize traceability if enabled
     if trace:
@@ -993,6 +1015,39 @@ def run(
 
             except Exception as e:
                 console.print(f"[yellow]⚠ Could not generate HTML report: {e}[/yellow]")
+                if verbose:
+                    import traceback
+
+                    console.print(traceback.format_exc())
+
+        # Generate machine-readable reports if requested
+        if report:
+            try:
+                from .core.test_runner import (
+                    generate_junit_report,
+                    generate_json_report,
+                )
+
+                console.print(
+                    f"\n📊 [cyan]Generating {report.upper()} report...[/cyan]"
+                )
+
+                if report == "junit":
+                    junit_path = generate_junit_report(
+                        results, output_path=str(Path(report_output) / "junit.xml")
+                    )
+                    console.print(f"[green]✓ JUnit report:[/green] {junit_path}")
+
+                elif report == "json":
+                    json_path = generate_json_report(
+                        results, output_path=str(Path(report_output) / "report.json")
+                    )
+                    console.print(f"[green]✓ JSON report:[/green] {json_path}")
+
+            except Exception as e:
+                console.print(
+                    f"[yellow]⚠ Could not generate {report} report: {e}[/yellow]"
+                )
                 if verbose:
                     import traceback
 

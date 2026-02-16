@@ -910,3 +910,184 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
     console.print("═" * 60)
 
     return overall_success
+
+
+def generate_junit_report(
+    results: Dict[str, TestSuiteResult], 
+    output_path: str = "./reports/junit.xml"
+) -> str:
+    """Generate a JUnit XML report from test results.
+    
+    Args:
+        results: Dictionary mapping service names to their TestSuiteResults
+        output_path: Path where the JUnit XML file should be written
+        
+    Returns:
+        The path to the generated JUnit XML file
+    """
+    import xml.etree.ElementTree as ET
+    from datetime import datetime
+    
+    # Create the root testsuites element
+    testsuites = ET.Element("testsuites")
+    
+    # Calculate totals
+    total_tests = 0
+    total_failures = 0
+    total_errors = 0
+    total_time = 0.0
+    
+    for service_name, suite_result in results.items():
+        # Create a testsuite element for each service
+        testsuite = ET.SubElement(testsuites, "testsuite")
+        testsuite.set("name", service_name)
+        testsuite.set("tests", str(suite_result.total))
+        testsuite.set("failures", str(suite_result.failed))
+        testsuite.set("errors", str(suite_result.errors))
+        testsuite.set("skipped", str(suite_result.skipped))
+        testsuite.set("time", str(suite_result.total_duration_ms / 1000.0))
+        
+        total_tests += suite_result.total
+        total_failures += suite_result.failed
+        total_errors += suite_result.errors
+        total_time += suite_result.total_duration_ms / 1000.0
+        
+        # Add individual test cases
+        for result in suite_result.results:
+            testcase = ET.SubElement(testsuite, "testcase")
+            testcase.set("name", result.name)
+            testcase.set("classname", f"{service_name}.{result.name}")
+            testcase.set("time", str(result.duration_ms / 1000.0))
+            
+            # Add failure/error elements if applicable
+            if result.status == "failed":
+                failure = ET.SubElement(testcase, "failure")
+                failure.set("message", result.error_message or "Test failed")
+                failure.text = result.error_traceback or result.error_message
+            elif result.status == "error":
+                error = ET.SubElement(testcase, "error")
+                error.set("message", result.error_message or "Test error")
+                error.text = result.error_traceback or result.error_message
+            elif result.status == "skipped":
+                ET.SubElement(testcase, "skipped")
+    
+    # Set attributes on root element
+    testsuites.set("name", "socialseed-e2e")
+    testsuites.set("tests", str(total_tests))
+    testsuites.set("failures", str(total_failures))
+    testsuites.set("errors", str(total_errors))
+    testsuites.set("time", str(total_time))
+    testsuites.set("timestamp", datetime.now().isoformat())
+    
+    # Create output directory if it doesn't exist
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Write the XML file
+    tree = ET.ElementTree(testsuites)
+    ET.indent(tree, space="  ")
+    tree.write(output_path, encoding="utf-8", xml_declaration=True)
+    
+    return output_path
+
+
+def generate_json_report(
+    results: Dict[str, TestSuiteResult],
+    output_path: str = "./reports/report.json",
+    include_payloads: bool = True
+) -> str:
+    """Generate a JSON report from test results.
+    
+    Args:
+        results: Dictionary mapping service names to their TestSuiteResults
+        output_path: Path where the JSON file should be written
+        include_payloads: Whether to include request/response payloads (if available)
+        
+    Returns:
+        The path to the generated JSON file
+    """
+    import json
+    from datetime import datetime
+    
+    # Build the report structure
+    report = {
+        "framework": "socialseed-e2e",
+        "version": "0.1.2",
+        "timestamp": datetime.now().isoformat(),
+        "summary": {
+            "total": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "success_rate": 0.0,
+            "total_duration_ms": 0.0
+        },
+        "services": {}
+    }
+    
+    # Calculate totals and populate services
+    total_duration = 0.0
+    
+    for service_name, suite_result in results.items():
+        # Update summary
+        report["summary"]["total"] += suite_result.total
+        report["summary"]["passed"] += suite_result.passed
+        report["summary"]["failed"] += suite_result.failed
+        report["summary"]["skipped"] += suite_result.skipped
+        report["summary"]["errors"] += suite_result.errors
+        total_duration += suite_result.total_duration_ms
+        
+        # Add service details
+        report["services"][service_name] = {
+            "total": suite_result.total,
+            "passed": suite_result.passed,
+            "failed": suite_result.failed,
+            "skipped": suite_result.skipped,
+            "errors": suite_result.errors,
+            "success_rate": suite_result.success_rate,
+            "total_duration_ms": suite_result.total_duration_ms,
+            "tests": []
+        }
+        
+        # Add individual test results
+        for result in suite_result.results:
+            test_info = {
+                "name": result.name,
+                "status": result.status,
+                "duration_ms": result.duration_ms,
+                "duration_seconds": result.duration_ms / 1000.0
+            }
+            
+            # Add error details for failed tests
+            if result.status in ("failed", "error"):
+                test_info["error"] = {
+                    "message": result.error_message,
+                    "traceback": result.error_traceback
+                }
+                
+                # Include payloads if available (placeholder for future enhancement)
+                if include_payloads:
+                    test_info["error"]["request_payload"] = None
+                    test_info["error"]["response_payload"] = None
+            
+            report["services"][service_name]["tests"].append(test_info)
+    
+    # Calculate overall success rate
+    if report["summary"]["total"] > 0:
+        passed = report["summary"]["passed"]
+        total = report["summary"]["total"]
+        report["summary"]["success_rate"] = (passed / total) * 100.0
+    
+    report["summary"]["total_duration_ms"] = total_duration
+    report["summary"]["total_duration_seconds"] = total_duration / 1000.0
+    
+    # Create output directory if it doesn't exist
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Write the JSON file
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, ensure_ascii=False)
+    
+    return output_path
