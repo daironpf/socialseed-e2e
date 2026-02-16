@@ -75,12 +75,14 @@ class WorkerTask:
         service_config: Configuration for the service
         module_paths: List of test module paths to execute
         project_root: Root directory of the project
+        debug: Whether to enable debug mode with verbose HTTP logging
     """
 
     service_name: str
     service_config: Optional[ServiceConfig]
     module_paths: List[Path]
     project_root: Path
+    debug: bool = False
 
 
 @dataclass
@@ -139,7 +141,7 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
             try:
                 for module_path in task.module_paths:
                     result = execute_single_test_in_worker(
-                        module_path, page, service_name
+                        module_path, page, service_name, debug=task.debug
                     )
                     suite_result.results.append(result)
                     suite_result.total += 1
@@ -164,7 +166,7 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
 
 
 def execute_single_test_in_worker(
-    module_path: Path, page: BasePage, service_name: str
+    module_path: Path, page: BasePage, service_name: str, debug: bool = False
 ) -> TestResult:
     """Execute a single test module within a worker.
 
@@ -172,10 +174,13 @@ def execute_single_test_in_worker(
         module_path: Path to test module
         page: Page instance to pass to test
         service_name: Name of the service
+        debug: Whether to enable debug mode with verbose HTTP logging
 
     Returns:
         TestResult with execution details
     """
+    import json
+
     start_time = time.time()
     test_name = module_path.stem
 
@@ -202,15 +207,44 @@ def execute_single_test_in_worker(
 
     except AssertionError as e:
         duration = (time.time() - start_time) * 1000
+
+        # Collect debug info if debug mode is enabled
+        debug_info = None
+        if debug and page.request_history:
+            last_request = page.request_history[-1]
+            debug_info = {
+                "method": last_request.method,
+                "url": last_request.url,
+                "request_payload": last_request.body,
+                "response_status": last_request.status,
+                "response_body": last_request.response_body,
+                "expected": str(e),
+            }
+
         return TestResult(
             name=test_name,
             service=service_name,
             status="failed",
             duration_ms=duration,
             error_message=str(e),
+            debug_info=debug_info,
         )
     except Exception as e:
         duration = (time.time() - start_time) * 1000
+
+        # Collect debug info if debug mode is enabled
+        debug_info = None
+        if debug and page.request_history:
+            last_request = page.request_history[-1]
+            debug_info = {
+                "method": last_request.method,
+                "url": last_request.url,
+                "request_payload": last_request.body,
+                "response_status": last_request.status,
+                "response_body": last_request.response_body,
+                "error": str(e),
+            }
+
         return TestResult(
             name=test_name,
             service=service_name,
@@ -227,6 +261,7 @@ def run_tests_parallel(
     specific_module: Optional[str] = None,
     parallel_config: Optional[ParallelConfig] = None,
     verbose: bool = False,
+    debug: bool = False,
     include_tags: Optional[List[str]] = None,
     exclude_tags: Optional[List[str]] = None,
 ) -> Dict[str, TestSuiteResult]:
@@ -238,6 +273,7 @@ def run_tests_parallel(
         specific_module: If specified, only run this module
         parallel_config: Configuration for parallel execution
         verbose: Whether to show verbose output
+        debug: Whether to enable debug mode with verbose HTTP logging
 
     Returns:
         Dictionary mapping service names to their TestSuiteResults
@@ -357,6 +393,7 @@ def run_tests_parallel(
             service_config=service_config,
             module_paths=test_modules,
             project_root=project_root,
+            debug=debug,
         )
         tasks.append(task)
 

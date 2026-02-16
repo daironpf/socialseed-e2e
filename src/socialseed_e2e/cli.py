@@ -780,6 +780,12 @@ def new_test(name: str, service: str, description: str):
     default="./reports",
     help="Directory for machine-readable reports (default: ./reports)",
 )
+@click.option(
+    "--debug",
+    "-d",
+    is_flag=True,
+    help="Enable debug mode with verbose HTTP request/response logging for failed tests",
+)
 def run(
     service: Optional[str],
     module: Optional[str],
@@ -796,6 +802,7 @@ def run(
     exclude_tags: Tuple[str, ...],
     report: Optional[str],
     report_output: str,
+    debug: bool,
 ):
     """Execute E2E tests.
 
@@ -811,6 +818,7 @@ def run(
         trace: If True, enable visual traceability with sequence diagrams
         trace_output: Directory for traceability reports
         trace_format: Format for sequence diagrams (mermaid, plantuml, both)
+        debug: If True, enable debug mode with verbose HTTP logging for failed tests
 
     Examples:
         e2e run                                              # Run all tests
@@ -824,6 +832,7 @@ def run(
         e2e run --report junit                               # Generate JUnit XML report
         e2e run --report json                                # Generate JSON report
         e2e run --report junit --report-output ./reports     # Custom report directory
+        e2e run --debug                                      # Enable debug mode
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -897,6 +906,10 @@ def run(
         console.print(f"🔍 [yellow]Filtering by module:[/yellow] {module}")
     if verbose:
         console.print("📢 [yellow]Verbose mode activated[/yellow]")
+    if debug:
+        console.print(
+            "🐛 [yellow]Debug mode activated - verbose HTTP logging for failures[/yellow]"
+        )
     if include_tags:
         console.print(f"🏷️ [yellow]Including tags:[/yellow] {', '.join(include_tags)}")
     if exclude_tags:
@@ -943,6 +956,7 @@ def run(
                 specific_module=module,
                 parallel_config=parallel_config,
                 verbose=verbose,
+                debug=debug,
                 include_tags=list(include_tags) if include_tags else None,
                 exclude_tags=list(exclude_tags) if exclude_tags else None,
             )
@@ -952,6 +966,7 @@ def run(
                 specific_service=service,
                 specific_module=module,
                 verbose=verbose,
+                debug=debug,
                 include_tags=list(include_tags) if include_tags else None,
                 exclude_tags=list(exclude_tags) if exclude_tags else None,
             )
