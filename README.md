@@ -108,6 +108,74 @@ demo-api: 1/1 passed (100.0%)
 
 ---
 
+## 📋 System Requirements
+
+Before installing socialseed-e2e, ensure your environment meets the following requirements:
+
+### Python Versions
+
+- **Python >= 3.10** (required)
+- Tested on Python 3.10, 3.11, and 3.12
+
+### Operating Systems
+
+- ✅ **Linux** - Fully supported (primary development platform)
+- ✅ **macOS** - Fully supported (Intel and Apple Silicon)
+- ⚠️ **Windows** - Supported via WSL2 (Windows Subsystem for Linux)
+
+### Browser Dependencies
+
+socialseed-e2e uses **Playwright** for HTTP testing. You need to install browser binaries:
+
+```bash
+# After installing socialseed-e2e
+playwright install chromium
+
+# Or install with dependencies (recommended for CI/CD)
+playwright install --with-deps chromium
+```
+
+**Supported Browsers:**
+- Chromium (recommended for API testing)
+- Firefox (optional)
+- WebKit (optional)
+
+### System Dependencies
+
+#### Linux (Ubuntu/Debian)
+```bash
+# Playwright system dependencies
+sudo apt-get update
+sudo apt-get install -y libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+  libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+  libxrandr2 libgbm1 libasound2
+```
+
+#### macOS
+```bash
+# No additional system dependencies required
+# Playwright will prompt if anything is needed
+```
+
+### Docker (Optional)
+
+You can also run socialseed-e2e using Docker:
+
+```bash
+# Build the Docker image
+docker build -t socialseed-e2e .
+
+# Run tests in container
+docker run --rm -v $(pwd):/app socialseed-e2e e2e run
+```
+
+**Docker Benefits:**
+- Consistent testing environment
+- No local Python/Playwright installation needed
+- Perfect for CI/CD pipelines
+
+---
+
 ## 🤖 Built for AI Agents (Recommended)
 
 **This framework was designed from the ground up for AI agents.**
