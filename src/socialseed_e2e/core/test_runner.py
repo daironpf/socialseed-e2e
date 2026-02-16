@@ -721,6 +721,7 @@ def run_service_tests(
                 )
                 suite_result.results.append(result)
                 suite_result.total += 1
+                suite_result.total_duration_ms += result.duration_ms
 
                 if result.status == "passed":
                     suite_result.passed += 1
@@ -991,12 +992,14 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
     total_passed = 0
     total_failed = 0
     total_errors = 0
+    total_duration_ms = 0.0
 
     for service_name, suite_result in results.items():
         total_tests += suite_result.total
         total_passed += suite_result.passed
         total_failed += suite_result.failed
         total_errors += suite_result.errors
+        total_duration_ms += suite_result.total_duration_ms
 
         status_color = (
             "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
@@ -1031,6 +1034,14 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
         console.print(f"  [red]Errors: {total_errors}[/red]")
 
     console.print("═" * 60)
+
+    total_duration_seconds = total_duration_ms / 1000.0
+    console.print("\n" + "=" * 30)
+    console.print(f"{total_tests} tests executed")
+    console.print(f"{total_passed} passed")
+    console.print(f"{total_failed + total_errors} failed")
+    console.print(f"Duration: {total_duration_seconds:.1f}s")
+    console.print("=" * 30)
 
     return overall_success
 
