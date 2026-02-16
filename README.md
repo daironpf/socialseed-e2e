@@ -247,6 +247,82 @@ e2e watch                   # Auto-update on changes
 
 ---
 
+## 🔄 CI/CD Integration
+
+SocialSeed E2E provides ready-to-use CI/CD templates for seamless integration into your pipelines.
+
+### GitHub Actions
+
+The framework includes a pre-configured GitHub Actions workflow at `.github/workflows/e2e.yml`:
+
+```yaml
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '>=3.10'
+    - name: Install socialseed-e2e
+      run: pip install socialseed-e2e
+    - name: Install Playwright Browsers
+      run: playwright install --with-deps chromium
+    - name: Run E2E Tests
+      run: e2e run --report junit
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: junit-test-results
+        path: ./reports/junit.xml
+```
+
+**Features:**
+- ✅ Triggers on push/PR to `main` branch
+- ✅ Python 3.10+ support
+- ✅ Automatic JUnit XML report generation
+- ✅ Test artifacts uploaded for 30 days
+- ✅ Workflow summary in GitHub Actions UI
+
+### Setup Instructions
+
+1. **Use the built-in template:**
+   ```bash
+   e2e setup-ci github
+   ```
+
+2. **Or manually copy** the `.github/workflows/e2e.yml` file to your repository
+
+3. **The workflow will automatically:**
+   - Run on every push/PR to main
+   - Install socialseed-e2e
+   - Execute all E2E tests
+   - Generate JUnit reports
+   - Upload artifacts for analysis
+
+### Other Platforms
+
+Generate templates for other CI/CD platforms:
+
+```bash
+e2e setup-ci gitlab      # GitLab CI
+e2e setup-ci jenkins     # Jenkins
+e2e setup-ci azure       # Azure DevOps
+e2e setup-ci circleci    # CircleCI
+e2e setup-ci travis      # Travis CI
+```
+
+---
+
 ## 📚 Documentation
 
 All guides at **[daironpf.github.io/socialseed-e2e](https://daironpf.github.io/socialseed-e2e/)**
