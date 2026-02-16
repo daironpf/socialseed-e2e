@@ -330,6 +330,44 @@ e2e init
 
 ---
 
+## 📚 Advanced Usage Examples
+
+Learn how to handle common testing scenarios with these examples:
+
+### [Authorization Headers](examples/advanced_usage/auth_headers_example.py)
+- Basic Authentication
+- Bearer Token (JWT)
+- API Key authentication
+- Custom headers
+- OAuth 2.0 flow
+
+### [Environment Variables](examples/advanced_usage/env_variables_example.py)
+- Loading .env files
+- Environment-specific configuration
+- Secrets management
+- Test data from environment
+
+### [Test Fixtures](examples/advanced_usage/fixtures_example.py)
+- Setup/teardown logic
+- Sharing state between tests
+- Page attributes as fixtures
+- Test isolation patterns
+- Cleanup strategies
+
+### [Parameterized Tests](examples/advanced_usage/parameterized_tests_example.py)
+- Multiple test files
+- External test data (JSON, CSV)
+- Test data providers
+- Dynamic test generation
+- pytest parametrize integration
+
+```bash
+# Run an example
+python3 examples/advanced_usage/auth_headers_example.py
+```
+
+---
+
 ## 📝 Example Test
 
 ```python
