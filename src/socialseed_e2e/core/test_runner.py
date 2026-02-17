@@ -94,6 +94,79 @@ class TestExecutionError(Exception):
     pass
 
 
+class ImportValidationError(Exception):
+    """Error when test uses invalid imports."""
+
+    pass
+
+
+def validate_test_imports(module_path: Path) -> List[Dict[str, str]]:
+    """Validate that a test module uses absolute imports.
+
+    According to framework standards, tests must use absolute imports:
+    - ✅ CORRECT: from services.auth_service.data_schema import RegisterRequest
+    - ❌ INCORRECT: from ..data_schema import RegisterRequest
+
+    Args:
+        module_path: Path to the test module
+
+    Returns:
+        List of validation issues (empty if valid)
+    """
+    issues = []
+
+    try:
+        content = module_path.read_text(encoding="utf-8")
+    except Exception:
+        return issues
+
+    lines = content.split("\n")
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+
+        if stripped.startswith("#"):
+            continue
+
+        if " from " in stripped and " import " in stripped:
+            if stripped.startswith("from .") or stripped.startswith("from .."):
+                issue = {
+                    "file": str(module_path),
+                    "line": line_num,
+                    "type": "relative_import",
+                    "message": f"Relative import found (line {line_num}): {stripped[:80]}",
+                    "suggestion": "Use absolute import: from services.<service_name>.data_schema import ...",
+                }
+                issues.append(issue)
+
+    return issues
+
+
+def validate_service_tests(service_path: Path) -> Dict[str, List[Dict[str, str]]]:
+    """Validate all test modules in a service.
+
+    Args:
+        service_path: Path to the service directory
+
+    Returns:
+        Dictionary mapping module paths to list of issues
+    """
+    all_issues = {}
+    modules_path = service_path / "modules"
+
+    if not modules_path.exists():
+        return all_issues
+
+    for module_file in modules_path.glob("*.py"):
+        if module_file.name.startswith("__"):
+            continue
+
+        issues = validate_test_imports(module_file)
+        if issues:
+            all_issues[str(module_file)] = issues
+
+    return all_issues
+
+
 class SetupError(Exception):
     """Error during test setup/validation."""
 
