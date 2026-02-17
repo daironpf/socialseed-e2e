@@ -945,6 +945,11 @@ def new_test(name: str, service: str, description: str, force: bool):
     help="Enable debug mode with verbose HTTP request/response logging for failed tests",
 )
 @click.option(
+    "--skip-unhealthy",
+    is_flag=True,
+    help="Skip tests for services that are not healthy (skip instead of fail)",
+)
+@click.option(
     "--no-agent",
     is_flag=True,
     help="Disable AI agent features (boring mode). No external LLM calls will be made",
@@ -966,6 +971,7 @@ def run(
     report: Optional[str],
     report_output: str,
     debug: bool,
+    skip_unhealthy: bool,
     no_agent: bool,
 ):
     """Execute E2E tests.
@@ -982,6 +988,7 @@ def run(
         trace: If True, enable visual traceability with sequence diagrams
         trace_output: Directory for traceability reports
         trace_format: Format for sequence diagrams (mermaid, plantuml, both)
+        skip_unhealthy: If True, skip tests for services that are not healthy
         debug: If True, enable debug mode with verbose HTTP logging for failed tests
         no_agent: If True, disable AI agent features (boring mode)
 
@@ -999,6 +1006,7 @@ def run(
         e2e run --report junit --report-output ./reports     # Custom report directory
         e2e run --debug                                      # Enable debug mode
         e2e run --no-agent                                   # Run in boring mode (no AI)
+        e2e run --skip-unhealthy                             # Skip tests for unhealthy services
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -1089,6 +1097,31 @@ def run(
 
     # Determine if parallel execution should be used
     use_parallel = parallel is not None and parallel != 0
+
+    # Check service health if skip_unhealthy is enabled
+    unhealthy_services = []
+    if skip_unhealthy:
+        console.print("🏥 [cyan]Checking service health...[/cyan]")
+        try:
+            health_loader = ApiConfigLoader()
+            app_config = health_loader.load(config)
+            for name, svc in app_config.services.items():
+                health_endpoint = svc.health_endpoint or "/actuator/health"
+                is_healthy, _ = _check_service_health(svc.base_url, health_endpoint)
+                if not is_healthy:
+                    unhealthy_services.append(name)
+                    console.print(f"   ⏭️  [yellow]Skipping {name} (not healthy)[/yellow]")
+                else:
+                    console.print(f"   ✅ [green]{name} is healthy[/green]")
+        except Exception as e:
+            console.print(f"   ⚠️  [yellow]Could not check health: {e}[/yellow]")
+        console.print()
+
+    # If service is specified and it's unhealthy, skip it
+    if service and skip_unhealthy and service in unhealthy_services:
+        console.print(f"⏭️  [yellow]Skipping service '{service}' - not healthy[/yellow]")
+        console.print()
+        return
 
     # Initialize parallel config if needed
     parallel_config = None
