@@ -23,7 +23,7 @@ try:
     WEBSOCKET_AVAILABLE = True
 except ImportError:
     WEBSOCKET_AVAILABLE = False
-    logger.warning(
+    logger.debug(
         "websockets package not installed. WebSocket testing will not be available."
     )
 
