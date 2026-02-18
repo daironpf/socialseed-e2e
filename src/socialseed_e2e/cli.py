@@ -313,7 +313,7 @@ email-validator>=2.0.0
             "  [yellow]⚠[/yellow] Already exists: services/example/ (use --force to overwrite)"
         )
 
-    # Create/update e2e.conf with example service
+    # Create/update e2e.conf with commented example service
     config_path = target_path / "e2e.conf"
     if not config_path.exists() or force:
         engine.render_to_file(
@@ -323,15 +323,21 @@ email-validator>=2.0.0
                 "timeout": "30000",
                 "user_agent": "socialseed-e2e/1.0",
                 "verbose": "true",
-                "services_config": """  example:
-    base_url: http://localhost:8765
-    health_endpoint: /health
+                "services_config": """  # Example service (commented out by default)
+  # To use the example service:
+  # 1. Start the mock server: python -m socialseed_e2e.mock_server
+  # 2. Uncomment the configuration below
+  # example:
+  #   base_url: http://localhost:8765
+  #   health_endpoint: /health
 """,
             },
             str(config_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: e2e.conf (with example service)")
+        console.print(
+            "  [green]✓[/green] Created: e2e.conf (example service commented)"
+        )
 
     # Create socialseed.config.yaml (alternative config format)
     config_yaml_path = target_path / "socialseed.config.yaml"
@@ -6411,7 +6417,10 @@ def import_environment(file_path: str, output: str, service_name: str):
 @cli.command()
 @click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
 @click.option("--service", "-s", help="Filter by specific service")
-def tui(config: str, service: str):
+@click.option(
+    "--yes", "-y", is_flag=True, help="Auto-install dependencies without prompting"
+)
+def tui(config: str, service: str, yes: bool):
     """Launch the Rich Terminal Interface (TUI).
 
     Opens an interactive terminal-based UI for power users who prefer
@@ -6440,6 +6449,75 @@ def tui(config: str, service: str):
         e2e tui --service users    # Launch with service filter
         e2e tui --config ./e2e.conf  # Use custom config
     """
+    # Check if TUI dependencies are installed
+    try:
+        import textual
+
+        tui_available = True
+    except ImportError:
+        tui_available = False
+
+    if not tui_available:
+        console.print("\n[yellow]⚠️  TUI dependencies not installed.[/yellow]")
+        console.print(
+            "[dim]The Terminal User Interface requires additional packages.[/dim]\n"
+        )
+
+        if yes:
+            # Auto-install without prompting (flag -y was used)
+            console.print("[cyan]📦 Installing required dependencies...[/cyan]\n")
+            auto_install = True
+        else:
+            # Ask user explicitly - must answer y or n
+            while True:
+                user_input = (
+                    input(
+                        "Would you like to install the required dependencies? [y/n]: "
+                    )
+                    .strip()
+                    .lower()
+                )
+                if user_input in ("y", "yes"):
+                    console.print(
+                        "\n[cyan]📦 Installing required dependencies...[/cyan]\n"
+                    )
+                    auto_install = True
+                    break
+                elif user_input in ("n", "no"):
+                    console.print("\n[yellow]⚠️  Installation cancelled.[/yellow]")
+                    console.print(
+                        "[dim]The TUI cannot run without these dependencies.[/dim]"
+                    )
+                    console.print("\n[cyan]To install manually later, run:[/cyan]")
+                    console.print("   pip install socialseed-e2e[tui]")
+                    sys.exit(0)
+                else:
+                    console.print(
+                        "[red]❌ Invalid input. Please enter 'y' or 'n'.[/red]"
+                    )
+
+        if auto_install:
+            if check_and_install_extra("tui", auto_install=True):
+                console.print(
+                    "\n[green]✅ Dependencies installed successfully![/green]\n"
+                )
+                # Re-import after installation
+                try:
+                    from socialseed_e2e.tui import TuiApp
+
+                    tui_available = True
+                except ImportError:
+                    console.print(
+                        "[red]❌ Failed to import TUI after installation. Please try again.[/red]"
+                    )
+                    sys.exit(1)
+            else:
+                console.print("[red]❌ Failed to install dependencies.[/red]")
+                console.print("[dim]You can install them manually with:[/dim]")
+                console.print("   pip install socialseed-e2e[tui]")
+                sys.exit(1)
+
+    # Launch TUI
     try:
         from socialseed_e2e.tui import TuiApp
 
@@ -6450,9 +6528,6 @@ def tui(config: str, service: str):
         app = TuiApp(config_path=config, service_filter=service)
         app.run()
 
-    except ImportError as e:
-        check_and_install_extra("tui", auto_install=False)
-        sys.exit(1)
     except Exception as e:
         console.print(f"\n[red]❌ Unexpected error:[/red] {e}")
         sys.exit(1)

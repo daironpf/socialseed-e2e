@@ -101,7 +101,32 @@ e2e new-test health --service demo-api
 
 This creates `services/demo-api/modules/01_health_flow.py` with a test template.
 
-### 5. Run Tests
+### 5. Start Your API (or Use the Mock Server)
+
+Before running tests, you need an API server running. You have two options:
+
+#### Option A: Use Your Own API
+Ensure your API is running at the configured base URL (e.g., `http://localhost:8080`):
+
+```bash
+# Start your API (example)
+python your_api.py
+# or
+npm start
+# or
+docker-compose up
+```
+
+#### Option B: Use the Built-in Mock Server (for testing)
+```bash
+# Install Flask (required for mock server)
+pip install flask>=2.0.0
+
+# Start the mock server in a separate terminal
+python -m socialseed_e2e.mock_server
+```
+
+### 6. Run Tests
 
 ```bash
 e2e run
@@ -132,6 +157,8 @@ demo-api: 1/1 passed (100.0%)
 
 ✅ All tests passed!
 ```
+
+**Note:** If tests fail with "Connection refused", ensure your API server is running before executing `e2e run`.
 
 ---
 

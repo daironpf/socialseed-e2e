@@ -1028,23 +1028,31 @@ class NodeParser(BaseParser):
         ]
 
         for pattern in port_patterns:
-            matches = re.finditer(pattern, content)
-            for match in matches:
-                try:
-                    port_str = match.group(1)
-                    if port_str is None:
-                        continue
-                    port = int(port_str)
-                    if 1 <= port <= 65535:
-                        ports.append(
-                            PortConfig(
-                                port=port,
-                                protocol="http",
-                                description=f"Detected from {file_path}",
+            try:
+                matches = re.finditer(pattern, content)
+                for match in matches:
+                    try:
+                        # Check if group 1 exists and is not None
+                        if match.lastindex is None or match.lastindex < 1:
+                            continue
+                        port_str = match.group(1)
+                        if port_str is None or not port_str.strip():
+                            continue
+                        port = int(port_str)
+                        if 1 <= port <= 65535:
+                            ports.append(
+                                PortConfig(
+                                    port=port,
+                                    protocol="http",
+                                    description=f"Detected from {file_path}",
+                                )
                             )
-                        )
-                except (ValueError, IndexError):
-                    pass
+                    except (ValueError, IndexError, TypeError):
+                        # Skip invalid port values
+                        continue
+            except re.error:
+                # Skip invalid regex patterns
+                continue
 
         return ports
 

@@ -50,9 +50,6 @@ from socialseed_e2e.__version__ import (
     __version_info__,
 )
 
-# CLI
-from socialseed_e2e.cli import main
-
 # Core - BasePage and configuration
 from socialseed_e2e.core.base_page import (
     BasePage,
@@ -95,7 +92,11 @@ from socialseed_e2e.core.test_runner import (
 
 # Core - gRPC Support
 try:
-    from socialseed_e2e.core.base_grpc_page import BaseGrpcPage, GrpcCallLog, GrpcRetryConfig
+    from socialseed_e2e.core.base_grpc_page import (
+        BaseGrpcPage,
+        GrpcCallLog,
+        GrpcRetryConfig,
+    )
 
     GRPC_AVAILABLE = True
 except ImportError:
@@ -295,8 +296,6 @@ __all__ = [
     # Version
     "__version__",
     "__version_info__",
-    # CLI
-    "main",
     # Core - BasePage
     "BasePage",
     "BasePageError",

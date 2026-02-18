@@ -21,7 +21,8 @@ import pytest
 import requests
 
 
-MOCK_SERVER_PORT = 8765
+# Configurable mock server port via environment variable
+MOCK_SERVER_PORT = int(os.getenv("E2E_MOCK_PORT", "8765"))
 MOCK_SERVER_URL = f"http://localhost:{MOCK_SERVER_PORT}"
 
 

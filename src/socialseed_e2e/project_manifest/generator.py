@@ -41,7 +41,9 @@ class ManifestGenerator:
             exclude_patterns: List of glob patterns to exclude from scanning
         """
         self.project_root = Path(project_root).resolve()
-        self.manifest_path = manifest_path or (self.project_root / self.MANIFEST_FILENAME)
+        self.manifest_path = manifest_path or (
+            self.project_root / self.MANIFEST_FILENAME
+        )
         self.exclude_patterns = exclude_patterns or [
             "**/node_modules/**",
             "**/.git/**",
@@ -54,6 +56,9 @@ class ManifestGenerator:
             "**/dist/**",
             "**/.idea/**",
             "**/.vscode/**",
+            "**/ide-extensions/**",
+            "**/.agent/**",
+            "**/.github/**",
             "**/test*/**",
             "**/tests/**",
             "**/*_test.py",
@@ -153,7 +158,9 @@ class ManifestGenerator:
         source_files = self._discover_source_files()
 
         # Detect changed files
-        changed_files, removed_files = self._detect_changes(source_files, existing_manifest)
+        changed_files, removed_files = self._detect_changes(
+            source_files, existing_manifest
+        )
 
         if not changed_files and not removed_files:
             print("✅ No changes detected. Manifest is up to date.")
@@ -175,7 +182,9 @@ class ManifestGenerator:
         # Process changed files
         for file_path in changed_files:
             # Remove old data for this file
-            self._remove_file_from_services(services, str(file_path.relative_to(self.project_root)))
+            self._remove_file_from_services(
+                services, str(file_path.relative_to(self.project_root))
+            )
 
             # Parse the file
             parser = parser_registry.get_parser(file_path, self.project_root)
@@ -186,7 +195,9 @@ class ManifestGenerator:
 
                     # Add to appropriate service
                     service_name = self._get_service_name_for_file(file_path)
-                    service = next((s for s in services if s.name == service_name), None)
+                    service = next(
+                        (s for s in services if s.name == service_name), None
+                    )
 
                     if not service:
                         service = ServiceInfo(
@@ -264,7 +275,9 @@ class ManifestGenerator:
         relative_path = str(file_path.relative_to(self.project_root))
 
         for pattern in self.exclude_patterns:
-            if fnmatch.fnmatch(str_path, pattern) or fnmatch.fnmatch(relative_path, pattern):
+            if fnmatch.fnmatch(str_path, pattern) or fnmatch.fnmatch(
+                relative_path, pattern
+            ):
                 return True
 
         return False
@@ -369,7 +382,9 @@ class ManifestGenerator:
             name=service_name,
             language=language,
             framework=framework,
-            root_path=str(self._get_service_root(files[0]) if files else self.project_root),
+            root_path=str(
+                self._get_service_root(files[0]) if files else self.project_root
+            ),
             endpoints=endpoints,
             dto_schemas=dto_schemas,
             ports=ports,
@@ -401,7 +416,9 @@ class ManifestGenerator:
 
         return None
 
-    def _detect_global_env_vars(self, services: List[ServiceInfo]) -> List[EnvironmentVariable]:
+    def _detect_global_env_vars(
+        self, services: List[ServiceInfo]
+    ) -> List[EnvironmentVariable]:
         """Detect global environment variables."""
         # Common environment variables across many projects
         common_vars = [
@@ -488,7 +505,9 @@ class ManifestGenerator:
         changed_files = []
         removed_files = []
 
-        current_file_paths = {str(f.relative_to(self.project_root)) for f in current_files}
+        current_file_paths = {
+            str(f.relative_to(self.project_root)) for f in current_files
+        }
 
         # Use source_hashes (v2.0) or fall back to file_metadata
         if manifest.source_hashes:
@@ -548,14 +567,20 @@ class ManifestGenerator:
                 continue
         return hashes
 
-    def _remove_file_from_services(self, services: List[ServiceInfo], file_path: str) -> None:
+    def _remove_file_from_services(
+        self, services: List[ServiceInfo], file_path: str
+    ) -> None:
         """Remove all data associated with a file from services."""
         for service in services:
             # Remove endpoints from this file
-            service.endpoints = [e for e in service.endpoints if e.file_path != file_path]
+            service.endpoints = [
+                e for e in service.endpoints if e.file_path != file_path
+            ]
 
             # Remove DTOs from this file
-            service.dto_schemas = [d for d in service.dto_schemas if d.file_path != file_path]
+            service.dto_schemas = [
+                d for d in service.dto_schemas if d.file_path != file_path
+            ]
 
             # Remove file from file_paths
             service.file_paths = [f for f in service.file_paths if f != file_path]
