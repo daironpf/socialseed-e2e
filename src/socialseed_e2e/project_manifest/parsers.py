@@ -339,7 +339,9 @@ class PythonParser(BaseParser):
                     )
             elif keyword.arg == "pattern":
                 if isinstance(keyword.value, ast.Constant):
-                    validations.append(ValidationRule(rule_type="regex", value=keyword.value.value))
+                    validations.append(
+                        ValidationRule(rule_type="regex", value=keyword.value.value)
+                    )
 
         return validations, alias
 
@@ -410,7 +412,9 @@ class PythonParser(BaseParser):
 
         return ports, env_vars
 
-    def _parse_dependencies(self, content: str, file_path: str) -> List[ServiceDependency]:
+    def _parse_dependencies(
+        self, content: str, file_path: str
+    ) -> List[ServiceDependency]:
         """Parse service dependencies."""
         dependencies = []
 
@@ -509,7 +513,9 @@ class JavaParser(BaseParser):
         endpoints = []
 
         # Get class-level @RequestMapping
-        class_mapping = re.search(r'@RequestMapping\s*\(\s*["\']([^"\']+)["\']\s*\)', content)
+        class_mapping = re.search(
+            r'@RequestMapping\s*\(\s*["\']([^"\']+)["\']\s*\)', content
+        )
         base_path = class_mapping.group(1) if class_mapping else ""
 
         for pattern, method in self.ENDPOINT_PATTERNS:
@@ -522,7 +528,9 @@ class JavaParser(BaseParser):
                 http_method = method
                 if http_method is None and len(match.groups()) > 1:
                     method_str = match.group(2)
-                    http_method = HttpMethod(method_str.upper()) if method_str else HttpMethod.GET
+                    http_method = (
+                        HttpMethod(method_str.upper()) if method_str else HttpMethod.GET
+                    )
 
                 # Find method name after the annotation
                 remaining = content[match.end() :]
@@ -538,7 +546,9 @@ class JavaParser(BaseParser):
                 request_dto = None
                 response_dto = None
 
-                request_body_match = re.search(r"@RequestBody\s+(?:\w+\s+)*(\w+)", next_section)
+                request_body_match = re.search(
+                    r"@RequestBody\s+(?:\w+\s+)*(\w+)", next_section
+                )
                 if request_body_match:
                     request_dto = request_body_match.group(1)
 
@@ -547,12 +557,16 @@ class JavaParser(BaseParser):
                     response_dto = response_body_match.group(1)
 
                 # Check authentication
-                requires_auth = "@PreAuthorize" in next_section or "@Secured" in next_section
+                requires_auth = (
+                    "@PreAuthorize" in next_section or "@Secured" in next_section
+                )
 
                 # Extract path parameters
                 path_params = re.findall(r"\{(\w+)\}", path)
                 parameters = [
-                    EndpointParameter(name=p, param_type="string", location="path", required=True)
+                    EndpointParameter(
+                        name=p, param_type="string", location="path", required=True
+                    )
                     for p in path_params
                 ]
 
@@ -669,7 +683,9 @@ class JavaParser(BaseParser):
         fields = []
 
         # Match private fields with optional annotations
-        field_pattern = r"((?:@\w+(?:\([^)]*\))?\s+)*)(?:private\s+)?(\w+(?:<[^>]+>)?)\s+(\w+)\s*;"
+        field_pattern = (
+            r"((?:@\w+(?:\([^)]*\))?\s+)*)(?:private\s+)?(\w+(?:<[^>]+>)?)\s+(\w+)\s*;"
+        )
         field_matches = re.finditer(field_pattern, class_body)
 
         for match in field_matches:
@@ -707,7 +723,9 @@ class JavaParser(BaseParser):
                                     if match.group(1).isdigit()
                                     else match.group(1)
                                 )
-                                validations.append(ValidationRule(rule_type=rule_type, value=value))
+                                validations.append(
+                                    ValidationRule(rule_type=rule_type, value=value)
+                                )
                             except (ValueError, IndexError):
                                 pass
                 elif isinstance(rules, tuple):
@@ -781,7 +799,9 @@ class JavaParser(BaseParser):
 
         return ports
 
-    def _parse_env_vars(self, content: str, file_path: str) -> List[EnvironmentVariable]:
+    def _parse_env_vars(
+        self, content: str, file_path: str
+    ) -> List[EnvironmentVariable]:
         """Parse environment variable usage."""
         env_vars = []
 
@@ -814,7 +834,9 @@ class JavaParser(BaseParser):
 
         return env_vars
 
-    def _parse_dependencies(self, content: str, file_path: str) -> List[ServiceDependency]:
+    def _parse_dependencies(
+        self, content: str, file_path: str
+    ) -> List[ServiceDependency]:
         """Parse service dependencies."""
         dependencies = []
 
@@ -1002,14 +1024,17 @@ class NodeParser(BaseParser):
             r"app\.listen\s*\(\s*(\d+)",
             r'["\']PORT["\']\s*:\s*(\d+)',
             r"PORT\s*=\s*(\d+)",
-            r"process\.env\.PORT\s*||\s*(\d+)",
+            r"process\.env\.PORT\s*\|\|\s*(\d+)",
         ]
 
         for pattern in port_patterns:
             matches = re.finditer(pattern, content)
             for match in matches:
                 try:
-                    port = int(match.group(1))
+                    port_str = match.group(1)
+                    if port_str is None:
+                        continue
+                    port = int(port_str)
                     if 1 <= port <= 65535:
                         ports.append(
                             PortConfig(
@@ -1023,7 +1048,9 @@ class NodeParser(BaseParser):
 
         return ports
 
-    def _parse_env_vars(self, content: str, file_path: str) -> List[EnvironmentVariable]:
+    def _parse_env_vars(
+        self, content: str, file_path: str
+    ) -> List[EnvironmentVariable]:
         """Parse environment variable usage."""
         env_vars = []
 
@@ -1042,7 +1069,9 @@ class NodeParser(BaseParser):
 
         return env_vars
 
-    def _parse_dependencies(self, content: str, file_path: str) -> List[ServiceDependency]:
+    def _parse_dependencies(
+        self, content: str, file_path: str
+    ) -> List[ServiceDependency]:
         """Parse service dependencies."""
         dependencies = []
 
@@ -1104,7 +1133,9 @@ class ParserRegistry:
                 return parser
         return None
 
-    def get_parser_for_language(self, language: str, project_root: Path) -> Optional[BaseParser]:
+    def get_parser_for_language(
+        self, language: str, project_root: Path
+    ) -> Optional[BaseParser]:
         """Get parser by language name."""
         for parser_class in self._parsers:
             if parser_class.LANGUAGE == language.lower():

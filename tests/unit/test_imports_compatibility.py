@@ -92,6 +92,7 @@ class TestMainPackageImports:
                 "GrpcRetryConfig",
                 "GrpcCallLog",
                 "TraceContext",
+                "TuiApp",
             ):
                 continue
             assert hasattr(socialseed_e2e, name), f"{name} not found in main package"
