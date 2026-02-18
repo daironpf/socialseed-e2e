@@ -45,28 +45,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          # Skip known failing tests temporarily
-          pytest -v \
-            --ignore=tests/integration/cli/test_run.py \
-            --ignore=tests/unit/test_imports_compatibility.py \
-            --ignore=tests/unit/test_data_management.py \
-            --ignore=tests/unit/test_plugins.py \
-            --deselect=tests/unit/project_manifest/test_generator.py::TestManifestGenerator::test_generate_python_project \
-            --deselect=tests/unit/project_manifest/test_generator.py::TestManifestGenerator::test_generate_java_project \
-            --deselect=tests/unit/project_manifest/test_generator.py::TestManifestGeneratorSmartSync::test_smart_sync_with_file_change \
-            --deselect=tests/unit/project_manifest/test_generator.py::TestManifestGeneratorSmartSync::test_smart_sync_with_new_file \
-            --deselect=tests/unit/project_manifest/test_parsers.py::TestJavaParser::test_parse_java_record \
-            --deselect=tests/unit/project_manifest/test_parsers.py::TestNodeParser::test_parse_express_endpoints \
-            --deselect=tests/unit/project_manifest/test_parsers.py::TestNodeParser::test_parse_typescript_interface \
-            --deselect=tests/unit/project_manifest/test_retrieval.py::TestContextChunkTypes::test_endpoint_chunk \
-            --deselect=tests/unit/project_manifest/test_api.py::TestTokenOptimizedQuery::test_get_endpoint_signature \
-            --deselect=tests/unit/project_manifest/test_business_logic_inference.py::TestBusinessLogicInference::test_detect_crud_flow \
-            --deselect=tests/unit/project_manifest/test_business_logic_inference.py::TestFlowDetection::test_entity_name_extraction \
-            --deselect=tests/unit/core/test_parallel_runner.py::TestGetParallelConfigFromArgs::test_enabled_with_workers \
-            --deselect=tests/unit/core/test_parallel_runner.py::TestGetParallelConfigFromArgs::test_enabled_auto_workers \
-            --deselect=tests/unit/core/traceability/test_collector.py::TestGlobalCollector::test_get_set_global_collector \
-            --deselect=tests/unit/shadow_runner/test_traffic_interceptor.py::TestFastAPIMiddleware::test_fastapi_middleware_dispatch \
-            --deselect=tests/unit/test_template_engine.py::TestTestModuleTemplate::test_test_module_template_rendering
+          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=80 -v
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
