@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=40 -v
+          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=80 -v
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
