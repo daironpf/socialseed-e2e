@@ -258,11 +258,11 @@ class TestTestModuleTemplate:
         engine = TemplateEngine()
 
         result = engine.render(
-            "test_module.py",
+            "test_module",
             {
                 "service_name": "users-api",
                 "class_name": "UsersApi",
-                "snake_case_service": "users_api",
+                "snake_case_name": "users_api",
                 "test_name": "login",
                 "test_description": "User login flow",
             },

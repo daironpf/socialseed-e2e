@@ -102,24 +102,30 @@ class TestGetParallelConfigFromArgs:
 
     def test_disabled(self):
         """Test disabled parallel execution."""
-        config = get_parallel_config_from_args(parallel_workers=0)
+        config = get_parallel_config_from_args(
+            parallel_workers=0, config_path="/nonexistent/path.conf"
+        )
         assert config.enabled is False
 
     def test_enabled_with_workers(self):
         """Test enabled with specific workers."""
-        config = get_parallel_config_from_args(parallel_workers=4)
+        config = get_parallel_config_from_args(
+            parallel_workers=4, config_path="/nonexistent/path.conf"
+        )
         assert config.enabled is True
         assert config.max_workers == 4
 
     def test_enabled_auto_workers(self):
         """Test enabled with auto workers (negative number)."""
-        config = get_parallel_config_from_args(parallel_workers=-1)
+        config = get_parallel_config_from_args(
+            parallel_workers=-1, config_path="/nonexistent/path.conf"
+        )
         assert config.enabled is True
         assert config.max_workers == -1  # Will be auto-detected in runner
 
     def test_default_disabled(self):
         """Test default is disabled."""
-        config = get_parallel_config_from_args()
+        config = get_parallel_config_from_args(config_path="/nonexistent/path.conf")
         assert config.enabled is False
 
 

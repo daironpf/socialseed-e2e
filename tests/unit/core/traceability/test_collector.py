@@ -10,7 +10,11 @@ from socialseed_e2e.core.traceability.collector import (
     get_global_collector,
     set_global_collector,
 )
-from socialseed_e2e.core.traceability.models import InteractionType, LogicBranchType, TraceConfig
+from socialseed_e2e.core.traceability.models import (
+    InteractionType,
+    LogicBranchType,
+    TraceConfig,
+)
 
 
 class TestTraceCollector:
@@ -234,6 +238,9 @@ class TestGlobalCollector:
 
     def test_get_set_global_collector(self):
         """Test getting and setting global collector."""
+        # Clean state first
+        set_global_collector(None)
+
         # Initially None
         assert get_global_collector() is None
 

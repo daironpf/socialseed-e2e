@@ -106,7 +106,7 @@ class TestContextChunkTypes:
             chunk_type="endpoint",
             content=f"Endpoint: {endpoint.name}\nMethod: {endpoint.method}\nPath: {endpoint.full_path}",
             metadata={
-                "method": str(endpoint.method),
+                "method": endpoint.method.value,
                 "path": endpoint.full_path,
                 "requires_auth": endpoint.requires_auth,
             },
