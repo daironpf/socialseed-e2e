@@ -28,48 +28,54 @@ The project manifest is included in `socialseed-e2e` by default. No additional i
 
 ### 1. Generate the Manifest
 
-```bash
-# Generate manifest in current directory
-e2e manifest
+The manifest is generated for a microservice and stored in a centralized folder within the framework (NOT in the microservice directory).
 
-# Generate for a specific project
-e2e manifest /path/to/project
+```bash
+# Generate manifest for a microservice
+# The manifest is saved at: <framework_root>/manifests/<service_name>/project_knowledge.json
+e2e manifest ../services/auth-service
 
 # Force full re-scan (instead of smart sync)
-e2e manifest --force
+e2e manifest ../services/auth-service --force
 ```
 
 ### 2. Query the Manifest
 
+Use the service name to query the manifest:
+
 ```bash
 # Display project summary as JSON
-e2e manifest-query
+e2e manifest-query auth-service
 
 # Display as Markdown
-e2e manifest-query -f markdown
+e2e manifest-query auth-service -f markdown
 ```
 
 ### 3. Watch Files for Changes
 
 ```bash
-# Start file watcher with auto-update
-e2e watch
-
-# Watch specific project
-e2e watch /path/to/project
+# Start file watcher with auto-update for a specific service
+e2e watch auth-service
 ```
 
 ## Project Structure
 
-After running `e2e manifest`, you'll have:
+After running `e2e manifest`, the manifest is stored in the framework's manifests folder:
 
 ```
-project-root/
-├── project_knowledge.json     # Generated manifest
-├── src/
-│   └── ...                    # Your source files
-└── ...
+socialseed-e2e/                          # Framework root
+├── manifests/                            # Centralized manifests folder
+│   ├── auth-service/                   # Manifest for auth service
+│   │   └── project_knowledge.json
+│   ├── user-service/                    # Manifest for user service
+│   │   └── project_knowledge.json
+│   └── payment-service/                 # Manifest for payment service
+│       └── project_knowledge.json
+└── src/
+    └── socialseed_e2e/                  # Framework source code
 ```
+
+This approach keeps the microservice code clean while providing a centralized location for AI agents to query project knowledge.
 
 ## Manifest Schema
 
@@ -283,47 +289,131 @@ generator = ManifestGenerator(
 
 ### `e2e manifest`
 
-Generate the project manifest.
+Generate the project manifest for a microservice. The manifest is stored in the framework's manifests folder.
+
+**Arguments:**
+- `directory`: Path to the microservice directory (e.g., `../services/auth-service`)
 
 **Options:**
 - `--force`: Force full scan instead of smart sync
 
 **Examples:**
 ```bash
-e2e manifest                    # Current directory
-e2e manifest /path/to/project   # Specific project
-e2e manifest --force            # Full re-scan
+e2e manifest ../services/auth-service   # Generate for auth service
+e2e manifest ../services/user-service    # Generate for user service
+e2e manifest ../services/auth-service --force  # Force full re-scan
 ```
 
 ### `e2e manifest-query`
 
-Query the generated manifest.
+Query the generated manifest using the service name.
+
+**Arguments:**
+- `directory`: Service name (e.g., `auth-service`)
 
 **Options:**
 - `--format, -f`: Output format (`json` or `markdown`)
 
 **Examples:**
 ```bash
-e2e manifest-query                    # JSON output
-e2e manifest-query -f markdown        # Markdown output
+e2e manifest-query auth-service           # JSON output
+e2e manifest-query auth-service -f markdown  # Markdown output
+```
+
+### `e2e manifest-check`
+
+Validate manifest freshness using source code hashes.
+
+**Arguments:**
+- `directory`: Service name (e.g., `auth-service`)
+
+**Examples:**
+```bash
+e2e manifest-check auth-service
+```
+
+### `e2e build-index`
+
+Build vector index for semantic search.
+
+**Arguments:**
+- `directory`: Service name (e.g., `auth-service`)
+
+**Examples:**
+```bash
+e2e build-index auth-service
+```
+
+### `e2e search`
+
+Semantic search on project manifest.
+
+**Arguments:**
+- `query`: Search query
+
+**Options:**
+- `--service, -s`: Service name (required)
+- `--top-k, -k`: Number of results (default: 5)
+- `--type, -t`: Filter by type (`endpoint`, `dto`, `service`)
+
+**Examples:**
+```bash
+e2e search "authentication endpoints" -s auth-service
+e2e search "user DTO" -s user-service --type dto
+```
+
+### `e2e retrieve`
+
+Retrieve context for a specific task.
+
+**Arguments:**
+- `task`: Task description
+
+**Options:**
+- `--service, -s`: Service name (required)
+- `--max-chunks, -c`: Maximum chunks (default: 5)
+
+**Examples:**
+```bash
+e2e retrieve "create auth tests" -s auth-service
+e2e retrieve "test payment flow" -s payment-service --max-chunks 3
 ```
 
 ### `e2e watch`
 
-Watch files and auto-update manifest.
+Watch files and auto-update manifest for a specific service.
+
+**Arguments:**
+- `directory`: Service name (e.g., `auth-service`)
 
 **Examples:**
 ```bash
-e2e watch                    # Watch current directory
-e2e watch /path/to/project   # Watch specific project
+e2e watch auth-service
 ```
 
 ## Best Practices
 
-1. **Commit the Manifest**: Add `project_knowledge.json` to version control for team collaboration
-2. **CI/CD Integration**: Generate manifest in CI to validate project structure
-3. **Pre-commit Hook**: Auto-update manifest before commits
-4. **AI Agent Integration**: Point AI agents to the manifest for context
+1. **Centralized Manifest Location**: The manifest is stored in `<framework_root>/manifests/<service_name>/` - this keeps microservices clean
+2. **AI Agent Usage**: Point AI agents to the manifest location for context instead of parsing source code
+3. **CI/CD Integration**: Generate manifest in CI to validate project structure
+4. **Use Smart Sync**: Let the system detect changes automatically instead of full rescans
+
+### Workflow for AI Agents
+
+```bash
+# 1. Generate manifest for the microservice
+e2e manifest ../services/auth-service
+
+# 2. Query to understand the service
+e2e manifest-query auth-service
+
+# 3. Build index for semantic search (requires rag extras)
+e2e build-index auth-service
+
+# 4. Use search/retrieve for context
+e2e search "login endpoint" -s auth-service
+e2e retrieve "write tests" -s auth-service
+```
 
 ### Pre-commit Hook Example
 
@@ -331,25 +421,26 @@ e2e watch /path/to/project   # Watch specific project
 #!/bin/sh
 # .git/hooks/pre-commit
 
-e2e manifest
-if [ $? -ne 0 ]; then
-    echo "Failed to update manifest"
-    exit 1
-fi
-
-git add project_knowledge.json
+# Update manifest for known services
+for service in auth-service user-service payment-service; do
+    e2e manifest ../services/$service
+    if [ $? -ne 0 ]; then
+        echo "Failed to update manifest for $service"
+        exit 1
+    fi
+done
 ```
 
 ## Troubleshooting
 
-### Manifest Not Generated
+### Manifest Not Found
 
 ```bash
-# Check if project has source files
-find . -name "*.py" -o -name "*.java" -o -name "*.js" | head -10
+# Check if manifest exists in the framework
+ls -la src/manifests/<service_name>/
 
-# Force full scan
-e2e manifest --force
+# Generate manifest
+e2e manifest ../services/<service_name>
 ```
 
 ### Services Not Detected
@@ -361,11 +452,14 @@ e2e manifest --force
 ### Outdated Manifest
 
 ```bash
+# Check freshness
+e2e manifest-check auth-service
+
 # Regenerate with force
-e2e manifest --force
+e2e manifest ../services/auth-service --force
 
 # Or use watch mode for automatic updates
-e2e watch
+e2e watch auth-service
 ```
 
 ## API Reference

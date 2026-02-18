@@ -267,21 +267,63 @@ e2e set show auth_service
 
 **Ver documentación completa:** `.agent/SERVICE_DETECTION.md`
 
-## AI Project Manifest (Nuevo Feature)
+## AI Project Manifest (Feature)
 
 ### Generación de project_knowledge.json
 
-El framework ahora incluye un sistema de **Manifest de Conocimiento del Proyecto** que genera un archivo JSON estructurado con información de la API:
+El framework ahora incluye un sistema de **Manifest de Conocimiento del Proyecto** que genera un archivo JSON estructurado con información de la API.
+
+**Importante:** El manifest se guarda en una carpeta centralizada dentro del framework, NO en el directorio del microservicio. Esto mantiene limpio el código del microservicio.
 
 ```bash
-# Generar el manifest en el directorio actual
-e2e manifest
-
-# Para un proyecto específico
-e2e manifest /path/to/project
+# Generar manifest para un microservicio
+# El manifest se guarda en: <framework_root>/manifests/<service_name>/project_knowledge.json
+e2e manifest ../services/auth-service
 
 # Forzar re-escaneo completo
-e2e manifest --force
+e2e manifest ../services/auth-service --force
+```
+
+### Estructura de Directorios
+
+```
+socialseed-e2e/                          # Raíz del framework
+├── manifests/                            # Carpeta centralizada de manifests
+│   ├── auth-service/                    # Manifest del servicio auth
+│   │   └── project_knowledge.json
+│   ├── user-service/                     # Manifest del servicio user
+│   │   └── project_knowledge.json
+│   └── payment-service/                  # Manifest del servicio payment
+│       └── project_knowledge.json
+└── src/
+    └── socialseed_e2e/                  # Código fuente del framework
+```
+
+### Flujo de Trabajo para Microservicios
+
+```bash
+# 1. Generar manifest para un microservicio
+e2e manifest ../services/auth-service
+
+# 2. Consultar el manifest (usando nombre del servicio)
+e2e manifest-query auth-service
+e2e manifest-query auth-service -f markdown
+
+# 3. Verificar freshness del manifest
+e2e manifest-check auth-service
+
+# 4. Construir índice vectorial para búsqueda semántica
+e2e build-index auth-service
+
+# 5. Búsqueda semántica
+e2e search "authentication endpoints" -s auth-service
+e2e search "user DTO" -s auth-service --type dto
+
+# 6. Retrieval para contexto RAG
+e2e retrieve "create auth tests" -s auth-service
+
+# 7. Watching para auto-actualización
+e2e watch auth-service
 ```
 
 ### Smart Sync (Sincronización Inteligente)
@@ -289,25 +331,35 @@ e2e manifest --force
 El sistema detecta automáticamente cambios en archivos y solo re-escanea los modificados:
 
 ```bash
-# Iniciar watcher con auto-actualización
-e2e watch
+# Iniciar watcher con auto-actualización para un servicio específico
+e2e watch auth-service
 
 # O usar SmartSyncManager programáticamente
 from socialseed_e2e.project_manifest import ManifestGenerator, SmartSyncManager
+from pathlib import Path
 
-generator = ManifestGenerator("/path/to/project")
+framework_root = Path("/path/to/socialseed-e2e")
+manifest_dir = framework_root / "manifests" / "auth-service"
+
+generator = ManifestGenerator(
+    project_root=Path("../services/auth-service"),  # Ruta al microservicio real
+    manifest_path=manifest_dir / "project_knowledge.json"
+)
 manager = SmartSyncManager(generator)
 manager.start_watching()
 ```
 
 ### Internal API para Consulta
 
-Los agentes de IA pueden consultar el manifest en lugar de parsear el código fuente:
+Los agentes de IA pueden consultar el manifest usando la API interna:
 
 ```python
 from socialseed_e2e.project_manifest import ManifestAPI, HttpMethod
+from pathlib import Path
 
-api = ManifestAPI("/path/to/project")
+# Usar la ruta del manifest dentro del framework
+framework_root = Path("/path/to/socialseed-e2e")
+api = ManifestAPI(framework_root / "manifests" / "auth-service")
 
 # Obtener endpoints
 endpoints = api.get_endpoints(method=HttpMethod.POST, requires_auth=True)

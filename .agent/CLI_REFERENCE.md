@@ -588,14 +588,20 @@ Risk coverage: 95%
 ## Documentación y AI
 
 ### `manifest`
-Genera AI Project Manifest (manifiesto del proyecto).
+Genera AI Project Manifest (manifiesto del proyecto) para un microservicio.
+
+El manifest se guarda en: `<framework_root>/manifests/<service_name>/project_knowledge.json`
 
 ```bash
-e2e manifest
-e2e manifest --watch            # Modo watch
+e2e manifest ../services/auth-service    # Generar manifest para auth-service
+e2e manifest ../services/user-service     # Generar manifest para user-service
+e2e manifest ../services/auth-service --force  # Forzar re-escaneo completo
 ```
 
-**Genera:** `project_knowledge.json`
+**Argumentos:**
+- `directory`: Ruta al directorio del microservicio (e.g., `../services/auth-service`)
+
+**Genera:** `<framework_root>/manifests/<service_name>/project_knowledge.json`
 
 **Contiene:**
 - Hash de archivos fuente
@@ -608,6 +614,7 @@ e2e manifest --watch            # Modo watch
 - Token optimization para AI
 - Detección de cambios
 - Contexto para LLMs
+- Mantiene el código del microservicio limpio
 
 ---
 
@@ -615,67 +622,93 @@ e2e manifest --watch            # Modo watch
 Valida freshness del manifest vs código fuente.
 
 ```bash
-e2e manifest-check
+e2e manifest-check auth-service    # Verificar freshness de auth-service
+e2e manifest-check user-service    # Verificar freshness de user-service
 ```
+
+**Argumentos:**
+- `directory`: Nombre del servicio (e.g., `auth-service`)
 
 **Output:**
 ```
-📋 Manifest Validation
+🔍 Checking Manifest Freshness
+   Service: auth-service
+   Manifest: .../manifests/auth-service/project_knowledge.json
 
-✓ Manifest up to date (last update: 2 hours ago)
-
-Changed files detected:
-  - src/users/controller.py (modified)
-  - src/payments/service.py (modified)
-
-Recommendation: Regenerate manifest
+✅ Manifest is FRESH
+   All source files match stored hashes.
+   Version: 2.0
+   Last updated: 2026-02-18 02:01:50
+   Total files tracked: 15
 ```
 
 ---
 
 ### `manifest-query`
-Consulta el manifest.
+Consulta el manifest usando el nombre del servicio.
 
 ```bash
-e2e manifest-query "endpoints in users-api"
-e2e manifest-query "DTOs using EmailStr"
+e2e manifest-query auth-service           # Consulta manifest de auth-service
+e2e manifest-query auth-service -f markdown  # Formato markdown
 ```
 
+**Argumentos:**
+- `directory`: Nombre del servicio (e.g., `auth-service`)
+
+**Opciones:**
+- `--format, -f`: Formato de salida (`json` o `markdown`)
+
 **Uso:**
-- Buscar información específica
+- Buscar información específica del servicio
 - Debugging
 - Auditoría
 
 ---
 
 ### `search`
-Búsqueda semántica en el proyecto.
+Búsqueda semántica en el manifest de un servicio específico.
 
 ```bash
-e2e search "authentication flow"
-e2e search "payment validation"
+e2e search "authentication flow" -s auth-service
+e2e search "payment validation" -s payment-service
+e2e search "user DTO" -s user-service --type dto
 ```
+
+**Argumentos:**
+- `query`: Query de búsqueda
+
+**Opciones:**
+- `--service, -s`: Nombre del servicio (requerido)
+- `--top-k, -k`: Número de resultados (default: 5)
+- `--type, -t`: Filtrar por tipo (`endpoint`, `dto`, `service`)
 
 **Requiere:**
 ```bash
 e2e install-extras rag
-e2e build-index
+e2e build-index auth-service
 ```
 
 **Características:**
 - Búsqueda semántica (no solo keyword)
 - Results ordenados por relevancia
-- Incluye código y documentación
+- Busca en el manifest del servicio específico
 
 ---
 
 ### `retrieve`
-Recupera contexto para una tarea específica.
+Recupera contexto para una tarea específica desde el manifest de un servicio.
 
 ```bash
-e2e retrieve --task "implement user registration"
-e2e retrieve --task "fix payment bug" --format markdown
+e2e retrieve "implement user registration" -s auth-service
+e2e retrieve "fix payment bug" -s payment-service --max-chunks 3
 ```
+
+**Argumentos:**
+- `task`: Descripción de la tarea
+
+**Opciones:**
+- `--service, -s`: Nombre del servicio (requerido)
+- `--max-chunks, -c`: Máximo de chunks (default: 5)
 
 **Uso:**
 - Obtener contexto relevante para una tarea
@@ -1137,17 +1170,20 @@ e2e set --key services.legacy --delete
 ---
 
 ### `watch`
-Modo watch - auto-actualización.
+Modo watch - auto-actualización del manifest para un servicio específico.
 
 ```bash
-e2e watch
-e2e watch --manifest        # Watch para manifest
+e2e watch auth-service         # Watch para auth-service
+e2e watch user-service          # Watch para user-service
 ```
 
+**Argumentos:**
+- `directory`: Nombre del servicio (e.g., `auth-service`)
+
 **Características:**
-- Detecta cambios en código
-- Regenera manifest automáticamente
-- Re-ejecuta tests en cambios
+- Detecta cambios en código fuente del microservicio
+- Regenera manifest automáticamente usando smart sync
+- Monitorea el manifest en `<framework_root>/manifests/<service_name>/`
 
 ---
 
@@ -1247,16 +1283,21 @@ e2e shadow generate-tests --capture capture.json
 ---
 
 ### `build-index`
-Construye índice vectorial para búsqueda.
+Construye índice vectorial para búsqueda semántica de un servicio específico.
 
 ```bash
-e2e build-index
-e2e build-index --force-rebuild
+e2e build-index auth-service         # Build index para auth-service
+e2e build-index user-service          # Build index para user-service
 ```
+
+**Argumentos:**
+- `directory`: Nombre del servicio (e.g., `auth-service`)
 
 **Requiere:** `e2e install-extras rag`
 
-**Uso:** Preparar para `e2e search`
+**Uso:** Preparar para `e2e search` y `e2e retrieve`
+
+**Nota:** El índice se guarda en `<framework_root>/manifests/<service_name>/.index/`
 
 ---
 
