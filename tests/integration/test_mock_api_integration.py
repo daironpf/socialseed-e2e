@@ -53,7 +53,7 @@ class TestMockAPIUsersCRUD:
         assert "limit" in data
         assert "total_pages" in data
 
-    def test_list_users_has_seeded_data(self, mock_api_url):
+    def test_list_users_has_seeded_data(self, mock_api_url, mock_api_reset):
         """Test that seeded users are present."""
         response = requests.get(f"{mock_api_url}/api/users")
         data = response.json()
@@ -69,7 +69,9 @@ class TestMockAPIUsersCRUD:
         response = requests.post(f"{mock_api_url}/api/users", json=sample_user_data)
         assert response.status_code == 201
 
-    def test_create_user_returns_user_data(self, mock_api_url, mock_api_reset, sample_user_data):
+    def test_create_user_returns_user_data(
+        self, mock_api_url, mock_api_reset, sample_user_data
+    ):
         """Test creating a user returns the created user."""
         response = requests.post(f"{mock_api_url}/api/users", json=sample_user_data)
         data = response.json()
@@ -138,7 +140,11 @@ class TestMockAPIUsersCRUD:
         for i in range(5):
             requests.post(
                 f"{mock_api_url}/api/users",
-                json={"email": f"user{i}@test.com", "password": "pass123", "name": f"User {i}"},
+                json={
+                    "email": f"user{i}@test.com",
+                    "password": "pass123",
+                    "name": f"User {i}",
+                },
             )
 
         # Test with limit=2
@@ -155,7 +161,9 @@ class TestMockAPIUsersCRUD:
         data = response.json()
 
         assert data["total"] >= 1
-        assert all("admin" in u["email"] or "admin" in u["name"].lower() for u in data["items"])
+        assert all(
+            "admin" in u["email"] or "admin" in u["name"].lower() for u in data["items"]
+        )
 
 
 class TestMockAPIAuthentication:
@@ -163,7 +171,9 @@ class TestMockAPIAuthentication:
 
     def test_login_with_valid_credentials(self, mock_api_url, admin_credentials):
         """Test login with valid admin credentials."""
-        response = requests.post(f"{mock_api_url}/api/auth/login", json=admin_credentials)
+        response = requests.post(
+            f"{mock_api_url}/api/auth/login", json=admin_credentials
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -185,7 +195,8 @@ class TestMockAPIAuthentication:
     def test_login_requires_email_and_password(self, mock_api_url):
         """Test that login requires both email and password."""
         response = requests.post(
-            f"{mock_api_url}/api/auth/login", json={"email": "test@example.com"}  # Missing password
+            f"{mock_api_url}/api/auth/login",
+            json={"email": "test@example.com"},  # Missing password
         )
 
         assert response.status_code == 400
@@ -250,7 +261,9 @@ class TestMockAPIErrorHandling:
 
     def test_update_nonexistent_user(self, mock_api_url):
         """Test updating a non-existent user."""
-        response = requests.put(f"{mock_api_url}/api/users/nonexistent", json={"name": "New Name"})
+        response = requests.put(
+            f"{mock_api_url}/api/users/nonexistent", json={"name": "New Name"}
+        )
 
         assert response.status_code == 404
 

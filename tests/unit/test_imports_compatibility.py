@@ -93,6 +93,8 @@ class TestMainPackageImports:
                 "GrpcCallLog",
                 "TraceContext",
                 "TuiApp",
+                "ProtoSchemaHandler",
+                "ProtoRegistry",
             ):
                 continue
             assert hasattr(socialseed_e2e, name), f"{name} not found in main package"

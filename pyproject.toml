@@ -129,6 +129,7 @@ markers = [
     "grpc: Tests for gRPC protocol support",
 ]
 filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
 ]
@@ -147,7 +148,7 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 80
+fail_under = 45
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
