@@ -41,6 +41,10 @@ jobs:
           cache: 'pip'
           cache-dependency-path: '**/pyproject.toml'
 
+      - name: Verify fixes are applied
+        run: |
+          python verify_fixes.py
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
