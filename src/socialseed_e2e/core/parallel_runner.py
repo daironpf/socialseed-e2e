@@ -485,27 +485,28 @@ def get_parallel_config_from_args(
     Args:
         parallel_workers: Number of workers from CLI (None = auto, 0 = disabled)
         parallel_mode: Execution mode ('service' or 'test')
-        config_path: Path to configuration file
+        config_path: Path to configuration file (if None, only uses CLI args)
 
     Returns:
         ParallelConfig instance
     """
-    # Check config file first
-    try:
-        loader = ApiConfigLoader()
-        app_config = loader.load(config_path)
+    # Check config file first only if path is provided
+    if config_path is not None:
+        try:
+            loader = ApiConfigLoader()
+            app_config = loader.load(config_path)
 
-        # Check if parallel config exists in app_config
-        if hasattr(app_config, "parallel") and app_config.parallel:
-            pconf = app_config.parallel
-            return ParallelConfig(
-                enabled=pconf.enabled,
-                max_workers=pconf.max_workers,
-                parallel_mode=pconf.mode,
-                isolation_level=pconf.isolation_level,
-            )
-    except Exception:
-        pass
+            # Check if parallel config exists in app_config
+            if hasattr(app_config, "parallel") and app_config.parallel:
+                pconf = app_config.parallel
+                return ParallelConfig(
+                    enabled=pconf.enabled,
+                    max_workers=pconf.max_workers,
+                    parallel_mode=pconf.mode,
+                    isolation_level=pconf.isolation_level,
+                )
+        except Exception:
+            pass
 
     # Use CLI arguments
     if parallel_workers == 0:

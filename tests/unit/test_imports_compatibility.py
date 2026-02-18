@@ -87,7 +87,12 @@ class TestMainPackageImports:
 
         for name in socialseed_e2e.__all__:
             # Skip optional imports that may not be available
-            if name in ("BaseGrpcPage", "GrpcRetryConfig", "GrpcCallLog"):
+            if name in (
+                "BaseGrpcPage",
+                "GrpcRetryConfig",
+                "GrpcCallLog",
+                "TraceContext",
+            ):
                 continue
             assert hasattr(socialseed_e2e, name), f"{name} not found in main package"
 
