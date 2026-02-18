@@ -109,12 +109,20 @@ Before running tests, you need an API server running. You have three options:
 The `e2e init` command automatically creates a demo REST API with CRUD operations:
 
 ```bash
+# Install dependencies (includes Flask for the demo API)
+pip install -r requirements.txt
+
 # Start the demo API (in a separate terminal)
 cd demo
 python api-rest-demo.py
 
 # The API will start on http://localhost:5000
 # It includes 10 sample users and full CRUD endpoints
+```
+
+**Note:** If you get a `ModuleNotFoundError: No module named 'flask'` error, install Flask manually:
+```bash
+pip install flask>=2.0.0
 ```
 
 **Update your service to use the demo API:**

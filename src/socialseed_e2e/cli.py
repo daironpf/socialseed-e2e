@@ -252,6 +252,7 @@ htmlcov/
     if not requirements_path.exists() or force:
         requirements_content = """pydantic>=2.0.0
 email-validator>=2.0.0
+flask>=2.0.0
 """
         requirements_path.write_text(requirements_content)
         console.print("  [green]✓[/green] Created: requirements.txt")
