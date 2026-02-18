@@ -815,7 +815,9 @@ def new_test(name: str, service: str, description: str, force: bool):
     else:
         next_num = 1
 
-    test_filename = f"{next_num:02d}_{name}_flow.py"
+    # Sanitize name: replace hyphens with underscores for valid Python module names
+    safe_name = to_snake_case(name)
+    test_filename = f"{next_num:02d}_{safe_name}_flow.py"
     test_path = modules_path / test_filename
 
     # Check if it already exists
@@ -869,6 +871,12 @@ def new_test(name: str, service: str, description: str, force: bool):
 @click.option("--service", "-s", help="Filter by specific service")
 @click.option("--module", "-m", help="Filter by specific module")
 @click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+@click.option(
+    "--url",
+    "-u",
+    "override_url",
+    help="Override service URL (e.g., https://api.example.com:443). Useful for testing remote APIs in AWS, Azure, GCP, etc.",
+)
 @click.option("--verbose", "-v", is_flag=True, help="Verbose mode")
 @click.option(
     "--output",
@@ -958,6 +966,7 @@ def run(
     service: Optional[str],
     module: Optional[str],
     config: Optional[str],
+    override_url: Optional[str],
     verbose: bool,
     output: str,
     report_dir: str,
@@ -982,6 +991,7 @@ def run(
         service: If specified, only run tests for this service
         module: If specified, only run this test module
         config: Path to the e2e.conf file
+        override_url: Override service URL (for remote APIs in AWS, Azure, GCP, etc.)
         verbose: If True, shows detailed information
         output: Output format (text, json, or html)
         report_dir: Directory for HTML reports
@@ -996,6 +1006,9 @@ def run(
         e2e run                                              # Run all tests
         e2e run --service auth_service                       # Run tests for specific service
         e2e run --service auth_service --module 01_login     # Run specific test module
+        e2e run --url https://api.example.com:443            # Test remote API
+        e2e run --url https://my-api.azurewebsites.net       # Test Azure API
+        e2e run --url https://my-api.execute-api.us-east-1.amazonaws.com  # Test AWS API
         e2e run --verbose                                    # Run with detailed output
         e2e run --output html --report-dir ./reports         # Generate HTML report
         e2e run --parallel 4                                 # Run with 4 parallel workers
@@ -1210,7 +1223,8 @@ def run(
                         )
 
                 # Generate report
-                report = collector.generate_report()
+                from socialseed_e2e.reporting import TestSuiteReport
+                report: TestSuiteReport = collector.generate_report()
                 generator = HTMLReportGenerator()
 
                 import os
@@ -1454,6 +1468,157 @@ def recorder_convert(file: str, output: Optional[str]):
     Path(output_path).write_text(code)
 
     console.print(f"\n[bold green]✓ Test module generated:[/bold green] {output_path}")
+
+
+@cli.group("set")
+def set_group():
+    """Configuration management commands.
+    
+    Examples:
+        e2e set url <service> <url>     # Set service URL
+        e2e set url auth_service https://api.example.com:443
+    """
+    pass
+
+
+@set_group.command("url")
+@click.argument("service_name")
+@click.argument("url")
+@click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+@click.option("--health-endpoint", "-e", help="Health endpoint for the service")
+def set_url(service_name: str, url: str, config: Optional[str], health_endpoint: Optional[str]):
+    """Set or update the URL for a service in e2e.conf.
+    
+    This is useful for testing remote APIs deployed in AWS, Azure, GCP, or any
+    other cloud provider without modifying the configuration file manually.
+    
+    Args:
+        service_name: Name of the service to configure
+        url: Base URL for the service (e.g., https://api.example.com:443)
+        config: Path to e2e.conf file (default: ./e2e.conf)
+        health_endpoint: Health endpoint path (optional)
+    
+    Examples:
+        e2e set url auth_service https://my-api.azurewebsites.net
+        e2e set url auth_service https://api.example.com:443
+        e2e set url payment_service https://my-api.execute-api.us-east-1.amazonaws.com
+        e2e set url auth_service http://localhost:8085 -c custom.conf
+        e2e set url auth_service https://api.example.com --health-endpoint /health
+    """
+    import yaml
+    
+    config_path = Path(config) if config else Path("e2e.conf")
+    
+    if not config_path.exists():
+        console.print(f"[red]❌ Error:[/red] Configuration file not found: {config_path}")
+        console.print("[yellow]Tip:[/yellow] Run 'e2e init' to create a new configuration file.")
+        sys.exit(1)
+    
+    # Validate URL format
+    if not url.startswith(("http://", "https://")):
+        console.print(f"[red]❌ Error:[/red] URL must start with http:// or https://")
+        console.print(f"[yellow]Example:[/yellow] https://api.example.com:443")
+        sys.exit(1)
+    
+    # Read and parse YAML
+    try:
+        with open(config_path, 'r') as f:
+            config_data = yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        console.print(f"[red]❌ Error parsing configuration file:[/red] {e}")
+        sys.exit(1)
+    
+    # Ensure services section exists
+    if 'services' not in config_data:
+        config_data['services'] = {}
+    
+    # Update or add service
+    if service_name in config_data['services']:
+        config_data['services'][service_name]['base_url'] = url
+        if health_endpoint:
+            config_data['services'][service_name]['health_endpoint'] = health_endpoint
+        console.print(f"[green]✓[/green] Updated base_url for '{service_name}'")
+    else:
+        config_data['services'][service_name] = {
+            'base_url': url
+        }
+        if health_endpoint:
+            config_data['services'][service_name]['health_endpoint'] = health_endpoint
+        console.print(f"[green]✓[/green] Added new service '{service_name}'")
+    
+    # Write back to file
+    with open(config_path, 'w') as f:
+        yaml.dump(config_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    
+    console.print(f"\n[bold cyan]Configuration updated:[/bold cyan]")
+    console.print(f"  Service: [yellow]{service_name}[/yellow]")
+    console.print(f"  URL: [green]{url}[/green]")
+    if health_endpoint:
+        console.print(f"  Health: [dim]{health_endpoint}[/dim]")
+    console.print(f"\n[dim]Run 'e2e run --service {service_name}' to test[/dim]")
+
+
+@set_group.command("show")
+@click.argument("service_name", required=False)
+@click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+def show_config(service_name: Optional[str], config: Optional[str]):
+    """Show configuration for a service or all services.
+    
+    Args:
+        service_name: Name of the service (optional, shows all if not specified)
+        config: Path to e2e.conf file
+    
+    Examples:
+        e2e set show                    # Show all services
+        e2e set show auth_service       # Show specific service
+        e2e set show -c custom.conf     # Show from custom config
+    """
+    config_path = Path(config) if config else Path("e2e.conf")
+    
+    if not config_path.exists():
+        console.print(f"[red]❌ Error:[/red] Configuration file not found: {config_path}")
+        sys.exit(1)
+    
+    from socialseed_e2e.core.config_loader import ApiConfigLoader
+    
+    try:
+        loader = ApiConfigLoader()
+        app_config = loader.load(str(config_path))
+        
+        if service_name:
+            # Show specific service
+            if service_name not in app_config.services:
+                console.print(f"[red]❌ Error:[/red] Service '{service_name}' not found")
+                console.print(f"[dim]Available services: {', '.join(app_config.services.keys())}[/dim]")
+                sys.exit(1)
+            
+            svc = app_config.services[service_name]
+            console.print(f"\n[bold cyan]Service: {service_name}[/bold cyan]\n")
+            console.print(f"  Base URL: [green]{svc.base_url}[/green]")
+            console.print(f"  Health: [dim]{svc.health_endpoint or 'N/A'}[/dim]")
+            console.print(f"  Timeout: [dim]{getattr(svc, 'timeout', 'default')}ms[/dim]")
+        else:
+            # Show all services
+            console.print(f"\n[bold cyan]Configured Services[/bold cyan]\n")
+            
+            from rich.table import Table
+            table = Table(title="Services")
+            table.add_column("Service", style="cyan")
+            table.add_column("Base URL", style="green")
+            table.add_column("Health Endpoint", style="dim")
+            
+            for name, svc in app_config.services.items():
+                table.add_row(
+                    name,
+                    svc.base_url,
+                    svc.health_endpoint or "N/A"
+                )
+            
+            console.print(table)
+            
+    except Exception as e:
+        console.print(f"[red]❌ Error loading configuration:[/red] {e}")
+        sys.exit(1)
 
 
 @cli.command()
