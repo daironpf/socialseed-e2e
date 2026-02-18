@@ -1,0 +1,35 @@
+"""Configuration for Demo API Service.
+
+This module contains configuration settings for the demo API service.
+"""
+
+from socialseed_e2e.core.config_loader import ServiceConfig
+
+# Default configuration for demo API
+DEFAULT_CONFIG = ServiceConfig(
+    name="demo-api",
+    base_url="http://localhost:5000",
+    health_endpoint="/health",
+    timeout=5000,
+    retry_attempts=3,
+    headers={
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+)
+
+# Test data for demo API
+TEST_USERS = [
+    {"name": "Alice Johnson", "email": "alice@example.com", "role": "admin"},
+    {"name": "Bob Smith", "email": "bob@example.com", "role": "user"},
+    {"name": "Carol Williams", "email": "carol@example.com", "role": "user"},
+]
+
+# Expected API responses
+EXPECTED_RESPONSES = {
+    "health": {
+        "status": "healthy",
+        "service": "demo-api",
+    },
+    "users_count": 10,
+}

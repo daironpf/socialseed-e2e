@@ -313,7 +313,7 @@ email-validator>=2.0.0
             "  [yellow]⚠[/yellow] Already exists: services/example/ (use --force to overwrite)"
         )
 
-    # Create/update e2e.conf with commented example service
+    # Create/update e2e.conf with demo service configured for the demo API
     config_path = target_path / "e2e.conf"
     if not config_path.exists() or force:
         engine.render_to_file(
@@ -323,10 +323,18 @@ email-validator>=2.0.0
                 "timeout": "30000",
                 "user_agent": "socialseed-e2e/1.0",
                 "verbose": "true",
-                "services_config": """  # Example service (commented out by default)
-  # To use the example service:
-  # 1. Start the mock server: python -m socialseed_e2e.mock_server
-  # 2. Uncomment the configuration below
+                "services_config": """  # Demo API Service (ready to use)
+  # This service is configured to test the included demo API
+  # Start the demo API: python api-rest-demo.py
+  demo-api:
+    base_url: http://localhost:5000
+    health_endpoint: /health
+    timeout: 5000
+    auto_start: false
+    required: true
+  
+  # Example service (commented out - requires mock server)
+  # To use: python -m socialseed_e2e.mock_server
   # example:
   #   base_url: http://localhost:8765
   #   health_endpoint: /health
@@ -336,7 +344,7 @@ email-validator>=2.0.0
             overwrite=force,
         )
         console.print(
-            "  [green]✓[/green] Created: e2e.conf (example service commented)"
+            "  [green]✓[/green] Created: e2e.conf (with demo-api service configured)"
         )
 
     # Create socialseed.config.yaml (alternative config format)
@@ -386,6 +394,95 @@ email-validator>=2.0.0
         console.print("  [green]✓[/green] Created: README.md")
     else:
         console.print("  [yellow]⚠[/yellow] Already exists: README.md")
+
+    # Create demo REST API for testing
+    demo_api_path = target_path / "api-rest-demo.py"
+    if not demo_api_path.exists() or force:
+        engine.render_to_file(
+            "api_rest_demo.py.template",
+            {},
+            str(demo_api_path),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: api-rest-demo.py (demo API for testing)"
+        )
+    else:
+        console.print("  [yellow]⚠[/yellow] Already exists: api-rest-demo.py")
+
+    # Create demo-api service with tests
+    demo_service_path = target_path / "services" / "demo-api"
+    demo_modules_path = demo_service_path / "modules"
+
+    if not demo_service_path.exists() or force:
+        demo_service_path.mkdir(parents=True, exist_ok=True)
+        demo_modules_path.mkdir(exist_ok=True)
+
+        # Create __init__.py files
+        (demo_service_path / "__init__.py").write_text("")
+        (demo_modules_path / "__init__.py").write_text("")
+
+        # Create demo_api_page.py
+        engine.render_to_file(
+            "demo_service_page.py.template",
+            {},
+            str(demo_service_path / "demo_api_page.py"),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: services/demo-api/demo_api_page.py")
+
+        # Create data_schema.py
+        engine.render_to_file(
+            "demo_data_schema.py.template",
+            {},
+            str(demo_service_path / "data_schema.py"),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: services/demo-api/data_schema.py")
+
+        # Create config.py
+        engine.render_to_file(
+            "demo_config.py.template",
+            {},
+            str(demo_service_path / "config.py"),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: services/demo-api/config.py")
+
+        # Create test modules
+        engine.render_to_file(
+            "demo_test_health.py.template",
+            {},
+            str(demo_modules_path / "01_health_check.py"),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: services/demo-api/modules/01_health_check.py"
+        )
+
+        engine.render_to_file(
+            "demo_test_list_users.py.template",
+            {},
+            str(demo_modules_path / "02_list_users.py"),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: services/demo-api/modules/02_list_users.py"
+        )
+
+        engine.render_to_file(
+            "demo_test_create_user.py.template",
+            {},
+            str(demo_modules_path / "03_create_user.py"),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: services/demo-api/modules/03_create_user.py"
+        )
+    else:
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: services/demo-api/ (use --force to overwrite)"
+        )
 
     # Copy GitHub Actions workflow
     github_workflows_path = target_path / ".github" / "workflows"

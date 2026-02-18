@@ -1,0 +1,151 @@
+"""Demo API Page for socialseed-e2e testing.
+
+This module provides the page class for interacting with the demo REST API.
+The demo API is a simple Flask application with CRUD operations for users.
+
+Example:
+    page = DemoApiPage()
+    page.setup()
+    
+    # Get all users
+    response = page.get("/api/users")
+    
+    # Create a new user
+    response = page.post("/api/users", data={
+        "name": "John Doe",
+        "email": "john@example.com"
+    })
+    
+    page.teardown()
+"""
+
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+from socialseed_e2e.core.base_page import BasePage
+
+if TYPE_CHECKING:
+    from playwright.sync_api import APIResponse
+
+
+class DemoApiPage(BasePage):
+    """Page class for Demo API interactions.
+    
+    This class extends BasePage and provides methods for testing
+the demo REST API endpoints.
+    
+    Attributes:
+        base_url: The base URL of the demo API (http://localhost:5000)
+    """
+
+    def __init__(self, base_url: str = "http://localhost:5000", **kwargs):
+        """Initialize the DemoApiPage.
+        
+        Args:
+            base_url: Base URL for the demo API
+            **kwargs: Additional arguments passed to BasePage (e.g., playwright)
+        """
+        super().__init__(base_url=base_url, **kwargs)
+        self.current_user_id: Optional[str] = None
+
+    def setup(self) -> None:
+        """Set up the page before tests."""
+        super().setup()
+
+    def teardown(self) -> None:
+        """Clean up after tests."""
+        super().teardown()
+
+    def get_users(
+        self,
+        page: int = 1,
+        per_page: int = 10,
+        role: Optional[str] = None,
+        search: Optional[str] = None
+    ) -> "APIResponse":
+        """Get list of users with optional filtering.
+        
+        Args:
+            page: Page number for pagination
+            per_page: Number of items per page
+            role: Filter by role (admin, user, moderator)
+            search: Search term for name or email
+            
+        Returns:
+            APIResponse with users list
+        """
+        params: Dict[str, Any] = {"page": page, "per_page": per_page}
+        
+        if role:
+            params["role"] = role
+        if search:
+            params["search"] = search
+            
+        return self.get("/api/users", params=params)
+
+    def get_user(self, user_id: str) -> "APIResponse":
+        """Get a specific user by ID.
+        
+        Args:
+            user_id: The user ID
+            
+        Returns:
+            APIResponse with user data
+        """
+        return self.get(f"/api/users/{user_id}")
+
+    def create_user(
+        self,
+        name: str,
+        email: str,
+        role: str = "user",
+        department: str = "General"
+    ) -> "APIResponse":
+        """Create a new user.
+        
+        Args:
+            name: User's full name
+            email: User's email address
+            role: User role (default: user)
+            department: User's department (default: General)
+            
+        Returns:
+            APIResponse with created user data
+        """
+        data = {
+            "name": name,
+            "email": email,
+            "role": role,
+            "department": department
+        }
+        return self.post("/api/users", data=data)
+
+    def update_user(self, user_id: str, **kwargs) -> "APIResponse":
+        """Update an existing user.
+        
+        Args:
+            user_id: The user ID to update
+            **kwargs: Fields to update (name, email, role, department, is_active)
+            
+        Returns:
+            APIResponse with updated user data
+        """
+        return self.put(f"/api/users/{user_id}", data=kwargs)
+
+    def delete_user(self, user_id: str) -> "APIResponse":
+        """Delete a user.
+        
+        Args:
+            user_id: The user ID to delete
+            
+        Returns:
+            APIResponse confirming deletion
+        """
+        return self.delete(f"/api/users/{user_id}")
+
+    def get_stats(self) -> "APIResponse":
+        """Get API statistics.
+        
+        Returns:
+            APIResponse with statistics
+        """
+        return self.get("/api/stats")

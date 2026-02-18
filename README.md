@@ -101,11 +101,29 @@ e2e new-test health --service demo-api
 
 This creates `services/demo-api/modules/01_health_flow.py` with a test template.
 
-### 5. Start Your API (or Use the Mock Server)
+### 5. Start Your API (3 Options)
 
-Before running tests, you need an API server running. You have two options:
+Before running tests, you need an API server running. You have three options:
 
-#### Option A: Use Your Own API
+#### Option A: Use the Included Demo API (Recommended for beginners)
+The `e2e init` command automatically creates a demo REST API with CRUD operations:
+
+```bash
+# Start the demo API (in a separate terminal)
+cd demo
+python api-rest-demo.py
+
+# The API will start on http://localhost:5000
+# It includes 10 sample users and full CRUD endpoints
+```
+
+**Update your service to use the demo API:**
+```bash
+# Edit e2e.conf and change the base_url to http://localhost:5000
+e2e set url demo-api http://localhost:5000
+```
+
+#### Option B: Use Your Own API
 Ensure your API is running at the configured base URL (e.g., `http://localhost:8080`):
 
 ```bash
@@ -117,7 +135,7 @@ npm start
 docker-compose up
 ```
 
-#### Option B: Use the Built-in Mock Server (for testing)
+#### Option C: Use the Built-in Mock Server
 ```bash
 # Install Flask (required for mock server)
 pip install flask>=2.0.0

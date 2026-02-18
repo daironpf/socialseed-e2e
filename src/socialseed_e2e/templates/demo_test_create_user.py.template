@@ -1,0 +1,112 @@
+"""Test module for creating users.
+
+This module tests the user creation endpoint of the demo API.
+"""
+
+from playwright.sync_api import APIResponse
+from typing import TYPE_CHECKING
+import uuid
+
+if TYPE_CHECKING:
+    from services.demo_api.demo_api_page import DemoApiPage
+
+
+def run(demo_api: 'DemoApiPage') -> APIResponse:
+    """Execute create user test.
+
+    This test validates that we can create a new user through the API
+    and that validation works correctly.
+
+    Args:
+        demo_api: Instance of DemoApiPage
+
+    Returns:
+        APIResponse: HTTP response from the API
+
+    Raises:
+        AssertionError: If test assertions fail
+    """
+    print("Running create user test...")
+
+    # Generate unique email to avoid conflicts
+    unique_id = str(uuid.uuid4())[:8]
+    test_email = f"test.user.{unique_id}@example.com"
+    
+    # Create a new user
+    response = demo_api.create_user(
+        name=f"Test User {unique_id}",
+        email=test_email,
+        role="user",
+        department="Testing"
+    )
+
+    # Assert: Verify successful creation (201 status)
+    assert response.status == 201, f"Expected status 201, got {response.status}: {response.text()}"
+    
+    # Parse response
+    data = response.json()
+    
+    # Verify response structure
+    assert "message" in data, "Response should contain 'message' field"
+    assert "data" in data, "Response should contain 'data' field"
+    assert data["message"] == "User created successfully", f"Unexpected message: {data.get('message')}"
+    
+    created_user = data["data"]
+    
+    # Verify created user data
+    assert created_user["name"] == f"Test User {unique_id}", "Name mismatch"
+    assert created_user["email"] == test_email, "Email mismatch"
+    assert created_user["role"] == "user", "Role mismatch"
+    assert created_user["department"] == "Testing", "Department mismatch"
+    assert "id" in created_user, "Created user should have an ID"
+    assert created_user["is_active"] == True, "New user should be active"
+    
+    user_id = created_user["id"]
+    print(f"✓ User created successfully with ID: {user_id}")
+    
+    # Verify the user can be retrieved
+    print("\nVerifying created user can be retrieved...")
+    get_response = demo_api.get_user(user_id)
+    assert get_response.ok, f"Failed to retrieve created user: {get_response.status}"
+    
+    get_data = get_response.json()
+    retrieved_user = get_data["data"]
+    assert retrieved_user["email"] == test_email, "Retrieved user email mismatch"
+    print(f"✓ Created user verified via GET endpoint")
+    
+    # Store user ID for potential cleanup in subsequent tests
+    demo_api.current_user_id = user_id
+    
+    # Test validation - missing required field
+    print("\nTesting validation - missing name...")
+    invalid_response = demo_api.post("/api/users", data={
+        "email": f"invalid.{unique_id}@example.com"
+        # name is missing
+    })
+    
+    # Should return 400 Bad Request
+    assert invalid_response.status == 400, f"Expected 400 for missing name, got {invalid_response.status}"
+    invalid_data = invalid_response.json()
+    assert "error" in invalid_data, "Error response should contain 'error' field"
+    print(f"✓ Validation correctly rejected request without name")
+    
+    # Test validation - duplicate email
+    print("\nTesting validation - duplicate email...")
+    duplicate_response = demo_api.create_user(
+        name="Duplicate User",
+        email=test_email,  # Same email as before
+        role="user"
+    )
+    
+    # Should return 409 Conflict
+    assert duplicate_response.status == 409, f"Expected 409 for duplicate email, got {duplicate_response.status}"
+    dup_data = duplicate_response.json()
+    assert "error" in dup_data, "Error response should contain 'error' field"
+    print(f"✓ Validation correctly rejected duplicate email")
+    
+    print(f"\n✓ Create user test completed successfully")
+    print(f"  - Created user: {created_user['name']}")
+    print(f"  - Email: {created_user['email']}")
+    print(f"  - ID: {user_id}")
+    
+    return response

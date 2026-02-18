@@ -1,0 +1,91 @@
+"""Test module for listing users.
+
+This module tests the users list endpoint of the demo API.
+"""
+
+from playwright.sync_api import APIResponse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.demo_api.demo_api_page import DemoApiPage
+
+
+def run(demo_api: 'DemoApiPage') -> APIResponse:
+    """Execute list users test.
+
+    This test validates that we can retrieve the list of users
+    and that pagination works correctly.
+
+    Args:
+        demo_api: Instance of DemoApiPage
+
+    Returns:
+        APIResponse: HTTP response from the API
+
+    Raises:
+        AssertionError: If test assertions fail
+    """
+    print("Running list users test...")
+
+    # Get all users with default pagination
+    response = demo_api.get_users()
+
+    # Assert: Verify successful response
+    assert response.ok, f"List users failed with status {response.status}"
+    
+    # Parse response
+    data = response.json()
+    
+    # Verify response structure
+    assert "data" in data, "Response should contain 'data' field"
+    assert "pagination" in data, "Response should contain 'pagination' field"
+    
+    users = data["data"]
+    pagination = data["pagination"]
+    
+    # Verify we got users
+    assert len(users) > 0, "Should return at least one user"
+    print(f"✓ Retrieved {len(users)} users")
+    
+    # Verify pagination metadata
+    assert pagination["page"] == 1, "Should be on page 1"
+    assert pagination["total"] == 10, f"Expected 10 total users, got {pagination['total']}"
+    assert pagination["total_pages"] == 1, "Should have 1 page with default per_page=10"
+    
+    # Verify user structure
+    first_user = users[0]
+    required_fields = ["id", "name", "email", "role", "department", "created_at", "is_active"]
+    for field in required_fields:
+        assert field in first_user, f"User should have '{field}' field"
+    
+    print(f"✓ User structure validated")
+    print(f"✓ First user: {first_user['name']} ({first_user['email']})")
+    
+    # Test filtering by role
+    print("\nTesting role filter...")
+    admin_response = demo_api.get_users(role="admin")
+    assert admin_response.ok, "Role filter request failed"
+    
+    admin_data = admin_response.json()
+    admin_users = admin_data["data"]
+    
+    # Verify all returned users are admins
+    for user in admin_users:
+        assert user["role"] == "admin", f"Expected admin role, got {user['role']}"
+    
+    print(f"✓ Found {len(admin_users)} admin users")
+    
+    # Test search functionality
+    print("\nTesting search functionality...")
+    search_response = demo_api.get_users(search="alice")
+    assert search_response.ok, "Search request failed"
+    
+    search_data = search_response.json()
+    search_results = search_data["data"]
+    
+    if len(search_results) > 0:
+        print(f"✓ Search found {len(search_results)} user(s) matching 'alice'")
+    else:
+        print("⚠ No users found matching 'alice'")
+    
+    return response

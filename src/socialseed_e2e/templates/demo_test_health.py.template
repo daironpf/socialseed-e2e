@@ -1,0 +1,49 @@
+"""Test module for health check.
+
+This module tests the health endpoint of the demo API.
+"""
+
+from playwright.sync_api import APIResponse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.demo_api.demo_api_page import DemoApiPage
+
+
+def run(demo_api: 'DemoApiPage') -> APIResponse:
+    """Execute health check test.
+
+    This test validates that the demo API is running and healthy.
+
+    Args:
+        demo_api: Instance of DemoApiPage
+
+    Returns:
+        APIResponse: HTTP response from the API
+
+    Raises:
+        AssertionError: If health check fails
+    """
+    print("Running health check test...")
+
+    # Call the health endpoint
+    response = demo_api.get("/health")
+
+    # Assert: Verify the service is healthy
+    assert response.ok, f"Health check failed with status {response.status}"
+    
+    # Parse response and verify structure
+    data = response.json()
+    assert "status" in data, "Response should contain 'status' field"
+    assert data["status"] == "healthy", f"Expected status 'healthy', got '{data.get('status')}'"
+    assert "service" in data, "Response should contain 'service' field"
+    assert data["service"] == "demo-api", f"Expected service 'demo-api', got '{data.get('service')}'"
+    
+    # Verify users count is present
+    assert "users_count" in data, "Response should contain 'users_count' field"
+    assert data["users_count"] == 10, f"Expected 10 users, got {data.get('users_count')}"
+    
+    print(f"✓ Health check passed - API has {data['users_count']} users")
+    print(f"✓ Active users: {data.get('active_users', 'N/A')}")
+    
+    return response
