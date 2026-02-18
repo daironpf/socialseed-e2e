@@ -339,47 +339,52 @@ version = "1.0.0"
         assert len(global_vars) > 0
 
 
+@pytest.fixture
+def empty_project_fixture(tmp_path):
+    """Create an empty project structure."""
+    return tmp_path
+
+
 class TestManifestGeneratorExcludePatterns:
     """Test exclude patterns functionality."""
 
-    @pytest.fixture
-    def empty_project(self, tmp_path):
-        """Create an empty project structure."""
-        return tmp_path
-
-    def test_default_exclude_patterns(self, empty_project):
+    def test_default_exclude_patterns(self, empty_project_fixture):
         """Test that default exclude patterns are set."""
-        generator = ManifestGenerator(empty_project)
+        generator = ManifestGenerator(empty_project_fixture)
 
         assert len(generator.exclude_patterns) > 0
         assert "**/node_modules/**" in generator.exclude_patterns
         assert "**/__pycache__/**" in generator.exclude_patterns
 
-    def test_custom_exclude_patterns(self, empty_project):
+    def test_custom_exclude_patterns(self, empty_project_fixture):
         """Test custom exclude patterns."""
         custom_patterns = ["**/custom/**", "**/*.tmp"]
-        generator = ManifestGenerator(empty_project, exclude_patterns=custom_patterns)
+        generator = ManifestGenerator(
+            empty_project_fixture, exclude_patterns=custom_patterns
+        )
 
         assert generator.exclude_patterns == custom_patterns
 
-    def test_should_exclude(self, empty_project):
+    def test_should_exclude(self, empty_project_fixture):
         """Test file exclusion logic."""
-        generator = ManifestGenerator(empty_project)
+        generator = ManifestGenerator(empty_project_fixture)
 
         # Should exclude
         assert (
-            generator._should_exclude(empty_project / "node_modules" / "test.js")
+            generator._should_exclude(
+                empty_project_fixture / "node_modules" / "test.js"
+            )
             is True
         )
         assert (
             generator._should_exclude(
-                empty_project / "__pycache__" / "test.cpython-39.pyc"
+                empty_project_fixture / "__pycache__" / "test.cpython-39.pyc"
             )
             is True
         )
 
         # Should not exclude regular source files
         # Note: some patterns may incorrectly exclude src files, adjusting test
-        result = generator._should_exclude(empty_project / "src" / "main.py")
+        result = generator._should_exclude(empty_project_fixture / "src" / "main.py")
         # Just verify the method runs without error
         assert result in [True, False]
