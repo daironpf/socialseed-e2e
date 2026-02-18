@@ -227,3 +227,9 @@ out/
 # SocialSeed E2E Local Data
 .e2e/
 e2e_reports/
+
+# Security testing reports (generated during red-team testing)
+security/
+
+# Test services generated during development
+services/
