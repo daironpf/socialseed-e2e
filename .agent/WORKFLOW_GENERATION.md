@@ -2,7 +2,41 @@
 
 Sigue este flujo de trabajo cuando el usuario te pida generar tests a partir de su código fuente (Controladores, Routers, etc.).
 
-**IMPORTANT PRINCIPLES:**
+## 🚨 PASO 0: DETECCIÓN DE PUERTOS (OBLIGATORIO)
+
+**ANTES DE EMPEZAR**, DEBES detectar dónde está corriendo el servicio. **Lee primero:** `SERVICE_DETECTION.md`
+
+### Checklist de Detección
+
+1. **Buscar puerto en configuración:**
+   ```bash
+   grep -r "port" services/<service-name>/src/main/resources/*.yml
+   ```
+
+2. **Verificar servicio activo:**
+   ```bash
+   curl http://localhost:<puerto_detectado>/actuator/health
+   ```
+
+3. **Ver contenedores Docker (si aplica):**
+   ```bash
+   docker ps --format "table {{.Names}}\t{{.Ports}}"
+   ```
+
+4. **Configurar e2e.conf con el puerto correcto:**
+   ```yaml
+   services:
+     <service_name>:
+       base_url: http://localhost:<puerto_detectado>
+       health_endpoint: /actuator/health
+   ```
+
+**⚠️ NUNCA asumas el puerto. Siempre detecta primero.**
+
+---
+
+## IMPORTANT PRINCIPLES
+
 - NO relative imports (from ..x import y) - use absolute imports from `services.xxx.data_schema`
 - Always use `by_alias=True` when serializing Pydantic models (REST only)
 - Handle authentication headers manually (no `update_headers` method)
@@ -191,12 +225,13 @@ def run(page: 'UsersApiPage'):
 ```
 
 ## Reglas de Oro
-1. **No relative imports**: Use absolute imports like `from services.xxx.data_schema import ...`
-2. **by_alias=True**: Always use `model_dump(by_alias=True)` when serializing Pydantic models
-3. **No update_headers()**: Handle authentication headers manually by setting `self.headers`
-4. **do_* prefix**: Use `do_register`, `do_login`, etc. to avoid name conflicts with attributes
-5. **No hardcodees URLs** en los tests; úsales en `data_schema.py` o en la Page class.
-6. **Reutiliza la instancia `page`**: Es el vehículo para compartir estado (tokens, IDs creados) entre tests.
-7. **Usa Type Hints**: Ayuda a la legibilidad y previene errores.
-8. **Validaciones**: Siempre valida `response.ok` o el status code específico.
-9. **Error Handling**: Include descriptive error messages in assertions with `response.text()` for debugging
+1. **Detectar puerto PRIMERO**: Lee SERVICE_DETECTION.md antes de generar nada
+2. **No relative imports**: Use absolute imports like `from services.xxx.data_schema import ...`
+3. **by_alias=True**: Always use `model_dump(by_alias=True)` when serializing Pydantic models
+4. **No update_headers()**: Handle authentication headers manually by setting `self.headers`
+5. **do_* prefix**: Use `do_register`, `do_login`, etc. to avoid name conflicts with attributes
+6. **No hardcodees URLs** en los tests; úsalas en `data_schema.py` o en la Page class.
+7. **Reutiliza la instancia `page`**: Es el vehículo para compartir estado (tokens, IDs creados) entre tests.
+8. **Usa Type Hints**: Ayuda a la legibilidad y previene errores.
+9. **Validaciones**: Siempre valida `response.ok` o el status code específico.
+10. **Error Handling**: Include descriptive error messages in assertions with `response.text()` for debugging

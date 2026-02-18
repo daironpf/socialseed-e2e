@@ -6,6 +6,11 @@
 # Install with: pip install email-validator>=2.0.0
 # Or if installing from requirements: pip install -r requirements.txt
 
+# ⭐ TIP: Configure remote URLs with:
+#   e2e set url <service_name> <url>
+#   e2e set url auth_service https://my-api.azurewebsites.net
+#   e2e set url auth_service https://my-api.execute-api.us-east-1.amazonaws.com
+
 general:
   # Entorno de ejecución (dev, staging, production)
   environment: ${environment}

@@ -1,8 +1,31 @@
 # 📘 Guía para Agentes de IA - SocialSeed E2E Framework
 
-> **Versión 2.0 - Actualizado para evitar errores comunes**
+> **Versión 3.0 - Actualizado con Detección Automática de Puertos**
 
 Esta guía te permite generar tests E2E funcionales sin errores de importación, serialización o configuración.
+
+---
+
+## 🚨 PASO 0: DETECCIÓN DE PUERTOS (OBLIGATORIO)
+
+**ANTES DE GENERAR CUALQUIER TEST**, debes detectar dónde está corriendo el servicio.
+
+**Lee primero:** `SERVICE_DETECTION.md`
+
+### Detección Rápida
+
+```bash
+# 1. Buscar puerto en configuración
+grep -r "port" services/<service-name>/src/main/resources/*.yml
+
+# 2. Verificar servicio activo
+curl http://localhost:<puerto>/actuator/health
+
+# 3. Ver contenedores Docker
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+```
+
+**⚠️ NUNCA asumas el puerto por defecto (8080). Siempre detecta primero.**
 
 ---
 

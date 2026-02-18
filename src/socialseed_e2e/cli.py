@@ -116,6 +116,29 @@ def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool
         return False
 
 
+def get_framework_root() -> Path:
+    """Get the root directory of the framework installation.
+
+    Returns:
+        Path to the framework root directory
+    """
+    import socialseed_e2e
+
+    return Path(socialseed_e2e.__file__).parent.parent
+
+
+def get_service_name_from_path(target_path: Path) -> str:
+    """Extract service name from the target path.
+
+    Args:
+        target_path: Path to the microservice directory
+
+    Returns:
+        Service name derived from directory name
+    """
+    return target_path.name
+
+
 @click.group()
 @click.version_option(version=str(__version__), prog_name="socialseed-e2e")
 def cli():
@@ -654,7 +677,10 @@ def check_extra_installed(extra_name: str) -> bool:
 @click.argument("name")
 @click.option("--base-url", default="http://localhost:8080", help="Service base URL")
 @click.option("--health-endpoint", default="/health", help="Health check endpoint")
-def new_service(name: str, base_url: str, health_endpoint: str):
+@click.option(
+    "--force", "-f", is_flag=True, help="Overwrite existing files without prompting"
+)
+def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
     """Create a new service with scaffolding.
 
     Creates the complete directory structure and template files for a new
@@ -664,11 +690,13 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         name: Service name (e.g.: users-api, auth_service)
         base_url: Service base URL (default: http://localhost:8080)
         health_endpoint: Health check endpoint path (default: /health)
+        force: Overwrite existing files without prompting
 
     Examples:
         e2e new-service users-api                                    # Create with defaults
         e2e new-service payment-service --base-url http://localhost:8081
         e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
+        e2e new-service auth-service --force                         # Overwrite without prompting
     """
     console.print(f"\n🔧 [bold blue]Creating service:[/bold blue] {name}\n")
 
@@ -691,7 +719,8 @@ def new_service(name: str, base_url: str, health_endpoint: str):
         console.print(f"  [green]✓[/green] Created: services/{name}/modules/")
     except FileExistsError:
         console.print(f"  [yellow]⚠[/yellow] Service '{name}' already exists")
-        if not click.confirm("Do you want to continue and overwrite files?"):
+        if not force:
+            console.print("   Use --force to overwrite existing files")
             return
 
     # Create __init__.py
@@ -765,13 +794,22 @@ def new_service(name: str, base_url: str, health_endpoint: str):
 @click.argument("name")
 @click.option("--service", "-s", required=True, help="Service name")
 @click.option("--description", "-d", default="", help="Test description")
-def new_test(name: str, service: str, description: str):
+@click.option(
+    "--force", "-f", is_flag=True, help="Overwrite existing files without prompting"
+)
+def new_test(name: str, service: str, description: str, force: bool):
     """Create a new test module.
 
     Args:
         name: Test name (e.g.: login, create-user)
         service: Service to which the test belongs
         description: Optional test description
+        force: Overwrite existing files without prompting
+
+    Examples:
+        e2e new-test login -s auth_service
+        e2e new-test create-user -s users-api -d "Test user creation"
+        e2e new-test login -s auth_service --force
     """
     console.print(f"\n📝 [bold cyan]Creating test:[/bold cyan] {name}\n")
 
@@ -804,13 +842,16 @@ def new_test(name: str, service: str, description: str):
     else:
         next_num = 1
 
-    test_filename = f"{next_num:02d}_{name}_flow.py"
+    # Sanitize name: replace hyphens with underscores for valid Python module names
+    safe_name = to_snake_case(name)
+    test_filename = f"{next_num:02d}_{safe_name}_flow.py"
     test_path = modules_path / test_filename
 
     # Check if it already exists
     if test_path.exists():
         console.print(f"[yellow]⚠[/yellow] Test '{name}' already exists.")
-        if not click.confirm("Do you want to overwrite it?"):
+        if not force:
+            console.print("   Use --force to overwrite existing files")
             return
 
     # Initialize TemplateEngine
@@ -857,6 +898,12 @@ def new_test(name: str, service: str, description: str):
 @click.option("--service", "-s", help="Filter by specific service")
 @click.option("--module", "-m", help="Filter by specific module")
 @click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+@click.option(
+    "--url",
+    "-u",
+    "override_url",
+    help="Override service URL (e.g., https://api.example.com:443). Useful for testing remote APIs in AWS, Azure, GCP, etc.",
+)
 @click.option("--verbose", "-v", is_flag=True, help="Verbose mode")
 @click.option(
     "--output",
@@ -933,6 +980,11 @@ def new_test(name: str, service: str, description: str):
     help="Enable debug mode with verbose HTTP request/response logging for failed tests",
 )
 @click.option(
+    "--skip-unhealthy",
+    is_flag=True,
+    help="Skip tests for services that are not healthy (skip instead of fail)",
+)
+@click.option(
     "--no-agent",
     is_flag=True,
     help="Disable AI agent features (boring mode). No external LLM calls will be made",
@@ -941,6 +993,7 @@ def run(
     service: Optional[str],
     module: Optional[str],
     config: Optional[str],
+    override_url: Optional[str],
     verbose: bool,
     output: str,
     report_dir: str,
@@ -954,6 +1007,7 @@ def run(
     report: Optional[str],
     report_output: str,
     debug: bool,
+    skip_unhealthy: bool,
     no_agent: bool,
 ):
     """Execute E2E tests.
@@ -964,12 +1018,14 @@ def run(
         service: If specified, only run tests for this service
         module: If specified, only run this test module
         config: Path to the e2e.conf file
+        override_url: Override service URL (for remote APIs in AWS, Azure, GCP, etc.)
         verbose: If True, shows detailed information
         output: Output format (text, json, or html)
         report_dir: Directory for HTML reports
         trace: If True, enable visual traceability with sequence diagrams
         trace_output: Directory for traceability reports
         trace_format: Format for sequence diagrams (mermaid, plantuml, both)
+        skip_unhealthy: If True, skip tests for services that are not healthy
         debug: If True, enable debug mode with verbose HTTP logging for failed tests
         no_agent: If True, disable AI agent features (boring mode)
 
@@ -977,6 +1033,9 @@ def run(
         e2e run                                              # Run all tests
         e2e run --service auth_service                       # Run tests for specific service
         e2e run --service auth_service --module 01_login     # Run specific test module
+        e2e run --url https://api.example.com:443            # Test remote API
+        e2e run --url https://my-api.azurewebsites.net       # Test Azure API
+        e2e run --url https://my-api.execute-api.us-east-1.amazonaws.com  # Test AWS API
         e2e run --verbose                                    # Run with detailed output
         e2e run --output html --report-dir ./reports         # Generate HTML report
         e2e run --parallel 4                                 # Run with 4 parallel workers
@@ -987,6 +1046,7 @@ def run(
         e2e run --report junit --report-output ./reports     # Custom report directory
         e2e run --debug                                      # Enable debug mode
         e2e run --no-agent                                   # Run in boring mode (no AI)
+        e2e run --skip-unhealthy                             # Skip tests for unhealthy services
     """
     # from .core.test_orchestrator import TestOrchestrator
 
@@ -1078,6 +1138,33 @@ def run(
     # Determine if parallel execution should be used
     use_parallel = parallel is not None and parallel != 0
 
+    # Check service health if skip_unhealthy is enabled
+    unhealthy_services = []
+    if skip_unhealthy:
+        console.print("🏥 [cyan]Checking service health...[/cyan]")
+        try:
+            health_loader = ApiConfigLoader()
+            app_config = health_loader.load(config)
+            for name, svc in app_config.services.items():
+                health_endpoint = svc.health_endpoint or "/actuator/health"
+                is_healthy, _ = _check_service_health(svc.base_url, health_endpoint)
+                if not is_healthy:
+                    unhealthy_services.append(name)
+                    console.print(
+                        f"   ⏭️  [yellow]Skipping {name} (not healthy)[/yellow]"
+                    )
+                else:
+                    console.print(f"   ✅ [green]{name} is healthy[/green]")
+        except Exception as e:
+            console.print(f"   ⚠️  [yellow]Could not check health: {e}[/yellow]")
+        console.print()
+
+    # If service is specified and it's unhealthy, skip it
+    if service and skip_unhealthy and service in unhealthy_services:
+        console.print(f"⏭️  [yellow]Skipping service '{service}' - not healthy[/yellow]")
+        console.print()
+        return
+
     # Initialize parallel config if needed
     parallel_config = None
     run_tests_parallel_func = None
@@ -1165,7 +1252,9 @@ def run(
                         )
 
                 # Generate report
-                report = collector.generate_report()
+                from socialseed_e2e.reporting import TestSuiteReport
+
+                report: TestSuiteReport = collector.generate_report()
                 generator = HTMLReportGenerator()
 
                 import os
@@ -1409,6 +1498,172 @@ def recorder_convert(file: str, output: Optional[str]):
     Path(output_path).write_text(code)
 
     console.print(f"\n[bold green]✓ Test module generated:[/bold green] {output_path}")
+
+
+@cli.group("set")
+def set_group():
+    """Configuration management commands.
+
+    Examples:
+        e2e set url <service> <url>     # Set service URL
+        e2e set url auth_service https://api.example.com:443
+    """
+    pass
+
+
+@set_group.command("url")
+@click.argument("service_name")
+@click.argument("url")
+@click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+@click.option("--health-endpoint", "-e", help="Health endpoint for the service")
+def set_url(
+    service_name: str, url: str, config: Optional[str], health_endpoint: Optional[str]
+):
+    """Set or update the URL for a service in e2e.conf.
+
+    This is useful for testing remote APIs deployed in AWS, Azure, GCP, or any
+    other cloud provider without modifying the configuration file manually.
+
+    Args:
+        service_name: Name of the service to configure
+        url: Base URL for the service (e.g., https://api.example.com:443)
+        config: Path to e2e.conf file (default: ./e2e.conf)
+        health_endpoint: Health endpoint path (optional)
+
+    Examples:
+        e2e set url auth_service https://my-api.azurewebsites.net
+        e2e set url auth_service https://api.example.com:443
+        e2e set url payment_service https://my-api.execute-api.us-east-1.amazonaws.com
+        e2e set url auth_service http://localhost:8085 -c custom.conf
+        e2e set url auth_service https://api.example.com --health-endpoint /health
+    """
+    import yaml
+
+    config_path = Path(config) if config else Path("e2e.conf")
+
+    if not config_path.exists():
+        console.print(
+            f"[red]❌ Error:[/red] Configuration file not found: {config_path}"
+        )
+        console.print(
+            "[yellow]Tip:[/yellow] Run 'e2e init' to create a new configuration file."
+        )
+        sys.exit(1)
+
+    # Validate URL format
+    if not url.startswith(("http://", "https://")):
+        console.print(f"[red]❌ Error:[/red] URL must start with http:// or https://")
+        console.print(f"[yellow]Example:[/yellow] https://api.example.com:443")
+        sys.exit(1)
+
+    # Read and parse YAML
+    try:
+        with open(config_path, "r") as f:
+            config_data = yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        console.print(f"[red]❌ Error parsing configuration file:[/red] {e}")
+        sys.exit(1)
+
+    # Ensure services section exists
+    if "services" not in config_data:
+        config_data["services"] = {}
+
+    # Update or add service
+    if service_name in config_data["services"]:
+        config_data["services"][service_name]["base_url"] = url
+        if health_endpoint:
+            config_data["services"][service_name]["health_endpoint"] = health_endpoint
+        console.print(f"[green]✓[/green] Updated base_url for '{service_name}'")
+    else:
+        config_data["services"][service_name] = {"base_url": url}
+        if health_endpoint:
+            config_data["services"][service_name]["health_endpoint"] = health_endpoint
+        console.print(f"[green]✓[/green] Added new service '{service_name}'")
+
+    # Write back to file
+    with open(config_path, "w") as f:
+        yaml.dump(
+            config_data,
+            f,
+            default_flow_style=False,
+            sort_keys=False,
+            allow_unicode=True,
+        )
+
+    console.print(f"\n[bold cyan]Configuration updated:[/bold cyan]")
+    console.print(f"  Service: [yellow]{service_name}[/yellow]")
+    console.print(f"  URL: [green]{url}[/green]")
+    if health_endpoint:
+        console.print(f"  Health: [dim]{health_endpoint}[/dim]")
+    console.print(f"\n[dim]Run 'e2e run --service {service_name}' to test[/dim]")
+
+
+@set_group.command("show")
+@click.argument("service_name", required=False)
+@click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+def show_config(service_name: Optional[str], config: Optional[str]):
+    """Show configuration for a service or all services.
+
+    Args:
+        service_name: Name of the service (optional, shows all if not specified)
+        config: Path to e2e.conf file
+
+    Examples:
+        e2e set show                    # Show all services
+        e2e set show auth_service       # Show specific service
+        e2e set show -c custom.conf     # Show from custom config
+    """
+    config_path = Path(config) if config else Path("e2e.conf")
+
+    if not config_path.exists():
+        console.print(
+            f"[red]❌ Error:[/red] Configuration file not found: {config_path}"
+        )
+        sys.exit(1)
+
+    from socialseed_e2e.core.config_loader import ApiConfigLoader
+
+    try:
+        loader = ApiConfigLoader()
+        app_config = loader.load(str(config_path))
+
+        if service_name:
+            # Show specific service
+            if service_name not in app_config.services:
+                console.print(
+                    f"[red]❌ Error:[/red] Service '{service_name}' not found"
+                )
+                console.print(
+                    f"[dim]Available services: {', '.join(app_config.services.keys())}[/dim]"
+                )
+                sys.exit(1)
+
+            svc = app_config.services[service_name]
+            console.print(f"\n[bold cyan]Service: {service_name}[/bold cyan]\n")
+            console.print(f"  Base URL: [green]{svc.base_url}[/green]")
+            console.print(f"  Health: [dim]{svc.health_endpoint or 'N/A'}[/dim]")
+            console.print(
+                f"  Timeout: [dim]{getattr(svc, 'timeout', 'default')}ms[/dim]"
+            )
+        else:
+            # Show all services
+            console.print(f"\n[bold cyan]Configured Services[/bold cyan]\n")
+
+            from rich.table import Table
+
+            table = Table(title="Services")
+            table.add_column("Service", style="cyan")
+            table.add_column("Base URL", style="green")
+            table.add_column("Health Endpoint", style="dim")
+
+            for name, svc in app_config.services.items():
+                table.add_row(name, svc.base_url, svc.health_endpoint or "N/A")
+
+            console.print(table)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error loading configuration:[/red] {e}")
+        sys.exit(1)
 
 
 @cli.command()
@@ -1723,16 +1978,18 @@ def _update_e2e_conf(service_name: str, base_url: str, health_endpoint: str) -> 
 def manifest(directory: str, force: bool):
     """Generate AI Project Manifest for token optimization.
 
-    Analyzes the project and generates project_knowledge.json containing:
-    - All detected endpoints and HTTP methods
-    - DTO schemas and validation rules
-    - Port configurations and environment variables
-    - Relationships between services
+    Analyzes the microservice and generates project_knowledge.json in the
+    framework's manifests folder (not in the microservice directory).
+
+    The manifest is stored at: <framework_root>/manifests/<service_name>/project_knowledge.json
+
+    This allows AI agents to understand the microservice structure without
+    cluttering the microservice's own directory.
 
     Examples:
-        e2e manifest                    # Generate manifest in current directory
-        e2e manifest /path/to/project   # Generate manifest for specific project
-        e2e manifest --force            # Force full re-scan
+        e2e manifest ../services/auth-service  # Generate manifest for auth service
+        e2e manifest /path/to/microservice     # Generate manifest for any service
+        e2e manifest --force                  # Force full re-scan
     """
     target_path = Path(directory).resolve()
 
@@ -1740,16 +1997,24 @@ def manifest(directory: str, force: bool):
         console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
+    service_name = get_service_name_from_path(target_path)
+    framework_root = get_framework_root()
+    manifest_dir = framework_root / "manifests" / service_name
+    manifest_path = manifest_dir / "project_knowledge.json"
+
     console.print("\n📚 [bold cyan]Generating AI Project Manifest[/bold cyan]")
-    console.print(f"   Project: {target_path}\n")
+    console.print(f"   Service: {service_name}")
+    console.print(f"   Source: {target_path}")
+    console.print(f"   Output: {manifest_path}\n")
 
     try:
         from socialseed_e2e.project_manifest import ManifestGenerator
 
-        generator = ManifestGenerator(target_path)
+        generator = ManifestGenerator(
+            project_root=target_path, manifest_path=manifest_path
+        )
         manifest = generator.generate(force_full_scan=force)
 
-        # Display summary
         table = Table(title="Project Summary")
         table.add_column("Metric", style="cyan")
         table.add_column("Count", style="green")
@@ -1768,7 +2033,6 @@ def manifest(directory: str, force: bool):
         console.print(table)
         console.print()
 
-        # Display services
         if manifest.services:
             console.print("[bold]Services detected:[/bold]")
             for service in manifest.services:
@@ -1777,10 +2041,14 @@ def manifest(directory: str, force: bool):
             console.print()
 
         console.print("[bold green]✅ Manifest generated successfully![/bold green]")
-        console.print(f"   📄 Location: {generator.manifest_path}\n")
+        console.print(f"   📄 Location: {generator.manifest_path}")
+        console.print(f"   🔗 Source: {target_path}\n")
 
     except Exception as e:
         console.print(f"[red]❌ Error generating manifest:[/red] {e}")
+        import traceback
+
+        traceback.print_exc()
         sys.exit(1)
 
 
@@ -1796,19 +2064,33 @@ def manifest(directory: str, force: bool):
 def manifest_query(directory: str, format: str):
     """Query the AI Project Manifest.
 
-    Displays project information from the generated manifest.
+    Displays project information from the generated manifest stored in
+    the framework's manifests folder.
 
     Examples:
-        e2e manifest-query                    # Query current directory
-        e2e manifest-query /path/to/project   # Query specific project
-        e2e manifest-query -f markdown        # Output as Markdown
+        e2e manifest-query auth-service         # Query auth service manifest
+        e2e manifest-query user-service         # Query user service manifest
+        e2e manifest-query -f markdown         # Output as Markdown
     """
-    target_path = Path(directory).resolve()
-    manifest_path = target_path / "project_knowledge.json"
+    service_name = directory if directory and directory != "." else None
+
+    if not service_name:
+        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("Usage: e2e manifest-query <service_name>")
+        console.print("Example: e2e manifest-query auth-service")
+        sys.exit(1)
+
+    framework_root = get_framework_root()
+    manifest_path = (
+        framework_root / "manifests" / service_name / "project_knowledge.json"
+    )
+    target_path = framework_root / "manifests" / service_name
 
     if not manifest_path.exists():
         console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
-        console.print("Run 'e2e manifest' first to generate the manifest.")
+        console.print(
+            f"Run 'e2e manifest ../services/{service_name}' to generate the manifest."
+        )
         sys.exit(1)
 
     try:
@@ -1836,16 +2118,29 @@ def manifest_check(directory: str):
     Quickly checks if the project manifest is up-to-date by comparing
     stored SHA-256 hashes with current source files.
 
+    The manifest is expected to be in the framework's manifests folder.
+
     Examples:
-        e2e manifest-check                    # Check current directory
-        e2e manifest-check /path/to/project   # Check specific project
+        e2e manifest-check auth-service         # Check auth service manifest
+        e2e manifest-check user-service         # Check user service manifest
     """
-    target_path = Path(directory).resolve()
-    manifest_path = target_path / "project_knowledge.json"
+    service_name = directory if directory and directory != "." else None
+
+    if not service_name:
+        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("Usage: e2e manifest-check <service_name>")
+        console.print("Example: e2e manifest-check auth-service")
+        sys.exit(1)
+
+    framework_root = get_framework_root()
+    manifest_dir = framework_root / "manifests" / service_name
+    manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():
         console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
-        console.print("Run 'e2e manifest' first to generate the manifest.")
+        console.print(
+            f"Run 'e2e manifest ../services/{service_name}' first to generate."
+        )
         sys.exit(1)
 
     try:
@@ -1853,18 +2148,20 @@ def manifest_check(directory: str):
         from socialseed_e2e.project_manifest.hash_validator import HashValidator
 
         console.print("\n🔍 [bold cyan]Checking Manifest Freshness[/bold cyan]")
-        console.print(f"   Project: {target_path}\n")
+        console.print(f"   Service: {service_name}")
+        console.print(f"   Manifest: {manifest_path}\n")
 
-        # Load existing manifest
-        generator = ManifestGenerator(target_path)
+        generator = ManifestGenerator(
+            project_root=manifest_dir, manifest_path=manifest_path
+        )
         manifest = generator.get_manifest()
 
         if not manifest:
             console.print("[red]❌ Error:[/red] Could not load manifest")
             sys.exit(1)
 
-        # Validate using hash validator
-        validator = HashValidator(target_path)
+        source_path = Path(manifest.project_root)
+        validator = HashValidator(source_path)
         freshness, changed_files = validator.validate_manifest(manifest)
 
         # Display results
@@ -1886,14 +2183,14 @@ def manifest_check(directory: str):
                     console.print(f"     ... and {len(changed_files) - 5} more\n")
 
             console.print(
-                "\n[yellow]Run 'e2e manifest' to update the manifest.[/yellow]\n"
+                f"\n[yellow]Run 'e2e manifest ../services/{service_name}' to update.[/yellow]\n"
             )
             sys.exit(1)
         else:  # partial
             console.print("[bold orange]⚠️  Manifest is PARTIALLY FRESH[/bold orange]")
             console.print("   Some files may be outdated.\n")
             console.print(
-                "[yellow]Run 'e2e manifest --force' for full re-scan.[/yellow]\n"
+                f"[yellow]Run 'e2e manifest ../services/{service_name} --force' for full re-scan.[/yellow]\n"
             )
             sys.exit(1)
 
@@ -1908,30 +2205,41 @@ def watch(directory: str):
     """Watch project files and auto-update manifest.
 
     Monitors source files for changes and automatically updates
-    the project_knowledge.json manifest using smart sync.
+    the manifest in the framework's manifests folder using smart sync.
 
     Examples:
-        e2e watch                    # Watch current directory
-        e2e watch /path/to/project   # Watch specific project
+        e2e watch auth-service         # Watch auth service for changes
+        e2e watch user-service         # Watch user service for changes
     """
-    target_path = Path(directory).resolve()
+    service_name = directory if directory and directory != "." else None
 
-    if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+    if not service_name:
+        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("Usage: e2e watch <service_name>")
+        console.print("Example: e2e watch auth-service")
+        sys.exit(1)
+
+    framework_root = get_framework_root()
+    manifest_dir = framework_root / "manifests" / service_name
+    manifest_path = manifest_dir / "project_knowledge.json"
+
+    if not manifest_path.exists():
+        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print(
+            f"Run 'e2e manifest ../services/{service_name}' first to generate."
+        )
         sys.exit(1)
 
     try:
         from socialseed_e2e.project_manifest import ManifestGenerator, SmartSyncManager
 
-        generator = ManifestGenerator(target_path)
-
-        # Ensure manifest exists
-        if not generator.manifest_path.exists():
-            console.print("📚 Generating initial manifest...\n")
-            generator.generate()
+        generator = ManifestGenerator(
+            project_root=manifest_dir, manifest_path=manifest_path
+        )
 
         console.print("\n👁️  [bold cyan]Starting file watcher[/bold cyan]")
-        console.print(f"   Project: {target_path}")
+        console.print(f"   Service: {service_name}")
+        console.print(f"   Manifest: {manifest_path}")
         console.print("   Press Ctrl+C to stop\n")
 
         manager = SmartSyncManager(generator, debounce_seconds=2.0)
@@ -1946,7 +2254,7 @@ def watch(directory: str):
 
 @cli.command()
 @click.argument("query")
-@click.option("--directory", "-d", default=".", help="Project directory")
+@click.option("--service", "-s", default=None, help="Service name")
 @click.option("--top-k", "-k", default=5, help="Number of results")
 @click.option(
     "--type",
@@ -1954,23 +2262,35 @@ def watch(directory: str):
     type=click.Choice(["endpoint", "dto", "service"]),
     help="Filter by type",
 )
-def search(query: str, directory: str, top_k: int, type: str):
+def search(query: str, service: str, top_k: int, type: str):
     """Semantic search on project manifest.
 
     Performs semantic search using vector embeddings to find
     relevant endpoints, DTOs, and services.
 
     Examples:
-        e2e search "authentication endpoints"
-        e2e search "user DTO" --type dto
-        e2e search "payment" --top-k 10
+        e2e search "authentication endpoints" -s auth-service
+        e2e search "user DTO" -s user-service --type dto
+        e2e search "payment" -s payment-service --top-k 10
     """
-    target_path = Path(directory).resolve()
+    if not service:
+        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("Usage: e2e search <query> -s <service_name>")
+        console.print("Example: e2e search authentication -s auth-service")
+        sys.exit(1)
+
+    framework_root = get_framework_root()
+    manifest_dir = framework_root / "manifests" / service
+
+    if not manifest_dir.exists():
+        console.print(f"[red]❌ Error:[/red] Manifest not found for service: {service}")
+        console.print(f"Run 'e2e manifest ../services/{service}' first.")
+        sys.exit(1)
 
     try:
         from socialseed_e2e.project_manifest import ManifestVectorStore
 
-        store = ManifestVectorStore(target_path)
+        store = ManifestVectorStore(manifest_dir)
 
         if not store.is_index_valid():
             console.print("📊 Building vector index...")
@@ -2006,24 +2326,36 @@ def search(query: str, directory: str, top_k: int, type: str):
 
 @cli.command()
 @click.argument("task")
-@click.option("--directory", "-d", default=".", help="Project directory")
+@click.option("--service", "-s", default=None, help="Service name")
 @click.option("--max-chunks", "-c", default=5, help="Maximum chunks")
-def retrieve(task: str, directory: str, max_chunks: int):
+def retrieve(task: str, service: str, max_chunks: int):
     """Retrieve context for a specific task.
 
     Retrieves relevant context from the project manifest
     for the given task description.
 
     Examples:
-        e2e retrieve "create user authentication tests"
-        e2e retrieve "test payment flow" --max-chunks 3
+        e2e retrieve "create user authentication tests" -s auth-service
+        e2e retrieve "test payment flow" -s payment-service --max-chunks 3
     """
-    target_path = Path(directory).resolve()
+    if not service:
+        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("Usage: e2e retrieve <task> -s <service_name>")
+        console.print("Example: e2e retrieve 'create auth tests' -s auth-service")
+        sys.exit(1)
+
+    framework_root = get_framework_root()
+    manifest_dir = framework_root / "manifests" / service
+
+    if not manifest_dir.exists():
+        console.print(f"[red]❌ Error:[/red] Manifest not found for service: {service}")
+        console.print(f"Run 'e2e manifest ../services/{service}' first.")
+        sys.exit(1)
 
     try:
         from socialseed_e2e.project_manifest import RAGRetrievalEngine
 
-        engine = RAGRetrievalEngine(target_path)
+        engine = RAGRetrievalEngine(manifest_dir)
         chunks = engine.retrieve_for_task(task, max_chunks=max_chunks)
 
         if not chunks:
@@ -2055,28 +2387,35 @@ def build_index(directory: str):
     in the project manifest.
 
     Examples:
-        e2e build-index              # Build index for current directory
-        e2e build-index /path/to/project  # Build for specific project
+        e2e build-index auth-service         # Build index for auth service
+        e2e build-index user-service         # Build index for user service
     """
-    target_path = Path(directory).resolve()
+    service_name = directory if directory and directory != "." else None
 
-    if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+    if not service_name:
+        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("Usage: e2e build-index <service_name>")
+        console.print("Example: e2e build-index auth-service")
         sys.exit(1)
 
-    manifest_path = target_path / "project_knowledge.json"
+    framework_root = get_framework_root()
+    manifest_dir = framework_root / "manifests" / service_name
+    manifest_path = manifest_dir / "project_knowledge.json"
+
     if not manifest_path.exists():
         console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
-        console.print("Run 'e2e manifest' first to generate the manifest.")
+        console.print(
+            f"Run 'e2e manifest ../services/{service_name}' first to generate."
+        )
         sys.exit(1)
 
     try:
         from socialseed_e2e.project_manifest import ManifestVectorStore
 
         console.print("\n📊 [bold cyan]Building Vector Index[/bold cyan]")
-        console.print(f"   Project: {target_path}\n")
+        console.print(f"   Service: {service_name}\n")
 
-        store = ManifestVectorStore(target_path)
+        store = ManifestVectorStore(manifest_dir)
         store.build_index()
 
         console.print("[bold green]✅ Vector index built successfully![/bold green]")
@@ -2181,11 +2520,9 @@ def generate_tests(
     - Validation tests (success, failure, edge cases)
     - Chaos tests with intelligent dummy data
 
-    The generator automatically:
-    - Parses database models (SQLAlchemy, Prisma, Hibernate)
-    - Detects validation rules from code
-    - Generates valid dummy data based on constraints
-    - Creates tests that follow your API's business flows
+    Prerequisites:
+        - Run 'e2e manifest' first to generate project manifest
+        - Services must be defined in e2e.conf
 
     Examples:
         e2e generate-tests                    # Generate for all services
@@ -3699,7 +4036,92 @@ def perf_profile(
 
 
 @cli.command()
-@click.argument("directory", default=".", required=False)
+@click.option(
+    "--project",
+    "-p",
+    default=".",
+    help="Path to project directory",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+@click.option(
+    "--service",
+    "-s",
+    help="Validate specific service only",
+)
+@click.option(
+    "--fix",
+    is_flag=True,
+    help="Attempt to fix automatically (not implemented yet)",
+)
+def lint(project: str, service: str, fix: bool):
+    """Validate test files for common issues.
+
+    Checks that tests follow framework standards:
+    - No relative imports (must use absolute imports)
+    - Proper module structure
+    - Correct import paths
+
+    Examples:
+        e2e lint                                    # Validate all services
+        e2e lint --service auth_service            # Validate specific service
+        e2e lint --project /path/to/project        # Custom project path
+    """
+    from socialseed_e2e.core.test_runner import validate_service_tests
+
+    console.print("\n🔍 [bold blue]Validating Test Files[/bold blue]\n")
+
+    project_path = Path(project).resolve()
+    services_path = project_path / "services"
+
+    if not services_path.exists():
+        console.print("[red]❌ Error:[/red] services/ directory not found")
+        sys.exit(1)
+
+    services_to_check = [service] if service else None
+
+    total_issues = 0
+    services_with_issues = 0
+
+    for service_dir in sorted(services_path.iterdir()):
+        if not service_dir.is_dir() or service_dir.name.startswith("__"):
+            continue
+
+        if services_to_check and service_dir.name not in services_to_check:
+            continue
+
+        console.print(f"[cyan]Checking:[/cyan] {service_dir.name}")
+
+        issues = validate_service_tests(service_dir)
+
+        if issues:
+            services_with_issues += 1
+            for module_path, module_issues in issues.items():
+                module_name = Path(module_path).name
+                console.print(f"  [yellow]⚠[/yellow] {module_name}")
+                for issue in module_issues:
+                    total_issues += 1
+                    console.print(f"      Line {issue['line']}: {issue['message']}")
+                    console.print(f"      → {issue['suggestion']}")
+        else:
+            console.print(f"  [green]✓[/green] No issues found")
+
+    console.print()
+    if total_issues > 0:
+        console.print(
+            f"[red]✗ Found {total_issues} issues in {services_with_issues} services[/red]"
+        )
+        console.print()
+        console.print("[cyan]Note:[/cyan] Use absolute imports in tests:")
+        console.print(
+            "  ✅ CORRECT: from services.auth_service.data_schema import RegisterRequest"
+        )
+        console.print("  ❌ WRONG:   from ..data_schema import RegisterRequest")
+        sys.exit(1)
+    else:
+        console.print("[green]✓ All tests passed validation![/green]")
+
+
+@cli.command()
 @click.option(
     "--output",
     "-o",
@@ -3920,6 +4342,10 @@ def plan_strategy(
     Analyzes the codebase and creates a comprehensive testing strategy
     with risk-based prioritization and optimal execution order.
 
+    Prerequisites:
+        - Run 'e2e manifest' first for best results
+        - Services must be defined in e2e.conf
+
     Examples:
         e2e plan-strategy --name "API Regression Strategy"
         e2e plan-strategy --name "Critical Path Tests" --services users-api,orders-api
@@ -4037,6 +4463,10 @@ def autonomous_run(
 
     Executes a test strategy with intelligent retry, self-healing,
     and autonomous debugging capabilities.
+
+    Prerequisites:
+        - Create a strategy first with 'e2e plan-strategy --name "My Strategy"'
+        - Strategy IDs are generated by the plan-strategy command
 
     Examples:
         e2e autonomous-run --strategy-id abc123
@@ -4237,6 +4667,10 @@ def debug_execution(project: str, execution_id: str, apply_fix: bool):
 
     Analyzes failed tests, identifies root causes, and suggests
     or applies fixes automatically.
+
+    Prerequisites:
+        - Run 'e2e run --report json' first to generate execution records
+        - Execution IDs are stored in .e2e/reports/
 
     Examples:
         e2e debug-execution --execution-id exec_20240211_120000

@@ -7,19 +7,19 @@ from playwright.sync_api import APIResponse
 from typing import TYPE_CHECKING
 
 # ABSOLUTE imports - always use absolute paths from project root
-# Example: from services.${snake_case_service}.data_schema import ${SchemaClass}, ENDPOINTS
+# Example: from services.${snake_case_name}.data_schema import ${SchemaClass}, ENDPOINTS
 
 if TYPE_CHECKING:
-    from services.${snake_case_service}.${snake_case_service}_page import ${class_name}Page
+    from services.${snake_case_name}.${snake_case_name}_page import ${class_name}Page
 
 
-def run(${snake_case_service}: '${class_name}Page') -> APIResponse:
+def run(${snake_case_name}: '${class_name}Page') -> APIResponse:
     """Execute ${test_name} test flow.
 
     This test validates the ${test_description} functionality.
 
     Args:
-        ${snake_case_service}: Instance of ${class_name}Page
+        ${snake_case_name}: Instance of ${class_name}Page
 
     Returns:
         APIResponse: HTTP response from the API
@@ -32,12 +32,12 @@ def run(${snake_case_service}: '${class_name}Page') -> APIResponse:
     # Arrange: Setup test data and preconditions
     # TODO: Add test data setup here
     # Example using data_schema:
-    # from services.${snake_case_service}.data_schema import CreateRequest
+    # from services.${snake_case_name}.data_schema import CreateRequest
     # request_data = CreateRequest(name="Test Name", value=123)
 
     # Act: Execute the operation being tested
     # TODO: Add API call here
-    # response = ${snake_case_service}.post("/${endpoint}", data=request_data.model_dump(by_alias=True))
+    # response = ${snake_case_name}.post("/${endpoint}", data=request_data.model_dump(by_alias=True))
 
     # Assert: Verify the results with error handling
     # TODO: Add assertions here
@@ -47,11 +47,11 @@ def run(${snake_case_service}: '${class_name}Page') -> APIResponse:
     # assert data["expected_field"] == "expected_value", f"Expected 'expected_value', got {data['expected_field']}"
 
     # Store state for subsequent tests (optional)
-    # ${snake_case_service}.current_entity_id = data["id"]
+    # ${snake_case_name}.current_entity_id = data["id"]
 
     # Return a response or raise an error if test failed
     # Example:
-    # response = ${snake_case_service}.get("/${endpoint}/status")
+    # response = ${snake_case_name}.get("/${endpoint}/status")
     # assert response.ok, f"Test failed with status {response.status}: {response.text()}"
     # return response
 

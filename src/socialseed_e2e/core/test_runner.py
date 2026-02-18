@@ -6,10 +6,13 @@ This module provides the actual test execution logic for the e2e run command.
 import importlib
 import importlib.util
 import json
+import re
 import sys
 import time
 import traceback
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
@@ -92,6 +95,141 @@ class TestExecutionError(Exception):
     """Error during test execution."""
 
     pass
+
+
+class ImportValidationError(Exception):
+    """Error when test uses invalid imports."""
+
+    pass
+
+
+def validate_test_imports(module_path: Path) -> List[Dict[str, str]]:
+    """Validate that a test module uses absolute imports.
+
+    According to framework standards, tests must use absolute imports:
+    - ✅ CORRECT: from services.auth_service.data_schema import RegisterRequest
+    - ❌ INCORRECT: from ..data_schema import RegisterRequest
+
+    Args:
+        module_path: Path to the test module
+
+    Returns:
+        List of validation issues (empty if valid)
+    """
+    issues = []
+
+    try:
+        content = module_path.read_text(encoding="utf-8")
+    except Exception:
+        return issues
+
+    lines = content.split("\n")
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+
+        if stripped.startswith("#"):
+            continue
+
+        if " from " in stripped and " import " in stripped:
+            if stripped.startswith("from .") or stripped.startswith("from .."):
+                issue = {
+                    "file": str(module_path),
+                    "line": line_num,
+                    "type": "relative_import",
+                    "message": f"Relative import found (line {line_num}): {stripped[:80]}",
+                    "suggestion": "Use absolute import: from services.<service_name>.data_schema import ...",
+                }
+                issues.append(issue)
+
+    return issues
+
+
+def validate_pydantic_models(module_path: Path) -> List[Dict[str, str]]:
+    """Validate that Pydantic models have required configuration.
+
+    According to framework standards, Pydantic models must have:
+    - model_config = {"populate_by_name": True}
+
+    Args:
+        module_path: Path to the test module
+
+    Returns:
+        List of validation issues (empty if valid)
+    """
+    issues = []
+
+    try:
+        content = module_path.read_text(encoding="utf-8")
+    except Exception:
+        return issues
+
+    class_pattern = r"class\s+(\w+)\(.*BaseModel.*\):"
+    model_matches = list(re.finditer(class_pattern, content))
+
+    if not model_matches:
+        return issues
+
+    for match in model_matches:
+        class_name = match.group(1)
+        class_start = match.start()
+
+        class_content_start = content.find("\n", class_start)
+        if class_content_start == -1:
+            continue
+
+        next_class = content.find("\nclass ", class_content_start + 1)
+        if next_class == -1:
+            next_class = len(content)
+
+        class_block = content[class_content_start:next_class]
+
+        if "model_config" not in class_block:
+            issue = {
+                "file": str(module_path),
+                "type": "missing_model_config",
+                "message": f"Model '{class_name}' missing model_config",
+                "suggestion": "Add: model_config = {\"populate_by_name\": True}",
+            }
+            issues.append(issue)
+        elif 'populate_by_name' not in class_block:
+            issue = {
+                "file": str(module_path),
+                "type": "missing_populate_by_name",
+                "message": f"Model '{class_name}' missing populate_by_name in model_config",
+                "suggestion": "Add: model_config = {\"populate_by_name\": True}",
+            }
+            issues.append(issue)
+
+    return issues
+
+
+def validate_service_tests(service_path: Path) -> Dict[str, List[Dict[str, str]]]:
+    """Validate all test modules in a service.
+
+    Args:
+        service_path: Path to the service directory
+
+    Returns:
+        Dictionary mapping module paths to list of issues
+    """
+    all_issues = {}
+    modules_path = service_path / "modules"
+
+    if not modules_path.exists():
+        return all_issues
+
+    for module_file in modules_path.glob("*.py"):
+        if module_file.name.startswith("__"):
+            continue
+
+        import_issues = validate_test_imports(module_file)
+        pydantic_issues = validate_pydantic_models(module_file)
+
+        all_issues_list = import_issues + pydantic_issues
+        if all_issues_list:
+            all_issues[str(module_file)] = all_issues_list
+
+    return all_issues
 
 
 class SetupError(Exception):
@@ -730,9 +868,13 @@ def run_service_tests(
                     )
                 elif result.status == "failed":
                     suite_result.failed += 1
+                    error_summary = f"{result.name} - {result.error_message[:50]}"
+                    if result.error_message.endswith("..."):
+                        error_summary = result.name
                     console.print(
-                        f"  [red]✗[/red] {result.name} - {result.error_message[:50]}"
+                        f"  [red]✗[/red] {error_summary}"
                     )
+                    # Show more context in verbose mode
                     if verbose and result.error_message:
                         console.print(f"    [dim]{result.error_message}[/dim]")
                     # Print debug info if debug mode is enabled
@@ -743,8 +885,9 @@ def run_service_tests(
                     console.print(
                         f"  [red]⚠[/red] {result.name} - Error: {result.error_message[:50]}"
                     )
-                    if verbose:
-                        console.print(f"    [dim]{result.error_traceback[:200]}[/dim]")
+                    # Show more context in verbose mode
+                    if verbose and result.error_message:
+                        console.print(f"    [dim]{result.error_message}[/dim]")
                     # Print debug info if debug mode is enabled
                     if debug and result.debug_info:
                         _print_debug_info(result.debug_info)
