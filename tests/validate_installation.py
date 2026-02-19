@@ -37,7 +37,12 @@ def test_core_classes():
     print("\n2. Verificando clases core...")
 
     try:
-        from socialseed_e2e.core import ApiConfigLoader, BasePage, ModuleLoader, TestOrchestrator
+        from socialseed_e2e.core import (
+            ApiConfigLoader,
+            BasePage,
+            ModuleLoader,
+            TestOrchestrator,
+        )
         from socialseed_e2e.core.models import ServiceConfig
 
         # Verificar BasePage
@@ -89,15 +94,20 @@ def test_version():
     print("\n4. Verificando versión...")
 
     try:
-        from socialseed_e2e import __author__, __license__, __version__, __version_info__
+        from socialseed_e2e import (
+            __author__,
+            __license__,
+            __version__,
+            __version_info__,
+        )
 
         print(f"   ✓ Versión: {__version__}")
         print(f"   ✓ Versión info: {__version_info__}")
         print(f"   ✓ Autor: {__author__}")
         print(f"   ✓ Licencia: {__license__}")
 
-        assert __version__ == "0.1.2"
-        assert __version_info__ == (0, 1, 2)
+        assert __version__ == "0.1.3"
+        assert __version_info__ == (0, 1, 3)
 
         return True
     except Exception as e:

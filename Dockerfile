@@ -5,7 +5,7 @@ FROM python:3.11-slim
 
 LABEL maintainer="Dairon Pérez Frías <dairon.perezfrias@gmail.com>"
 LABEL description="SocialSeed E2E - Framework for testing REST APIs"
-LABEL version="0.1.2"
+LABEL version="0.1.3"
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

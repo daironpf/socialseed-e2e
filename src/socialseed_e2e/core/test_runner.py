@@ -188,15 +188,15 @@ def validate_pydantic_models(module_path: Path) -> List[Dict[str, str]]:
                 "file": str(module_path),
                 "type": "missing_model_config",
                 "message": f"Model '{class_name}' missing model_config",
-                "suggestion": "Add: model_config = {\"populate_by_name\": True}",
+                "suggestion": 'Add: model_config = {"populate_by_name": True}',
             }
             issues.append(issue)
-        elif 'populate_by_name' not in class_block:
+        elif "populate_by_name" not in class_block:
             issue = {
                 "file": str(module_path),
                 "type": "missing_populate_by_name",
                 "message": f"Model '{class_name}' missing populate_by_name in model_config",
-                "suggestion": "Add: model_config = {\"populate_by_name\": True}",
+                "suggestion": 'Add: model_config = {"populate_by_name": True}',
             }
             issues.append(issue)
 
@@ -871,9 +871,7 @@ def run_service_tests(
                     error_summary = f"{result.name} - {result.error_message[:50]}"
                     if result.error_message.endswith("..."):
                         error_summary = result.name
-                    console.print(
-                        f"  [red]✗[/red] {error_summary}"
-                    )
+                    console.print(f"  [red]✗[/red] {error_summary}")
                     # Show more context in verbose mode
                     if verbose and result.error_message:
                         console.print(f"    [dim]{result.error_message}[/dim]")
@@ -1288,7 +1286,7 @@ def generate_json_report(
     # Build the report structure
     report = {
         "framework": "socialseed-e2e",
-        "version": "0.1.2",
+        "version": "0.1.3",
         "timestamp": datetime.now().isoformat(),
         "summary": {
             "total": 0,

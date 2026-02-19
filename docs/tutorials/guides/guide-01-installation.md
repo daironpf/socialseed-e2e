@@ -41,7 +41,7 @@ Let's verify that the installation was successful:
 e2e --version
 
 # Expected output:
-# socialseed-e2e version 0.1.2
+# socialseed-e2e version 0.1.3
 ```
 
 ## Step 3: Run Doctor
