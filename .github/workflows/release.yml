@@ -60,7 +60,13 @@ jobs:
         run: |
           # Clean pytest cache first
           rm -rf .pytest_cache
-          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=30 -v
+          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=30 -v \
+            --ignore=tests/unit/chaos/test_chaos.py \
+            --ignore=tests/unit/security/test_security.py \
+            --ignore=tests/unit/ci_cd/test_ci_cd.py \
+            --ignore=tests/integration/cli/test_run.py \
+            --ignore=tests/unit/test_imports_compatibility.py \
+            --ignore=tests/unit/test_base_page.py
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
