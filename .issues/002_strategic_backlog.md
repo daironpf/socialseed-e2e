@@ -1063,12 +1063,27 @@ AI agents need automatic test documentation:
 
 ## Issue #019: Test Maintenance Automation
 
-**Status:** OPEN
+**Status:** RESOLVED ✅
 **Created:** 2026-02-18
+**Resolved:** 2026-02-19
 **Priority:** HIGH
 **Category:** FEATURE
 
 **Title:** Implement Self-Healing Test Suite
+
+**Implementation Completed:**
+- Enhanced `src/socialseed_e2e/self_healing/` module with comprehensive self-healing capabilities:
+  - **SchemaAdapter**: Detects API schema changes (field removal, addition, type changes, renaming) and suggests adaptations
+  - **LocatorRepairEngine**: Repairs broken element locators using multiple strategies (ID matching, class matching, attribute matching, text matching, structure matching)
+  - **AssertionTuner**: Adjusts assertion thresholds automatically, handles timeout issues, detects flaky tests, tunes value and range assertions
+  - **TestOptimizer**: Removes redundant tests, merges similar tests, optimizes test execution order, identifies slow tests
+  - **HealingOrchestrator**: Coordinates all healing components, manages healing workflow, tracks healing history
+- Full Pydantic models for all healing operations (HealingResult, HealingSuggestion, TestFailure, SchemaChange, etc.)
+- Confidence scoring for all healing suggestions (0.0-1.0)
+- Auto-healing support with configurable confidence threshold
+- Healing history tracking and analytics
+- Backup creation before applying fixes
+- Support for manual review before applying non-auto-applicable fixes
 
 **Description:**
 
@@ -1485,41 +1500,53 @@ Enterprise buyers need certifications:
 
 ---
 
-## Issue #030: Monetization Infrastructure
+## Issue #030: Dynamic Architecture Documentation (Self-Evolving)
 
-**Status:** OPEN
-**Created:** 2026-02-18
-**Priority:** MEDIUM
-**Category:** FEATURE
+**Status:** OPEN 🟢
+**Created:** 2026-02-19
+**Priority:** HIGH
+**Category:** DOCUMENTATION / CORE INFRASTRUCTURE
 
-**Title:** Implement Pricing & Licensing Model
+**Title:** Implement and Maintain Dynamic `ARCHITECTURE.md` for AI Agent Alignment
 
 **Description:**
 
-Enterprise software needs pricing:
+As the SocialSeed-E2E framework evolves into a multi-agent autonomous system, we need a "Source of Truth" that defines how every component interacts. This is not a static file; it must be a living document that AI agents consult before implementing new features to ensure architectural consistency.
 
-1. **Pricing Tiers**
-   - Free tier
-   - Pro tier
-   - Enterprise tier
+1. **System Macro-Architecture**
+* High-level overview of the **Shadow Runner**, **Standardized Agent Protocol**, and the **Core Engine**.
+* Definition of the Event-Driven communication bus between specialized agents.
 
-2. **Licensing**
-   - Per-seat licensing
-   - Concurrent user licensing
-   - Site license
 
-3. **Billing**
-   - Subscription management
-   - Usage-based billing
-   - Invoice generation
+2. **Component Interdependency Map**
+* Documentation of how the **Visual Regression Heat-Map** consumes data from the **Traffic Sniffer**.
+* Relationship between **Source Code Hash Tracking** and **Self-Healing Test Suites**.
+
+
+3. **Data Flow Specifications**
+* Detailed path of a request: Capture (eBPF) -> Vectorization (ChromaDB) -> Reasoning (LLM Agent) -> Execution (Pytest/Playwright) -> Analytics (UI).
+
+
+4. **Agent Role Definition**
+* Clear boundaries for specialized agents (Explorer, Aggressor, Auditor) to prevent logic overlap and resource contention.
+
+
+
+**Technical Requirements for AI Agents:**
+
+* **Automatic Updates:** The agent assigned to this issue must scan the `/src` directory and existing `README.md` files to detect new modules and update the architecture diagram (using Mermaid.js syntax).
+* **Consistency Check:** Every time a new "Feature Issue" is completed, this agent must verify if the implementation aligns with the architectural principles defined here.
+* **Visual Documentation:** Use Mermaid.js for sequence diagrams and class hierarchies within the Markdown file.
 
 **Expected Deliverable:**
 
-- Pricing page
-- Licensing documentation
-- Billing integration
+* A comprehensive `ARCHITECTURE.md` file in the root directory.
+* Detailed Mermaid.js diagrams illustrating the **SocialSeed-E2E Hive Mind** workflow.
+* A "Contract Section" defining how external APIs (Postman/OpenAPI) are ingested into the internal logic.
 
 ---
+
+**¿Te gustaría que actúe como el primer agente y redacte un borrador inicial de este `ARCHITECTURE.md` basado en todo lo que hemos hablado?**
 
 ## Summary
 
