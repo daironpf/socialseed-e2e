@@ -4,19 +4,21 @@ This module provides a plugin architecture that allows users to extend
 the framework with custom functionality.
 
 Quick Start:
-    >>> from socialseed_e2e.plugins import PluginManager, IPlugin
+    >>> from socialseed_e2e.plugins import PluginManager, IPlugin, PluginSDK, BasePlugin
     >>>
     >>> # Create a plugin
-    >>> class MyPlugin(IPlugin):
-    ...     name = "my-plugin"
-    ...     version = "1.0.0"
-    ...     description = "My custom plugin"
+    >>> class MyPlugin(BasePlugin):
+    ...     @property
+    ...     def name(self): return "my-plugin"
+    ...     @property
+    ...     def version(self): return "1.0.0"
+    ...     @property
+    ...     def description(self): return "My custom plugin"
     ...
-    ...     def initialize(self, config=None):
-    ...         print(f"Plugin {self.name} initialized!")
-    ...
-    ...     def shutdown(self):
-    ...         print(f"Plugin {self.name} shutdown!")
+    >>> # Use SDK to register hooks/assertions
+    >>> sdk = PluginSDK()
+    >>> sdk.register_hook("before_test", my_callback)
+    >>> sdk.register_assertion("my_assertion", my_assertion_fn)
     >>>
     >>> # Load and use
     >>> manager = PluginManager()
@@ -43,6 +45,18 @@ from socialseed_e2e.plugins.manager import (
     PluginNotFoundError,
     load_plugin,
 )
+from socialseed_e2e.plugins.sdk import (
+    PluginLifecycle,
+    PluginConfig,
+    PluginSDK,
+    BasePlugin,
+    PluginValidator,
+)
+from socialseed_e2e.plugins.marketplace import (
+    PluginListing,
+    PluginMarketplace,
+    PluginInstaller,
+)
 
 __all__ = [
     # Interfaces
@@ -64,4 +78,14 @@ __all__ = [
     "PluginNotFoundError",
     "PluginLoadError",
     "load_plugin",
+    # SDK
+    "PluginLifecycle",
+    "PluginConfig",
+    "PluginSDK",
+    "BasePlugin",
+    "PluginValidator",
+    # Marketplace
+    "PluginListing",
+    "PluginMarketplace",
+    "PluginInstaller",
 ]

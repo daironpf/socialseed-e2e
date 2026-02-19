@@ -47,8 +47,7 @@ class SecretDetector:
         SecretType.AWS_KEY: [
             (r"(?i)AKIA[0-9A-Z]{16}", 0),  # AWS Access Key ID
             (
-                r"(?i)aws[_-]?(access[_-]?key|secret)["
-                "\s]*[=:]\s*['\"]?([A-Za-z0-9/+=]{40})['\"]?",
+                r"(?i)aws[_-]?(access[_-]?key|secret)[\s]*[=:]\s*['\"]?([A-Za-z0-9/+=]{40})['\"]?",
                 2,
             ),
         ],

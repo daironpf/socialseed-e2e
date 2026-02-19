@@ -48,16 +48,16 @@ class ComplianceValidator:
         (r"\b4\d{3}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b", "visa_card"),
         (r"\b5[1-5]\d{2}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b", "mastercard"),
         (r"\b3[47]\d{2}[\s-]?\d{6}[\s-]?\d{5}\b", "amex_card"),
-        (r"cvv[" "\s]*[=:]\s*\d{3,4}", "cvv"),
-        (r"(track1|track2)[" "\s]*[=:]\s*[^\s]+", "card_track_data"),
+        (r"cvv[\s]*[=:]\s*\d{3,4}", "cvv"),
+        (r"(track1|track2)[\s]*[=:]\s*[^\s]+", "card_track_data"),
     ]
 
     # HIPAA PHI patterns (Protected Health Information)
     HIPAA_PHI_PATTERNS = [
         (r"\b\d{3}-\d{2}-\d{4}\b", "ssn"),
-        (r"(mrn|patient_id|medical_record)[" "\s]*[=:]\s*\d+", "medical_record_number"),
-        (r"(diagnosis|condition|treatment)[" "\s]*[=:]\s*[^\s]+", "health_condition"),
-        (r"(prescription|medication|drug)[" "\s]*[=:]\s*[^\s]+", "prescription_info"),
+        (r"(mrn|patient_id|medical_record)[\s]*[=:]\s*\d+", "medical_record_number"),
+        (r"(diagnosis|condition|treatment)[\s]*[=:]\s*[^\s]+", "health_condition"),
+        (r"(prescription|medication|drug)[\s]*[=:]\s*[^\s]+", "prescription_info"),
     ]
 
     def __init__(self):

@@ -22,6 +22,7 @@ from .service.service_chaos import ServiceChaosInjector
 from .resource_chaos import ResourceChaos
 from .resource.resource_chaos import ResourceChaosInjector
 from .gameday.gameday_orchestrator import GameDayOrchestrator
+from .recovery.recovery_validator import RecoveryValidator
 
 __all__ = [
     "ChaosExperiment",
@@ -40,4 +41,5 @@ __all__ = [
     "ResourceChaos",
     "ResourceChaosInjector",
     "GameDayOrchestrator",
+    "RecoveryValidator",
 ]
