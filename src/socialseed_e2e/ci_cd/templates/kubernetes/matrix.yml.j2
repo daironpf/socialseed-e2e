@@ -1,0 +1,342 @@
+{% if config.template_type.value == 'matrix' %}
+# Kubernetes Job for matrix testing
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-tests-matrix
+  namespace: {{ config.project_name | lower | replace('_', '-') }}
+  labels:
+    app: e2e-tests
+    version: matrix
+spec:
+  parallelism: {{ config.parallel_workers | default(4) }}
+  completions: {{ config.parallel_workers | default(4) }}
+  completionMode: Indexed
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: e2e-tests
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: e2e-tests
+        image: python:{{ config.python_versions | first }}-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Starting E2E tests on node $(JOB_COMPLETION_INDEX)"
+          
+          # Install dependencies
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -e .
+          
+          # Run specific test subset based on job index
+          TOTAL_TESTS=$(find tests -name "test_*.py" | wc -l)
+          CHUNK_SIZE=$(( (TOTAL_TESTS + {{ config.parallel_workers | default(4) }} - 1) / {{ config.parallel_workers | default(4) }} ))
+          START=$(( JOB_COMPLETION_INDEX * CHUNK_SIZE ))
+          END=$(( START + CHUNK_SIZE ))
+          
+          echo "Running tests $START to $END (chunk size: $CHUNK_SIZE)"
+          
+          # Run tests and generate results
+          pytest \
+            --cov=socialseed_e2e \
+            --cov-report=xml:/results/coverage-$(JOB_COMPLETION_INDEX).xml \
+            --junitxml=/results/junit-$(JOB_COMPLETION_INDEX).xml \
+            -v || true
+          
+          echo "Tests completed for node $(JOB_COMPLETION_INDEX)"
+        env:
+        - name: JOB_COMPLETION_INDEX
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['job-completion-index']
+        {% if config.secrets %}
+        {% for secret in config.secrets %}
+        - name: {{ secret }}
+          valueFrom:
+            secretKeyRef:
+              name: e2e-secrets
+              key: {{ secret | lower }}
+        {% endfor %}
+        {% endif %}
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: test-results
+          mountPath: /results
+        - name: requirements
+          mountPath: /requirements.txt
+          subPath: requirements.txt
+      volumes:
+      - name: test-results
+        emptyDir: {}
+      - name: requirements
+        configMap:
+          name: e2e-requirements
+---
+# ConfigMap for requirements
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e2e-requirements
+  namespace: {{ config.project_name | lower | replace('_', '-') }}
+data:
+  requirements.txt: |
+    pytest
+    pytest-cov
+    pytest-html
+    socialseed-e2e
+{% elif config.template_type.value == 'enterprise' %}
+# Enterprise Kubernetes testing with multi-stage pipeline
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ config.project_name | lower | replace('_', '-') }}-e2e
+---
+# ServiceAccount for E2E tests
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e2e-test-runner
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+---
+# RBAC permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: e2e-test-runner
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: e2e-test-runner
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+subjects:
+- kind: ServiceAccount
+  name: e2e-test-runner
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+roleRef:
+  kind: Role
+  name: e2e-test-runner
+  apiGroup: rbac.authorization.k8s.io
+---
+# Lint Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-lint
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+spec:
+  template:
+    spec:
+      serviceAccountName: e2e-test-runner
+      restartPolicy: Never
+      containers:
+      - name: lint
+        image: python:{{ config.python_versions | first }}-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install black flake8 mypy
+          black --check src/
+          flake8 src/ --max-line-length=100
+          mypy src/socialseed_e2e --ignore-missing-imports
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+---
+# Unit Tests Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-unit-tests
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+spec:
+  template:
+    spec:
+      serviceAccountName: e2e-test-runner
+      restartPolicy: Never
+      containers:
+      - name: unit-tests
+        image: python:{{ config.python_versions | first }}-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install -r requirements.txt
+          pip install -e .
+          pytest tests/unit -v --cov=socialseed_e2e --cov-report=xml --junitxml=/results/unit-results.xml
+        volumeMounts:
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: results
+        emptyDir: {}
+---
+# Integration Tests Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-integration-tests
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+spec:
+  template:
+    spec:
+      serviceAccountName: e2e-test-runner
+      restartPolicy: Never
+      containers:
+      - name: integration-tests
+        image: python:{{ config.python_versions | first }}-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install -r requirements.txt
+          pip install -e .
+          pytest tests/integration -v --junitxml=/results/integration-results.xml
+        volumeMounts:
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: results
+        emptyDir: {}
+---
+# E2E Tests Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-tests
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+spec:
+  activeDeadlineSeconds: {{ config.timeout_minutes | default(45) * 60 }}
+  template:
+    spec:
+      serviceAccountName: e2e-test-runner
+      restartPolicy: Never
+      containers:
+      - name: e2e-tests
+        image: python:{{ config.python_versions | first }}-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install -r requirements.txt
+          pip install -e .
+          e2e run -v --output=/results/
+        env:
+        {% if config.secrets %}
+        {% for secret in config.secrets %}
+        - name: {{ secret }}
+          valueFrom:
+            secretKeyRef:
+              name: e2e-secrets
+              key: {{ secret | lower }}
+        {% endfor %}
+        {% endif %}
+        volumeMounts:
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: results
+        emptyDir: {}
+---
+# CronJob for nightly tests
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: e2e-nightly
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: e2e-test-runner
+          restartPolicy: Never
+          containers:
+          - name: e2e-nightly
+            image: python:{{ config.python_versions | first }}-slim
+            command:
+            - /bin/sh
+            - -c
+            - |
+              pip install -r requirements.txt
+              pip install -e .
+              e2e run -v --suite=nightly
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+{% else %}
+# Basic Kubernetes Job for E2E testing
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ config.project_name | lower | replace('_', '-') }}-e2e
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-tests
+  namespace: {{ config.project_name | lower | replace('_', '-') }}-e2e
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: e2e-tests
+        image: python:{{ config.python_versions | first }}-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -e .
+          e2e run -v
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+{% endif %}

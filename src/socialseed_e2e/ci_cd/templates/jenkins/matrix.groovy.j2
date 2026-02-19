@@ -1,0 +1,306 @@
+#!/usr/bin/env groovy
+{% if config.template_type.value == 'matrix' %}
+// Matrix testing pipeline for Jenkins
+pipeline {
+    agent none
+    
+    options {
+        timeout(time: {{ config.timeout_minutes | default(60) }}, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+    
+    environment {
+        FORCE_COLOR = '1'
+        {% if config.secrets %}
+        {% for secret in config.secrets %}
+        {{ secret }} = credentials('{{ secret }}')
+        {% endfor %}
+        {% endif %}
+    }
+    
+    stages {
+        stage('Matrix Testing') {
+            matrix {
+                axes {
+                    axis {
+                        name 'PYTHON_VERSION'
+                        values '{{ config.python_versions | join("', '") }}'
+                    }
+                    axis {
+                        name 'OS'
+                        values '{{ config.os_list | join("', '") }}'
+                    }
+                }
+                stages {
+                    stage('Test') {
+                        agent {
+                            label "${OS}"
+                        }
+                        steps {
+                            checkout scm
+                            
+                            script {
+                                def pythonCmd = isUnix() ? 'python3' : 'python'
+                                sh """
+                                    ${pythonCmd} --version
+                                    ${pythonCmd} -m pip install --upgrade pip
+                                    ${pythonCmd} -m pip install -r requirements.txt
+                                    ${pythonCmd} -m pip install -e .
+                                """
+                                
+                                sh """
+                                    ${pythonCmd} -m pytest \
+                                        --cov=socialseed_e2e \
+                                        --cov-report=xml \
+                                        --cov-report=html \
+                                        --junitxml=results-${PYTHON_VERSION}-${OS}.xml \
+                                        -v
+                                """
+                            }
+                        }
+                        post {
+                            always {
+                                junit "results-*.xml"
+                                publishHTML([
+                                    allowMissing: false,
+                                    alwaysLinkToLastBuild: true,
+                                    keepAll: true,
+                                    reportDir: 'htmlcov',
+                                    reportFiles: 'index.html',
+                                    reportName: "Coverage Report ${PYTHON_VERSION} ${OS}"
+                                ])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                if (currentBuild.result == 'FAILURE') {
+                    {% if config.slack_webhook %}
+                    slackSend(
+                        color: 'danger',
+                        message: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
+                    )
+                    {% endif %}
+                    
+                    {% if config.email_notifications %}
+                    emailext(
+                        subject: "Build Failed: \${env.JOB_NAME} - \${env.BUILD_NUMBER}",
+                        body: "The build has failed. Check the console output for details.",
+                        to: "\${env.CHANGE_AUTHOR_EMAIL}"
+                    )
+                    {% endif %}
+                }
+            }
+        }
+    }
+}
+{% elif config.template_type.value == 'enterprise' %}
+// Enterprise-grade Jenkins pipeline
+pipeline {
+    agent {
+        docker {
+            image 'python:{{ config.python_versions | first }}'
+            args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    
+    options {
+        timeout(time: {{ config.timeout_minutes | default(90) }}, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timestamps()
+        ansiColor('xterm')
+    }
+    
+    environment {
+        PIP_CACHE_DIR = "${WORKSPACE}/.cache/pip"
+        {% if config.secrets %}
+        {% for secret in config.secrets %}
+        {{ secret }} = credentials('{{ secret }}')
+        {% endfor %}
+        {% endif %}
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'python --version'
+            }
+        }
+        
+        stage('Lint') {
+            steps {
+                sh '''
+                    pip install black flake8 mypy
+                    black --check src/ || true
+                    flake8 src/ --max-line-length=100 || true
+                    mypy src/socialseed_e2e --ignore-missing-imports || true
+                '''
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                sh '''
+                    pip install bandit safety
+                    bandit -r src/ -f json -o bandit-report.json || true
+                    safety check --json --output safety-report.json || true
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: '*-report.json', allowEmptyArchive: true
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
+                    pip install -e .
+                '''
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                sh '''
+                    pytest tests/unit -v --cov=socialseed_e2e --cov-report=xml --junitxml=unit-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'unit-results.xml'
+                }
+            }
+        }
+        
+        stage('Integration Tests') {
+            steps {
+                sh '''
+                    pytest tests/integration -v --cov=socialseed_e2e --cov-append --junitxml=integration-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'integration-results.xml'
+                }
+            }
+        }
+        
+        stage('E2E Tests') {
+            steps {
+                sh '''
+                    e2e run -v --coverage
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'reports',
+                        reportFiles: 'index.html',
+                        reportName: 'E2E Test Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Coverage Report') {
+            steps {
+                sh '''
+                    coverage combine
+                    coverage report
+                    coverage html
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                def color = currentBuild.result == 'SUCCESS' ? 'good' : 'danger'
+                {% if config.slack_webhook %}
+                slackSend(
+                    color: color,
+                    message: "Build \${currentBuild.result}: \${env.JOB_NAME} - \${env.BUILD_NUMBER}"
+                )
+                {% endif %}
+            }
+            {% if config.email_notifications %}
+            emailext(
+                subject: "\${currentBuild.result}: \${env.JOB_NAME} - \${env.BUILD_NUMBER}",
+                body: """<p>Build \${currentBuild.result}</p>
+                       <p>Job: \${env.JOB_NAME}</p>
+                       <p>Build: \${env.BUILD_NUMBER}</p>
+                       <p>Duration: \${currentBuild.durationString}</p>""",
+                to: "\${env.CHANGE_AUTHOR_EMAIL}"
+            )
+            {% endif %}
+        }
+    }
+}
+{% else %}
+// Basic Jenkins pipeline
+pipeline {
+    agent {
+        docker {
+            image 'python:{{ config.python_versions | first }}'
+            args '-u root'
+        }
+    }
+    
+    options {
+        timeout(time: {{ config.timeout_minutes | default(30) }}, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+    
+    stages {
+        stage('Install') {
+            steps {
+                sh '''
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
+                    pip install -e .
+                '''
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                sh 'e2e run -v'
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
+{% endif %}

@@ -1,0 +1,275 @@
+{% if config.template_type.value == 'matrix' %}
+# Matrix testing pipeline for Azure DevOps
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  pythonVersion: '{{ config.python_versions | first }}'
+  FORCE_COLOR: 1
+
+strategy:
+  matrix:
+    {% for os in config.os_list %}
+    {{ os | replace('-', '_') }}_py{{ config.python_versions | first | replace('.', '') }}:
+      vmImage: '{{ os }}'
+      pythonVersion: '{{ config.python_versions | first }}'
+    {% endfor %}
+
+pool:
+  vmImage: $(vmImage)
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(pythonVersion)'
+  displayName: 'Use Python $(pythonVersion)'
+
+- task: Cache@2
+  inputs:
+    key: 'pip | "$(Agent.OS)" | requirements.txt'
+    restoreKeys: |
+      pip | "$(Agent.OS)"
+      pip
+    path: $(PIP_CACHE_DIR)
+  displayName: Cache pip packages
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install -e .
+  displayName: 'Install dependencies'
+
+- script: |
+    pytest --cov=socialseed_e2e --cov-report=xml --cov-report=html -v
+  displayName: 'Run E2E tests'
+  timeoutInMinutes: {{ config.timeout_minutes | default(30) }}
+  env:
+    {% if config.secrets %}
+    {% for secret in config.secrets %}
+    {{ secret }}: $({{ secret }})
+    {% endfor %}
+    {% endif %}
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-results.xml'
+    testRunTitle: 'E2E Tests $(pythonVersion)'
+
+- task: PublishCodeCoverageResults@1
+  condition: succeededOrFailed()
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '**/coverage.xml'
+    pathToSources: '$(System.DefaultWorkingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  condition: always()
+  inputs:
+    PathtoPublish: 'htmlcov'
+    ArtifactName: 'coverage-report-$(pythonVersion)'
+{% elif config.template_type.value == 'enterprise' %}
+# Enterprise Azure DevOps pipeline with multi-stage
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  pythonVersion: '{{ config.python_versions | first }}'
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  isDevelop: $[eq(variables['Build.SourceBranch'], 'refs/heads/develop')]
+
+stages:
+- stage: Build
+  displayName: 'Build and Lint'
+  jobs:
+  - job: Lint
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+    
+    - script: |
+        pip install black flake8 mypy
+        black --check src/
+        flake8 src/ --max-line-length=100
+        mypy src/socialseed_e2e --ignore-missing-imports
+      displayName: 'Run linters'
+
+- stage: Security
+  displayName: 'Security Scan'
+  dependsOn: Build
+  jobs:
+  - job: SecurityScan
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+    
+    - script: |
+        pip install bandit safety
+        bandit -r src/ -f json -o bandit-report.json
+        safety check
+      displayName: 'Run security scans'
+      continueOnError: true
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '*-report.json'
+        ArtifactName: 'security-reports'
+
+- stage: Test
+  displayName: 'Test Suite'
+  dependsOn: Build
+  jobs:
+  - job: UnitTests
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+    
+    - script: |
+        pip install -r requirements.txt
+        pip install -e .
+        pytest tests/unit -v --cov=socialseed_e2e --cov-report=xml --junitxml=unit-results.xml
+      displayName: 'Run unit tests'
+    
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: 'unit-results.xml'
+        testRunTitle: 'Unit Tests'
+
+  - job: IntegrationTests
+    pool:
+      vmImage: 'ubuntu-latest'
+    dependsOn: UnitTests
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+    
+    - script: |
+        pip install -r requirements.txt
+        pip install -e .
+        pytest tests/integration -v --junitxml=integration-results.xml
+      displayName: 'Run integration tests'
+    
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: 'integration-results.xml'
+        testRunTitle: 'Integration Tests'
+
+  - job: E2ETests
+    pool:
+      vmImage: 'ubuntu-latest'
+    dependsOn: IntegrationTests
+    timeoutInMinutes: {{ config.timeout_minutes | default(45) }}
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+    
+    - script: |
+        pip install -r requirements.txt
+        pip install -e .
+        e2e run -v
+      displayName: 'Run E2E tests'
+      env:
+        {% if config.secrets %}
+        {% for secret in config.secrets %}
+        {{ secret }}: $({{ secret }})
+        {% endfor %}
+        {% endif %}
+    
+    - task: PublishBuildArtifacts@1
+      condition: always()
+      inputs:
+        PathtoPublish: 'reports'
+        ArtifactName: 'e2e-reports'
+
+- stage: DeployStaging
+  displayName: 'Deploy to Staging'
+  dependsOn: [Security, Test]
+  condition: and(succeeded(), eq(variables.isDevelop, 'true'))
+  jobs:
+  - deployment: DeployStaging
+    environment: 'staging'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deploying to staging..."
+            displayName: 'Deploy'
+
+- stage: DeployProduction
+  displayName: 'Deploy to Production'
+  dependsOn: [Security, Test]
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
+  jobs:
+  - deployment: DeployProduction
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deploying to production..."
+            displayName: 'Deploy'
+{% else %}
+# Basic Azure DevOps pipeline
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  pythonVersion: '{{ config.python_versions | first }}'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(pythonVersion)'
+  displayName: 'Use Python $(pythonVersion)'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install -e .
+  displayName: 'Install dependencies'
+
+- script: |
+    e2e run -v
+  displayName: 'Run E2E tests'
+  timeoutInMinutes: {{ config.timeout_minutes | default(30) }}
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-results.xml'
+    testRunTitle: 'E2E Tests'
+{% endif %}

@@ -1,0 +1,285 @@
+{% raw %}{%{% endraw %} set python_versions_str = config.python_versions | join("', '") {% raw %}%}{%{% endraw %} set os_str = config.os_list | join("', '") {% raw %}%}{%{% endraw %}
+name: E2E Tests - {{ config.project_name }}
+
+on:
+  push:
+    branches: [ main, develop{% if config.template_type.value == 'enterprise' %}, staging{% endif %} ]
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  {% if config.template_type.value in ['nightly', 'enterprise'] %}
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  {% endif %}
+  workflow_dispatch:
+    inputs:
+      test_markers:
+        description: 'pytest markers to run'
+        required: false
+        default: ''
+      fail_fast:
+        description: 'Fail fast on first error'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: {% raw %}${{{% endraw %} github.workflow {% raw %}}}{% endraw %}-{% raw %}${{{% endraw %} github.ref {% raw %}}}{% endraw %}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  PY_COLORS: 1
+  {% if config.secrets %}
+  {% for secret in config.secrets %}
+  {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
+  {% endfor %}
+  {% endif %}
+
+jobs:
+  {% if config.template_type.value == 'matrix' %}
+  # Matrix testing across Python versions and OS
+  test-matrix:
+    runs-on: {% raw %}${{{% endraw %} matrix.os {% raw %}}}{% endraw %}
+    timeout-minutes: {{ config.timeout_minutes | default(30) }}
+    strategy:
+      fail-fast: {{ 'true' if config.fail_fast else 'false' }}
+      matrix:
+        os: ['{{ os_str }}']
+        python-version: ['{{ python_versions_str }}']
+        include:
+          - os: ubuntu-latest
+            artifact-name: linux
+          - os: windows-latest
+            artifact-name: windows
+          - os: macos-latest
+            artifact-name: macos
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better test analysis
+      
+      - name: Set up Python {% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+        uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+          cache: 'pip'{% if config.needs_cache else '' %}
+      
+      {% if config.needs_database %}
+      - name: Start test database
+        run: |
+          docker run -d --name test-db -p 5432:5432 -e POSTGRES_PASSWORD=test postgres:15
+          sleep 5  # Wait for database to be ready
+      
+      {% endif %}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest-html pytest-cov codecov
+      
+      - name: Run E2E tests
+        run: |
+          pytest \
+            {% if config.test_markers %}-m "{{ config.test_markers | join(' or ') }}" \{% endif %}
+            --cov=socialseed_e2e \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-fail-under={{ config.coverage_threshold }} \
+            --html=report-{% raw %}${{{% endraw %} matrix.os {% raw %}}}{% endraw %}-{% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}.html \
+            -v
+        timeout-minutes: {{ config.timeout_minutes | default(25) }}
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-{% raw %}${{{% endraw %} matrix.artifact-name {% raw %}}}{% endraw %}-{% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+          path: |
+            report-*.html
+            coverage.xml
+            .coverage
+          retention-days: 30
+      
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '{{ config.python_versions | first }}'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+      
+      - name: Clean up
+        if: always()
+        run: |
+          {% if config.needs_database %}
+          docker stop test-db || true
+          docker rm test-db || true
+          {% endif %}
+  
+  {% elif config.template_type.value == 'parallel' %}
+  # Parallel test execution with test splitting
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      test-files: {% raw %}${{{% endraw %} steps.tests.outputs.files {% raw %}}}{% endraw %}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Find test files
+        id: tests
+        run: |
+          files=$(find tests -name "test_*.py" -type f | jq -R -s -c 'split("\n")[:-1]')
+          echo "files=$files" >> $GITHUB_OUTPUT
+  
+  test-parallel:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: {{ config.timeout_minutes | default(30) }}
+    strategy:
+      fail-fast: {{ 'true' if config.fail_fast else 'false' }}
+      matrix:
+        python-version: ['{{ config.python_versions | first }}']
+        test-file: {% raw %}${{{% endraw %} fromJSON(needs.setup.outputs.test-files) {% raw %}}}{% endraw %}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python {% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+        uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      
+      - name: Run tests for {% raw %}${{{% endraw %} matrix.test-file {% raw %}}}{% endraw %}
+        run: pytest {% raw %}${{{% endraw %} matrix.test-file {% raw %}}}{% endraw %} -v --tb=short
+        timeout-minutes: 10
+  
+  {% elif config.template_type.value == 'enterprise' %}
+  # Enterprise-grade testing with comprehensive stages
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '{{ config.python_versions | first }}'
+          cache: 'pip'
+      - run: pip install black flake8 mypy
+      - run: black --check src/
+      - run: flake8 src/ --max-line-length=100
+      - run: mypy src/socialseed_e2e --ignore-missing-imports
+  
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '{{ config.python_versions | first }}'
+      - run: pip install bandit safety
+      - run: bandit -r src/ -f json -o bandit-report.json || true
+      - run: safety check --json --output safety-report.json || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: '*-report.json'
+  
+  test-enterprise:
+    runs-on: ubuntu-latest
+    needs: [lint, security-scan]
+    timeout-minutes: {{ config.timeout_minutes | default(60) }}
+    strategy:
+      fail-fast: {{ 'true' if config.fail_fast else 'false' }}
+      matrix:
+        python-version: ['{{ python_versions_str }}']
+        test-type: [unit, integration, e2e]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python {% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+        uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{{% endraw %} matrix.python-version {% raw %}}}{% endraw %}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .[all]
+      
+      - name: Run {% raw %}${{{% endraw %} matrix.test-type {% raw %}}}{% endraw %} tests
+        run: |
+          {% raw %}${{{% endraw %} if matrix.test-type == 'unit' {% raw %}}}{% endraw %}pytest tests/unit -v --cov=socialseed_e2e --cov-report=xml{% raw %}${{{% endraw %} endif {% raw %}}}{% endraw %}
+          {% raw %}${{{% endraw %} if matrix.test-type == 'integration' {% raw %}}}{% endraw %}pytest tests/integration -v --cov=socialseed_e2e --cov-append{% raw %}${{{% endraw %} endif {% raw %}}}{% endraw %}
+          {% raw %}${{{% endraw %} if matrix.test-type == 'e2e' {% raw %}}}{% endraw %}e2e run{% raw %}${{{% endraw %} endif {% raw %}}}{% endraw %}
+        timeout-minutes: 20
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-{% raw %}${{{% endraw %} matrix.test-type {% raw %}}}{% endraw %}
+          path: |
+            *.xml
+            *.html
+  
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: test-enterprise
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+    steps:
+      - run: echo "Deploying to staging..."
+  
+  {% else %}
+  # Basic testing configuration
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: {{ config.timeout_minutes | default(30) }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python {{ config.python_versions | first }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '{{ config.python_versions | first }}'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      
+      - name: Run E2E tests
+        run: e2e run -v
+        timeout-minutes: {{ config.timeout_minutes | default(25) }}
+  {% endif %}
+  
+  {% if config.slack_webhook %}
+  notify:
+    needs: [{% if config.template_type.value == 'matrix' %}test-matrix{% elif config.template_type.value == 'parallel' %}test-parallel{% elif config.template_type.value == 'enterprise' %}test-enterprise{% else %}e2e-tests{% endif %}]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: {% raw %}${{{% endraw %} job.status {% raw %}}}{% endraw %}
+          channel: '#e2e-tests'
+          webhook_url: {% raw %}${{{% endraw %} secrets.SLACK_WEBHOOK {% raw %}}}{% endraw %}
+  {% endif %}
