@@ -737,7 +737,7 @@ jinja2>=3.1.0
 ### Estadísticas del Framework
 | Métrica | Valor |
 |---------|-------|
-| **Versión** | 0.1.3 |
+| **Versión** | 0.1.4 |
 | **Módulos Principales** | ~39 |
 | **Archivos Python** | ~200+ |
 | **Líneas de Código (CLI)** | ~7,018 |
@@ -751,7 +751,7 @@ jinja2>=3.1.0
 - ✅ Test Runner - Ejecución completa con Playwright
 - ✅ HTML Reporting - Reportes visuales
 - ✅ Traceability System - Trazabilidad completa
-- ✅ CLI v0.1.3 con 45+ comandos
+- ✅ CLI v0.1.4 con 45+ comandos
 - ✅ Templates para scaffolding
 
 ### AI Project Manifest ✅
@@ -817,8 +817,8 @@ jinja2>=3.1.0
 - 🚧 Cloud Implementaciones Detalladas - Esqueletos básicos presentes
 
 ### Pendiente 📋
-- [ ] Publicar versión 0.1.3 a PyPI
-- [ ] Crear tag v0.1.3 definitivo
+- [ ] Publicar versión 0.1.4 a PyPI
+- [ ] Crear tag v0.1.4 definitivo
 - [ ] Agregar más ejemplos en `examples/`
 - [ ] Crear plugin para VS Code
 - [ ] Tests unitarios adicionales para módulos recientes

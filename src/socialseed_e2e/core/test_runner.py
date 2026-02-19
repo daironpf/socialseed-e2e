@@ -1292,7 +1292,7 @@ def generate_json_report(
     # Build the report structure
     report = {
         "framework": "socialseed-e2e",
-        "version": "0.1.3",
+        "version": "0.1.4",
         "timestamp": datetime.now().isoformat(),
         "summary": {
             "total": 0,

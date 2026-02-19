@@ -91,7 +91,7 @@ e2e --version
 
 **Output:**
 ```
-socialseed-e2e, version 0.1.3
+socialseed-e2e, version 0.1.4
 ```
 
 ---

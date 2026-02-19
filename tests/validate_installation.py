@@ -106,8 +106,8 @@ def test_version():
         print(f"   ✓ Autor: {__author__}")
         print(f"   ✓ Licencia: {__license__}")
 
-        assert __version__ == "0.1.3"
-        assert __version_info__ == (0, 1, 3)
+        assert __version__ == "0.1.4"
+        assert __version_info__ == (0, 1, 4)
 
         return True
     except Exception as e:
