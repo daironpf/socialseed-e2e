@@ -1036,7 +1036,10 @@ class NodeParser(BaseParser):
                         if match.lastindex is None or match.lastindex < 1:
                             continue
                         port_str = match.group(1)
-                        if port_str is None or not port_str.strip():
+                        # Check if port_str is None
+                        if port_str is None:
+                            continue
+                        if not port_str.strip():
                             continue
                         port = int(port_str)
                         if 1 <= port <= 65535:
