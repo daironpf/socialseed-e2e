@@ -64,8 +64,11 @@ def mock_api_server() -> Generator[MockAPIServer, None, None]:
 
     yield server
 
-    # Cleanup: server thread will be terminated automatically (daemon=True)
-    # but we could add explicit shutdown logic here if needed
+    # Cleanup: Stop the server gracefully
+    try:
+        server.stop()
+    except Exception:
+        pass  # Server may already be stopped
 
 
 @pytest.fixture(scope="session")

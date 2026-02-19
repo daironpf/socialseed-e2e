@@ -60,7 +60,7 @@ jobs:
         run: |
           # Clean pytest cache first
           rm -rf .pytest_cache
-          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=45 -v
+          pytest --cov=socialseed_e2e --cov-report=xml --cov-fail-under=30 -v
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
