@@ -36,6 +36,14 @@ dependencies = [
     "rich>=13.0.0",
     "jsonschema>=4.0.0",
     "jinja2>=3.0.0",
+    "websocket-client>=2.0.0",
+    "grpcio>=1.59.0",
+    "grpcio-tools>=1.59.0",
+    "protobuf>=4.24.0",
+    "Faker>=19.0.0",
+    "Pillow>=10.0.0",
+    "aiohttp>=3.9.0",
+    "email-validator>=2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -59,35 +67,13 @@ dev = [
 mock = [
     "flask>=2.0.0",
 ]
-collaboration = [
-    "aiohttp>=3.9.0",
-]
-docs = [
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=1.3.0",
-    "myst-parser>=2.0.0",
-]
-grpc = [
-    "grpcio>=1.59.0",
-    "grpcio-tools>=1.59.0",
-    "protobuf>=4.24.0",
-]
 rag = [
     "sentence-transformers>=2.2.0",
     "numpy>=1.24.0",
 ]
-visual = [
-    "numpy>=1.24.0",
-    "scipy>=1.10.0",
-    "Pillow>=10.0.0",
-    "pdf2image>=1.16.0",
-]
 secrets = [
     "hvac>=1.0.0",
     "boto3>=1.26.0",
-]
-test-data = [
-    "Faker>=19.0.0",
 ]
 
 [project.scripts]
