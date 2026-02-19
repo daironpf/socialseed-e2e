@@ -72,6 +72,12 @@ rag = [
     "sentence-transformers>=2.2.0",
     "numpy>=1.24.0",
 ]
+visual = [
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "Pillow>=10.0.0",
+    "pdf2image>=1.16.0",
+]
 secrets = [
     "hvac>=1.0.0",
     "boto3>=1.26.0",

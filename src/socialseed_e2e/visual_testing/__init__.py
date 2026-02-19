@@ -33,15 +33,27 @@ from socialseed_e2e.visual_testing.screenshotter import (
     ResponsiveScreenshotter,
     Screenshotter,
 )
-from socialseed_e2e.visual_testing.ai_comparator import (
-    AIComparator,
-    ImageComparator,
-    PerceptualComparator,
-)
 from socialseed_e2e.visual_testing.baseline_manager import (
     BaselineManager,
     BaselineReviewer,
 )
+
+# Conditionally import AI components that require numpy/scipy
+try:
+    import numpy
+    import scipy
+
+    _NUMPY_SCIPY_AVAILABLE = True
+except ImportError:
+    _NUMPY_SCIPY_AVAILABLE = False
+
+if _NUMPY_SCIPY_AVAILABLE:
+    from socialseed_e2e.visual_testing.ai_comparator import (
+        AIComparator,
+        ImageComparator,
+        PerceptualComparator,
+    )
+    from socialseed_e2e.visual_testing.orchestrator import VisualTestingOrchestrator
 
 __all__ = [
     # Models
@@ -66,11 +78,20 @@ __all__ = [
     # Screenshotter
     "Screenshotter",
     "ResponsiveScreenshotter",
-    # AI Comparator
-    "AIComparator",
-    "ImageComparator",
-    "PerceptualComparator",
     # Baseline Manager
     "BaselineManager",
     "BaselineReviewer",
 ]
+
+# Add AI components to __all__ only if available
+if _NUMPY_SCIPY_AVAILABLE:
+    __all__.extend(
+        [
+            # AI Comparator
+            "AIComparator",
+            "ImageComparator",
+            "PerceptualComparator",
+            # Orchestrator
+            "VisualTestingOrchestrator",
+        ]
+    )
