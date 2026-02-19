@@ -4,6 +4,19 @@ This package provides a rich set of domain-specific assertions for API testing,
 including JSON Schema, GraphQL, time-based, statistical, and collection assertions.
 """
 
+from socialseed_e2e.assertions.advanced import (
+    BusinessRuleValidator,
+    DataQualityValidator,
+    PerformanceValidator,
+    SchemaType,
+    SchemaValidator,
+    SecurityValidator,
+    ValidationResult,
+    assert_no_pii,
+    assert_no_sql_injection,
+    assert_response_time,
+    assert_valid_json_schema,
+)
 from socialseed_e2e.assertions.base import AssertionBuilder, E2EAssertionError, expect
 from socialseed_e2e.assertions.collections import (
     assert_all,
@@ -30,9 +43,23 @@ from socialseed_e2e.assertions.time_assertions import (
 )
 
 __all__ = [
+    # Base
     "expect",
     "AssertionBuilder",
     "E2EAssertionError",
+    # Advanced
+    "SchemaValidator",
+    "BusinessRuleValidator",
+    "PerformanceValidator",
+    "SecurityValidator",
+    "DataQualityValidator",
+    "SchemaType",
+    "ValidationResult",
+    "assert_valid_json_schema",
+    "assert_response_time",
+    "assert_no_sql_injection",
+    "assert_no_pii",
+    # Existing
     "assert_valid_schema",
     "assert_graphql_success",
     "assert_graphql_error",
