@@ -1047,13 +1047,19 @@ def run_all_tests(
             console.print(f"   Unconfigured: [{', '.join(unconfigured_services)}]")
     console.print()
 
-    # Run tests for each service
+    # Run tests for each service (skip unconfigured services)
     for service_name in services:
         # Get service configuration (using normalized name for lookup)
-        service_config = None
-        if config:
-            normalized_name = normalize_service_name(service_name)
-            service_config = config.services.get(normalized_name)
+        normalized_name = normalize_service_name(service_name)
+
+        # Skip unconfigured services
+        if config is None or normalized_name not in config.services:
+            console.print(
+                f"[dim]Skipping '{service_name}' - not configured in e2e.conf[/dim]"
+            )
+            continue
+
+        service_config = config.services.get(normalized_name)
 
         suite_result = run_service_tests(
             service_name=service_name,

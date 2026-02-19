@@ -374,9 +374,16 @@ def run_tests_parallel(
             print(f"   Unconfigured: [{', '.join(unconfigured_services)}]")
     print()
 
-    # Prepare worker tasks
+    # Prepare worker tasks (skip unconfigured services)
     tasks: List[WorkerTask] = []
     for service_name in services:
+        normalized_name = normalize_service_name(service_name)
+
+        # Skip unconfigured services
+        if config is None or normalized_name not in config.services:
+            print(f"[dim]Skipping '{service_name}' - not configured in e2e.conf[/dim]")
+            continue
+
         service_path = services_path / service_name
 
         # Discover test modules
