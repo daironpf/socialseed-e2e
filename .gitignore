@@ -231,5 +231,8 @@ e2e_reports/
 # Security testing reports (generated during red-team testing)
 security/
 
+# Issues to resolve
+.issues/
+
 # Test services generated during development
 services/

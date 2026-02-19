@@ -23,12 +23,17 @@ class TestE2ERunCommand:
     ):
         """Test that run shows configuration information."""
         isolated_cli_runner.invoke(cli, ["init"])
-        isolated_cli_runner.invoke(cli, ["new-service", "test-api"])
+        # Use mock API URL for the service
+        mock_url = mock_api_server.get_base_url()
+        isolated_cli_runner.invoke(
+            cli, ["new-service", "test-api", "--base-url", mock_url]
+        )
         # Create a dummy test
         modules_dir = temp_dir / "services" / "test-api" / "modules"
         (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
-        result = isolated_cli_runner.invoke(cli, ["run"])
+        # Use --service filter to avoid running demo-api on port 5000
+        result = isolated_cli_runner.invoke(cli, ["run", "--service", "test-api"])
 
         assert result.exit_code == 0
         assert "Configuración" in result.output or "Configuration" in result.output
@@ -39,12 +44,16 @@ class TestE2ERunCommand:
     ):
         """Test that run shows environment information."""
         isolated_cli_runner.invoke(cli, ["init"])
-        isolated_cli_runner.invoke(cli, ["new-service", "test-api"])
+        mock_url = mock_api_server.get_base_url()
+        isolated_cli_runner.invoke(
+            cli, ["new-service", "test-api", "--base-url", mock_url]
+        )
         # Create a dummy test
         modules_dir = temp_dir / "services" / "test-api" / "modules"
         (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
-        result = isolated_cli_runner.invoke(cli, ["run"])
+        # Use --service filter to avoid running demo-api on port 5000
+        result = isolated_cli_runner.invoke(cli, ["run", "--service", "test-api"])
 
         assert result.exit_code == 0
         assert "Environment" in result.output or "environment" in result.output
@@ -56,12 +65,16 @@ class TestE2ERunCommand:
         isolated_cli_runner.invoke(cli, ["init"])
 
         # Create a service
-        isolated_cli_runner.invoke(cli, ["new-service", "users-api"])
+        mock_url = mock_api_server.get_base_url()
+        isolated_cli_runner.invoke(
+            cli, ["new-service", "users-api", "--base-url", mock_url]
+        )
         # Create a dummy test
         modules_dir = temp_dir / "services" / "users-api" / "modules"
         (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
 
-        result = isolated_cli_runner.invoke(cli, ["run"])
+        # Use --service filter to avoid running demo-api on port 5000
+        result = isolated_cli_runner.invoke(cli, ["run", "--service", "users-api"])
 
         assert result.exit_code == 0
         assert "users-api" in result.output
@@ -72,7 +85,10 @@ class TestE2ERunCommand:
     ):
         """Test run with --service filter option."""
         isolated_cli_runner.invoke(cli, ["init"])
-        isolated_cli_runner.invoke(cli, ["new-service", "users-api"])
+        mock_url = mock_api_server.get_base_url()
+        isolated_cli_runner.invoke(
+            cli, ["new-service", "users-api", "--base-url", mock_url]
+        )
         # Create a dummy test
         modules_dir = temp_dir / "services" / "users-api" / "modules"
         (modules_dir / "01_test.py").write_text("def run(page):\n    pass")
