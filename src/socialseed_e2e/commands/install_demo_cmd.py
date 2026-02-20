@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 from rich.console import Console
 
-from socialseed_e2e.templates import TemplateEngine
+from socialseed_e2e.utils import TemplateEngine
 
 
 console = Console()

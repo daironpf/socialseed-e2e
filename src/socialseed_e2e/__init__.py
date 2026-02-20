@@ -50,6 +50,9 @@ from socialseed_e2e.__version__ import (
     __version_info__,
 )
 
+# CLI entry point
+from socialseed_e2e.cli import main
+
 # Core - BasePage and configuration
 from socialseed_e2e.core.base_page import (
     BasePage,
@@ -296,6 +299,8 @@ __all__ = [
     # Version
     "__version__",
     "__version_info__",
+    # CLI
+    "main",
     # Core - BasePage
     "BasePage",
     "BasePageError",

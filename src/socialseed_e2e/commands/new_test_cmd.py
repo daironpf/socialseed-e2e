@@ -9,8 +9,7 @@ from pathlib import Path
 import click
 from rich.console import Console
 
-from socialseed_e2e.templates import TemplateEngine
-from socialseed_e2e.utils.naming import to_snake_case, _to_class_name
+from socialseed_e2e.utils import TemplateEngine, to_snake_case, to_class_name
 
 
 console = Console()
