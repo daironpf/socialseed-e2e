@@ -1822,16 +1822,41 @@ def run(
                         import time
 
                         # Re-run tests
-                        results = run_tests_func(
-                            services_path=services_path,
-                            specific_service=service,
-                            specific_module=module,
-                            verbose=verbose,
-                            debug=debug,
-                            no_agent=no_agent,
-                            include_tags=list(include_tags) if include_tags else None,
-                            exclude_tags=list(exclude_tags) if exclude_tags else None,
-                        )
+                        if (
+                            use_parallel
+                            and parallel_config is not None
+                            and run_tests_parallel_func is not None
+                        ):
+                            results = run_tests_parallel_func(
+                                services_path=services_path,
+                                specific_service=service,
+                                specific_module=module,
+                                parallel_config=parallel_config,
+                                verbose=verbose,
+                                debug=debug,
+                                no_agent=no_agent,
+                                include_tags=list(include_tags)
+                                if include_tags
+                                else None,
+                                exclude_tags=list(exclude_tags)
+                                if exclude_tags
+                                else None,
+                            )
+                        else:
+                            results = run_all_tests(
+                                services_path=services_path,
+                                specific_service=service,
+                                specific_module=module,
+                                verbose=verbose,
+                                debug=debug,
+                                no_agent=no_agent,
+                                include_tags=list(include_tags)
+                                if include_tags
+                                else None,
+                                exclude_tags=list(exclude_tags)
+                                if exclude_tags
+                                else None,
+                            )
                         all_passed = print_summary(results)
                         console.print(
                             "\n🔄 [cyan]Waiting for changes... (Ctrl+C to stop)[/cyan]\n"
