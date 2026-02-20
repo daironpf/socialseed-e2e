@@ -1,117 +1,115 @@
 # Documentation
 
-Welcome to the socialseed-e2e documentation!
+Welcome to the **socialseed-e2e** documentation!
 
-## 🆕 Nuevo: Generación Autónoma de Tests (Issue #185)
-
-Genera tests automáticamente analizando tu código fuente. Ideal para APIs con muchos endpoints.
+## 🚀 Quick Start
 
 ```bash
-e2e manifest        # Analizar proyecto
-e2e generate-tests  # Generar tests automáticamente
-e2e run             # Ejecutar tests generados
-```
+# Install
+pip install socialseed-e2e
 
-📖 **[Guía Completa de Generación Autónoma](autonomous-test-generation-guide.md)** - Paso a paso con ejemplos
+# Initialize project
+e2e init my-project
+cd my-project
 
-## Table of Contents
+# Install demo APIs (optional)
+e2e install-demo
 
-### Guías Principales
-- [Installation](installation.md) - Instalación del framework
-- [Quick Start](quickstart.md) - Primeros pasos en 15 minutos
-- [Autonomous Test Generation](autonomous-test-generation-guide.md) - **🆕 Generación automática de tests**
-
-### Core Concepts
-- [Core Engine](core-engine.md) - Arquitectura del motor de E2E
-- [Test Organization](test-organization.md) - **🆕 Tags, dependencias y prioridades**
-- [Assertion Library](assertions.md) - **🆕 Biblioteca de aserciones avanzada**
-- [Record and Replay](recorder.md) - **🆕 Grabación y reproducción de sesiones**
-- [API Configuration](api-config.md) - Definición de servicios y endpoints
-
-### Configuración y Uso
-- [Configuration](configuration.md) - Configuración de e2e.conf
-- [CLI Reference](cli-reference.md) - Referencia completa de comandos
-- [Writing Tests](writing-tests.md) - Cómo escribir tests manualmente
-- [CI/CD Integration](ci-cd.md) - **🆕 Integración continua y plantillas**
-- [IDE Extensions](ide-extensions.md) - **🆕 Extensiones para VS Code y PyCharm**
-- [API Reference](api-reference.md) - Referencia de la API
-
-### Testing Avanzado
-- [Mock API for Testing](mock-api.md) - API mock basada en Flask
-- [Cloud Integrations](cloud-integrations.md) - **🆕 Integración nativa con AWS, GCP y Azure**
-- [Observability & APM](observability.md) - **🆕 Integración con DataDog, New Relic y Prometheus**
-- [Database Testing](database-testing.md) - **🆕 Soporte avanzado para SQL y NoSQL**
-- [Contract Testing](contract-testing.md) - **🆕 CDC (Consumer-Driven Contracts) y compatibilidad**
-- [Chaos Engineering](chaos-testing.md) - **🆕 Pruebas de resiliencia e inyección de fallos**
-- [Advanced Performance](advanced-performance.md) - **🆕 Load testing y validación de SLAs**
-- [Testing Guide](testing-guide.md) - Configuración de pytest, marcadores y cobertura
-- [Agent Guide](AGENT_GUIDE.md) - Guía para agentes de IA
-
-### Otros
-- [GitHub Pages Setup](github-pages-setup.md) - Despliegue automático de documentación
-
-## Quick Links
-
-| Tema | Documentación |
-|------|---------------|
-| **🆕 Generación Automática** | [autonomous-test-generation-guide.md](autonomous-test-generation-guide.md) |
-| **CLI Commands** | [CLI Reference](cli-reference.md) |
-| **Running Tests** | [Testing Guide](testing-guide.md) |
-| **Writing Tests** | [Writing Tests](writing-tests.md) |
-| **Agent IA Guide** | [Agent Guide](AGENT_GUIDE.md) |
-| **Coverage Reports** | Automatic coverage reporting to codecov.io (minimum 80%) |
-
-## Getting Started
-
-### Opción 1: Generación Automática (Recomendado para APIs existentes)
-
-Si ya tienes una API con código fuente:
-
-```bash
-# 1. Inicializar proyecto
-e2e init
-
-# 2. Analizar código fuente
-e2e manifest
-
-# 3. Generar tests automáticamente
-e2e generate-tests
-
-# 4. Personalizar datos (opcional)
-vim services/*/data_schema.py
-
-# 5. Ejecutar tests
+# Run tests
 e2e run
 ```
 
-📖 **[Ver guía completa](autonomous-test-generation-guide.md)**
-
-### Opción 2: Manual (Para control total)
-
-Si prefieres escribir los tests manualmente:
-
-```bash
-# 1. Inicializar proyecto
-e2e init
-
-# 2. Crear servicio
-e2e new-service users-api
-
-# 3. Crear tests
-e2e new-test login --service users-api
-
-# 4. Ejecutar
-e2e run
-```
-
-📖 **[Ver Quick Start](quickstart.md)**
+📖 **[Full Documentation](https://daironpf.github.io/socialseed-e2e/)**
 
 ---
 
-## 🚀 Características Principales
+## 📚 Documentation Structure
 
-- **Generación Autónoma**: Analiza tu código y genera tests automáticamente
-- **Multi-ORM**: Soporta SQLAlchemy, Prisma, Hibernate
-- **Detección de Flujos**: Detecta automáticamente flujos de autenticación, CRUD, etc.
-- **Datos Inteligentes**: Genera datos de prueba válidos basados en constraints
-- **Tests de Validación**: Crea automáticamente tests para casos edge y chaos
+### Getting Started
+- [Installation](installation.md) - Install the framework
+- [Quick Start](quickstart.md) - Get started in 15 minutes
+- [How It Works](how-it-works.md) - Understand the architecture
+
+### Core Concepts
+- [Configuration](configuration.md) - Configure your project
+- [Writing Tests](writing-tests.md) - Write test modules
+- [Test Organization](test-organization.md) - Organize tests with tags and priorities
+
+### CLI Reference
+- [CLI Reference](cli-reference.md) - Complete command reference (47 commands)
+
+### Testing Features
+- [Assertions](assertions.md) - Advanced assertion library
+- [Database Testing](database-testing.md) - SQL and NoSQL support
+- [Contract Testing](contract-testing.md) - Consumer-Driven Contracts
+
+### Performance & Scale
+- [Performance Profiling](performance-profiling.md) - Profile test execution
+- [Advanced Performance](advanced-performance.md) - Load testing and SLAs
+- [Parallel Execution](parallel-execution.md) - Run tests in parallel
+
+### Security Testing
+- [Security Fuzzing](security-fuzzing.md) - AI-driven security tests
+- [Red Team Guide](red-team-security-guide.md) - Adversarial security testing
+- [Regression Testing](regression-testing.md) - AI regression analysis
+
+### Protocol Support
+- [WebSocket Testing](websocket-testing.md) - WebSocket support
+- [gRPC Testing](grpc-testing.md) - gRPC protocol support
+
+### AI Features
+- [Project Manifest](project-manifest.md) - AI knowledge base
+- [Semantic Analyzer](semantic-analyzer-guide.md) - Logic drift detection
+- [AI Discovery Report](ai-discovery-report.md) - Auto-discover endpoints
+- [AI Orchestrator](ai-orchestrator.md) - Autonomous test execution
+- [AI Learning](ai-learning.md) - Continuous improvement
+- [AI Mocking](ai-mocking.md) - Mock external APIs
+- [NLP](nlp.md) - Natural language processing
+- [Deep Context Awareness](deep-context-awareness.md) - Understand business logic
+
+### Advanced Features
+- [Chaos Testing](chaos-testing.md) - Resilience testing
+- [Shadow Runner](shadow_runner.md) - Capture production traffic
+- [Recorder](recorder.md) - Record and replay sessions
+
+### Integrations
+- [Docker Compose](docker-compose-integration.md) - Docker integration
+- [Cloud Integrations](cloud-integrations.md) - AWS, GCP, Azure
+- [Observability](observability.md) - DataDog, New Relic, Prometheus
+- [Plugin Development](plugin-development.md) - Extend the framework
+- [IDE Extensions](ide-extensions.md) - VS Code, PyCharm
+
+### CI/CD & Team
+- [CI/CD Templates](ci-cd-templates.md) - Ready-to-use pipelines
+- [CI/CD](ci-cd.md) - Integration guides
+- [Collaboration](collaboration.md) - Team features
+
+### Reporting
+- [HTML Reporting](html-reporting.md) - Beautiful test reports
+- [Autonomous Test Generation](autonomous-test-generation.md) - Auto-generate tests
+
+### Development
+- [Testing Guide](testing-guide.md) - Pytest configuration
+- [Mock API](mock-api.md) - Built-in mock server
+
+### Reference
+- [API Reference](api/core.md) - Code reference
+- [Changelog](changelog.rst) - Version history
+
+---
+
+## 🎯 Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **AI-Powered** | Generate tests automatically, detect logic drift |
+| **47 CLI Commands** | Complete command-line interface |
+| **Multi-Protocol** | REST, gRPC, WebSocket, GraphQL |
+| **Production Ready** | Parallel execution, CI/CD templates |
+| **Self-Healing** | Automatic test fixes |
+
+---
+
+## 📖 Full Guide
+
+For complete documentation, visit: **https://daironpf.github.io/socialseed-e2e/**
