@@ -510,6 +510,1051 @@ Ejecuta: e2e init para crear un proyecto
 
 ---
 
+## AI Features Commands
+
+### `manifest` - Generate AI Project Manifest
+
+Creates a comprehensive knowledge file about your project for AI agents.
+
+```bash
+e2e manifest [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--force` | Force full scan instead of smart sync |
+
+**Examples:**
+```bash
+e2e manifest                           # Generate for current project
+e2e manifest ../services/auth-service  # Generate for specific service
+e2e manifest --force                   # Force full rescan
+```
+
+---
+
+### `manifest-query` - Query Project Manifest
+
+Query the generated manifest for project information.
+
+```bash
+e2e manifest-query [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--format` | `-f` | Output format: json, markdown |
+
+**Examples:**
+```bash
+e2e manifest-query auth-service         # Query auth manifest
+e2e manifest-query -f markdown user-api # Output as Markdown
+```
+
+---
+
+### `manifest-check` - Validate Manifest Freshness
+
+Check if the manifest is up-to-date with source code.
+
+```bash
+e2e manifest-check [DIRECTORY]
+```
+
+**Examples:**
+```bash
+e2e manifest-check auth-service
+```
+
+---
+
+### `build-index` - Build Vector Index
+
+Build semantic search index for the manifest.
+
+```bash
+e2e build-index [DIRECTORY]
+```
+
+**Note:** Requires RAG extras: `e2e install-extras rag`
+
+**Examples:**
+```bash
+e2e build-index auth-service
+```
+
+---
+
+### `search` - Semantic Search
+
+Perform semantic search on the project manifest.
+
+```bash
+e2e search "QUERY" [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Service name |
+| `--top-k` | `-k` | Number of results |
+| `--type` | `-t` | Filter by type: endpoint, dto, service |
+
+**Examples:**
+```bash
+e2e search "authentication endpoints"
+e2e search "user DTO" -s user-service --type dto
+e2e search "payment" --top-k 10
+```
+
+---
+
+### `retrieve` - Retrieve Context
+
+Retrieve relevant context for a specific task.
+
+```bash
+e2e retrieve "TASK" [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Service name |
+| `--max-chunks` | `-c` | Maximum chunks to retrieve |
+
+**Examples:**
+```bash
+e2e retrieve "create user authentication tests" -s auth-service
+e2e retrieve "test payment flow" --max-chunks 3
+```
+
+---
+
+### `watch` - Watch Project Files
+
+Auto-update manifest when files change.
+
+```bash
+e2e watch [DIRECTORY]
+```
+
+**Examples:**
+```bash
+e2e watch auth-service
+```
+
+---
+
+### `discover` - Generate AI Discovery Report
+
+Create comprehensive project analysis report.
+
+```bash
+e2e discover [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--output` | `-o` | Output directory |
+| `--open` | | Open report after generation |
+
+**Examples:**
+```bash
+e2e discover
+e2e discover --open
+```
+
+---
+
+### `generate-tests` - Autonomous Test Generation
+
+Generate test suites automatically.
+
+```bash
+e2e generate-tests [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--output` | `-o` | Output directory |
+| `--service` | `-s` | Generate for specific service |
+| `--strategy` | | Strategy: valid, invalid, edge, chaos, all |
+| `--dry-run` | | Preview without creating files |
+| `--verbose` | `-v` | Verbose output |
+
+**Examples:**
+```bash
+e2e generate-tests
+e2e generate-tests --service users-api
+e2e generate-tests --dry-run
+```
+
+---
+
+### `plan-strategy` - Generate Test Strategy
+
+Create AI-driven testing strategy.
+
+```bash
+e2e plan-strategy [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--name` | `-n` | Strategy name (required) |
+| `--description` | `-d` | Strategy description |
+| `--services` | `-s` | Comma-separated services |
+| `--output` | `-o` | Output path |
+
+**Examples:**
+```bash
+e2e plan-strategy -n "API Regression"
+e2e plan-strategy -n "Critical Path" -s users,payments
+```
+
+---
+
+### `autonomous-run` - Run Tests Autonomously
+
+Execute tests with AI orchestration.
+
+```bash
+e2e autonomous-run [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | `-p` | Project directory |
+| `--strategy-id` | `-s` | Strategy ID (required) |
+| `--parallel` | `-j` | Parallel workers |
+| `--no-healing` | | Disable self-healing |
+| `--auto-fix` | | Auto-apply fixes |
+| `--verbose` | `-v` | Verbose output |
+
+**Examples:**
+```bash
+e2e autonomous-run -s abc123
+e2e autonomous-run -s abc123 --parallel 8
+```
+
+---
+
+## Testing & Debugging Commands
+
+### `doctor` - Verify Installation
+
+Verify framework installation and dependencies.
+
+```bash
+e2e doctor
+```
+
+**Examples:**
+```bash
+e2e doctor
+```
+
+---
+
+### `deep-scan` - Zero-Config Project Mapping
+
+Automatically detect tech stack and configuration.
+
+```bash
+e2e deep-scan [DIRECTORY]
+```
+
+**Examples:**
+```bash
+e2e deep-scan
+e2e deep-scan /path/to/project
+e2e deep-scan --auto-config
+```
+
+---
+
+### `observe` - Auto-Detect Services
+
+Detect running services and ports.
+
+```bash
+e2e observe [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--host` | | Host to scan (default: localhost) |
+| `--ports` | | Port range (e.g., 8000-9000) |
+| `--docker` | | Include Docker containers |
+
+**Examples:**
+```bash
+e2e observe
+e2e observe --host localhost --ports 8000-9000
+e2e observe --docker
+```
+
+---
+
+### `debug-execution` - Debug Failed Tests
+
+Analyze and debug failed test executions.
+
+```bash
+e2e debug-execution [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | `-p` | Project directory |
+| `--execution-id` | `-e` | Execution ID (required) |
+| `--apply-fix` | | Auto-apply fix |
+
+**Examples:**
+```bash
+e2e debug-execution -e exec_20240211_120000
+e2e debug-execution -e exec_20240211_120000 --apply-fix
+```
+
+---
+
+### `analyze-flaky` - Analyze Flaky Tests
+
+Identify patterns causing flaky tests.
+
+```bash
+e2e analyze-flaky [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | `-p` | Project directory |
+| `--test-file` | `-f` | Test file to analyze (required) |
+
+**Examples:**
+```bash
+e2e analyze-flaky -f services/users/modules/test_login.py
+```
+
+---
+
+### `healing-stats` - Self-Healing Statistics
+
+View statistics about self-healing test fixes.
+
+```bash
+e2e healing-stats
+```
+
+**Examples:**
+```bash
+e2e healing-stats
+```
+
+---
+
+### `regression` - AI Regression Analysis
+
+Analyze git changes and run affected tests.
+
+```bash
+e2e regression [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--base-ref` | `-b` | Base git reference (default: HEAD~1) |
+| `--target-ref` | `-t` | Target git reference (default: HEAD) |
+| `--run-tests` | | Run affected tests |
+| `--no-run-tests` | | Don't run tests |
+| `--output` | `-o` | Output report filename |
+
+**Examples:**
+```bash
+e2e regression
+e2e regression --run-tests
+e2e regression -b main -t HEAD
+```
+
+---
+
+### `semantic-analyze` - Semantic Drift Detection
+
+Detect logic drift between intended behavior and actual behavior.
+
+```bash
+e2e semantic-analyze [COMMAND]
+```
+
+**Commands:**
+- `run` - Run semantic drift analysis
+- `intents` - Extract intent baselines
+- `server` - Start gRPC server
+
+**Examples:**
+```bash
+e2e semantic-analyze run
+e2e semantic-analyze intents
+```
+
+---
+
+## Performance & Security Commands
+
+### `perf-profile` - Performance Profiling
+
+Profile test execution performance.
+
+```bash
+e2e perf-profile [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Service name |
+| `--output` | `-o` | Output directory |
+| `--threshold` | `-t` | Regression threshold % |
+| `--compare-baseline` | | Compare with baseline |
+| `--set-baseline` | | Set current as baseline |
+
+**Examples:**
+```bash
+e2e perf-profile
+e2e perf-profile -s demo-api
+e2e perf-profile --set-baseline
+```
+
+---
+
+### `perf-report` - Performance Report
+
+Generate performance analysis report.
+
+```bash
+e2e perf-report [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--output` | `-o` | Reports directory |
+| `--baseline` | `-b` | Baseline report path |
+| `--threshold` | `-t` | Regression threshold |
+| `--format` | `-f` | Format: text, json, markdown |
+
+**Examples:**
+```bash
+e2e perf-report
+e2e perf-report -f markdown
+```
+
+---
+
+### `security-test` - Security Fuzzing
+
+Run AI-driven security tests.
+
+```bash
+e2e security-test [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Service to test |
+| `--max-payloads` | `-m` | Max payloads per field |
+| `--output` | `-o` | Output report filename |
+| `--attack-types` | `-a` | Attack types: sql, nosql, xss, buffer, all |
+
+**Examples:**
+```bash
+e2e security-test
+e2e security-test --service users
+e2e security-test --attack-types sql,nosql
+```
+
+---
+
+### `red-team` - Adversarial Security Testing
+
+Run adversarial security assessments.
+
+```bash
+e2e red-team [COMMAND]
+```
+
+**Commands:**
+- `assess` - Run full assessment
+- `guardrails` - Discover security guardrails
+- `logs` - View attack logs
+- `payloads` - List attack payloads
+
+**Examples:**
+```bash
+e2e red-team assess
+e2e red-team guardrails
+e2e red-team logs
+```
+
+---
+
+## Mocking & Recording Commands
+
+### `mock-analyze` - Analyze External Dependencies
+
+Analyze project for external API dependencies.
+
+```bash
+e2e mock-analyze [DIRECTORY]
+```
+
+**Examples:**
+```bash
+e2e mock-analyze
+```
+
+---
+
+### `mock-generate` - Generate Mock Server
+
+Generate mock server for external APIs.
+
+```bash
+e2e mock-generate SERVICE [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--port` | `-p` | Mock server port |
+| `--output-dir` | `-o` | Output directory |
+| `--docker` | | Generate Docker files |
+| `--all` | | Generate all detected mocks |
+
+**Examples:**
+```bash
+e2e mock-generate stripe
+e2e mock-generate stripe --port 9000
+e2e mock-generate --all
+```
+
+---
+
+### `mock-run` - Run Mock Servers
+
+Start mock servers for testing.
+
+```bash
+e2e mock-run [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--services` | `-s` | Comma-separated services |
+| `--config` | `-c` | Config file path |
+| `--detach` | `-d` | Run in background |
+| `--port` | `-p` | Starting port |
+
+**Examples:**
+```bash
+e2e mock-run
+e2e mock-run -s stripe,aws
+e2e mock-run -d
+```
+
+---
+
+### `mock-validate` - Validate API Contracts
+
+Validate API contract against mock schema.
+
+```bash
+e2e mock-validate CONTRACT_FILE [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Service name |
+| `--verbose` | `-v` | Verbose output |
+
+**Examples:**
+```bash
+e2e mock-validate contracts/stripe.json
+e2e mock-validate contracts.json -s stripe
+```
+
+---
+
+### `recorder` - Record/Replay Sessions
+
+Commands for recording and replaying API sessions.
+
+```bash
+e2e recorder [COMMAND]
+```
+
+**Commands:**
+- `record` - Record new session
+- `replay` - Replay session
+- `convert` - Convert to test code
+
+**Examples:**
+```bash
+e2e recorder record
+e2e recorder replay
+e2e recorder convert session.json
+```
+
+---
+
+### `shadow` - Shadow Runner
+
+Capture production traffic and generate tests.
+
+```bash
+e2e shadow [COMMAND]
+```
+
+**Commands:**
+- `capture` - Capture traffic
+- `analyze` - Analyze captured traffic
+- `generate` - Generate tests from capture
+- `replay` - Replay captured traffic
+- `export-middleware` - Export middleware
+
+**Examples:**
+```bash
+e2e shadow capture myapp -u http://localhost:8000
+e2e shadow analyze
+e2e shadow generate
+```
+
+---
+
+## Import & Export Commands
+
+### `import` - Import External Formats
+
+Import tests from external formats.
+
+```bash
+e2e import [COMMAND]
+```
+
+**Commands:**
+- `postman` - Import Postman collection
+- `openapi` - Import OpenAPI spec
+- `curl` - Import curl command
+- `environment` - Import Postman environment
+
+**Examples:**
+```bash
+e2e import postman collection.json
+e2e import openapi swagger.yaml
+e2e import curl "curl -X GET http://api.example.com"
+```
+
+---
+
+### `gherkin-translate` - Convert Gherkin
+
+Convert Gherkin feature files to test code.
+
+```bash
+e2e gherkin-translate [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | `-p` | Project directory |
+| `--feature-file` | `-f` | Gherkin file (required) |
+| `--output-dir` | `-o` | Output directory |
+
+**Examples:**
+```bash
+e2e gherkin-translate -f features/login.feature
+e2e gherkin-translate -f features/ --output-dir tests/
+```
+
+---
+
+### `translate` - Natural Language to Code
+
+Translate natural language to test code.
+
+```bash
+e2e translate [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | `-p` | Project directory |
+| `--description` | `-d` | Test description (required) |
+| `--service` | `-s` | Target service |
+| `--language` | `-l` | Language: en, es, fr, de |
+| `--output` | `-o` | Output file path |
+
+**Examples:**
+```bash
+e2e translate -d "Verify user can login"
+e2e translate -d "Verificar inicio de sesión" --language es
+```
+
+---
+
+## CI/CD & Community Commands
+
+### `setup-ci` - Generate CI/CD Templates
+
+Generate pipeline templates for various platforms.
+
+```bash
+e2e setup-ci [PLATFORM] [OPTIONS]
+```
+
+**Platforms:** github, gitlab, jenkins, azure, circleci, travis, bitbucket, all
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--force` | Overwrite existing files |
+
+**Examples:**
+```bash
+e2e setup-ci github
+e2e setup-ci all
+e2e setup-ci gitlab --force
+```
+
+---
+
+### `community` - Community Hub
+
+Community marketplace commands.
+
+```bash
+e2e community [COMMAND]
+```
+
+**Commands:**
+- `templates` - List available templates
+- `plugins` - List plugins
+- `install-template` - Install a template
+- `install-plugin` - Install a plugin
+- `publish-template` - Publish template
+
+**Examples:**
+```bash
+e2e community templates
+e2e community plugins
+```
+
+---
+
+## Additional Commands
+
+### `install-demo` - Install Demo APIs
+
+Install demo APIs and example services.
+
+```bash
+e2e install-demo [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--force` | Overwrite existing files |
+
+**Examples:**
+```bash
+e2e install-demo
+e2e install-demo --force
+```
+
+---
+
+### `install-extras` - Install Optional Dependencies
+
+Install optional feature packages.
+
+```bash
+e2e install-extras [EXTRA] [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--list` | List available extras |
+| `--all` | Install all extras |
+
+**Available Extras:**
+- `tui` - Terminal User Interface
+- `rag` - Semantic search and RAG
+- `grpc` - gRPC protocol support
+- `full` - All optional features
+
+**Examples:**
+```bash
+e2e install-extras --list
+e2e install-extras rag
+e2e install-extras tui
+e2e install-extras full
+```
+
+---
+
+### `telemetry` - Token Usage Monitoring
+
+Monitor LLM token usage and costs.
+
+```bash
+e2e telemetry [COMMAND]
+```
+
+**Commands:**
+- `baseline` - Save current metrics as baseline
+- `budget` - Manage token budgets
+- `monitor` - Start monitoring
+- `report` - View telemetry report
+
+**Examples:**
+```bash
+e2e telemetry budget status
+e2e telemetry baseline
+e2e telemetry report
+```
+
+---
+
+### `ai-learning` - AI Learning Feedback
+
+AI learning and feedback loop commands.
+
+```bash
+e2e ai-learning [COMMAND]
+```
+
+**Commands:**
+- `feedback` - View collected feedback
+- `train` - Train AI model
+- `adapt` - Get adaptation suggestions
+- `optimize` - Optimize test order
+
+**Examples:**
+```bash
+e2e ai-learning feedback
+e2e ai-learning train
+e2e ai-learning optimize
+```
+
+---
+
+### `dashboard` - Launch Web Dashboard
+
+Launch interactive web dashboard.
+
+```bash
+e2e dashboard [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--port` | | Port number (default: 8501) |
+| `--host` | | Host address |
+| `--no-browser` | | Don't open browser |
+
+**Examples:**
+```bash
+e2e dashboard
+e2e dashboard --port 8080
+e2e dashboard --no-browser
+```
+
+---
+
+### `tui` - Launch Terminal Interface
+
+Launch Rich terminal interface.
+
+```bash
+e2e tui
+```
+
+**Note:** Requires TUI extras: `e2e install-extras tui`
+
+**Examples:**
+```bash
+e2e tui
+```
+
+---
+
+### `set` - Configuration Management
+
+Manage service configuration.
+
+```bash
+e2e set [COMMAND]
+```
+
+**Commands:**
+- `show` - Show current configuration
+- `url` - Set service URL
+
+**Examples:**
+```bash
+e2e set show
+e2e set url auth_service http://localhost:8080
+```
+
+---
+
+### `lint` - Validate Test Files
+
+Validate test files for common issues.
+
+```bash
+e2e lint [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | `-p` | Project directory |
+| `--service` | `-s` | Validate specific service |
+
+**Examples:**
+```bash
+e2e lint
+e2e lint --service auth_service
+```
+
+---
+
+### `new-service` - Create Service
+
+Create new service with scaffolding.
+
+```bash
+e2e new-service NAME [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--base-url` | | Base URL for service |
+| `--force` | | Overwrite existing |
+
+**Examples:**
+```bash
+e2e new-service users-api
+e2e new-service payments --base-url http://localhost:8080
+```
+
+---
+
+### `new-test` - Create Test Module
+
+Create new test module.
+
+```bash
+e2e new-test NAME [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Target service (required) |
+| `--module` | `-m` | Module name |
+
+**Examples:**
+```bash
+e2e new-test login --service users-api
+e2e new-test register -s auth-api -m 02_registration
+```
+
+---
+
+### `init` - Initialize Project
+
+Initialize new E2E project.
+
+```bash
+e2e init [DIRECTORY] [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--force` | Overwrite existing files |
+
+**Examples:**
+```bash
+e2e init
+e2e init my-project
+e2e init --force
+```
+
+---
+
+### `run` - Execute Tests
+
+Run E2E tests.
+
+```bash
+e2e run [OPTIONS]
+```
+
+**Options:**
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--service` | `-s` | Run for specific service |
+| `--module` | `-m` | Run specific module |
+| `--output` | `-o` | Output format: json, html, junit |
+| `--report` | | Generate report |
+| `--verbose` | `-v` | Verbose output |
+| `--parallel` | `-j` | Parallel workers |
+| `--debug` | | Debug mode |
+| `--trace` | | Enable traceability |
+
+**Examples:**
+```bash
+e2e run
+e2e run --service users-api
+e2e run -s auth-api -m 01_login -v
+e2e run --report html
+```
+
+---
+
+### `config` - Show Configuration
+
+Display current configuration.
+
+```bash
+e2e config
+```
+
+---
+
 ## Error Messages and Solutions
 
 ### Common Errors
