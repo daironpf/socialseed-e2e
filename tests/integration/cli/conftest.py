@@ -10,6 +10,19 @@ import pytest
 from click.testing import CliRunner
 
 
+@pytest.fixture(autouse=True)
+def reset_config_loader():
+    """Reset the config loader between tests to avoid state leakage."""
+    from socialseed_e2e.core.config_loader import ApiConfigLoader
+
+    # Reset the singleton before and after each test
+    ApiConfigLoader._instance = None
+    ApiConfigLoader._config_path = None
+    yield
+    ApiConfigLoader._instance = None
+    ApiConfigLoader._config_path = None
+
+
 @pytest.fixture
 def cli_runner():
     """Provide a CliRunner instance."""
