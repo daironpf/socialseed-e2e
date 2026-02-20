@@ -10,6 +10,14 @@ Usage:
     # Returns the click command for 'init'
 
 Commands can be loaded dynamically for lazy loading.
+
+Structure:
+    commands/
+    ├── __init__.py          # Command registry
+    ├── template_cmd.py      # Template for new commands
+    ├── init_cmd.py          # init command
+    ├── doctor_cmd.py        # doctor command
+    └── ...
 """
 
 from typing import Callable, Dict, Optional
@@ -52,26 +60,45 @@ def list_commands() -> list:
 
 
 # Import all commands to register them
-# Using lazy imports to avoid circular dependencies
+# These will register themselves via the get_command() function
+# Note: This is for future use when commands are migrated
 def _load_commands():
     """Load all commands from submodules."""
     global _COMMANDS
 
     # Import available commands
-    # These will register themselves via the @register decorator
+    # Each module should define get_command() function
     try:
         from socialseed_e2e.commands import init_cmd
-        from socialseed_e2e.commands import doctor_cmd
+
+        _COMMANDS["init"] = init_cmd.get_command
     except ImportError:
-        pass  # Commands not available yet
+        pass
+
+    try:
+        from socialseed_e2e.commands import doctor_cmd
+
+        _COMMANDS["doctor"] = doctor_cmd.get_command
+    except ImportError:
+        pass
 
 
 # Load commands on first access
 _load_commands()
 
 
+def discover_commands():
+    """Manually discover all available commands.
+
+    Returns:
+        Dict of command name to command function
+    """
+    return dict(_COMMANDS)
+
+
 __all__ = [
     "get_command",
     "list_commands",
     "register",
+    "discover_commands",
 ]
