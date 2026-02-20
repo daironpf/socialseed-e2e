@@ -10,13 +10,13 @@
 
 **socialseed-e2e** es un framework de testing E2E extremely ambitious con 47+ comandos CLI y 60+ módulos. El proyecto demuestra una visión comprehensiva pero presenta desafíos arquitectónicos significativos que deben abordarse para alcanzar producción.
 
-### Calificación General: 6.5/10
+### Calificación General: 7.0/10 (improved from 6.5)
 
 | Aspecto | Calificación | Notas |
 |---------|-------------|-------|
 | Arquitectura Core | 7/10 | Sólida base hexagonal |
-| CLI Design | 4/10 | Monolítico (8245 líneas) |
-| Dependencias | 5/10 | Demasiadas obligatorias |
+| CLI Design | 4/10 | Monolítico (8245 líneas) - PENDIENTE |
+| Dependencias | 8/10 | ✅ Mejoradas - ahora opcionales |
 | Documentación | 8/10 | Excelente para usuarios |
 | Testing | 7/10 | Suite amplia pero lenta |
 | Seguridad | 6/10 | 基本OK, few gaps |

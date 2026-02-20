@@ -1,0 +1,13 @@
+{
+  "version": "2.0",
+  "project_name": "{{project_name}}",
+  "project_root": "/tmp/test-agent-full",
+  "generated_at": "2026-02-20T04:48:23.112619",
+  "last_updated": "2026-02-20T04:48:23.112631",
+  "services": [],
+  "file_metadata": {},
+  "source_hashes": {},
+  "manifest_freshness": "fresh",
+  "global_env_vars": [],
+  "metadata": {}
+}
