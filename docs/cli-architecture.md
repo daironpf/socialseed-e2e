@@ -7,8 +7,8 @@ This document describes the CLI architecture of socialseed-e2e and how to extend
 ## Overview
 
 The CLI is built with Click and provides 47+ commands for managing E2E tests. The architecture supports both:
-- **Monolithic mode**: All commands in `cli.py` (current default)
-- **Modular mode**: Commands in separate files (future)
+- **Monolithic mode**: All commands in `cli.py` (legacy)
+- **Modular mode**: Commands in separate files (current - 30+ commands extracted)
 
 ---
 
@@ -16,13 +16,22 @@ The CLI is built with Click and provides 47+ commands for managing E2E tests. Th
 
 ```
 src/socialseed_e2e/
-├── cli.py                    # Main CLI entry point (8245 lines)
+├── cli.py                    # Main CLI entry point (8371 lines, migrating)
 ├── __main__.py              # Package entry point
-├── commands/                # Modular commands package (NEW)
-│   ├── __init__.py         # Command registry
-│   ├── init_cmd.py         # Example: init command
-│   └── template_cmd.py     # Template for new commands
-└── commands/                # More command modules...
+├── commands/                # Modular commands package (30+ files)
+│   ├── __init__.py         # Command registry with lazy loading
+│   ├── init_cmd.py         # init command
+│   ├── doctor_cmd.py       # doctor command
+│   ├── config_cmd.py       # config command
+│   ├── new_service_cmd.py  # new-service command
+│   ├── new_test_cmd.py     # new-test command
+│   ├── ai_commands.py      # AI commands (generate-tests, etc.)
+│   ├── manifest_cmd.py    # manifest commands
+│   ├── mock_cmd.py        # mock commands
+│   ├── recorder_cmd.py     # recorder commands
+│   ├── shadow_cmd.py      # shadow commands
+│   ├── discover_cmd.py    # discover, deep-scan commands
+│   └── template_cmd.py    # Template for new commands
 ```
 
 ---

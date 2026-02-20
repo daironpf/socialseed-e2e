@@ -72,7 +72,54 @@ services/<nombre>/
 - Las pages deben heredar de `BasePage` en `core.base_page`
 - Usar `TYPE_CHECKING` para importaciones circulares
 
-## Comandos CLI Disponibles (47)
+### Estructura de Comandos CLI Modulares
+Los comandos se organizan en archivos separados en `commands/`:
+```
+src/socialseed_e2e/commands/
+├── __init__.py              # Registro con lazy loading
+├── init_cmd.py               # Comando init
+├── doctor_cmd.py             # Comando doctor
+├── config_cmd.py             # Comando config
+├── new_service_cmd.py        # Comando new-service
+├── new_test_cmd.py           # Comando new-test
+├── ai_commands.py            # Comandos AI (generate-tests, etc.)
+├── manifest_cmd.py           # Comandos manifest
+├── mock_cmd.py              # Comandos mock
+├── recorder_cmd.py           # Comandos recorder
+├── shadow_cmd.py            # Comandos shadow
+└── template_cmd.py          # Plantilla para nuevos comandos
+```
+
+#### Patrón para Nuevos Comandos
+Cada comando sigue el patrón POO/SOLID:
+```python
+# commands/<nombre>_cmd.py
+import click
+from rich.console import Console
+
+console = Console()
+
+class MiComando:
+    """Maneja la lógica del comando (Single Responsibility)."""
+    
+    def __init__(self, opciones):
+        self.opciones = opciones
+    
+    def ejecutar(self):
+        """Ejecuta la lógica del comando."""
+        pass
+
+@click.command(name="mi-comando")
+@click.option("--opcion", help="Descripción")
+def get_mi_comando_command(opcion: str):
+    """Descripción del comando."""
+    comando = MiComando(opcion)
+    comando.ejecutar()
+
+mi_comando_command = get_mi_comando_command()
+```
+
+## Comandos CLI Disponibles (60+)
 
 ### Comandos Principales
 ```bash
