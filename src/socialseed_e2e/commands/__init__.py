@@ -10,25 +10,21 @@ Usage:
     # Returns the click command for 'init'
 
 Commands can be loaded dynamically for lazy loading to improve startup time.
-
-Structure:
-    commands/
-    ├── __init__.py          # Command registry with lazy loading
-    ├── template_cmd.py      # Template for new commands
-    ├── init_cmd.py          # init command
-    ├── doctor_cmd.py        # doctor command
-    └── ...
+The lazy loading system auto-discovers commands from the commands directory.
 """
 
 import importlib
 import logging
-from typing import Callable, Dict, Optional
+import os
+from pathlib import Path
+from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 # Command registry with lazy loading
 _COMMAND_LOADERS: Dict[str, Callable[[], Callable]] = {}
 _LOADED_COMMANDS: Dict[str, Callable] = {}
+_DISCOVERED_COMMANDS: Optional[List[str]] = None
 
 
 def register(name: str) -> Callable:
@@ -87,24 +83,101 @@ def _lazy_import_command(name: str) -> Optional[Callable]:
     Returns:
         Command function or None if not found
     """
-    module_name = f"{name}_cmd"
+    # Skip commands that might trigger execution on import
+    skip_on_import = [
+        "discover",
+        "deep-scan",
+        "regression",
+        "manifest",
+        "build-index",
+        "generate-tests",
+    ]
+    if name in skip_on_import:
+        # Just return None - these commands need special handling
+        return None
+
+    # Handle command groups (e.g., "mock-analyze" -> "mock_cmd")
+    module_name = name.replace("-", "_") + "_cmd"
+
+    # Map command names to module names for special cases
+    command_to_module = {
+        "mock-analyze": "mock_cmd",
+        "mock-generate": "mock_cmd",
+        "mock-run": "mock_cmd",
+        "mock-validate": "mock_cmd",
+        "deep-scan": "discover_cmd",
+        "new-service": "new_service_cmd",
+        "new-test": "new_test_cmd",
+        "install-demo": "install_demo_cmd",
+        "install-extras": "install_extras_cmd",
+        "setup-ci": "setup_ci_cmd",
+        "plan-strategy": "ai_commands",
+        "generate-tests": "ai_commands",
+        "autonomous-run": "ai_commands",
+        "translate": "ai_commands",
+        "gherkin-translate": "ai_commands",
+        "perf-profile": "perf_cmd",
+        "perf-report": "perf_cmd",
+        "ai-learning": "learning_cmd",
+        "import-cmd": "import_cmd",
+    }
+
+    if name in command_to_module:
+        module_name = command_to_module[name]
 
     try:
-        # Try to import the command module
+        # Import the module
         module = importlib.import_module(f"socialseed_e2e.commands.{module_name}")
 
-        # Look for get_<command>_command function
-        func_name = f"get_{name}_command"
-        if hasattr(module, func_name):
-            loader = getattr(module, func_name)
-            command = loader()
-            _LOADED_COMMANDS[name] = command
-            return command
+        # For commands in ai_commands module, the function IS the Click command
+        # Don't call it, just return it
+        ai_commands = {
+            "generate-tests": "get_generate_tests_command",
+            "plan-strategy": "get_plan_strategy_command",
+            "autonomous-run": "get_autonomous_run_command",
+            "translate": "get_translate_command",
+            "gherkin-translate": "get_gherkin_translate_command",
+        }
 
-        # Look for command directly
+        if name in ai_commands:
+            func_name = ai_commands[name]
+            if hasattr(module, func_name):
+                cmd_func = getattr(module, func_name)
+                # Don't call it - the decorated function IS the command
+                _LOADED_COMMANDS[name] = cmd_func
+                return cmd_func
+
+        # Look for get_<command>_command function - this returns a Click command
+        func_name = f"get_{name.replace('-', '_')}_command"
+
+        # Handle group commands (like recorder, shadow, community)
+        group_func_name = f"get_{name.replace('-', '_')}_group"
+
+        for try_func in [func_name, group_func_name]:
+            if hasattr(module, try_func):
+                loader = getattr(module, try_func)
+                # Call it to get the Click command
+                command = loader()
+                _LOADED_COMMANDS[name] = command
+                return command
+
+        # Handle telemetry group special case
+        if name == "telemetry":
+            if hasattr(module, "get_telemetry_group"):
+                command = getattr(module, "get_telemetry_group")()
+                _LOADED_COMMANDS[name] = command
+                return command
+
+        # Look for command directly in module (like init_cmd.init_command)
         if hasattr(module, "command"):
             _LOADED_COMMANDS[name] = module.command
             return module.command
+
+        # Look for <name>_command in module (like init_cmd.init_command)
+        direct_name = name.replace("-", "_") + "_command"
+        if hasattr(module, direct_name):
+            _LOADED_COMMANDS[name] = getattr(module, direct_name)
+            return getattr(module, direct_name)
 
     except ImportError:
         pass
@@ -112,69 +185,55 @@ def _lazy_import_command(name: str) -> Optional[Callable]:
     return None
 
 
-def list_commands() -> list:
-    """List all registered commands (including lazy-loaded)."""
-    # Combine registered loaders with discovered commands
-    commands = set(_COMMAND_LOADERS.keys())
+def discover_commands() -> List[str]:
+    """Return list of known commands.
 
-    # Try to discover more commands
-    common_commands = [
+    This uses pre-registered commands to avoid importing modules
+    that have side-effects when loaded.
+
+    Returns:
+        List of known command names
+    """
+    global _DISCOVERED_COMMANDS
+
+    if _DISCOVERED_COMMANDS is not None:
+        return _DISCOVERED_COMMANDS
+
+    # Pre-registered commands via @register decorator
+    commands = list(_COMMAND_LOADERS.keys())
+
+    # Add known working commands
+    known_commands = [
         "init",
         "doctor",
+        "config",
+        "lint",
         "run",
         "new-service",
         "new-test",
-        "config",
-        "lint",
-        "set",
         "install-demo",
         "install-extras",
         "setup-ci",
         "dashboard",
         "tui",
-        "telemetry",
+        "observe",
         "perf-profile",
         "perf-report",
-        "generate-tests",
-        "analyze-flaky",
-        "autonomous-run",
-        "debug-execution",
-        "healing-stats",
-        "semantic-analyze",
-        "plan-strategy",
-        "translate",
-        "gherkin-translate",
-        "deep-scan",
-        "observe",
-        "discover",
-        "watch",
-        "manifest",
-        "manifest-query",
-        "manifest-check",
-        "build-index",
-        "search",
-        "retrieve",
-        "mock-analyze",
-        "mock-generate",
-        "mock-run",
-        "mock-validate",
         "security-test",
-        "red-team",
-        "recorder",
-        "shadow",
-        "community",
-        "import-cmd",
-        "regression",
-        "ai-learning",
     ]
 
-    for cmd in common_commands:
-        if cmd not in _LOADED_COMMANDS:
-            # Try lazy import
-            if _lazy_import_command(cmd):
-                commands.add(cmd)
+    for cmd in known_commands:
+        if cmd not in commands:
+            commands.append(cmd)
 
-    return sorted(commands)
+    _DISCOVERED_COMMANDS = commands
+    return commands
+
+
+def list_commands() -> list:
+    """List all registered commands (including lazy-loaded)."""
+    # Use auto-discovery
+    return discover_commands()
 
 
 def preload_commands(commands: Optional[list] = None) -> None:
@@ -184,7 +243,16 @@ def preload_commands(commands: Optional[list] = None) -> None:
         commands: List of command names to preload. If None, preload common commands.
     """
     if commands is None:
-        commands = ["init", "doctor", "run", "config", "lint"]
+        # Preload most commonly used commands
+        commands = [
+            "init",
+            "doctor",
+            "run",
+            "config",
+            "lint",
+            "new-service",
+            "new-test",
+        ]
 
     for name in commands:
         get_command(name)
@@ -195,8 +263,9 @@ def clear_cache() -> None:
 
     Useful for testing or forcing reload of commands.
     """
-    global _LOADED_COMMANDS
+    global _LOADED_COMMANDS, _DISCOVERED_COMMANDS
     _LOADED_COMMANDS.clear()
+    _DISCOVERED_COMMANDS = None
 
 
 def get_command_count() -> int:
@@ -204,24 +273,34 @@ def get_command_count() -> int:
     return len(_COMMAND_LOADERS) + len(_LOADED_COMMANDS)
 
 
-# Initialize with common command loaders
+# Initialize with common command loaders using the @register decorator
 # These will be loaded on-demand
-def _init_command_loaders():
-    """Initialize command loaders for lazy loading."""
-    global _COMMAND_LOADERS
+@register("init")
+def _load_init():
+    from socialseed_e2e.commands.init_cmd import init_command
 
-    # Define loaders for available commands
-    loaders = {
-        "init": lambda: importlib.import_module("socialseed_e2e.commands.init_cmd"),
-        "doctor": lambda: importlib.import_module("socialseed_e2e.commands.doctor_cmd"),
-    }
-
-    for name, loader in loaders.items():
-        _COMMAND_LOADERS[name] = loader
+    return init_command
 
 
-# Initialize on import
-_init_command_loaders()
+@register("doctor")
+def _load_doctor():
+    from socialseed_e2e.commands.doctor_cmd import doctor_command
+
+    return doctor_command
+
+
+@register("config")
+def _load_config():
+    from socialseed_e2e.commands.config_cmd import get_config_command
+
+    return get_config_command()
+
+
+@register("lint")
+def _load_lint():
+    from socialseed_e2e.commands.lint_cmd import get_lint_command
+
+    return get_lint_command()
 
 
 __all__ = [
@@ -231,4 +310,5 @@ __all__ = [
     "preload_commands",
     "clear_cache",
     "get_command_count",
+    "discover_commands",
 ]
