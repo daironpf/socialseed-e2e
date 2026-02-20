@@ -505,17 +505,91 @@ services:
 
 ## 🎯 CLI Commands
 
+### Core Commands
 ```bash
 e2e init [dir]              # Initialize project
 e2e new-service <name>      # Create service structure
 e2e new-test <name>         # Create test module
 e2e run                     # Run all tests
-e2e setup-ci <platform>     # Generate CI/CD pipelines
-e2e manifest                # Generate API knowledge
-e2e search "auth"           # Semantic search (RAG)
-e2e build-index             # Build vector index
-e2e watch                   # Auto-update on changes
+e2e lint                    # Validate test files
+e2e config                  # Show configuration
 ```
+
+### AI Features
+```bash
+e2e manifest                # Generate API knowledge manifest
+e2e manifest-query          # Query manifest
+e2e build-index            # Build vector index for semantic search
+e2e search "query"         # Semantic search (RAG)
+e2e retrieve "task"        # Retrieve context for task
+e2e watch                  # Auto-update manifest on file changes
+e2e discover               # Generate AI Discovery Report
+e2e generate-tests         # Autonomous test generation
+e2e plan-strategy          # Generate test strategy
+e2e autonomous-run         # Run tests with AI orchestration
+```
+
+### Testing & Debugging
+```bash
+e2e doctor                 # Verify installation
+e2e deep-scan              # Zero-config project mapping
+e2e observe                # Auto-detect services and ports
+e2e debug-execution        # Debug failed tests with AI
+e2e analyze-flaky         # Analyze flaky test patterns
+e2e healing-stats          # View self-healing statistics
+e2e regression             # AI regression analysis
+e2e semantic-analyze       # Semantic drift detection
+```
+
+### Performance & Security
+```bash
+e2e perf-profile           # Performance profiling
+e2e perf-report           # Generate performance report
+e2e security-test          # AI-driven security fuzzing
+e2e red-team assess        # Adversarial security testing
+```
+
+### Mocking & Recording
+```bash
+e2e mock-analyze          # Analyze external API dependencies
+e2e mock-generate <svc>   # Generate mock server
+e2e mock-run              # Run mock servers
+e2e mock-validate         # Validate API contracts
+e2e recorder record        # Record API session
+e2e recorder replay       # Replay session
+e2e shadow capture        # Capture production traffic
+```
+
+### Import & Export
+```bash
+e2e import postman <file> # Import Postman collection
+e2e import openapi <file> # Import OpenAPI spec
+e2e import curl <cmd>      # Import curl command
+e2e gherkin-translate     # Convert Gherkin to tests
+e2e translate             # Natural language to test code
+```
+
+### CI/CD & Community
+```bash
+e2e setup-ci <platform>   # Generate CI/CD templates
+e2e community templates   # List community templates
+e2e community plugins     # List plugins
+```
+
+### Additional Commands
+```bash
+e2e install-demo          # Install demo APIs
+e2e install-extras       # Install optional dependencies
+e2e telemetry             # Token usage monitoring
+e2e ai-learning feedback  # View AI feedback
+e2e dashboard             # Launch web dashboard
+e2e tui                  # Launch terminal interface
+e2e set url <svc> <url>  # Configure service URL
+e2e --version            # Show version
+```
+
+### Full Command Reference
+See [docs/cli-reference.md](docs/cli-reference.md) for complete documentation.
 
 ---
 
