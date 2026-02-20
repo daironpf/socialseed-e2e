@@ -538,7 +538,7 @@ class ApiConfigLoader:
         )
 
         # Services
-        services_data = data.get("services", {})
+        services_data = data.get("services") or {}
         for service_name, service_data in services_data.items():
             # Normalize service name (convert hyphens to underscores)
             normalized_name = normalize_service_name(service_name)
@@ -558,7 +558,7 @@ class ApiConfigLoader:
             )
 
         # Databases
-        databases_data = data.get("databases", {})
+        databases_data = data.get("databases") or {}
         for db_name, db_data in databases_data.items():
             config.databases[db_name] = DatabaseConfig(
                 host=db_data.get("host", "localhost"),

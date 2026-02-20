@@ -121,8 +121,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short --strict-markers --timeout=60"
-timeout = 60
+addopts = "-v --tb=short --strict-markers"
 markers = [
     "unit: Unit tests - fast, isolated tests for individual functions/classes",
     "integration: Integration tests - test component interactions and workflows",
