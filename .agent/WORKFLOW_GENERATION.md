@@ -53,7 +53,7 @@ Antes de empezar, pregunta al usuario:
 Sigue los pasos de esta guía normalmente.
 
 ### Si es gRPC
-Lee primero: **GRPC_AGENT_GUIDE.md.template**
+Lee primero: **GRPC_TESTING.md** (guía completa de testing gRPC)
 
 Pasos adicionales para gRPC:
 1. Solicitar archivo .proto

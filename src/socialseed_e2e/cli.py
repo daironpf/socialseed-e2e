@@ -1455,6 +1455,12 @@ def new_test(name: str, service: str, description: str, force: bool):
     is_flag=True,
     help="Disable AI agent features (boring mode). No external LLM calls will be made",
 )
+@click.option(
+    "--watch",
+    "-w",
+    is_flag=True,
+    help="Watch for file changes and re-run tests automatically",
+)
 def run(
     service: Optional[str],
     module: Optional[str],
@@ -1475,6 +1481,7 @@ def run(
     debug: bool,
     skip_unhealthy: bool,
     no_agent: bool,
+    watch: bool,
 ):
     """Execute E2E tests.
 
@@ -1720,24 +1727,27 @@ def run(
                 # Generate report
                 from socialseed_e2e.reporting import TestSuiteReport
 
-                report: TestSuiteReport = collector.generate_report()
+                test_suite_report: TestSuiteReport = collector.generate_report()
                 generator = HTMLReportGenerator()
 
                 import os
 
                 os.makedirs(report_dir, exist_ok=True)
                 report_path = generator.generate(
-                    report, output_path=os.path.join(report_dir, "report.html")
+                    test_suite_report,
+                    output_path=os.path.join(report_dir, "report.html"),
                 )
 
                 console.print(f"[green]✓ HTML report generated:[/green] {report_path}")
 
                 # Also export CSV and JSON
                 csv_path = generator.export_to_csv(
-                    report, output_path=os.path.join(report_dir, "report.csv")
+                    test_suite_report,
+                    output_path=os.path.join(report_dir, "report.csv"),
                 )
                 json_path = generator.export_to_json(
-                    report, output_path=os.path.join(report_dir, "report.json")
+                    test_suite_report,
+                    output_path=os.path.join(report_dir, "report.json"),
                 )
 
                 console.print(f"[green]✓ CSV report:[/green] {csv_path}")
@@ -1782,6 +1792,63 @@ def run(
                     import traceback
 
                     console.print(traceback.format_exc())
+
+        # Handle watch mode for hot reload
+        if watch:
+            try:
+                from socialseed_e2e.project_manifest.file_watcher import FileWatcher
+
+                console.print("\n🔄 [bold cyan]Watch Mode Enabled[/bold cyan]")
+                console.print("   Watching for file changes... Press Ctrl+C to stop\n")
+
+                # Watch services directory for changes
+                watcher = FileWatcher(
+                    project_root=services_path,
+                    file_patterns=["**/*.py"],
+                )
+
+                def on_change(event_type: str, file_path: str):
+                    console.print(
+                        f"\n📝 [yellow]File {event_type}:[/yellow] {file_path}"
+                    )
+                    console.print("   Re-running tests...\n")
+
+                watcher.add_callback(on_change)
+                watcher.start()
+
+                # Run tests in a loop until stopped
+                while True:
+                    try:
+                        import time
+
+                        # Re-run tests
+                        results = run_tests_func(
+                            services_path=services_path,
+                            specific_service=service,
+                            specific_module=module,
+                            verbose=verbose,
+                            debug=debug,
+                            no_agent=no_agent,
+                            include_tags=list(include_tags) if include_tags else None,
+                            exclude_tags=list(exclude_tags) if exclude_tags else None,
+                        )
+                        all_passed = print_summary(results)
+                        console.print(
+                            "\n🔄 [cyan]Waiting for changes... (Ctrl+C to stop)[/cyan]\n"
+                        )
+                        time.sleep(2)
+                    except KeyboardInterrupt:
+                        break
+
+                watcher.stop()
+                console.print("\n👋 [yellow]Watch mode stopped[/yellow]")
+                sys.exit(0 if all_passed else 1)
+
+            except ImportError:
+                console.print(
+                    "[yellow]⚠ Watch mode requires watchdog package: pip install watchdog[/yellow]"
+                )
+                sys.exit(1)
 
         # Exit with appropriate code
         sys.exit(0 if all_passed else 1)
@@ -2445,9 +2512,9 @@ def manifest(directory: str, force: bool):
     """Generate AI Project Manifest for token optimization.
 
     Analyzes the microservice and generates project_knowledge.json in the
-    framework's manifests folder (not in the microservice directory).
+    project's .e2e/manifests/ directory.
 
-    The manifest is stored at: <framework_root>/manifests/<service_name>/project_knowledge.json
+    The manifest is stored at: <project_root>/.e2e/manifests/<service_name>/project_knowledge.json
 
     This allows AI agents to understand the microservice structure without
     cluttering the microservice's own directory.
@@ -2464,8 +2531,18 @@ def manifest(directory: str, force: bool):
         sys.exit(1)
 
     service_name = get_service_name_from_path(target_path)
-    framework_root = get_framework_root()
-    manifest_dir = framework_root / "manifests" / service_name
+
+    # Use project directory for manifest (where e2e.conf is located)
+    # Default to current working directory if no e2e.conf found
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        # Try parent directory
+        project_root = project_root.parent
+        config_path = project_root / "e2e.conf"
+
+    # Unified manifest location: <project_root>/.e2e/manifests/<service>/
+    manifest_dir = project_root / ".e2e" / "manifests" / service_name
     manifest_path = manifest_dir / "project_knowledge.json"
 
     console.print("\n📚 [bold cyan]Generating AI Project Manifest[/bold cyan]")
@@ -2546,11 +2623,15 @@ def manifest_query(directory: str, format: str):
         console.print("Example: e2e manifest-query auth-service")
         sys.exit(1)
 
-    framework_root = get_framework_root()
+    # Use project directory for manifest
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        project_root = project_root.parent
     manifest_path = (
-        framework_root / "manifests" / service_name / "project_knowledge.json"
+        project_root / ".e2e" / "manifests" / service_name / "project_knowledge.json"
     )
-    target_path = framework_root / "manifests" / service_name
+    target_path = project_root / ".e2e" / "manifests" / service_name
 
     if not manifest_path.exists():
         console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
@@ -2598,8 +2679,12 @@ def manifest_check(directory: str):
         console.print("Example: e2e manifest-check auth-service")
         sys.exit(1)
 
-    framework_root = get_framework_root()
-    manifest_dir = framework_root / "manifests" / service_name
+    # Use project directory for manifest
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        project_root = project_root.parent
+    manifest_dir = project_root / ".e2e" / "manifests" / service_name
     manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():
@@ -2685,8 +2770,12 @@ def watch(directory: str):
         console.print("Example: e2e watch auth-service")
         sys.exit(1)
 
-    framework_root = get_framework_root()
-    manifest_dir = framework_root / "manifests" / service_name
+    # Use project directory for manifest
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        project_root = project_root.parent
+    manifest_dir = project_root / ".e2e" / "manifests" / service_name
     manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():
@@ -2745,8 +2834,12 @@ def search(query: str, service: str, top_k: int, type: str):
         console.print("Example: e2e search authentication -s auth-service")
         sys.exit(1)
 
-    framework_root = get_framework_root()
-    manifest_dir = framework_root / "manifests" / service
+    # Use project directory for manifest
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        project_root = project_root.parent
+    manifest_dir = project_root / ".e2e" / "manifests" / service
 
     if not manifest_dir.exists():
         console.print(f"[red]❌ Error:[/red] Manifest not found for service: {service}")
@@ -2810,8 +2903,12 @@ def retrieve(task: str, service: str, max_chunks: int):
         console.print("Example: e2e retrieve 'create auth tests' -s auth-service")
         sys.exit(1)
 
-    framework_root = get_framework_root()
-    manifest_dir = framework_root / "manifests" / service
+    # Use project directory for manifest
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        project_root = project_root.parent
+    manifest_dir = project_root / ".e2e" / "manifests" / service
 
     if not manifest_dir.exists():
         console.print(f"[red]❌ Error:[/red] Manifest not found for service: {service}")
@@ -2864,8 +2961,12 @@ def build_index(directory: str):
         console.print("Example: e2e build-index auth-service")
         sys.exit(1)
 
-    framework_root = get_framework_root()
-    manifest_dir = framework_root / "manifests" / service_name
+    # Use project directory for manifest
+    project_root = Path.cwd()
+    config_path = project_root / "e2e.conf"
+    if not config_path.exists():
+        project_root = project_root.parent
+    manifest_dir = project_root / ".e2e" / "manifests" / service_name
     manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():

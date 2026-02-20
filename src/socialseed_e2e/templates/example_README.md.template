@@ -36,6 +36,46 @@ pytest tests/example_test.py -v
 2. Tests run against the mock server
 3. Results are displayed in the console
 
+---
+
+## 🌀 Demo APIs Available
+
+Install additional demo APIs with different protocols:
+
+```bash
+e2e install-demo
+```
+
+This installs demo APIs in the `demos/` folder:
+
+| API | Port | Protocol | Description |
+|-----|------|----------|-------------|
+| REST | 5000 | HTTP | Basic CRUD operations |
+| gRPC | 50051 | Protocol Buffers | gRPC service |
+| WebSocket | 50052 | WS | Real-time messaging |
+| Auth | 5003 | HTTP | JWT Bearer authentication |
+
+### Running Demo APIs
+
+```bash
+# REST Demo
+python demos/rest/api-rest-demo.py
+
+# gRPC Demo (requires: pip install grpcio grpcio-tools)
+python demos/grpc/api-grpc-demo.py
+
+# WebSocket Demo (requires: pip install aiohttp)
+python demos/websocket/api-websocket-demo.py
+
+# Auth Demo (requires: pip install pyjwt cryptography)
+python demos/auth/api-auth-demo.py
+```
+
+### Demo Credentials (Auth API)
+- Admin: `admin` / `admin123`
+- User: `user1` / `user123`
+- Moderator: `moderator1` / `mod123`
+
 ## 📁 Project Structure
 
 ```
