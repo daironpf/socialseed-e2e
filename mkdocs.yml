@@ -1,0 +1,109 @@
+# Project documentation configuration for MkDocs
+
+site_name: SocialSeed E2E
+site_description: "E2E Testing Framework for REST APIs"
+site_author: "Dairon Pérez"
+site_url: "https://github.com/daironpf/socialseed-e2e"
+
+# Repository
+repo_name: "socialseed-e2e"
+repo_url: "https://github.com/daironpf/socialseed-e2e"
+edit_uri: "edit/main/docs/"
+
+# Copyright
+copyright: "Copyright &copy; 2024 Dairon Pérez"
+
+# Theme
+theme:
+  name: "material"
+  palette:
+    primary: "indigo"
+    accent: "blue"
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      css_class: highlight
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+# Navigation
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
+  - User Guide:
+      - Writing Tests: user-guide/writing-tests.md
+      - Running Tests: user-guide/running-tests.md
+      - Test Organization: user-guide/test-organization.md
+  - CLI Reference:
+      - Overview: cli/overview.md
+      - Commands: cli/commands.md
+  - API Reference: api reference.md
+  - Examples:
+      - Basic Tests: examples/basic-tests.md
+      - Advanced: examples/advanced.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Architecture: development/architecture.md
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+  - mkdocstrings:
+      handlers:
+        python:
+          selection:
+            filters:
+              - "!^_"
+  - git-revision-date-localized:
+      type: time_zone
+      timezone: Etc/UTC
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/daironpf/socialseed-e2e
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/socialseed-e2e/
+
+# Page tree
+# docs/
+# ├── index.md
+# ├── getting-started/
+# │   ├── installation.md
+# │   ├── quickstart.md
+# │   └── configuration.md
+# ├── user-guide/
+# │   ├── writing-tests.md
+# │   ├── running-tests.md
+# │   └── test-organization.md
+# ├── cli/
+# │   ├── overview.md
+# │   └── commands.md
+# ├── api/
+# │   └── reference.md
+# ├── examples/
+# │   ├── basic-tests.md
+# │   └── advanced.md
+# └── development/
+#     ├── contributing.md
+#     └── architecture.md
