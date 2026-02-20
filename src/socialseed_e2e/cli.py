@@ -698,12 +698,15 @@ services:
 @cli.command()
 @click.option("--force", is_flag=True, help="Overwrite existing files")
 def install_demo(force: bool):
-    """Install demo API and example services to an existing project.
+    """Install demo APIs and example services to an existing project.
 
-    This command adds the demo REST API, example service, and demo-api service
-    to a project that was initialized without the --demo flag.
+    This command adds multiple demo APIs covering different protocols:
+    - REST API (basic CRUD) on port 5000
+    - gRPC API (with proto definitions) on port 50051
+    - WebSocket API (real-time) on port 50052
+    - Auth API (JWT Bearer tokens) on port 5003
 
-    Use this to add examples to understand how the framework works.
+    Each demo includes a runnable server and corresponding test services.
 
     Example:
         e2e init my-project
@@ -718,8 +721,20 @@ def install_demo(force: bool):
 
     engine = TemplateEngine()
 
+    # Create demos directory structure
+    demos_path = target_path / "demos"
+    demos_rest_path = demos_path / "rest"
+    demos_grpc_path = demos_path / "grpc"
+    demos_ws_path = demos_path / "websocket"
+    demos_auth_path = demos_path / "auth"
+
+    demos_rest_path.mkdir(parents=True, exist_ok=True)
+    demos_grpc_path.mkdir(parents=True, exist_ok=True)
+    demos_ws_path.mkdir(parents=True, exist_ok=True)
+    demos_auth_path.mkdir(parents=True, exist_ok=True)
+
     # Create api-rest-demo.py
-    demo_api_path = target_path / "api-rest-demo.py"
+    demo_api_path = demos_rest_path / "api-rest-demo.py"
     if not demo_api_path.exists() or force:
         engine.render_to_file(
             "api_rest_demo.py.template",
@@ -727,9 +742,7 @@ def install_demo(force: bool):
             str(demo_api_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: api-rest-demo.py")
-    else:
-        console.print("  [yellow]⚠[/yellow] Already exists: api-rest-demo.py")
+        console.print("  [green]✓[/green] Created: demos/rest/api-rest-demo.py")
 
     # Create demo-api service
     demo_service_path = target_path / "services" / "demo-api"
@@ -798,6 +811,79 @@ def install_demo(force: bool):
     else:
         console.print("  [yellow]⚠[/yellow] Already exists: services/demo-api/")
 
+    # ========================
+    # 2. gRPC Demo
+    # ========================
+    console.print("\n[bold]🔷 gRPC Demo[/bold]")
+    grpc_demo_path = demos_grpc_path / "api-grpc-demo.py"
+    grpc_proto_path = demos_grpc_path / "api-grpc-demo.proto"
+
+    if not grpc_demo_path.exists() or force:
+        engine.render_to_file(
+            "api_grpc_demo.py.template",
+            {},
+            str(grpc_demo_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: demos/grpc/api-grpc-demo.py")
+    else:
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: demos/grpc/api-grpc-demo.py"
+        )
+
+    if not grpc_proto_path.exists() or force:
+        engine.render_to_file(
+            "api_grpc_demo.proto.template",
+            {},
+            str(grpc_proto_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: demos/grpc/api-grpc-demo.proto")
+    else:
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: demos/grpc/api-grpc-demo.proto"
+        )
+
+    # ========================
+    # 3. WebSocket Demo
+    # ========================
+    console.print("\n[bold]🔌 WebSocket Demo[/bold]")
+    ws_demo_path = demos_ws_path / "api-websocket-demo.py"
+
+    if not ws_demo_path.exists() or force:
+        engine.render_to_file(
+            "api_websocket_demo.py.template",
+            {},
+            str(ws_demo_path),
+            overwrite=force,
+        )
+        console.print(
+            "  [green]✓[/green] Created: demos/websocket/api-websocket-demo.py"
+        )
+    else:
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: demos/websocket/api-websocket-demo.py"
+        )
+
+    # ========================
+    # 4. Auth Demo (JWT)
+    # ========================
+    console.print("\n[bold]🔐 Auth Demo (JWT Bearer)[/bold]")
+    auth_demo_path = demos_auth_path / "api-auth-demo.py"
+
+    if not auth_demo_path.exists() or force:
+        engine.render_to_file(
+            "api_auth_demo.py.template",
+            {},
+            str(auth_demo_path),
+            overwrite=force,
+        )
+        console.print("  [green]✓[/green] Created: demos/auth/api-auth-demo.py")
+    else:
+        console.print(
+            "  [yellow]⚠[/yellow] Already exists: demos/auth/api-auth-demo.py"
+        )
+
     # Create example service
     example_service_path = target_path / "services" / "example"
     example_modules_path = example_service_path / "modules"
@@ -861,7 +947,7 @@ def install_demo(force: bool):
                 "timeout": "30000",
                 "user_agent": "socialseed-e2e/1.0",
                 "verbose": "true",
-                "services_config": """  # Demo API Service (ready to use)
+                "services_config": """  # Demo REST API Service (ready to use)
   # Start the demo API: python api-rest-demo.py
   demo-api:
     base_url: http://localhost:5000
@@ -869,6 +955,35 @@ def install_demo(force: bool):
     timeout: 5000
     auto_start: false
     required: true
+
+  # Demo gRPC API Service
+  # Start: python api-grpc-demo.py (requires: pip install grpcio grpcio-tools)
+  # Generate proto: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. api-grpc-demo.proto
+  grpc-demo:
+    base_url: localhost:50051
+    protocol: grpc
+    timeout: 5000
+    auto_start: false
+    required: false
+
+  # Demo WebSocket API Service
+  # Start: python api-websocket-demo.py (requires: pip install aiohttp)
+  websocket-demo:
+    base_url: ws://localhost:50052
+    health_endpoint: /health
+    timeout: 5000
+    auto_start: false
+    required: false
+
+  # Demo Auth API Service (JWT Bearer)
+  # Start: python api-auth-demo.py (requires: pip install pyjwt cryptography)
+  # Default users: admin/admin123, user1/user123, moderator1/mod123
+  auth-demo:
+    base_url: http://localhost:5003
+    health_endpoint: /health
+    timeout: 5000
+    auto_start: false
+    required: false
 """,
             },
             str(config_path),
@@ -880,10 +995,18 @@ def install_demo(force: bool):
         Panel(
             "[bold green]✅ Demo services installed successfully![/bold green]\n\n"
             "Next steps:\n"
-            "1. Start the demo API: [cyan]python api-rest-demo.py[/cyan]\n"
+            "1. Start a demo API server:\n"
+            "   [cyan]python demos/rest/api-rest-demo.py[/cyan]       # REST API (port 5000)\n"
+            "   [cyan]python demos/grpc/api-grpc-demo.py[/cyan]       # gRPC API (port 50051)\n"
+            "   [cyan]python demos/websocket/api-websocket-demo.py[/cyan]  # WebSocket (port 50052)\n"
+            "   [cyan]python demos/auth/api-auth-demo.py[/cyan]       # Auth JWT (port 5003)\n"
             "2. Run tests: [cyan]e2e run[/cyan]\n"
             "3. Learn from the example services in [cyan]services/[/cyan]\n\n"
-            "The demo API runs on [cyan]http://localhost:5000[/cyan]",
+            "Demo servers:\n"
+            "  [cyan]http://localhost:5000[/cyan]    - REST API\n"
+            "  [cyan]localhost:50051[/cyan]        - gRPC\n"
+            "  [cyan]ws://localhost:50052[/cyan]    - WebSocket\n"
+            "  [cyan]http://localhost:5003[/cyan]   - Auth/JWT",
             title="🎉 Done!",
             border_style="green",
         )
