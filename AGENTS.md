@@ -24,9 +24,16 @@ socialseed-e2e/
 │   ├── commands/               # Comandos CLI (init, new-service, run)
 │   ├── templates/              # Plantillas para scaffolding
 │   └── __main__.py            # Punto de entrada CLI
+├── demos/                      # APIs de demostración
+│   ├── rest/                  # REST API demo (Flask)
+│   ├── grpc/                  # gRPC API demo
+│   ├── websocket/             # WebSocket demo
+│   └── auth/                  # JWT Auth demo
 ├── tests/                      # Tests unitarios y de integración
 ├── docs/                       # Documentación del proyecto
 ├── examples/                   # Ejemplos de uso
+├── playground/                 # Playground y tutorials
+├── .agent/                     # Documentación para agentes IA
 └── pyproject.toml             # Configuración de paquete Python
 ```
 
@@ -65,7 +72,7 @@ services/<nombre>/
 - Las pages deben heredar de `BasePage` en `core.base_page`
 - Usar `TYPE_CHECKING` para importaciones circulares
 
-## Comandos CLI Disponibles (45+)
+## Comandos CLI Disponibles (47)
 
 ### Comandos Principales
 ```bash
@@ -73,6 +80,7 @@ e2e init [directorio]              # Inicializa proyecto
 e2e new-service <nombre>           # Crea estructura de servicio
 e2e new-test <nombre> --service <s> # Crea módulo de test
 e2e run [options]                  # Ejecuta tests
+e2e lint                           # Valida archivos de test
 e2e doctor                         # Verifica instalación
 e2e config                         # Muestra configuración
 e2e --version                      # Versión
@@ -176,10 +184,10 @@ e2e community plugins              # List plugins
 
 ### Import Commands
 ```bash
-e2e import-cmd postman             # Import Postman collection
-e2e import-cmd openapi             # Import OpenAPI spec
-e2e import-cmd curl                # Import curl command
-e2e import-cmd environment         # Import Postman environment
+e2e import postman <file>          # Import Postman collection
+e2e import openapi <file>          # Import OpenAPI spec
+e2e import curl "<command>"         # Import curl command
+e2e import environment <file>     # Import Postman environment
 ```
 
 ### CI/CD Commands
@@ -202,7 +210,9 @@ e2e telemetry budget               # Manage token budgets
 ### Other Commands
 ```bash
 e2e regression                     # AI regression analysis
-e2e install-extras                 # Install optional dependencies
+e2e install-extras                # Install optional dependencies
+e2e install-demo                  # Install demo APIs
+e2e set url <service> <url>      # Configure service URL
 ```
 
 ## Flujo de Trabajo Típico
@@ -789,11 +799,11 @@ jinja2>=3.1.0
 ### Estadísticas del Framework
 | Métrica | Valor |
 |---------|-------|
-| **Versión** | 0.1.2 |
-| **Módulos Principales** | ~39 |
+| **Versión** | 0.1.4 |
+| **Módulos Principales** | ~40+ |
 | **Archivos Python** | ~200+ |
-| **Líneas de Código (CLI)** | ~7,018 |
-| **Comandos CLI** | 45+ |
+| **Líneas de Código (CLI)** | ~8,000+ |
+| **Comandos CLI** | 47 |
 | **Features Completas** | 48+ |
 
 ### Core & Infrastructure ✅
@@ -803,7 +813,7 @@ jinja2>=3.1.0
 - ✅ Test Runner - Ejecución completa con Playwright
 - ✅ HTML Reporting - Reportes visuales
 - ✅ Traceability System - Trazabilidad completa
-- ✅ CLI v0.1.2 con 45+ comandos
+- ✅ CLI v0.1.4 con 47 comandos
 - ✅ Templates para scaffolding
 
 ### AI Project Manifest ✅
