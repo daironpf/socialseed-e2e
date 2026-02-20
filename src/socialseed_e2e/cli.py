@@ -8362,6 +8362,62 @@ def telemetry_budget(
         sys.exit(1)
 
 
+def _register_modular_commands():
+    """Register modular commands from commands/ directory.
+
+    This function imports and adds modular commands to the CLI group.
+    It provides a migration path from the monolith cli.py to modular commands.
+    """
+    # Commands that have been extracted to modular files
+    # Each entry: (command_name, module_name, function_name)
+    modular_commands = [
+        # Core commands
+        ("init", "init_cmd", "init_command"),
+        ("doctor", "doctor_cmd", "doctor_command"),
+        # Service commands
+        ("new-service", "new_service_cmd", "get_new_service_command"),
+        ("new-test", "new_test_cmd", "get_new_test_command"),
+        # Installation commands
+        ("install-demo", "install_demo_cmd", "get_install_demo_command"),
+        ("install-extras", "install_extras_cmd", "get_install_extras_command"),
+        # CI/CD
+        ("setup-ci", "setup_ci_cmd", "get_setup_ci_command"),
+        # UI
+        ("dashboard", "dashboard_cmd", "get_dashboard_command"),
+        ("tui", "tui_cmd", "get_tui_command"),
+        # Discovery
+        ("observe", "observe_cmd", "get_observe_command"),
+        # Config
+        ("set", "set_cmd", "get_set_group"),
+    ]
+
+    for cmd_name, module_name, func_name in modular_commands:
+        try:
+            # Import the module
+            module = importlib.import_module(f"socialseed_e2e.commands.{module_name}")
+
+            # Get the command function
+            if hasattr(module, func_name):
+                cmd_func = getattr(module, func_name)
+
+                # Call if it's a function that returns a command
+                if callable(cmd_func) and not hasattr(cmd_func, "name"):
+                    cmd = cmd_func()
+                else:
+                    cmd = cmd_func
+
+                # Add to CLI group
+                cli.add_command(cmd, name=cmd_name)
+
+        except Exception as e:
+            # Silently skip if import fails - command still exists in cli.py
+            pass
+
+
+# Register modular commands on module import
+_register_modular_commands()
+
+
 def main():
     """Entry point for the CLI."""
     cli()
