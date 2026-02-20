@@ -5538,7 +5538,8 @@ def shadow_capture(
             max_requests=max_requests,
         )
 
-        runner = ShadowRunner(config)
+        # Extract output_dir from the CaptureConfig for ShadowRunner
+        runner = ShadowRunner(output_dir=str(Path(config.output_path).parent))
 
         console.print(f"[yellow]Starting capture...[/yellow]")
         console.print(f"   Filter health checks: {'Yes' if filter_health else 'No'}")
@@ -5550,7 +5551,7 @@ def shadow_capture(
             console.print(f"   Max requests: {max_requests}")
         console.print()
 
-        runner.start_capture()
+        runner.start_capturing()
 
         console.print("[bold green]✓ Capture started![/bold green]")
         if duration:
@@ -5558,7 +5559,7 @@ def shadow_capture(
             import time
 
             time.sleep(duration)
-            session = runner.stop_capture()
+            session = runner.stop_capturing()
         else:
             console.print("   Press Ctrl+C to stop capturing...\n")
             try:
@@ -5567,7 +5568,7 @@ def shadow_capture(
                 while True:
                     time.sleep(1)
             except KeyboardInterrupt:
-                session = runner.stop_capture()
+                session = runner.stop_capturing()
 
         # Save captured session
         session.save(str(output_path))
@@ -6673,11 +6674,39 @@ def dashboard(port: int, host: str, no_browser: bool):
         launch_dashboard(port=port, open_browser=not no_browser)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Error launching dashboard:[/red] {e}")
-        console.print("\n[yellow]📦 Required dependencies:[/yellow]")
-        console.print("   pip install streamlit")
-        console.print()
-        sys.exit(1)
+        console.print(f"\n[red]❌ Streamlit not found. Installing...[/red]")
+
+        # Try to install streamlit automatically
+        import subprocess
+
+        try:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "streamlit", "-q"]
+            )
+            console.print("[green]✓ Streamlit installed successfully![/green]\n")
+
+            # Try to launch again
+            from socialseed_e2e.dashboard.server import launch_dashboard
+
+            console.print(
+                "\n🚀 [bold green]Launching SocialSeed E2E Dashboard...[/bold green]\n"
+            )
+            console.print(f"📊 Dashboard will be available at: http://{host}:{port}")
+            console.print()
+            launch_dashboard(port=port, open_browser=not no_browser)
+
+        except subprocess.CalledProcessError:
+            console.print("\n[red]❌ Failed to install streamlit.[/red]")
+            console.print("\n[yellow]📦 Please install manually:[/yellow]")
+            console.print("   pip install streamlit")
+            console.print()
+            sys.exit(1)
+        except ImportError as e2:
+            console.print(f"\n[red]❌ Error importing dashboard:[/red] {e2}")
+            console.print("\n[yellow]📦 Please install manually:[/yellow]")
+            console.print("   pip install streamlit")
+            console.print()
+            sys.exit(1)
     except Exception as e:
         console.print(f"\n[red]❌ Unexpected error:[/red] {e}")
         sys.exit(1)

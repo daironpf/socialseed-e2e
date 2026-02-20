@@ -37,15 +37,40 @@ class ManifestAPI:
         >>> auth_endpoints = api.search_endpoints(tags=["auth"])
     """
 
-    def __init__(self, project_root: Union[str, Path], manifest_path: Optional[Path] = None):
+    def __init__(
+        self, project_root: Union[str, Path], manifest_path: Optional[Path] = None
+    ):
         """Initialize the Manifest API.
 
         Args:
             project_root: Root directory of the project
             manifest_path: Optional custom path to manifest file
         """
+        import socialseed_e2e
+        import inspect
+
         self.project_root = Path(project_root).resolve()
-        self.manifest_path = manifest_path or (self.project_root / "project_knowledge.json")
+
+        # If manifest_path is not provided, search in multiple locations:
+        # 1. Framework manifests folder: <framework_root>/manifests/<service_name>/
+        # 2. Project root: <project_root>/project_knowledge.json
+        if manifest_path is None:
+            # Try to find the manifest in the framework's manifests folder
+            framework_root = Path(inspect.getfile(socialseed_e2e)).parent.parent
+            service_name = self.project_root.name
+
+            # Check framework manifests folder first
+            framework_manifest_path = (
+                framework_root / "manifests" / service_name / "project_knowledge.json"
+            )
+            if framework_manifest_path.exists():
+                self.manifest_path = framework_manifest_path
+            else:
+                # Fall back to project root
+                self.manifest_path = self.project_root / "project_knowledge.json"
+        else:
+            self.manifest_path = manifest_path
+
         self._manifest: Optional[ProjectKnowledge] = None
         self._load_manifest()
 
@@ -111,7 +136,9 @@ class ManifestAPI:
         Returns:
             List of ServiceInfo objects
         """
-        return [s for s in self.manifest.services if s.language.lower() == language.lower()]
+        return [
+            s for s in self.manifest.services if s.language.lower() == language.lower()
+        ]
 
     def get_services_by_framework(self, framework: str) -> List[ServiceInfo]:
         """Get all services using a specific framework.
@@ -159,7 +186,10 @@ class ManifestAPI:
             for endpoint in service.endpoints:
                 if method and endpoint.method != method:
                     continue
-                if requires_auth is not None and endpoint.requires_auth != requires_auth:
+                if (
+                    requires_auth is not None
+                    and endpoint.requires_auth != requires_auth
+                ):
                     continue
                 endpoints.append(endpoint)
 
@@ -229,7 +259,9 @@ class ManifestAPI:
 
         return matches
 
-    def get_endpoints_by_dto(self, dto_name: str, dto_type: str = "request") -> List[EndpointInfo]:
+    def get_endpoints_by_dto(
+        self, dto_name: str, dto_type: str = "request"
+    ) -> List[EndpointInfo]:
         """Get endpoints that use a specific DTO.
 
         Args:
@@ -243,9 +275,12 @@ class ManifestAPI:
 
         for service in self.manifest.services:
             for endpoint in service.endpoints:
-                match_request = dto_type in ("request", "both") and endpoint.request_dto == dto_name
+                match_request = (
+                    dto_type in ("request", "both") and endpoint.request_dto == dto_name
+                )
                 match_response = (
-                    dto_type in ("response", "both") and endpoint.response_dto == dto_name
+                    dto_type in ("response", "both")
+                    and endpoint.response_dto == dto_name
                 )
 
                 if match_request or match_response:
@@ -316,7 +351,9 @@ class ManifestAPI:
 
         return matches
 
-    def get_dto_fields(self, dto_name: str, include_validations: bool = True) -> List[DtoField]:
+    def get_dto_fields(
+        self, dto_name: str, include_validations: bool = True
+    ) -> List[DtoField]:
         """Get fields of a specific DTO.
 
         Args:
@@ -434,7 +471,9 @@ class ManifestAPI:
     # Dependency Queries
     # ==========================================================================
 
-    def get_dependencies(self, service_name: Optional[str] = None) -> List[ServiceDependency]:
+    def get_dependencies(
+        self, service_name: Optional[str] = None
+    ) -> List[ServiceDependency]:
         """Get service dependencies.
 
         Args:
@@ -617,7 +656,9 @@ class TokenOptimizedQuery:
         """
         self.api = api
 
-    def get_endpoint_signature(self, path: str, method: HttpMethod) -> Optional[Dict[str, Any]]:
+    def get_endpoint_signature(
+        self, path: str, method: HttpMethod
+    ) -> Optional[Dict[str, Any]]:
         """Get minimal endpoint signature for token optimization.
 
         Args:
