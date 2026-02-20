@@ -1,0 +1,956 @@
+Metadata-Version: 2.4
+Name: socialseed-e2e
+Version: 0.1.4
+Summary: Framework E2E para testing de APIs REST con Playwright
+Author: Dairon Pérez Frías
+Author-email: Dairon Pérez Frías <dairon.perezfrias@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/daironpf/socialseed-e2e
+Project-URL: Documentation, https://github.com/daironpf/socialseed-e2e/tree/main/docs
+Project-URL: Repository, https://github.com/daironpf/socialseed-e2e
+Project-URL: Issues, https://github.com/daironpf/socialseed-e2e/issues
+Project-URL: Changelog, https://github.com/daironpf/socialseed-e2e/blob/main/CHANGELOG.md
+Keywords: testing,e2e,api,playwright,rest,grpc,framework
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Testing
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: playwright>=1.40.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: typing-extensions>=4.8.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: jsonschema>=4.0.0
+Requires-Dist: jinja2>=3.0.0
+Requires-Dist: websocket-client>=1.0.0
+Requires-Dist: grpcio>=1.59.0
+Requires-Dist: grpcio-tools>=1.59.0
+Requires-Dist: protobuf>=4.24.0
+Requires-Dist: Faker>=19.0.0
+Requires-Dist: Pillow>=10.0.0
+Requires-Dist: aiohttp>=3.9.0
+Requires-Dist: email-validator>=2.0.0
+Requires-Dist: flask>=2.0.0
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: pytest-asyncio>=0.21.0
+Requires-Dist: pytest-cov>=4.0.0
+Requires-Dist: pytest-timeout>=2.2.0
+Provides-Extra: tui
+Requires-Dist: textual>=0.41.0; extra == "tui"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-timeout>=2.2.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Requires-Dist: twine>=4.0.0; extra == "dev"
+Requires-Dist: build>=0.10.0; extra == "dev"
+Requires-Dist: flask>=2.0.0; extra == "dev"
+Provides-Extra: mock
+Requires-Dist: flask>=2.0.0; extra == "mock"
+Provides-Extra: rag
+Requires-Dist: sentence-transformers>=2.2.0; extra == "rag"
+Requires-Dist: numpy>=1.24.0; extra == "rag"
+Provides-Extra: secrets
+Requires-Dist: hvac>=1.0.0; extra == "secrets"
+Requires-Dist: boto3>=1.26.0; extra == "secrets"
+Dynamic: license-file
+
+# 🌱 SocialSeed E2E
+
+[![PyPI](https://img.shields.io/pypi/v/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
+[![Python](https://img.shields.io/pypi/pyversions/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://daironpf.github.io/socialseed-e2e/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
+
+## The Problem: Your E2E Tests Are Brittle and Slow
+
+If you're a QA engineer or developer, you know the pain:
+
+- **Fragile tests** that break with every minor UI or API change
+- **Complex setup** requiring multiple tools and configurations  
+- **Slow feedback loops** waiting hours for test suites to run
+- **Unreliable CI/CD** with flaky tests causing false positives
+- **Repetitive boilerplate** writing the same test patterns over and over
+
+## The Solution: Reliable E2E Testing That Scales
+
+SocialSeed E2E is a testing platform designed for **production reliability** with optional AI acceleration.
+
+### Who is this for?
+
+- **QA Engineers** who need stable, maintainable API tests without writing boilerplate
+- **Developers** who want fast feedback on API changes without the overhead
+- **Teams** transitioning from experimental AI testing to a production-ready solution
+
+### Why we built this?
+
+Most AI-driven testing frameworks promise the world but deliver unreliable, flaky tests. We wanted something different:
+
+1. **Reliability First** - Tests that pass when they should, fail when they must
+2. **Optional AI Acceleration** - Use AI to generate tests faster when you want it, but never required
+3. **Developer Experience** - CLI that gets out of your way and lets you focus on testing
+4. **Production Ready** - Built for CI/CD pipelines from day one
+
+> **"Write tests that survive your API changing, not tests that break on every update."**
+
+📚 **[Full Documentation](https://daironpf.github.io/socialseed-e2e/)**
+
+---
+
+## 🚀 Quick Start
+
+Get up and running in under 5 minutes with this minimal setup:
+
+### 1. Install
+
+```bash
+pip install socialseed-e2e
+```
+
+### 2. Initialize Project
+
+```bash
+e2e init demo
+cd demo
+```
+
+**Output:**
+```
+🌱 Initializing E2E project at: /path/to/demo
+
+  ✓ Created: services
+  ✓ Created: tests
+  ✓ Created: .github/workflows
+  ✓ Created: e2e.conf
+  ✓ Created: .gitignore
+  ✓ Created: requirements.txt
+  ✓ Created: .agent/ (AI Documentation)
+
+✅ Project initialized successfully!
+```
+
+### 3. Create Your First Service
+
+```bash
+e2e new-service demo-api --base-url http://localhost:8080
+```
+
+**Generated Folder Structure:**
+```
+demo/
+├── e2e.conf                    # Configuration file
+├── services/
+│   └── demo-api/
+│       ├── __init__.py
+│       ├── demo_api_page.py    # Service Page class
+│       ├── data_schema.py      # Data models
+│       └── modules/            # Test modules
+├── tests/                      # Additional tests
+└── .github/workflows/          # CI/CD templates
+```
+
+### 4. Create Your First Test
+
+```bash
+e2e new-test health --service demo-api
+```
+
+This creates `services/demo-api/modules/01_health_flow.py` with a test template.
+
+### 5. Start Your API (3 Options)
+
+Before running tests, you need an API server running. You have three options:
+
+#### Option A: Use the Included Demo API (Recommended for beginners)
+The `e2e init` command automatically creates a demo REST API with CRUD operations:
+
+```bash
+# Install dependencies (includes Flask for the demo API)
+pip install -r requirements.txt
+
+# Start the demo API (in a separate terminal)
+cd demo
+python api-rest-demo.py
+
+# The API will start on http://localhost:5000
+# It includes 10 sample users and full CRUD endpoints
+```
+
+**Note:** If you get a `ModuleNotFoundError: No module named 'flask'` error, install Flask manually:
+```bash
+pip install flask>=2.0.0
+```
+
+**Update your service to use the demo API:**
+```bash
+# Edit e2e.conf and change the base_url to http://localhost:5000
+e2e set url demo-api http://localhost:5000
+```
+
+#### Option B: Use Your Own API
+Ensure your API is running at the configured base URL (e.g., `http://localhost:8080`):
+
+```bash
+# Start your API (example)
+python your_api.py
+# or
+npm start
+# or
+docker-compose up
+```
+
+#### Option C: Use the Built-in Mock Server
+```bash
+# Install Flask (required for mock server)
+pip install flask>=2.0.0
+
+# Start the mock server in a separate terminal
+python -m socialseed_e2e.mock_server
+```
+
+### 6. Run Tests
+
+```bash
+e2e run
+```
+
+**Expected Output:**
+```
+🚀 socialseed-e2e v0.1.4
+══════════════════════════════════════════════════
+
+📋 Configuration: e2e.conf
+🌍 Environment: dev
+
+Services Summary:
+   Detected:    [demo-api]
+   Configured:  [demo-api]
+
+Running tests for service: demo-api
+══════════════════════════════════════════════════
+
+✓ demo-api tests completed
+
+════════════════════════════════════════════════════════════
+Test Execution Summary
+════════════════════════════════════════════════════════════
+
+demo-api: 1/1 passed (100.0%)
+
+✅ All tests passed!
+```
+
+**Note:** If tests fail with "Connection refused", ensure your API server is running before executing `e2e run`.
+
+---
+
+## 📋 System Requirements
+
+Before installing socialseed-e2e, ensure your environment meets the following requirements:
+
+### Python Versions
+
+- **Python >= 3.10** (required)
+- Tested on Python 3.10, 3.11, and 3.12
+
+### Operating Systems
+
+- ✅ **Linux** - Fully supported (primary development platform)
+- ✅ **macOS** - Fully supported (Intel and Apple Silicon)
+- ⚠️ **Windows** - Supported via WSL2 (Windows Subsystem for Linux)
+
+### Browser Dependencies
+
+socialseed-e2e uses **Playwright** for HTTP testing. You need to install browser binaries:
+
+```bash
+# After installing socialseed-e2e
+playwright install chromium
+
+# Or install with dependencies (recommended for CI/CD)
+playwright install --with-deps chromium
+```
+
+**Supported Browsers:**
+- Chromium (recommended for API testing)
+- Firefox (optional)
+- WebKit (optional)
+
+### System Dependencies
+
+#### Linux (Ubuntu/Debian)
+```bash
+# Playwright system dependencies
+sudo apt-get update
+sudo apt-get install -y libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+  libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+  libxrandr2 libgbm1 libasound2
+```
+
+#### macOS
+```bash
+# No additional system dependencies required
+# Playwright will prompt if anything is needed
+```
+
+### Docker (Optional)
+
+You can also run socialseed-e2e using Docker:
+
+```bash
+# Build the Docker image
+docker build -t socialseed-e2e .
+
+# Run tests in container
+docker run --rm -v $(pwd):/app socialseed-e2e e2e run
+```
+
+**Docker Benefits:**
+- Consistent testing environment
+- No local Python/Playwright installation needed
+- Perfect for CI/CD pipelines
+
+---
+
+## 🐳 Docker Usage
+
+SocialSeed E2E provides an official Docker image for containerized test execution. This is ideal for CI/CD pipelines and environments where you want to avoid installing Python dependencies locally.
+
+### Building the Docker Image
+
+```bash
+# Clone or navigate to the project directory
+cd socialseed-e2e
+
+# Build the Docker image
+docker build -t socialseed-e2e .
+```
+
+### Running Tests with Docker
+
+#### Basic Usage
+
+```bash
+# Show help
+docker run --rm socialseed-e2e --help
+
+# Run all tests (mount your project directory)
+docker run --rm -v $(pwd):/app socialseed-e2e run
+
+# Run tests for a specific service
+docker run --rm -v $(pwd):/app socialseed-e2e run --service users-api
+
+# Run with verbose output
+docker run --rm -v $(pwd):/app socialseed-e2e run --verbose
+```
+
+#### Advanced Usage
+
+```bash
+# Run with debug mode
+docker run --rm -v $(pwd):/app socialseed-e2e run --debug
+
+# Run in boring mode (disable AI features)
+docker run --rm -v $(pwd):/app socialseed-e2e run --no-agent
+
+# Generate JUnit report
+docker run --rm -v $(pwd):/app -v $(pwd)/reports:/app/reports socialseed-e2e run --report junit
+
+# Run specific test module
+docker run --rm -v $(pwd):/app socialseed-e2e run --service auth --module 01_login
+```
+
+### Docker in CI/CD
+
+Example GitHub Actions workflow using Docker:
+
+```yaml
+name: E2E Tests with Docker
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -t socialseed-e2e .
+      
+      - name: Run E2E tests
+        run: docker run --rm -v $(pwd):/app socialseed-e2e run --report junit
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./reports/junit.xml
+```
+
+### Benefits of Docker Usage
+
+- **No local installation**: No need to install Python, Playwright, or dependencies
+- **Consistent environment**: Same environment across dev, CI, and production
+- **Isolated execution**: Tests run in a clean, isolated container
+- **Easy CI/CD integration**: Simple to integrate with any CI/CD platform
+- **Version pinning**: Use specific versions of the framework via Docker tags
+
+---
+
+## 🤖 Built for AI Agents (Recommended)
+
+**This framework was designed from the ground up for AI agents.**
+
+While you can write tests manually, the true power comes from letting AI do the work:
+
+```bash
+# 1. Initialize
+e2e init
+
+# 2. Tell your AI agent:
+# "Read the .agent/ folder and generate tests for my API"
+
+# 3. The AI automatically:
+# - Scans your API code
+# - Generates complete test suites
+# - Uses semantic search to understand your endpoints
+# - Creates stateful test chains
+```
+
+**AI Features:**
+- Auto-generates `project_knowledge.json` from your codebase
+- Vector embeddings for semantic search over your API
+- RAG-ready retrieval for context-aware test generation
+- Structured protocols that AI agents understand
+
+**Don't have an AI agent?** You can write tests manually too—it's still 10x faster than traditional frameworks.
+
+---
+
+## ✨ What You Get
+
+- **CLI scaffolding** - `e2e new-service` and `e2e new-test` commands
+- **Auto-discovery** - Tests run in order automatically
+- **Stateful chaining** - Share data between tests
+- **Built-in mocking** - Test without external dependencies
+- **AI Manifest** - Auto-generate API knowledge from code
+- **Vector search** - Semantic search over your API (RAG-ready)
+
+---
+
+## 📚 Advanced Usage Examples
+
+Learn how to handle common testing scenarios with these examples:
+
+### [Authorization Headers](examples/advanced_usage/auth_headers_example.py)
+- Basic Authentication
+- Bearer Token (JWT)
+- API Key authentication
+- Custom headers
+- OAuth 2.0 flow
+
+### [Environment Variables](examples/advanced_usage/env_variables_example.py)
+- Loading .env files
+- Environment-specific configuration
+- Secrets management
+- Test data from environment
+
+### [Test Fixtures](examples/advanced_usage/fixtures_example.py)
+- Setup/teardown logic
+- Sharing state between tests
+- Page attributes as fixtures
+- Test isolation patterns
+- Cleanup strategies
+
+### [Parameterized Tests](examples/advanced_usage/parameterized_tests_example.py)
+- Multiple test files
+- External test data (JSON, CSV)
+- Test data providers
+- Dynamic test generation
+- pytest parametrize integration
+
+```bash
+# Run an example
+python3 examples/advanced_usage/auth_headers_example.py
+```
+
+---
+
+## 📝 Example Test
+
+```python
+# services/users-api/modules/01_login.py
+
+async def run(page):
+    response = await page.do_login(
+        email="test@example.com",
+        password="secret"
+    )
+    assert response.status == 200
+    assert "token" in response.json()
+    return response
+```
+
+---
+
+## ✅ Checklist for Creating Tests
+
+Before creating tests, ensure your service setup follows these conventions:
+
+### Directory Structure
+```
+services/{service_name}/
+├── __init__.py
+├── {service_name}_page.py      # Must be named EXACTLY like this
+├── data_schema.py               # Optional: Data models and constants
+└── modules/                     # Test modules directory
+    ├── 01_login.py
+    └── __init__.py
+```
+
+### Requirements
+
+- [ ] **Directory**: `services/{service_name}/` - Use underscores (e.g., `auth_service`)
+- [ ] **Page File**: `{service_name}_page.py` - Must be named exactly like the directory + `_page.py`
+- [ ] **Inheritance**: Class must inherit from `BasePage`
+- [ ] **Constructor**: Must accept `base_url: str` and call `super().__init__(base_url=base_url)`
+- [ ] **Configuration**: The `services` block in `e2e.conf` must match the directory name (hyphens/underscores are normalized)
+
+### Boilerplate: `{service_name}_page.py`
+
+```python
+"""Page class for {service_name} API."""
+
+from socialseed_e2e.core.base_page import BasePage
+from typing import Optional
+
+
+class AuthServicePage(BasePage):  # Replace AuthService with your service name
+    """Page object for auth-service API interactions."""
+    
+    def __init__(self, base_url: str, **kwargs):
+        """Initialize the page with base URL.
+        
+        Args:
+            base_url: Base URL for the API (e.g., http://localhost:8080)
+            **kwargs: Additional arguments passed to BasePage
+        """
+        super().__init__(base_url=base_url, **kwargs)
+    
+    def do_login(self, email: str, password: str):
+        """Execute login request."""
+        return self.post("/auth/login", json={
+            "email": email,
+            "password": password
+        })
+```
+
+### Configuration Example (`e2e.conf`)
+
+```yaml
+services:
+  auth_service:  # Matches services/auth_service/ directory
+    base_url: http://localhost:8080
+    health_endpoint: /health
+```
+
+**Note**: Service names with hyphens (e.g., `auth-service`) are automatically normalized to underscores (`auth_service`) for matching.
+
+---
+
+## 🎯 CLI Commands
+
+```bash
+e2e init [dir]              # Initialize project
+e2e new-service <name>      # Create service structure
+e2e new-test <name>         # Create test module
+e2e run                     # Run all tests
+e2e setup-ci <platform>     # Generate CI/CD pipelines
+e2e manifest                # Generate API knowledge
+e2e search "auth"           # Semantic search (RAG)
+e2e build-index             # Build vector index
+e2e watch                   # Auto-update on changes
+```
+
+---
+
+## 🔄 CI/CD Integration
+
+SocialSeed E2E provides ready-to-use CI/CD templates for seamless integration into your pipelines.
+
+### GitHub Actions
+
+The framework includes a pre-configured GitHub Actions workflow at `.github/workflows/e2e.yml`:
+
+```yaml
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '>=3.10'
+    - name: Install socialseed-e2e
+      run: pip install socialseed-e2e
+    - name: Install Playwright Browsers
+      run: playwright install --with-deps chromium
+    - name: Run E2E Tests
+      run: e2e run --report junit
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: junit-test-results
+        path: ./reports/junit.xml
+```
+
+**Features:**
+- ✅ Triggers on push/PR to `main` branch
+- ✅ Python 3.10+ support
+- ✅ Automatic JUnit XML report generation
+- ✅ Test artifacts uploaded for 30 days
+- ✅ Workflow summary in GitHub Actions UI
+
+### Setup Instructions
+
+1. **Use the built-in template:**
+   ```bash
+   e2e setup-ci github
+   ```
+
+2. **Or manually copy** the `.github/workflows/e2e.yml` file to your repository
+
+3. **The workflow will automatically:**
+   - Run on every push/PR to main
+   - Install socialseed-e2e
+   - Execute all E2E tests
+   - Generate JUnit reports
+   - Upload artifacts for analysis
+
+### Other Platforms
+
+Generate templates for other CI/CD platforms:
+
+```bash
+e2e setup-ci gitlab      # GitLab CI
+e2e setup-ci jenkins     # Jenkins
+e2e setup-ci azure       # Azure DevOps
+e2e setup-ci circleci    # CircleCI
+e2e setup-ci travis      # Travis CI
+```
+
+---
+
+## 🎯 CLI Reference
+
+Complete reference for all CLI commands and flags.
+
+### Global Options
+
+```bash
+e2e --help          # Show help message and exit
+e2e --version       # Show version information
+```
+
+### Core Commands
+
+#### `e2e init` - Initialize Project
+
+Initialize a new E2E testing project with directory structure and configuration files.
+
+```bash
+e2e init [DIRECTORY] [OPTIONS]
+
+Options:
+  --force    Overwrite existing files
+```
+
+**Examples:**
+```bash
+e2e init                      # Initialize in current directory
+e2e init my-project           # Initialize in specific directory
+e2e init --force              # Overwrite existing files
+```
+
+#### `e2e new-service` - Create Service
+
+Create a new service with complete scaffolding (page class, data schema, and modules directory).
+
+```bash
+e2e new-service NAME [OPTIONS]
+
+Arguments:
+  NAME    Service name (e.g., users-api, auth_service)
+
+Options:
+  --base-url TEXT          Service base URL (default: http://localhost:8080)
+  --health-endpoint TEXT   Health check endpoint path (default: /health)
+```
+
+**Examples:**
+```bash
+e2e new-service users-api
+e2e new-service payment-service --base-url http://localhost:8081
+e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
+```
+
+#### `e2e new-test` - Create Test
+
+Create a new test module for an existing service.
+
+```bash
+e2e new-test NAME --service SERVICE
+
+Required:
+  --service TEXT    Service name to create test for
+```
+
+**Examples:**
+```bash
+e2e new-test login --service auth-api
+e2e new-test create-user --service users-api
+```
+
+#### `e2e run` - Execute Tests
+
+Run E2E tests with various filtering and output options.
+
+```bash
+e2e run [OPTIONS]
+
+Filtering Options:
+  -s, --service TEXT              Run tests for specific service only
+  -m, --module TEXT               Run specific test module
+  -t, --tag TEXT                  Only run tests with these tags (can be used multiple times)
+  -x, --exclude-tag TEXT          Exclude tests with these tags (can be used multiple times)
+
+Configuration Options:
+  -c, --config TEXT               Path to configuration file (default: e2e.conf)
+  -v, --verbose                   Enable verbose output with detailed information
+
+Output Options:
+  -o, --output [text|json|html]   Output format (default: text)
+  --report-dir PATH               Directory for HTML reports (default: .e2e/reports)
+
+Report Generation:
+  --report [junit|json]           Generate machine-readable test report
+  --report-output PATH            Directory for reports (default: ./reports)
+
+Debugging:
+  -d, --debug                     Enable debug mode with verbose HTTP request/response logging for failed tests
+
+Parallel Execution:
+  -j, --parallel INTEGER          Enable parallel execution with N workers (0=disabled)
+  --parallel-mode [service|test]  Parallel execution mode
+
+Traceability:
+  -T, --trace                     Enable visual traceability and generate sequence diagrams
+  --trace-output PATH             Directory for traceability reports
+  --trace-format [mermaid|plantuml|both]  Format for sequence diagrams
+```
+
+**Examples:**
+```bash
+e2e run                                              # Run all tests
+e2e run --service auth_service                       # Run tests for specific service
+e2e run --service auth_service --module 01_login     # Run specific test module
+e2e run --verbose                                    # Run with detailed output
+e2e run --output html --report-dir ./reports         # Generate HTML report
+e2e run --parallel 4                                 # Run with 4 parallel workers
+e2e run --trace                                      # Enable traceability
+e2e run -c /path/to/e2e.conf                         # Use custom config file
+e2e run --report junit                               # Generate JUnit XML report
+e2e run --report json                                # Generate JSON report
+e2e run --report junit --report-output ./reports     # Custom report directory
+e2e run --debug                                      # Enable debug mode with HTTP logging
+```
+
+### AI-Powered Commands
+
+#### `e2e manifest` - Generate AI Project Manifest
+
+Generate structured API knowledge from your codebase for AI agents.
+
+```bash
+e2e manifest [DIRECTORY]
+```
+
+#### `e2e search` - Semantic Search
+
+Search your API endpoints and DTOs using natural language (RAG-ready).
+
+```bash
+e2e search QUERY
+
+e2e search "authentication endpoints"
+e2e search "user DTO" --type dto
+```
+
+#### `e2e build-index` - Build Vector Index
+
+Build vector embeddings index for semantic search.
+
+```bash
+e2e build-index
+```
+
+#### `e2e deep-scan` - Auto-Discover Project
+
+Zero-config deep scan for automatic project mapping and configuration.
+
+```bash
+e2e deep-scan [DIRECTORY]
+
+Options:
+  --auto-config    Automatically configure e2e.conf based on scan results
+```
+
+#### `e2e generate-tests` - AI Test Generation
+
+Autonomous test suite generation based on code intent.
+
+```bash
+e2e generate-tests [OPTIONS]
+
+Options:
+  --service TEXT    Target service for test generation
+  --module TEXT     Specific module to generate tests for
+```
+
+#### `e2e translate` - Natural Language to Test Code
+
+Translate natural language descriptions to test code.
+
+```bash
+e2e translate "Create a test that logs in and verifies the token"
+```
+
+### CI/CD Commands
+
+#### `e2e setup-ci` - Generate CI/CD Templates
+
+Generate CI/CD pipeline templates for various platforms.
+
+```bash
+e2e setup-ci PLATFORM
+
+Platforms:
+  github       GitHub Actions
+  gitlab       GitLab CI
+  jenkins      Jenkins
+  azure        Azure DevOps
+  circleci     CircleCI
+  travis       Travis CI
+  bitbucket    Bitbucket Pipelines
+```
+
+**Examples:**
+```bash
+e2e setup-ci github      # Generate GitHub Actions workflow
+e2e setup-ci gitlab      # Generate GitLab CI configuration
+e2e setup-ci jenkins     # Generate Jenkinsfile
+```
+
+### Utility Commands
+
+#### `e2e config` - Show Configuration
+
+Show and validate current configuration.
+
+```bash
+e2e config
+```
+
+#### `e2e doctor` - Verify Installation
+
+Verify installation and check dependencies.
+
+```bash
+e2e doctor
+```
+
+#### `e2e watch` - File Watcher
+
+Watch project files and auto-update manifest on changes.
+
+```bash
+e2e watch [DIRECTORY]
+```
+
+#### `e2e observe` - Service Discovery
+
+Auto-detect running services and ports.
+
+```bash
+e2e observe [DIRECTORY]
+
+Options:
+  -h, --host TEXT         Hosts to scan
+  -p, --ports TEXT        Port range (e.g., 8000-9000)
+  -t, --timeout FLOAT     Timeout for port scanning in seconds
+  --docker / --no-docker  Scan Docker containers
+  --auto-setup            Auto-setup environment using Docker
+  --dry-run               Show what would be done without executing
+```
+
+### Getting Help
+
+Use `--help` with any command for detailed information:
+
+```bash
+e2e --help
+e2e run --help
+e2e new-service --help
+e2e generate-tests --help
+```
+
+---
+
+## 📚 Documentation
+
+All guides at **[daironpf.github.io/socialseed-e2e](https://daironpf.github.io/socialseed-e2e/)**
+
+- **[How it Works](https://daironpf.github.io/socialseed-e2e/how-it-works.html)** - Understanding the core concepts (Service, Endpoint, Scenario, Test)
+- [Quick Start](https://daironpf.github.io/socialseed-e2e/quickstart.html)
+- [Writing Tests](https://daironpf.github.io/socialseed-e2e/writing-tests.html)
+- [CI/CD Integration](https://daironpf.github.io/socialseed-e2e/ci-cd.html)
+- [CLI Reference](https://daironpf.github.io/socialseed-e2e/cli-reference.html)
+- [AI Manifest](https://daironpf.github.io/socialseed-e2e/project-manifest.html)
+
+---
+
+## 📜 License
+
+MIT - See [LICENSE](LICENSE)
+
+<p align="center">
+  <sub>Built with ❤️ by Dairon Pérez Frías and AI co-authors</sub>
+</p>

@@ -1,0 +1,137 @@
+# 🚀 Quick Start Guide for AI Agents
+
+This guide helps you start testing an API with socialseed-e2e in minutes.
+
+---
+
+## Prerequisites
+
+1. Python 3.8+
+2. socialseed-e2e installed: `pip install socialseed-e2e`
+
+---
+
+## Step 1: Initialize Project
+
+```bash
+e2e init my-api-tests
+cd my-api-tests
+```
+
+This creates:
+- `e2e.conf` - Configuration file
+- `services/` - Where your API tests will live
+- `.agent/` - Documentation for AI agents
+
+---
+
+## Step 2: Detect Your API
+
+**IMPORTANT:** Never assume the port. Always detect first!
+
+```bash
+# Auto-detect running services
+e2e observe --host localhost --ports 8000-9000
+```
+
+Or manually check:
+```bash
+curl http://localhost:8080/health
+```
+
+---
+
+## Step 3: Configure Service URL
+
+```bash
+e2e set url my-api http://localhost:8080
+```
+
+Or manually edit `e2e.conf`:
+```yaml
+services:
+  my-api:
+    base_url: http://localhost:8080
+    health_endpoint: /health
+```
+
+---
+
+## Step 4: Generate Tests
+
+### Option A: Autonomous Generation (Recommended)
+
+```bash
+e2e manifest
+e2e generate-tests
+```
+
+### Option B: Manual Creation
+
+```bash
+e2e new-service my-api
+e2e new-test login --service my-api
+```
+
+---
+
+## Step 5: Run Tests
+
+```bash
+e2e run
+```
+
+Or for a specific service:
+```bash
+e2e run --service my-api
+```
+
+---
+
+## Quick Reference
+
+| Command | Description |
+|---------|-------------|
+| `e2e init` | Initialize project |
+| `e2e observe` | Detect services |
+| `e2e set url` | Configure URL |
+| `e2e new-service` | Create service |
+| `e2e new-test` | Create test |
+| `e2e run` | Run tests |
+| `e2e manifest` | Generate API knowledge |
+| `e2e generate-tests` | Auto-generate tests |
+
+---
+
+## Important Rules
+
+1. **NO relative imports** - Use `from services.my_api.data_schema import ...`
+2. **Use `by_alias=True`** - When serializing Pydantic models
+3. **Handle auth manually** - Don't use `update_headers()`
+4. **Use `do_*` prefix** - For methods in Page classes
+
+---
+
+## Next Steps
+
+- Read `.agent/AGENT_GUIDE.md` for detailed patterns
+- Read `.agent/SERVICE_DETECTION.md` for port detection
+- Read `.agent/WORKFLOW_GENERATION.md` for test generation
+
+---
+
+## Troubleshooting
+
+### "Connection refused"
+- Service not running
+- Wrong port
+- Run: `e2e observe` to detect correct port
+
+### "No services configured"
+- Edit `e2e.conf` to add your service
+- Or run: `e2e set url my-api http://localhost:8080`
+
+### Tests fail
+- Check service is running: `curl http://localhost:8080/health`
+- Verify URL in `e2e.conf`
+- Run with debug: `e2e run --debug`

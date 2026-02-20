@@ -561,10 +561,13 @@ services:
 
         # List of documentation templates for the agent
         agent_templates = [
-            ("agent_docs/FRAMEWORK_CONTEXT.md.template", "FRAMEWORK_CONTEXT.md"),
+            ("agent_docs/AGENT_GUIDE.md.template", "AGENT_GUIDE.md"),
+            ("agent_docs/QUICK_START.md.template", "QUICK_START.md"),
+            ("agent_docs/SERVICE_DETECTION.md.template", "SERVICE_DETECTION.md"),
             ("agent_docs/WORKFLOW_GENERATION.md.template", "WORKFLOW_GENERATION.md"),
             ("agent_docs/EXAMPLE_TEST.md.template", "EXAMPLE_TEST.md"),
-            ("agent_docs/AGENT_GUIDE.md.template", "AGENT_GUIDE.md"),
+            ("agent_docs/GRPC_AGENT_GUIDE.md.template", "GRPC_AGENT_GUIDE.md"),
+            ("agent_docs/FRAMEWORK_CONTEXT.md.template", "FRAMEWORK_CONTEXT.md"),
         ]
 
         for template_name, output_name in agent_templates:
@@ -2028,7 +2031,7 @@ def set_url(
         sys.exit(1)
 
     # Ensure services section exists
-    if "services" not in config_data:
+    if "services" not in config_data or config_data.get("services") is None:
         config_data["services"] = {}
 
     # Update or add service

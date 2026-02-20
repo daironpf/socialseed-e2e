@@ -1,0 +1,3 @@
+[console_scripts]
+e2e = socialseed_e2e.cli:main
+socialseed-e2e = socialseed_e2e.cli:main
