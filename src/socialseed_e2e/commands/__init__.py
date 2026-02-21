@@ -114,6 +114,7 @@ def _lazy_import_command(name: str) -> Optional[Callable]:
         "search": "search_cmd",
         "retrieve": "retrieve_cmd",
         "build-index": "build_index_cmd",
+        "run": "run_cmd",
         "new-service": "new_service_cmd",
         "new-test": "new_test_cmd",
         "install-demo": "install_demo_cmd",
