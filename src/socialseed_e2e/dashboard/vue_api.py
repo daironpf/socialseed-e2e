@@ -7,6 +7,7 @@ replacing the old Streamlit interface with a modern reactive frontend.
 import asyncio
 import json
 import os
+import re
 import sys
 import sqlite3
 from datetime import datetime
@@ -18,6 +19,8 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+
+from socialseed_e2e.dashboard.models import Environment
 
 # Initialize FastAPI app
 app = FastAPI(title="SocialSeed E2E Dashboard API", version="2.0.0")
@@ -130,6 +133,31 @@ FALLBACK_DASHBOARD_HTML = r"""
         .sidebar-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
         .logo { color: var(--accent); font-weight: 700; font-size: 1.1rem; }
         .version { background: var(--bg-tertiary); padding: 0.15rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; color: var(--text-secondary); }
+        .env-select { flex: 1; padding: 0.3rem 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-primary); font-size: 0.75rem; cursor: pointer; }
+        .env-select:focus { outline: none; border-color: var(--accent); }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-secondary); border-radius: 0.5rem; width: 90%; max-width: 500px; max-height: 80vh; overflow: auto; }
+        .modal-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { margin: 0; font-size: 1rem; }
+        .modal-body { padding: 1rem; }
+        .modal-footer { padding: 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; justify-content: flex-end; }
+        .close-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
+        
+        .env-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .env-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.25rem; }
+        .env-item-name { flex: 1; font-weight: 500; }
+        .env-item.active { border: 1px solid var(--accent); }
+        .env-var-list { margin-top: 0.5rem; padding-left: 1rem; }
+        .env-var-item { display: flex; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .env-var-item input { flex: 1; padding: 0.3rem; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-primary); font-size: 0.8rem; }
+        .var-key { width: 30%; }
+        .var-value { flex: 1; }
+        .btn-icon { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; }
+        .btn-icon:hover { color: var(--text-primary); }
+        .add-var-btn { font-size: 0.75rem; padding: 0.3rem 0.5rem; }
         
         .sidebar-actions { padding: 0.75rem; display: flex; gap: 0.5rem; }
         .btn-sm { padding: 0.4rem 0.75rem; background: var(--accent); color: white; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
@@ -224,6 +252,10 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <span class="logo">🌱</span>
                 <span>SocialSeed</span>
                 <span class="version">E2E</span>
+                <select class="env-select" id="envSelect" onchange="switchEnvironment()">
+                    <option value="">No Environment</option>
+                </select>
+                <button class="btn-sm secondary" onclick="openEnvModal()" title="Manage Environments">⚙️</button>
             </div>
             
             <div class="sidebar-actions">
@@ -472,9 +504,12 @@ FALLBACK_DASHBOARD_HTML = r"""
                 return;
             }
             
-            const url = document.getElementById('urlInput').value;
+            // Substitute variables
+            const rawUrl = document.getElementById('urlInput').value;
+            const url = substituteVars(rawUrl);
             const method = document.getElementById('methodSelect').value;
-            const body = document.getElementById('bodyEditor').value;
+            const rawBody = document.getElementById('bodyEditor').value;
+            const body = substituteVars(rawBody);
             
             const statusBadge = document.getElementById('statusBadge');
             statusBadge.textContent = 'Running...';
@@ -490,7 +525,8 @@ FALLBACK_DASHBOARD_HTML = r"""
                     method,
                     body: body ? JSON.parse(body) : null,
                     isSandbox: !!selectedTest.sandbox,
-                    testName: selectedTest.name
+                    testName: selectedTest.name,
+                    substituted: rawUrl !== url || rawBody !== body
                 })
             })
             .then(res => res.json())
@@ -546,7 +582,145 @@ FALLBACK_DASHBOARD_HTML = r"""
         
         // Initial load
         loadData();
+        loadEnvironments();
+        
+        // Environment functions
+        let currentEnvironments = [];
+        let activeEnvVars = {};
+        
+        async function loadEnvironments() {
+            try {
+                const res = await fetch('/api/environments');
+                const data = await res.json();
+                currentEnvironments = data.environments || [];
+                const select = document.getElementById('envSelect');
+                select.innerHTML = '<option value="">No Environment</option>';
+                currentEnvironments.forEach(env => {
+                    const opt = document.createElement('option');
+                    opt.value = env.id;
+                    opt.textContent = env.name + (env.is_active ? ' ✓' : '');
+                    if (env.is_active) {
+                        activeEnvVars = env.variables || {};
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            } catch(e) {
+                console.error('Error loading environments:', e);
+            }
+        }
+        
+        function switchEnvironment() {
+            const select = document.getElementById('envSelect');
+            const envId = select.value;
+            if (!envId) {
+                activeEnvVars = {};
+                return;
+            }
+            const env = currentEnvironments.find(e => e.id == envId);
+            if (env) {
+                activeEnvVars = env.variables || {};
+            }
+        }
+        
+        function openEnvModal() {
+            document.getElementById('envModal').classList.add('active');
+            renderEnvList();
+        }
+        
+        function closeEnvModal() {
+            document.getElementById('envModal').classList.remove('active');
+        }
+        
+        function renderEnvList() {
+            const container = document.getElementById('envListContent');
+            if (currentEnvironments.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary)">No environments. Create one below.</p>';
+                return;
+            }
+            container.innerHTML = currentEnvironments.map(env => \`
+                <div class="env-item \${env.is_active ? 'active' : ''}">
+                    <span class="env-item-name">\${env.name}</span>
+                    <button class="btn-icon" onclick="activateEnv(\${env.id})" title="Activate">✓</button>
+                    <button class="btn-icon" onclick="editEnv(\${env.id})" title="Edit">✏️</button>
+                    <button class="btn-icon" onclick="deleteEnv(\${env.id})" title="Delete">🗑️</button>
+                </div>
+            \`).join('');
+        }
+        
+        async function createEnv() {
+            const name = prompt('Environment name:');
+            if (!name) return;
+            const res = await fetch('/api/environments', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, variables: {}})
+            });
+            await loadEnvironments();
+            renderEnvList();
+        }
+        
+        async function activateEnv(id) {
+            await fetch('/api/environments/' + id + '/activate', {method: 'POST'});
+            await loadEnvironments();
+            renderEnvList();
+        }
+        
+        async function deleteEnv(id) {
+            if (!confirm('Delete this environment?')) return;
+            await fetch('/api/environments/' + id, {method: 'DELETE'});
+            await loadEnvironments();
+            renderEnvList();
+        }
+        
+        async function editEnv(id) {
+            const env = currentEnvironments.find(e => e.id === id);
+            if (!env) return;
+            
+            const name = prompt('Environment name:', env.name);
+            if (!name) return;
+            
+            let vars = prompt('Variables (JSON format):', JSON.stringify(env.variables || {}, null, 2));
+            try {
+                vars = vars ? JSON.parse(vars) : {};
+            } catch(e) {
+                alert('Invalid JSON');
+                return;
+            }
+            
+            await fetch('/api/environments/' + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, variables: vars})
+            });
+            await loadEnvironments();
+            renderEnvList();
+        }
+        
+        function substituteVars(text) {
+            if (!text || !activeEnvVars) return text;
+            return text.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+                return activeEnvVars[varName.trim()] || match;
+            });
+        }
     </script>
+    
+    <!-- Environment Modal -->
+    <div class="modal-overlay" id="envModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Manage Environments</h3>
+                <button class="close-btn" onclick="closeEnvModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <button class="btn-sm btn-run" onclick="createEnv()" style="margin-bottom:1rem;">+ New Environment</button>
+                <div class="env-list" id="envListContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-sm secondary" onclick="closeEnvModal()">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 """
@@ -765,6 +939,98 @@ async def get_config() -> Dict[str, Any]:
         return {"config": content, "path": str(config_path)}
 
     return {"config": None, "path": str(config_path)}
+
+
+@app.get("/api/environments")
+async def get_environments() -> Dict[str, Any]:
+    """Get all environments."""
+    environments = Environment.get_all()
+    active = Environment.get_active()
+    return {
+        "environments": [
+            {
+                "id": e.id,
+                "name": e.name,
+                "variables": e.variables,
+                "is_active": e.is_active,
+                "created_at": e.created_at,
+                "updated_at": e.updated_at,
+            }
+            for e in environments
+        ],
+        "active": {"id": active.id, "name": active.name, "variables": active.variables}
+        if active
+        else None,
+    }
+
+
+@app.post("/api/environments")
+async def create_environment(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a new environment."""
+    env = Environment(
+        name=data.get("name", "New Environment"), variables=data.get("variables", {})
+    )
+    env.save()
+    return {
+        "id": env.id,
+        "name": env.name,
+        "variables": env.variables,
+        "message": "Environment created",
+    }
+
+
+@app.put("/api/environments/{env_id}")
+async def update_environment(env_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Update an environment."""
+    env = Environment(id=env_id)
+    if data.get("name"):
+        env.name = data["name"]
+    if data.get("variables"):
+        env.variables = data["variables"]
+    env.save()
+    return {
+        "id": env.id,
+        "name": env.name,
+        "variables": env.variables,
+        "message": "Environment updated",
+    }
+
+
+@app.delete("/api/environments/{env_id}")
+async def delete_environment(env_id: int) -> Dict[str, Any]:
+    """Delete an environment."""
+    env = Environment(id=env_id)
+    env.delete()
+    return {"message": "Environment deleted"}
+
+
+@app.post("/api/environments/{env_id}/activate")
+async def activate_environment(env_id: int) -> Dict[str, Any]:
+    """Activate an environment."""
+    envs = Environment.get_all()
+    env = next((e for e in envs if e.id == env_id), None)
+    if not env:
+        raise HTTPException(status_code=404, detail="Environment not found")
+
+    env.activate()
+    return {
+        "id": env.id,
+        "name": env.name,
+        "variables": env.variables,
+        "message": "Environment activated",
+    }
+
+
+def substitute_variables(text: str, variables: Dict[str, str]) -> str:
+    """Substitute {{variable}} placeholders with values."""
+    if not text or not variables:
+        return text
+
+    def replace_var(match):
+        var_name = match.group(1).strip()
+        return variables.get(var_name, match.group(0))
+
+    return re.sub(r"\{\{([^}]+)\}\}", replace_var, text)
 
 
 @app.get("/api/test-content")
