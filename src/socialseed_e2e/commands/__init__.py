@@ -108,6 +108,8 @@ def _lazy_import_command(name: str) -> Optional[Callable]:
         "deep-scan": "deep_scan_cmd",
         "watch": "watch_cmd",
         "analyze-flaky": "analyze_flaky_cmd",
+        "healing-stats": "healing_stats_cmd",
+        "debug-execution": "debug_execution_cmd",
         "new-service": "new_service_cmd",
         "new-test": "new_test_cmd",
         "install-demo": "install_demo_cmd",
