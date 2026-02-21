@@ -52,6 +52,10 @@ Requires-Dist: numpy>=1.24.0; extra == "rag"
 Provides-Extra: secrets
 Requires-Dist: hvac>=1.0.0; extra == "secrets"
 Requires-Dist: boto3>=1.26.0; extra == "secrets"
+Provides-Extra: dashboard
+Requires-Dist: fastapi>=0.104.0; extra == "dashboard"
+Requires-Dist: uvicorn[standard]>=0.24.0; extra == "dashboard"
+Requires-Dist: python-socketio[asyncio]>=5.10.0; extra == "dashboard"
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
@@ -74,6 +78,9 @@ Requires-Dist: sentence-transformers>=2.2.0; extra == "full"
 Requires-Dist: numpy>=1.24.0; extra == "full"
 Requires-Dist: hvac>=1.0.0; extra == "full"
 Requires-Dist: boto3>=1.26.0; extra == "full"
+Requires-Dist: fastapi>=0.104.0; extra == "full"
+Requires-Dist: uvicorn[standard]>=0.24.0; extra == "full"
+Requires-Dist: python-socketio[asyncio]>=5.10.0; extra == "full"
 Dynamic: license-file
 
 # 🌱 SocialSeed E2E
@@ -238,7 +245,7 @@ e2e run
 
 **Expected Output:**
 ```
-🚀 socialseed-e2e v0.1.4
+🚀 socialseed-e2e v0.1.5
 ══════════════════════════════════════════════════
 
 📋 Configuration: e2e.conf
@@ -656,11 +663,11 @@ e2e community plugins     # List plugins
 
 ### Additional Commands
 ```bash
-e2e install-demo          # Install demo APIs
-e2e install-extras       # Install optional dependencies
+e2e install-demo          # Install demo APIs (D01-D16)
+e2e install-extras       # Install optional dependencies (tui, rag, dashboard, etc.)
 e2e telemetry             # Token usage monitoring
 e2e ai-learning feedback  # View AI feedback
-e2e dashboard             # Launch web dashboard
+e2e dashboard             # Launch web dashboard (Vue.js + FastAPI)
 e2e tui                  # Launch terminal interface
 e2e set url <svc> <url>  # Configure service URL
 e2e --version            # Show version

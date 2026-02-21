@@ -262,6 +262,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <button class="btn-sm btn-run" onclick="runSelectedTest()">▶ Run</button>
                 <button class="btn-sm btn-duplicate" onclick="duplicateTest()">📋 Copy</button>
                 <button class="btn-sm secondary" onclick="refreshTests()">🔄</button>
+                <button class="btn-sm secondary" onclick="openImportModal()">📥 Import</button>
             </div>
             
             <div class="search-box">
@@ -721,6 +722,141 @@ FALLBACK_DASHBOARD_HTML = r"""
             </div>
         </div>
     </div>
+    
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header">
+                <h3>Import API Definition</h3>
+                <button class="close-btn" onclick="closeImportModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Import Type</label>
+                    <select id="importType" class="env-select" style="width:100%;" onchange="toggleImportType()">
+                        <option value="openapi">OpenAPI / Swagger</option>
+                        <option value="postman">Postman Collection</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Paste JSON / YAML</label>
+                    <textarea id="importData" class="code-editor" style="height:200px;" placeholder='{"openapi":"3.0.0","paths":{...}}'></textarea>
+                </div>
+                <div id="importPreview" style="max-height:200px;overflow:auto;background:var(--bg-tertiary);padding:0.5rem;border-radius:0.25rem;font-size:0.8rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-sm secondary" onclick="previewImport()">Preview</button>
+                <button class="btn-sm btn-run" onclick="doImport()">Import</button>
+                <button class="btn-sm secondary" onclick="closeImportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function openImportModal() {
+            document.getElementById('importModal').classList.add('active');
+            document.getElementById('importData').value = '';
+            document.getElementById('importPreview').innerHTML = '';
+        }
+        
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+        }
+        
+        function toggleImportType() {
+            document.getElementById('importPreview').innerHTML = '';
+        }
+        
+        async function previewImport() {
+            const importType = document.getElementById('importType').value;
+            const data = document.getElementById('importData').value;
+            const preview = document.getElementById('importPreview');
+            
+            if (!data.trim()) {
+                preview.innerHTML = '<span style="color:var(--error)">Please paste the JSON content</span>';
+                return;
+            }
+            
+            try {
+                const json = JSON.parse(data);
+                const endpoints = importType === 'openapi' ? 
+                    await parseOpenAPIEndpoints(json) :
+                    parsePostmanEndpoints(json);
+                
+                preview.innerHTML = endpoints.map(e => 
+                    '<div style="padding:0.25rem;border-bottom:1px solid var(--border);">' +
+                    '<span style="color:var(--success);font-weight:bold;">' + e.method + '</span> ' +
+                    '<span>' + e.path + '</span> - ' +
+                    '<span style="color:var(--text-secondary)">' + (e.name || e.summary || '') + '</span>' +
+                    '</div>'
+                ).join('');
+            } catch(e) {
+                preview.innerHTML = '<span style="color:var(--error)">Invalid JSON: ' + e.message + '</span>';
+            }
+        }
+        
+        async function parseOpenAPIEndpoints(spec) {
+            const endpoints = [];
+            const paths = spec.paths || {};
+            for (const [path, methods] of Object.entries(paths)) {
+                for (const [method, details] of Object.entries(methods)) {
+                    if (['get','post','put','delete','patch'].includes(method.toLowerCase())) {
+                        endpoints.push({
+                            method: method.toUpperCase(),
+                            path: path,
+                            summary: details.summary || '',
+                            name: details.summary || path
+                        });
+                    }
+                }
+            }
+            return endpoints;
+        }
+        
+        function parsePostmanEndpoints(collection) {
+            const endpoints = [];
+            const processItems = (items, folder = '') => {
+                for (const item of items) {
+                    if (item.item) {
+                        processItems(item.item, item.name);
+                    } else if (item.request) {
+                        const url = item.request.url || {};
+                        endpoints.push({
+                            method: item.request.method || 'GET',
+                            path: url.raw || url.toString() || '/',
+                            name: item.name,
+                            folder: folder
+                        });
+                    }
+                }
+            };
+            processItems(collection.item || []);
+            return endpoints;
+        }
+        
+        async function doImport() {
+            const importType = document.getElementById('importType').value;
+            const data = document.getElementById('importData').value;
+            
+            try {
+                const json = JSON.parse(data);
+                const endpoint = importType === 'openapi' ? '/api/import/openapi' : '/api/import/postman';
+                
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(importType === 'openapi' ? {spec: json} : {collection: json})
+                });
+                
+                const result = await res.json();
+                alert(result.message || result.error);
+                closeImportModal();
+                loadData();
+            } catch(e) {
+                alert('Import failed: ' + e.message);
+            }
+        }
+    </script>
 </body>
 </html>
 """
@@ -1146,6 +1282,205 @@ async def get_watch_status() -> Dict[str, Any]:
         "watching": True,
         "changes": changes,
         "last_check": datetime.now().isoformat(),
+    }
+
+
+def parse_openapi_spec(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse OpenAPI spec and extract endpoints."""
+    endpoints = []
+    paths = spec.get("paths", {})
+
+    for path, methods in paths.items():
+        for method, details in methods.items():
+            if method.upper() in [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS",
+                "HEAD",
+            ]:
+                params = []
+
+                # Extract parameters
+                for param in details.get("parameters", []):
+                    params.append(
+                        {
+                            "name": param.get("name"),
+                            "in": param.get("in"),
+                            "required": param.get("required", False),
+                            "schema": param.get("schema", {}),
+                            "description": param.get("description", ""),
+                        }
+                    )
+
+                # Extract request body for POST/PUT/PATCH
+                request_body = None
+                if method.upper() in ["POST", "PUT", "PATCH"]:
+                    content = details.get("requestBody", {}).get("content", {})
+                    if "application/json" in content:
+                        request_body = content["application/json"].get("schema", {})
+
+                endpoints.append(
+                    {
+                        "path": path,
+                        "method": method.upper(),
+                        "summary": details.get("summary", ""),
+                        "description": details.get("description", ""),
+                        "parameters": params,
+                        "request_body": request_body,
+                        "tags": details.get("tags", []),
+                    }
+                )
+
+    return endpoints
+
+
+def parse_postman_collection(collection: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse Postman collection and extract requests."""
+    endpoints = []
+
+    items = collection.get("item", [])
+
+    def parse_items(items_list, folder_name=""):
+        for item in items_list:
+            if "item" in item:  # Folder
+                parse_items(item["item"], item.get("name", ""))
+            else:  # Request
+                request = item.get("request", {})
+                url = request.get("url", {})
+                url_str = url if isinstance(url, str) else url.get("raw", "")
+
+                endpoints.append(
+                    {
+                        "path": url_str,
+                        "method": request.get("method", "GET"),
+                        "name": item.get("name", "Unnamed"),
+                        "description": item.get("description", ""),
+                        "folder": folder_name,
+                        "headers": request.get("header", []),
+                        "body": request.get("body", {}),
+                    }
+                )
+
+    parse_items(items)
+    return endpoints
+
+
+@app.post("/api/import/openapi")
+async def import_openapi(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Import endpoints from OpenAPI spec."""
+    spec = data.get("spec", {})
+
+    if not spec:
+        return {"error": "No spec provided", "endpoints": []}
+
+    try:
+        endpoints = parse_openapi_spec(spec)
+
+        # Save to database
+        conn = get_db()
+        cursor = conn.cursor()
+
+        for ep in endpoints:
+            cursor.execute(
+                """
+                INSERT INTO saved_requests 
+                (name, method, url, headers, body, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    ep.get("summary", ep["path"]),
+                    ep["method"],
+                    ep["path"],
+                    json.dumps(ep.get("parameters", [])),
+                    json.dumps(ep.get("request_body", {})),
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                ),
+            )
+
+        conn.commit()
+        conn.close()
+
+        return {
+            "message": f"Imported {len(endpoints)} endpoints",
+            "endpoints": endpoints,
+        }
+    except Exception as e:
+        return {"error": str(e), "endpoints": []}
+
+
+@app.post("/api/import/postman")
+async def import_postman(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Import requests from Postman collection."""
+    collection = data.get("collection", {})
+
+    if not collection:
+        return {"error": "No collection provided", "endpoints": []}
+
+    try:
+        endpoints = parse_postman_collection(collection)
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        for ep in endpoints:
+            cursor.execute(
+                """
+                INSERT INTO saved_requests 
+                (name, method, url, headers, body, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    ep.get("name", "Unnamed"),
+                    ep["method"],
+                    ep["path"],
+                    json.dumps(ep.get("headers", [])),
+                    json.dumps(ep.get("body", {})),
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                ),
+            )
+
+        conn.commit()
+        conn.close()
+
+        return {
+            "message": f"Imported {len(endpoints)} requests",
+            "endpoints": endpoints,
+        }
+    except Exception as e:
+        return {"error": str(e), "endpoints": []}
+
+
+@app.get("/api/saved-requests")
+async def get_saved_requests() -> Dict[str, Any]:
+    """Get all saved requests."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, name, method, url, headers, body, created_at
+        FROM saved_requests
+        ORDER BY created_at DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    return {
+        "requests": [
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "method": r["method"],
+                "url": r["url"],
+                "headers": json.loads(r["headers"]) if r["headers"] else {},
+                "body": json.loads(r["body"]) if r["body"] else {},
+                "created_at": r["created_at"],
+            }
+            for r in rows
+        ]
     }
 
 

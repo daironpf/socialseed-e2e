@@ -318,6 +318,7 @@ src/socialseed_e2e/core/traceability/sequence_diagram.py
 src/socialseed_e2e/dashboard/__init__.py
 src/socialseed_e2e/dashboard/app.py
 src/socialseed_e2e/dashboard/server.py
+src/socialseed_e2e/dashboard/vue_api.py
 src/socialseed_e2e/dashboard/components/server.py
 src/socialseed_e2e/data_governance/__init__.py
 src/socialseed_e2e/data_governance/data_manager.py
@@ -698,6 +699,7 @@ tests/unit/test_collaboration.py
 tests/unit/test_config_loader.py
 tests/unit/test_contract_testing.py
 tests/unit/test_data_management.py
+tests/unit/test_demo_factory.py
 tests/unit/test_distributed.py
 tests/unit/test_docker.py
 tests/unit/test_environments.py
