@@ -103,6 +103,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 socialseed_e2e = ["*.md", "templates/*.template"]
+"*" = ["verify_fixes.py"]
 
 # Black formatter
 [tool.black]
