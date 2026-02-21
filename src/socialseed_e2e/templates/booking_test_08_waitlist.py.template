@@ -1,0 +1,41 @@
+"""Test: Waitlist
+
+Run: pytest services/booking_demo/modules/08_waitlist.py
+"""
+
+from datetime import date, timedelta
+from socialseed_e2e import BasePage
+
+BASE_URL = "http://localhost:5006"
+
+async def run_join(page: BasePage):
+    future_date = (date.today() + timedelta(days=10)).strftime("%Y-%m-%d")
+    response = await page.post(f"{BASE_URL}/api/services/svc_1/waitlist", data={
+        "user_id": "user_wait1",
+        "requested_date": future_date,
+        "requested_time": "10:00"
+    })
+    assert response.status == 200
+    data = response.json()
+    assert data["status"] == "waiting"
+    return data
+
+async def run_get(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/services/svc_1/waitlist")
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    return response
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_join(base_page)
+            await browser.close()
+    asyncio.run(main())

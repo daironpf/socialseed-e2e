@@ -24,6 +24,7 @@ class DemoInstaller:
         ("auth", "api-auth-demo.py", None),
         ("ecommerce", "api-ecommerce-demo.py", "ecommerce_service_page.py"),
         ("chat", "api-chat-demo.py", "chat_service_page.py"),
+        ("booking", "api-booking-demo.py", "booking_service_page.py"),
     ]
 
     def __init__(self, force: bool = False):
@@ -266,6 +267,82 @@ class DemoInstaller:
                     f"  [green]✓[/green] Created: services/chat-demo/modules/{prefix}.py"
                 )
 
+        # Create booking demo service
+        self._create_booking_service(target_path)
+
+    def _create_booking_service(self, target_path: Path) -> None:
+        """Create booking demo service files."""
+        booking_service_path = target_path / "services" / "booking-demo"
+        booking_modules_path = booking_service_path / "modules"
+
+        if not booking_service_path.exists() or self.force:
+            booking_service_path.mkdir(parents=True, exist_ok=True)
+            booking_modules_path.mkdir(exist_ok=True)
+
+            (booking_service_path / "__init__.py").write_text("")
+            (booking_modules_path / "__init__.py").write_text("")
+
+            self.engine.render_to_file(
+                "booking_service_page.py.template",
+                {},
+                str(booking_service_path / "booking_page.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/booking-demo/booking_page.py"
+            )
+
+            self.engine.render_to_file(
+                "booking_data_schema.py.template",
+                {},
+                str(booking_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/booking-demo/data_schema.py"
+            )
+
+            self.engine.render_to_file(
+                "booking_config.py.template",
+                {},
+                str(booking_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print("  [green]✓[/green] Created: services/booking-demo/config.py")
+
+            test_files = [
+                ("01_list_services", "booking_test_01_list_services.py.template"),
+                ("02_get_service", "booking_test_02_get_service.py.template"),
+                ("03_availability", "booking_test_03_availability.py.template"),
+                (
+                    "04_create_appointment",
+                    "booking_test_04_create_appointment.py.template",
+                ),
+                (
+                    "05_list_appointments",
+                    "booking_test_05_list_appointments.py.template",
+                ),
+                (
+                    "06_cancel_appointment",
+                    "booking_test_06_cancel_appointment.py.template",
+                ),
+                ("07_reschedule", "booking_test_07_reschedule.py.template"),
+                ("08_waitlist", "booking_test_08_waitlist.py.template"),
+                ("09_double_booking", "booking_test_09_double_booking.py.template"),
+                ("10_booking_workflow", "booking_test_10_booking_workflow.py.template"),
+            ]
+
+            for prefix, template in test_files:
+                self.engine.render_to_file(
+                    template,
+                    {},
+                    str(booking_modules_path / f"{prefix}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/booking-demo/modules/{prefix}.py"
+                )
+
     def _update_e2e_conf(self) -> None:
         """Update e2e.conf with demo service."""
         from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
@@ -292,6 +369,12 @@ class DemoInstaller:
             config.services["chat-demo"] = ServiceConfig(
                 name="chat-demo",
                 base_url="http://localhost:5005",
+                health_endpoint="/health",
+            )
+
+            config.services["booking-demo"] = ServiceConfig(
+                name="booking-demo",
+                base_url="http://localhost:5006",
                 health_endpoint="/health",
             )
 

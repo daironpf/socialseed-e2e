@@ -1,0 +1,37 @@
+"""Test: Create Appointment
+
+Run: pytest services/booking_demo/modules/04_create_appointment.py
+"""
+
+from datetime import datetime, timedelta
+from socialseed_e2e import BasePage
+
+BASE_URL = "http://localhost:5006"
+
+async def run(page: BasePage):
+    future_date = (datetime.now() + timedelta(days=2)).replace(hour=10, minute=0, second=0)
+    start_time = future_date.isoformat()
+    response = await page.post(f"{BASE_URL}/api/appointments", data={
+        "service_id": "svc_1",
+        "user_id": "user1",
+        "start_time": start_time
+    })
+    assert response.status == 200
+    data = response.json()
+    assert data["service_id"] == "svc_1"
+    assert data["user_id"] == "user1"
+    assert data["status"] == "confirmed"
+    return response
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run(base_page)
+            await browser.close()
+    asyncio.run(main())

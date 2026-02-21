@@ -1,0 +1,520 @@
+#!/usr/bin/env python3
+"""
+Demo Booking/Reservas API for socialseed-e2e Testing
+
+FastAPI-based booking API with SQLite database.
+Use this API to test reservation and scheduling flows.
+
+Usage:
+    pip install fastapi uvicorn sqlalchemy
+    
+    # Start the API server
+    python api-booking-demo.py
+    
+    # The API will be available at http://localhost:5006
+
+Endpoints:
+    GET    /health                         - Health check
+    GET    /api/services                   - List services
+    POST   /api/services                   - Create service
+    GET    /api/services/{id}              - Get service
+    GET    /api/services/{id}/availability - Get available slots
+    POST   /api/appointments               - Create appointment
+    GET    /api/appointments               - List appointments
+    GET    /api/appointments/{id}         - Get appointment
+    POST   /api/appointments/{id}/cancel  - Cancel appointment
+    POST   /api/appointments/{id}/reschedule - Reschedule
+    GET    /api/services/{id}/waitlist    - Get waitlist
+    POST   /api/services/{id}/waitlist    - Join waitlist
+    DELETE /api/waitlist/{id}             - Leave waitlist
+"""
+
+import uuid
+from datetime import datetime, timezone, timedelta, date
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import create_engine, Column, String, Integer, Text, Boolean, DateTime, ForeignKey, Time
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
+
+DATABASE_URL = "sqlite:///./booking_demo.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+
+class ServiceDB(Base):
+    __tablename__ = "services"
+    
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    duration_minutes = Column(Integer, nullable=False)
+    price = Column(Integer, nullable=False)
+    timezone = Column(String, default="UTC")
+    slot_duration_minutes = Column(Integer, default=30)
+    buffer_time_minutes = Column(Integer, default=0)
+    max_advance_days = Column(Integer, default=30)
+    working_start = Column(String, default="09:00")
+    working_end = Column(String, default="18:00")
+    working_days = Column(String, default="1,2,3,4,5")  # Mon-Fri
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AppointmentDB(Base):
+    __tablename__ = "appointments"
+    
+    id = Column(String, primary_key=True, index=True)
+    service_id = Column(String, ForeignKey("services.id"), nullable=False)
+    user_id = Column(String, nullable=False)
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=False)
+    status = Column(String, default="confirmed")  # confirmed, cancelled, completed, no_show
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class WaitlistDB(Base):
+    __tablename__ = "waitlist"
+    
+    id = Column(String, primary_key=True, index=True)
+    service_id = Column(String, ForeignKey("services.id"), nullable=False)
+    user_id = Column(String, nullable=False)
+    requested_date = Column(String, nullable=False)  # YYYY-MM-DD
+    requested_time = Column(String, nullable=True)  # HH:MM
+    status = Column(String, default="waiting")  # waiting, notified, expired
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ServiceSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int
+    price: int
+    timezone: str
+    slot_duration_minutes: int
+    buffer_time_minutes: int
+    max_advance_days: int
+    working_start: str
+    working_end: str
+    working_days: str
+    is_active: bool
+    created_at: datetime
+
+
+class ServiceCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int = Field(..., gt=0)
+    price: int = Field(..., gt=0)
+    timezone: str = "UTC"
+    slot_duration_minutes: int = 30
+    buffer_time_minutes: int = 0
+    max_advance_days: int = 30
+    working_start: str = "09:00"
+    working_end: str = "18:00"
+    working_days: str = "1,2,3,4,5"
+
+
+class AppointmentSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    service_id: str
+    user_id: str
+    start_time: datetime
+    end_time: datetime
+    status: str
+    notes: Optional[str] = None
+    created_at: datetime
+
+
+class AppointmentCreate(BaseModel):
+    service_id: str
+    user_id: str
+    start_time: str  # ISO format
+    notes: Optional[str] = None
+
+
+class AppointmentUpdate(BaseModel):
+    start_time: str
+    notes: Optional[str] = None
+
+
+class WaitlistSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    service_id: str
+    user_id: str
+    requested_date: str
+    requested_time: Optional[str] = None
+    status: str
+    created_at: datetime
+
+
+class WaitlistCreate(BaseModel):
+    user_id: str
+    requested_date: str
+    requested_time: Optional[str] = None
+
+
+class AvailabilitySlot(BaseModel):
+    date: str
+    time: str
+    available: bool
+
+
+app = FastAPI(
+    title="Booking Demo API",
+    description="Demo Booking/Reservas API for socialseed-e2e Testing",
+    version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def seed_database(db: Session):
+    if db.query(ServiceDB).first():
+        return
+    
+    services = [
+        ServiceDB(id="svc_1", name="Corte de cabello", description="Corte de cabello clásico",
+                  duration_minutes=30, price=2500, timezone="America/New_York"),
+        ServiceDB(id="svc_2", name="Masaje", description="Masaje relajante de 60 minutos",
+                  duration_minutes=60, price=8000, timezone="America/New_York"),
+        ServiceDB(id="svc_3", name="Consulta", description="Consulta profesional",
+                  duration_minutes=45, price=10000, timezone="America/New_York"),
+    ]
+    db.add_all(services)
+    db.commit()
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "booking-demo",
+        "version": "1.0.0",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@app.get("/api/services", response_model=list[ServiceSchema])
+def list_services(db: Session = Depends(get_db)):
+    return db.query(ServiceDB).filter(ServiceDB.is_active == True).all()
+
+
+@app.post("/api/services", response_model=ServiceSchema)
+def create_service(service: ServiceCreate, db: Session = Depends(get_db)):
+    svc_id = f"svc_{uuid.uuid4().hex[:8]}"
+    db_service = ServiceDB(id=svc_id, **service.model_dump())
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
+
+
+@app.get("/api/services/{service_id}", response_model=ServiceSchema)
+def get_service(service_id: str, db: Session = Depends(get_db)):
+    service = db.query(ServiceDB).filter(ServiceDB.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return service
+
+
+@app.get("/api/services/{service_id}/availability")
+def get_availability(
+    service_id: str,
+    start_date: str = Query(..., description="YYYY-MM-DD"),
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    service = db.query(ServiceDB).filter(ServiceDB.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    from datetime import datetime as dt
+    start = dt.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end = dt.strptime(end_date, "%Y-%m-%d").date()
+    else:
+        end = start + timedelta(days=service.max_advance_days)
+    
+    working_days = [int(d) for d in service.working_days.split(",")]
+    
+    slots = []
+    current = start
+    while current <= end:
+        if current.weekday() in working_days:
+            start_hour = int(service.working_start.split(":")[0])
+            end_hour = int(service.working_end.split(":")[0])
+            
+            for hour in range(start_hour, end_hour):
+                for minute in range(0, 60, service.slot_duration_minutes):
+                    slot_time = current.replace(hour=hour, minute=minute)
+                    
+                    existing = db.query(AppointmentDB).filter(
+                        AppointmentDB.service_id == service_id,
+                        AppointmentDB.status != "cancelled",
+                        AppointmentDB.start_time == slot_time
+                    ).first()
+                    
+                    slots.append({
+                        "date": current.isoformat(),
+                        "time": f"{hour:02d}:{minute:02d}",
+                        "available": existing is None
+                    })
+        current += timedelta(days=1)
+    
+    return {"service_id": service_id, "slots": slots[:50]}
+
+
+@app.post("/api/appointments", response_model=AppointmentSchema)
+def create_appointment(appointment: AppointmentCreate, db: Session = Depends(get_db)):
+    service = db.query(ServiceDB).filter(ServiceDB.id == appointment.service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    try:
+        start_dt = datetime.fromisoformat(appointment.start_time.replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid datetime format")
+    
+    end_dt = start_dt + timedelta(minutes=service.duration_minutes)
+    
+    existing = db.query(AppointmentDB).filter(
+        AppointmentDB.service_id == appointment.service_id,
+        AppointmentDB.status != "cancelled",
+        AppointmentDB.start_time == start_dt
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=409, detail="Time slot not available")
+    
+    appt_id = f"appt_{uuid.uuid4().hex[:8]}"
+    db_appointment = AppointmentDB(
+        id=appt_id,
+        service_id=appointment.service_id,
+        user_id=appointment.user_id,
+        start_time=start_dt,
+        end_time=end_dt,
+        status="confirmed",
+        notes=appointment.notes
+    )
+    db.add(db_appointment)
+    db.commit()
+    db.refresh(db_appointment)
+    return db_appointment
+
+
+@app.get("/api/appointments", response_model=list[AppointmentSchema])
+def list_appointments(
+    user_id: str = Query(...),
+    service_id: Optional[str] = None,
+    status: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(AppointmentDB).filter(AppointmentDB.user_id == user_id)
+    
+    if service_id:
+        query = query.filter(AppointmentDB.service_id == service_id)
+    if status:
+        query = query.filter(AppointmentDB.status == status)
+    
+    return query.order_by(AppointmentDB.start_time).all()
+
+
+@app.get("/api/appointments/{appointment_id}", response_model=AppointmentSchema)
+def get_appointment(appointment_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    appointment = db.query(AppointmentDB).filter(
+        AppointmentDB.id == appointment_id,
+        AppointmentDB.user_id == user_id
+    ).first()
+    
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    return appointment
+
+
+@app.post("/api/appointments/{appointment_id}/cancel")
+def cancel_appointment(appointment_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    appointment = db.query(AppointmentDB).filter(
+        AppointmentDB.id == appointment_id,
+        AppointmentDB.user_id == user_id
+    ).first()
+    
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    
+    if appointment.status == "cancelled":
+        raise HTTPException(status_code=400, detail="Already cancelled")
+    
+    appointment.status = "cancelled"
+    db.commit()
+    
+    return {"message": "Appointment cancelled successfully"}
+
+
+@app.post("/api/appointments/{appointment_id}/reschedule", response_model=AppointmentSchema)
+def reschedule_appointment(
+    appointment_id: str,
+    update: AppointmentUpdate,
+    user_id: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    appointment = db.query(AppointmentDB).filter(
+        AppointmentDB.id == appointment_id,
+        AppointmentDB.user_id == user_id
+    ).first()
+    
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    
+    if appointment.status == "cancelled":
+        raise HTTPException(status_code=400, detail="Cannot reschedule cancelled appointment")
+    
+    try:
+        new_start = datetime.fromisoformat(update.start_time.replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid datetime format")
+    
+    service = db.query(ServiceDB).filter(ServiceDB.id == appointment.service_id).first()
+    new_end = new_start + timedelta(minutes=service.duration_minutes)
+    
+    existing = db.query(AppointmentDB).filter(
+        AppointmentDB.service_id == appointment.service_id,
+        AppointmentDB.status != "cancelled",
+        AppointmentDB.id != appointment_id,
+        AppointmentDB.start_time == new_start
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=409, detail="Time slot not available")
+    
+    appointment.start_time = new_start
+    appointment.end_time = new_end
+    if update.notes:
+        appointment.notes = update.notes
+    
+    db.commit()
+    db.refresh(appointment)
+    return appointment
+
+
+@app.get("/api/services/{service_id}/waitlist", response_model=list[WaitlistSchema])
+def get_waitlist(service_id: str, db: Session = Depends(get_db)):
+    return db.query(WaitlistDB).filter(
+        WaitlistDB.service_id == service_id,
+        WaitlistDB.status == "waiting"
+    ).all()
+
+
+@app.post("/api/services/{service_id}/waitlist", response_model=WaitlistSchema)
+def join_waitlist(service_id: str, waitlist: WaitlistCreate, db: Session = Depends(get_db)):
+    service = db.query(ServiceDB).filter(ServiceDB.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    existing = db.query(WaitlistDB).filter(
+        WaitlistDB.service_id == service_id,
+        WaitlistDB.user_id == waitlist.user_id,
+        WaitlistDB.status == "waiting"
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=409, detail="Already on waitlist")
+    
+    entry_id = f"wait_{uuid.uuid4().hex[:8]}"
+    db_entry = WaitlistDB(
+        id=entry_id,
+        service_id=service_id,
+        user_id=waitlist.user_id,
+        requested_date=waitlist.requested_date,
+        requested_time=waitlist.requested_time,
+        status="waiting"
+    )
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
+
+@app.delete("/api/waitlist/{waitlist_id}")
+def leave_waitlist(waitlist_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    entry = db.query(WaitlistDB).filter(
+        WaitlistDB.id == waitlist_id,
+        WaitlistDB.user_id == user_id
+    ).first()
+    
+    if not entry:
+        raise HTTPException(status_code=404, detail="Waitlist entry not found")
+    
+    db.delete(entry)
+    db.commit()
+    return {"message": "Removed from waitlist"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    Base.metadata.create_all(bind=engine)
+    
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
+    
+    print("=" * 60)
+    print("🚀 Booking Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5006")
+    print("\nDatabase: SQLite (booking_demo.db)")
+    print("\nDefault services:")
+    print("  - Corte de cabello (30 min, $25)")
+    print("  - Masaje (60 min, $80)")
+    print("  - Consulta (45 min, $100)")
+    print("\nAvailable endpoints:")
+    print("  GET    /health                    - Health check")
+    print("  GET    /api/services             - List services")
+    print("  POST   /api/services            - Create service")
+    print("  GET    /api/services/{id}       - Get service")
+    print("  GET    /api/services/{id}/availability - Get slots")
+    print("  POST   /api/appointments         - Create appointment")
+    print("  GET    /api/appointments        - List appointments")
+    print("  GET    /api/appointments/{id}   - Get appointment")
+    print("  POST   /api/appointments/{id}/cancel - Cancel")
+    print("  POST   /api/appointments/{id}/reschedule - Reschedule")
+    print("  GET    /api/services/{id}/waitlist - Get waitlist")
+    print("  POST   /api/services/{id}/waitlist - Join waitlist")
+    print("\nPress Ctrl+C to stop the server")
+    print("=" * 60 + "\n")
+    
+    uvicorn.run(app, host="0.0.0.0", port=5006)

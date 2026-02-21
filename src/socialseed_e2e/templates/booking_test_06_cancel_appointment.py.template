@@ -1,0 +1,40 @@
+"""Test: Cancel Appointment
+
+Run: pytest services/booking_demo/modules/06_cancel_appointment.py
+"""
+
+from datetime import datetime, timedelta
+from socialseed_e2e import BasePage
+
+BASE_URL = "http://localhost:5006"
+
+async def run(page: BasePage):
+    future_date = (datetime.now() + timedelta(days=3)).replace(hour=11, minute=0, second=0)
+    create_resp = await page.post(f"{BASE_URL}/api/appointments", data={
+        "service_id": "svc_2",
+        "user_id": "user2",
+        "start_time": future_date.isoformat()
+    })
+    appointment = create_resp.json()
+    appointment_id = appointment["id"]
+    
+    cancel_resp = await page.post(f"{BASE_URL}/api/appointments/{appointment_id}/cancel", params={"user_id": "user2"})
+    assert cancel_resp.status == 200
+    
+    get_resp = await page.get(f"{BASE_URL}/api/appointments/{appointment_id}", params={"user_id": "user2"})
+    data = get_resp.json()
+    assert data["status"] == "cancelled"
+    return get_resp
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run(base_page)
+            await browser.close()
+    asyncio.run(main())

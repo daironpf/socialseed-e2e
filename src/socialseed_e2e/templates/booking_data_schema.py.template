@@ -1,0 +1,85 @@
+"""Booking Demo Data Schema for socialseed-e2e"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class Service(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int
+    price: int
+    timezone: str
+    slot_duration_minutes: int
+    buffer_time_minutes: int
+    max_advance_days: int
+    working_start: str
+    working_end: str
+    working_days: str
+    is_active: bool
+    created_at: datetime
+
+
+class ServiceCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int
+    price: int
+    timezone: str = "UTC"
+    slot_duration_minutes: int = 30
+    buffer_time_minutes: int = 0
+    max_advance_days: int = 30
+    working_start: str = "09:00"
+    working_end: str = "18:00"
+    working_days: str = "1,2,3,4,5"
+
+
+class Appointment(BaseModel):
+    id: str
+    service_id: str
+    user_id: str
+    start_time: datetime
+    end_time: datetime
+    status: str
+    notes: Optional[str] = None
+    created_at: datetime
+
+
+class AppointmentCreate(BaseModel):
+    service_id: str
+    user_id: str
+    start_time: str
+    notes: Optional[str] = None
+
+
+class AppointmentUpdate(BaseModel):
+    start_time: str
+    notes: Optional[str] = None
+
+
+class Waitlist(BaseModel):
+    id: str
+    service_id: str
+    user_id: str
+    requested_date: str
+    requested_time: Optional[str] = None
+    status: str
+    created_at: datetime
+
+
+class WaitlistCreate(BaseModel):
+    user_id: str
+    requested_date: str
+    requested_time: Optional[str] = None
+
+
+class AvailabilitySlot(BaseModel):
+    date: str
+    time: str
+    available: bool
+
+
+DEFAULT_SERVICES = ["svc_1", "svc_2", "svc_3"]
+DEFAULT_USER = "user1"

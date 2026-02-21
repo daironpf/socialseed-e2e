@@ -1,0 +1,18 @@
+"""Booking Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class BookingConfig(BaseModel):
+    base_url: str = "http://localhost:5006"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    default_services: list[str] = ["svc_1", "svc_2", "svc_3"]
+    default_user: str = "user1"
+    
+    appointment_statuses: list[str] = ["confirmed", "cancelled", "completed", "no_show"]
+    waitlist_statuses: list[str] = ["waiting", "notified", "expired"]
+
+
+CONFIG = BookingConfig()

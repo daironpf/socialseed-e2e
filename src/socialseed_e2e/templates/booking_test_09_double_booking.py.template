@@ -1,0 +1,41 @@
+"""Test: Double Booking Prevention
+
+Run: pytest services/booking_demo/modules/09_double_booking.py
+"""
+
+from datetime import datetime, timedelta
+from socialseed_e2e import BasePage
+
+BASE_URL = "http://localhost:5006"
+
+async def run(page: BasePage):
+    same_time = (datetime.now() + timedelta(days=6)).replace(hour=9, minute=0, second=0)
+    
+    resp1 = await page.post(f"{BASE_URL}/api/appointments", data={
+        "service_id": "svc_1",
+        "user_id": "user_a",
+        "start_time": same_time.isoformat()
+    })
+    assert resp1.status == 200
+    
+    resp2 = await page.post(f"{BASE_URL}/api/appointments", data={
+        "service_id": "svc_1",
+        "user_id": "user_b",
+        "start_time": same_time.isoformat()
+    })
+    assert resp2.status == 409
+    assert "not available" in resp2.json()["detail"].lower()
+    return resp2
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run(base_page)
+            await browser.close()
+    asyncio.run(main())
