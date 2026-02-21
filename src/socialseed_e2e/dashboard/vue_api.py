@@ -89,24 +89,132 @@ init_db()
 
 @app.get("/")
 async def root():
-    """Serve the Vue app."""
+    """Serve the Vue app or fallback HTML."""
     vue_dist = Path(__file__).parent / "vue" / "dist"
     index_path = vue_dist / "index.html"
 
     if index_path.exists():
         return FileResponse(str(index_path))
 
-    return HTMLResponse(
-        content="""
-        <html>
-            <head><title>SocialSeed E2E Dashboard</title></head>
-            <body>
-                <h1>SocialSeed E2E Dashboard</h1>
-                <p>Vue dashboard files not found. Run 'npm run build' in dashboard/vue/</p>
-            </body>
-        </html>
-    """
-    )
+    return HTMLResponse(content=FALLBACK_DASHBOARD_HTML)
+
+
+FALLBACK_DASHBOARD_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialSeed E2E Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        header { background: white; padding: 1.5rem 2rem; border-radius: 0.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { color: #1f2937; font-size: 1.5rem; }
+        .badge { background: #22c55e; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; margin-left: 1rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #1f2937; }
+        .stat-label { color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 500; border: none; cursor: pointer; }
+        .btn:hover { background: #2563eb; }
+        .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+        .services { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .services h3 { margin-bottom: 1rem; color: #1f2937; }
+        .service-item { display: flex; justify-content: space-between; padding: 0.75rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 0.5rem; }
+        .service-name { font-weight: 500; }
+        .service-count { color: #6b7280; font-size: 0.875rem; }
+        .notice { background: #fef3c7; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; border-left: 4px solid #f59e0b; }
+        .notice strong { color: #92400e; }
+        .api-endpoints { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 2rem; }
+        .api-endpoints h3 { margin-bottom: 1rem; }
+        code { background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; }
+        .endpoint { padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb; }
+        .endpoint:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 SocialSeed E2E Dashboard <span class="badge">v2.0</span></h1>
+        </header>
+
+        <div class="notice">
+            <strong>Note:</strong> Vue.js frontend not built. This is a basic HTML fallback. 
+            For full features, run: <code>cd dashboard/vue && npm install && npm run build</code>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="stat-value" id="totalTests">-</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="card">
+                <div class="stat-value" id="servicesCount">-</div>
+                <div class="stat-label">Services</div>
+            </div>
+            <div class="card">
+                <div class="stat-value">CLI</div>
+                <div class="stat-label">Use e2e run</div>
+            </div>
+            <div class="card">
+                <div class="stat-value">Ready</div>
+                <div class="stat-label">API Server</div>
+            </div>
+        </div>
+
+        <div class="services">
+            <h3>Services</h3>
+            <div id="servicesList">
+                <p style="color: #6b7280;">Loading services...</p>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="location.reload()">🔄 Refresh</button>
+            <a href="/api/tests" class="btn" style="background: #6b7280;">📡 API Tests</a>
+            <a href="/api/health" class="btn" style="background: #6b7280;">💚 Health</a>
+        </div>
+
+        <div class="api-endpoints">
+            <h3>API Endpoints</h3>
+            <div class="endpoint"><code>GET /api/tests</code> - List all tests</div>
+            <div class="endpoint"><code>GET /api/history</code> - Test run history</div>
+            <div class="endpoint"><code>GET /api/config</code> - Dashboard config</div>
+            <div class="endpoint"><code>GET /api/health</code> - Health check</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const testsRes = await fetch('/api/tests');
+                const testsData = await testsRes.json();
+                
+                document.getElementById('totalTests').textContent = testsData.tests?.length || 0;
+                document.getElementById('servicesCount').textContent = testsData.services?.length || 0;
+                
+                const servicesList = document.getElementById('servicesList');
+                if (testsData.services?.length > 0) {
+                    servicesList.innerHTML = testsData.services.map(s => 
+                        `<div class="service-item">
+                            <span class="service-name">${s}</span>
+                            <span class="service-count">${testsData.tests?.filter(t => t.service === s).length || 0} tests</span>
+                        </div>`
+                    ).join('');
+                } else {
+                    servicesList.innerHTML = '<p style="color: #6b7280;">No services found. Run "e2e init" first.</p>';
+                }
+            } catch (e) {
+                document.getElementById('servicesList').innerHTML = '<p style="color: #ef4444;">Error loading services: ' + e.message + '</p>';
+            }
+        }
+        loadDashboard();
+    </script>
+</body>
+</html>
+"""
 
 
 @app.get("/api/health")
