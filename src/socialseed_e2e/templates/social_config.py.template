@@ -1,0 +1,8 @@
+"""Configuration for Social Graph Demo API."""
+from pydantic import BaseModel
+
+
+class SocialConfig(BaseModel):
+    base_url: str = "http://localhost:5009"
+    health_endpoint: str = "/health"
+    timeout: int = 30000

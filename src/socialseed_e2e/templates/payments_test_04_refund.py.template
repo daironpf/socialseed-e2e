@@ -1,0 +1,13 @@
+"""Test: Refund - Payments Demo."""
+import uuid
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    intent = page.create_payment_intent(amount=2000, idempotency_key=f"ref-{uuid.uuid4().hex}", user_id="user1").json()
+    method = page.create_payment_method(user_id="user1").json()
+    confirm = page.confirm_payment_intent(intent_id=intent["id"], payment_method_id=method["id"]).json()
+    
+    result = page.create_refund(charge_id=confirm["charge_id"], amount=1000)
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    return result

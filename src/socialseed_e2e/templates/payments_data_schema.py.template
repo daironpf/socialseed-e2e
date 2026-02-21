@@ -1,0 +1,40 @@
+"""Data schemas for Payments Demo API."""
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class PaymentIntent(BaseModel):
+    id: str
+    amount: int
+    currency: str = "usd"
+    status: str
+    payment_method_id: Optional[str] = None
+    client_secret: str
+    idempotency_key: str
+    metadata: Optional[dict] = None
+    created_at: datetime
+
+
+class PaymentMethod(BaseModel):
+    id: str
+    user_id: str
+    type: str = "card"
+    card_last4: Optional[str] = None
+    is_default: bool = False
+
+
+class Charge(BaseModel):
+    id: str
+    payment_intent_id: str
+    amount: int
+    status: str
+    receipt_url: Optional[str] = None
+
+
+class Refund(BaseModel):
+    id: str
+    charge_id: str
+    amount: int
+    reason: Optional[str] = None
+    status: str

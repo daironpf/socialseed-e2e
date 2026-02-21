@@ -1,0 +1,288 @@
+"""Payments API Demo for socialseed-e2e Testing
+
+Stripe-like payment API with payment intents, methods, refunds, and webhooks.
+"""
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Query, Depends
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+app = FastAPI(title="Payments Demo API")
+
+DATABASE_URL = "sqlite:///./payments_demo.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class PaymentIntentDB(Base):
+    __tablename__ = "payment_intents"
+    id = Column(String, primary_key=True)
+    amount = Column(Integer, nullable=False)
+    currency = Column(String, default="usd")
+    status = Column(String, default="requires_payment_method")
+    payment_method_id = Column(String, nullable=True)
+    client_secret = Column(String)
+    idempotency_key = Column(String, unique=True)
+    metadata_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class PaymentMethodDB(Base):
+    __tablename__ = "payment_methods"
+    id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=False)
+    type = Column(String, default="card")
+    card_last4 = Column(String)
+    is_default = Column(Integer, default=0)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ChargeDB(Base):
+    __tablename__ = "charges"
+    id = Column(String, primary_key=True)
+    payment_intent_id = Column(String, nullable=False)
+    amount = Column(Integer, nullable=False)
+    status = Column(String, default="pending")
+    receipt_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class RefundDB(Base):
+    __tablename__ = "refunds"
+    id = Column(String, primary_key=True)
+    charge_id = Column(String, nullable=False)
+    amount = Column(Integer, nullable=False)
+    reason = Column(String, nullable=True)
+    status = Column(String, default="pending")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+Base.metadata.create_all(bind=engine)
+
+
+class PaymentIntent(BaseModel):
+    id: str
+    amount: int
+    currency: str = "usd"
+    status: str
+    payment_method_id: Optional[str] = None
+    client_secret: str
+    idempotency_key: str
+    metadata: Optional[dict] = None
+    created_at: datetime
+
+
+class PaymentMethod(BaseModel):
+    id: str
+    user_id: str
+    type: str = "card"
+    card_last4: Optional[str] = None
+    is_default: bool = False
+
+
+class Charge(BaseModel):
+    id: str
+    payment_intent_id: str
+    amount: int
+    status: str
+    receipt_url: Optional[str] = None
+
+
+class Refund(BaseModel):
+    id: str
+    charge_id: str
+    amount: int
+    reason: Optional[str] = None
+    status: str
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "payments-demo", "version": "1.0.0"}
+
+
+@app.post("/api/payment_intents", response_model=PaymentIntent)
+def create_payment_intent(
+    amount: int,
+    currency: str = "usd",
+    idempotency_key: str = Query(...),
+    user_id: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(PaymentIntentDB).filter(PaymentIntentDB.idempotency_key == idempotency_key).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Idempotency key already used")
+    
+    intent = PaymentIntentDB(
+        id=f"pi_{uuid.uuid4().hex[:16]}",
+        amount=amount,
+        currency=currency,
+        client_secret=f"pi_{uuid.uuid4().hex}_secret_{uuid.uuid4().hex[:8]}",
+        idempotency_key=idempotency_key,
+    )
+    db.add(intent)
+    db.commit()
+    db.refresh(intent)
+    
+    return PaymentIntent(
+        id=intent.id, amount=intent.amount, currency=intent.currency,
+        status=intent.status, payment_method_id=intent.payment_method_id,
+        client_secret=intent.client_secret, idempotency_key=intent.idempotency_key,
+        created_at=intent.created_at
+    )
+
+
+@app.get("/api/payment_intents/{intent_id}", response_model=PaymentIntent)
+def get_payment_intent(intent_id: str, db: Session = Depends(get_db)):
+    intent = db.query(PaymentIntentDB).filter(PaymentIntentDB.id == intent_id).first()
+    if not intent:
+        raise HTTPException(status_code=404, detail="Payment intent not found")
+    
+    return PaymentIntent(
+        id=intent.id, amount=intent.amount, currency=intent.currency,
+        status=intent.status, payment_method_id=intent.payment_method_id,
+        client_secret=intent.client_secret, idempotency_key=intent.idempotency_key,
+        created_at=intent.created_at
+    )
+
+
+@app.post("/api/payment_intents/{intent_id}/confirm")
+def confirm_payment_intent(intent_id: str, payment_method_id: str = Query(...), db: Session = Depends(get_db)):
+    intent = db.query(PaymentIntentDB).filter(PaymentIntentDB.id == intent_id).first()
+    if not intent:
+        raise HTTPException(status_code=404, detail="Payment intent not found")
+    
+    intent.payment_method_id = payment_method_id
+    intent.status = "succeeded"
+    db.commit()
+    
+    charge = ChargeDB(
+        id=f"ch_{uuid.uuid4().hex[:16]}",
+        payment_intent_id=intent_id,
+        amount=intent.amount,
+        status="succeeded",
+        receipt_url=f"https://receipt.example.com/{uuid.uuid4().hex}"
+    )
+    db.add(charge)
+    db.commit()
+    
+    return {"status": "succeeded", "charge_id": charge.id}
+
+
+@app.post("/api/payment_intents/{intent_id}/cancel")
+def cancel_payment_intent(intent_id: str, db: Session = Depends(get_db)):
+    intent = db.query(PaymentIntentDB).filter(PaymentIntentDB.id == intent_id).first()
+    if not intent:
+        raise HTTPException(status_code=404, detail="Payment intent not found")
+    
+    intent.status = "canceled"
+    db.commit()
+    return {"status": "canceled"}
+
+
+@app.post("/api/payment_methods", response_model=PaymentMethod)
+def create_payment_method(user_id: str, card_last4: str = "4242", db: Session = Depends(get_db)):
+    method = PaymentMethodDB(
+        id=f"pm_{uuid.uuid4().hex[:16]}",
+        user_id=user_id,
+        card_last4=card_last4,
+    )
+    db.add(method)
+    db.commit()
+    db.refresh(method)
+    
+    return PaymentMethod(
+        id=method.id, user_id=method.user_id, type=method.type,
+        card_last4=method.card_last4, is_default=bool(method.is_default)
+    )
+
+
+@app.get("/api/payment_methods", response_model=list[PaymentMethod])
+def list_payment_methods(user_id: str = Query(...), db: Session = Depends(get_db)):
+    methods = db.query(PaymentMethodDB).filter(PaymentMethodDB.user_id == user_id).all()
+    return [PaymentMethod(
+        id=m.id, user_id=m.user_id, type=m.type,
+        card_last4=m.card_last4, is_default=bool(m.is_default)
+    ) for m in methods]
+
+
+@app.post("/api/refunds", response_model=Refund)
+def create_refund(charge_id: str, amount: int = Query(...), reason: str = "", db: Session = Depends(get_db)):
+    charge = db.query(ChargeDB).filter(ChargeDB.id == charge_id).first()
+    if not charge:
+        raise HTTPException(status_code=404, detail="Charge not found")
+    
+    refund = RefundDB(
+        id=f"re_{uuid.uuid4().hex[:16]}",
+        charge_id=charge_id,
+        amount=amount,
+        reason=reason,
+        status="succeeded"
+    )
+    db.add(refund)
+    charge.status = "refunded"
+    db.commit()
+    db.refresh(refund)
+    
+    return Refund(
+        id=refund.id, charge_id=refund.charge_id, amount=refund.amount,
+        reason=refund.reason, status=refund.status
+    )
+
+
+@app.get("/api/refunds/{refund_id}", response_model=Refund)
+def get_refund(refund_id: str, db: Session = Depends(get_db)):
+    refund = db.query(RefundDB).filter(RefundDB.id == refund_id).first()
+    if not refund:
+        raise HTTPException(status_code=404, detail="Refund not found")
+    
+    return Refund(
+        id=refund.id, charge_id=refund.charge_id, amount=refund.amount,
+        reason=refund.reason, status=refund.status
+    )
+
+
+@app.get("/api/charges", response_model=list[Charge])
+def list_charges(user_id: str = Query(...), db: Session = Depends(get_db)):
+    charges = db.query(ChargeDB).all()
+    return [Charge(
+        id=c.id, payment_intent_id=c.payment_intent_id, amount=c.amount,
+        status=c.status, receipt_url=c.receipt_url
+    ) for c in charges]
+
+
+if __name__ == "__main__":
+    import uvicorn
+    print("=" * 60)
+    print("🚀 Payments Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5010")
+    print("\nFeatures: Stripe-like payments with idempotency")
+    print("\nAvailable endpoints:")
+    print("  GET    /health                    - Health")
+    print("  POST   /api/payment_intents       - Create payment intent")
+    print("  GET    /api/payment_intents/{id}  - Get payment intent")
+    print("  POST   /api/payment_intents/{id}/confirm - Confirm payment")
+    print("  POST   /api/payment_intents/{id}/cancel - Cancel payment")
+    print("  POST   /api/payment_methods       - Create payment method")
+    print("  GET    /api/payment_methods      - List payment methods")
+    print("  POST   /api/refunds              - Create refund")
+    print("  GET    /api/refunds/{id}         - Get refund")
+    print("  GET    /api/charges               - List charges")
+    print("\nPress Ctrl+C")
+    print("=" * 60)
+    uvicorn.run(app, host="0.0.0.0", port=5010)

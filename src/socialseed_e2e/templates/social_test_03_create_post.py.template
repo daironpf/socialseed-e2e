@@ -1,0 +1,12 @@
+"""Test: Create post - Social Graph Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    user = page.create_user(username="poster", display_name="Poster").json()
+    result = page.create_post(user_id=user["id"], content="Hello World!")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "id" in data, "Post ID not in response"
+    assert data["content"] == "Hello World!"
+    return result

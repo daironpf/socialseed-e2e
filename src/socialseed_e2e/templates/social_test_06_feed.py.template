@@ -1,0 +1,12 @@
+"""Test: Get feed - Social Graph Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    user = page.create_user(username="feeduser", display_name="Feed User").json()
+    
+    result = page.get_feed(user_id=user["id"], limit=10)
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert isinstance(data, list), "Feed should be a list"
+    return result

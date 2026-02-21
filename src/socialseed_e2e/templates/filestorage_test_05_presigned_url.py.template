@@ -1,0 +1,14 @@
+"""Test: Presigned URL - File Storage Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    bucket_name = "test-bucket"
+    key = "test-object.txt"
+    
+    result = page.get_presigned_url(bucket_name=bucket_name, key=key, expires_in=3600)
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "url" in data, "URL not in response"
+    assert "expires_in" in data, "expires_in not in response"
+    return result

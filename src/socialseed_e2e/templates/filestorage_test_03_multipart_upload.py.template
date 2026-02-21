@@ -1,0 +1,32 @@
+"""Test: Multipart upload - File Storage Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    bucket_name = "test-bucket"
+    key = "large-file.bin"
+    
+    init_result = page.initiate_multipart(
+        bucket_name=bucket_name,
+        key=key,
+        owner="user1"
+    )
+    assert init_result.status == 200, f"Expected 200, got {init_result.status}"
+    init_data = init_result.json()
+    upload_id = init_data["upload_id"]
+    
+    part1 = page.upload_part(bucket_name, key, 1, upload_id, b"Part1data")
+    assert part1.status == 200, f"Part 1 upload failed: {part1.status}"
+    
+    part2 = page.upload_part(bucket_name, key, 2, upload_id, b"Part2data")
+    assert part2.status == 200, f"Part 2 upload failed: {part2.status}"
+    
+    complete_result = page.complete_multipart(
+        bucket_name=bucket_name,
+        key=key,
+        upload_id=upload_id,
+        owner="user1"
+    )
+    assert complete_result.status == 200, f"Complete failed: {complete_result.status}"
+    
+    return complete_result

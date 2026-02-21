@@ -1,0 +1,13 @@
+"""Test: Delete object - File Storage Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    bucket_name = "test-bucket"
+    key = "test-object.txt"
+    
+    result = page.delete_object(bucket_name=bucket_name, key=key, owner="user1")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert data.get("deleted") == True, "Object was not deleted"
+    return result

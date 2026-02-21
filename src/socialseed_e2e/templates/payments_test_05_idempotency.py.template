@@ -1,0 +1,14 @@
+"""Test: Idempotency - Payments Demo."""
+import uuid
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    idempotency_key = f"idem-{uuid.uuid4().hex}"
+    
+    result1 = page.create_payment_intent(amount=1000, idempotency_key=idempotency_key, user_id="user1")
+    assert result1.status == 200
+    
+    result2 = page.create_payment_intent(amount=1000, idempotency_key=idempotency_key, user_id="user1")
+    assert result2.status == 409, "Should reject duplicate idempotency key"
+    return result2

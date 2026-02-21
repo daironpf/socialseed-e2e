@@ -1,0 +1,11 @@
+"""Test: Create user - Social Graph Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    result = page.create_user(username="testuser", display_name="Test User")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "username" in data, "Username not in response"
+    assert data["username"] == "testuser"
+    return result

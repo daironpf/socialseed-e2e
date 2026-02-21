@@ -1,0 +1,45 @@
+"""Service page for Social Graph Demo API."""
+from socialseed_e2e.core import BasePage
+
+
+class SocialPage(BasePage):
+    """Service page for Social Graph Demo API."""
+
+    def create_user(self, username: str, display_name: str = "", **kwargs):
+        return self.post(f"/api/users?username={username}&display_name={display_name}", **kwargs)
+
+    def get_user(self, user_id: str, **kwargs):
+        return self.get(f"/api/users/{user_id}", **kwargs)
+
+    def follow_user(self, user_id: str, follower_id: str, **kwargs):
+        return self.post(f"/api/users/{user_id}/follow?follower_id={follower_id}", **kwargs)
+
+    def unfollow_user(self, user_id: str, follower_id: str, **kwargs):
+        return self.post(f"/api/users/{user_id}/unfollow?follower_id={follower_id}", **kwargs)
+
+    def get_followers(self, user_id: str, **kwargs):
+        return self.get(f"/api/users/{user_id}/followers", **kwargs)
+
+    def get_following(self, user_id: str, **kwargs):
+        return self.get(f"/api/users/{user_id}/following", **kwargs)
+
+    def create_post(self, user_id: str, content: str, **kwargs):
+        return self.post(f"/api/posts?user_id={user_id}&content={content}", **kwargs)
+
+    def get_user_posts(self, user_id: str, **kwargs):
+        return self.get(f"/api/users/{user_id}/posts", **kwargs)
+
+    def get_post(self, post_id: str, **kwargs):
+        return self.get(f"/api/posts/{post_id}", **kwargs)
+
+    def like_post(self, post_id: str, user_id: str, **kwargs):
+        return self.post(f"/api/posts/{post_id}/like?user_id={user_id}", **kwargs)
+
+    def unlike_post(self, post_id: str, user_id: str, **kwargs):
+        return self.post(f"/api/posts/{post_id}/unlike?user_id={user_id}", **kwargs)
+
+    def create_comment(self, post_id: str, user_id: str, content: str, **kwargs):
+        return self.post(f"/api/posts/{post_id}/comments?user_id={user_id}&content={content}", **kwargs)
+
+    def get_feed(self, user_id: str, limit: int = 20, **kwargs):
+        return self.get(f"/api/users/{user_id}/feed?limit={limit}", **kwargs)

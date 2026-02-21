@@ -1,0 +1,11 @@
+"""Test: Like post - Social Graph Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    user = page.create_user(username="liker", display_name="Liker").json()
+    post = page.create_post(user_id=user["id"], content="Like me!").json()
+    
+    result = page.like_post(post_id=post["id"], user_id=user["id"])
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    return result

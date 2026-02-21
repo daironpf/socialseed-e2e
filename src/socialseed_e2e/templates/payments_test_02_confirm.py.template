@@ -1,0 +1,14 @@
+"""Test: Confirm payment - Payments Demo."""
+import uuid
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    intent = page.create_payment_intent(amount=3000, idempotency_key=f"pay-{uuid.uuid4().hex}", user_id="user1").json()
+    method = page.create_payment_method(user_id="user1").json()
+    
+    result = page.confirm_payment_intent(intent_id=intent["id"], payment_method_id=method["id"])
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert data.get("status") == "succeeded"
+    return result

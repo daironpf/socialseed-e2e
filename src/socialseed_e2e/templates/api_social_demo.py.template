@@ -1,0 +1,325 @@
+"""Social Graph API Demo for socialseed-e2e Testing
+
+Social network API with followers, posts, likes, comments, and feed.
+"""
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Query, Depends
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+app = FastAPI(title="Social Graph Demo API")
+
+DATABASE_URL = "sqlite:///./social_demo.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class UserDB(Base):
+    __tablename__ = "users"
+    id = Column(String, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
+    display_name = Column(String)
+    bio = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class FollowDB(Base):
+    __tablename__ = "follows"
+    id = Column(String, primary_key=True)
+    follower_id = Column(String, nullable=False)
+    following_id = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class PostDB(Base):
+    __tablename__ = "posts"
+    id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    media_urls = Column(Text, nullable=True)
+    likes_count = Column(Integer, default=0)
+    comments_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class LikeDB(Base):
+    __tablename__ = "likes"
+    id = Column(String, primary_key=True)
+    post_id = Column(String, nullable=False)
+    user_id = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class CommentDB(Base):
+    __tablename__ = "comments"
+    id = Column(String, primary_key=True)
+    post_id = Column(String, nullable=False)
+    user_id = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+Base.metadata.create_all(bind=engine)
+
+
+class User(BaseModel):
+    id: str
+    username: str
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    followers_count: int = 0
+    following_count: int = 0
+    posts_count: int = 0
+    created_at: datetime
+
+
+class Post(BaseModel):
+    id: str
+    user_id: str
+    content: str
+    media_urls: Optional[list] = None
+    likes_count: int = 0
+    comments_count: int = 0
+    created_at: datetime
+
+
+class Comment(BaseModel):
+    id: str
+    post_id: str
+    user_id: str
+    content: str
+    created_at: datetime
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "social-demo", "version": "1.0.0"}
+
+
+@app.post("/api/users", response_model=User)
+def create_user(username: str, display_name: str = "", db: Session = Depends(get_db)):
+    existing = db.query(UserDB).filter(UserDB.username == username).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Username already exists")
+    
+    user = UserDB(id=str(uuid.uuid4()), username=username, display_name=display_name)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    return User(
+        id=user.id, username=user.username, display_name=user.display_name,
+        bio=user.bio, followers_count=0, following_count=0, posts_count=0,
+        created_at=user.created_at
+    )
+
+
+@app.get("/api/users/{user_id}", response_model=User)
+def get_user(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    followers_count = db.query(FollowDB).filter(FollowDB.following_id == user_id).count()
+    following_count = db.query(FollowDB).filter(FollowDB.follower_id == user_id).count()
+    posts_count = db.query(PostDB).filter(PostDB.user_id == user_id).count()
+    
+    return User(
+        id=user.id, username=user.username, display_name=user.display_name,
+        bio=user.bio, followers_count=followers_count, following_count=following_count,
+        posts_count=posts_count, created_at=user.created_at
+    )
+
+
+@app.post("/api/users/{user_id}/follow")
+def follow_user(user_id: str, follower_id: str = Query(...), db: Session = Depends(get_db)):
+    existing = db.query(FollowDB).filter(
+        FollowDB.follower_id == follower_id,
+        FollowDB.following_id == user_id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Already following")
+    
+    follow = FollowDB(id=str(uuid.uuid4()), follower_id=follower_id, following_id=user_id)
+    db.add(follow)
+    db.commit()
+    return {"followed": True, "user_id": user_id}
+
+
+@app.post("/api/users/{user_id}/unfollow")
+def unfollow_user(user_id: str, follower_id: str = Query(...), db: Session = Depends(get_db)):
+    follow = db.query(FollowDB).filter(
+        FollowDB.follower_id == follower_id,
+        FollowDB.following_id == user_id
+    ).first()
+    if not follow:
+        raise HTTPException(status_code=404, detail="Not following")
+    
+    db.delete(follow)
+    db.commit()
+    return {"unfollowed": True, "user_id": user_id}
+
+
+@app.get("/api/users/{user_id}/followers")
+def get_followers(user_id: str, db: Session = Depends(get_db)):
+    follows = db.query(FollowDB).filter(FollowDB.following_id == user_id).all()
+    followers = []
+    for f in follows:
+        user = db.query(UserDB).filter(UserDB.id == f.follower_id).first()
+        if user:
+            followers.append({"id": user.id, "username": user.username})
+    return followers
+
+
+@app.get("/api/users/{user_id}/following")
+def get_following(user_id: str, db: Session = Depends(get_db)):
+    follows = db.query(FollowDB).filter(FollowDB.follower_id == user_id).all()
+    following = []
+    for f in follows:
+        user = db.query(UserDB).filter(UserDB.id == f.following_id).first()
+        if user:
+            following.append({"id": user.id, "username": user.username})
+    return following
+
+
+@app.post("/api/posts", response_model=Post)
+def create_post(user_id: str, content: str, db: Session = Depends(get_db)):
+    post = PostDB(id=str(uuid.uuid4()), user_id=user_id, content=content)
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+    
+    return Post(
+        id=post.id, user_id=post.user_id, content=post.content,
+        likes_count=post.likes_count, comments_count=post.comments_count,
+        created_at=post.created_at
+    )
+
+
+@app.get("/api/users/{user_id}/posts")
+def get_user_posts(user_id: str, db: Session = Depends(get_db)):
+    posts = db.query(PostDB).filter(PostDB.user_id == user_id).order_by(PostDB.created_at.desc()).all()
+    return [Post(
+        id=p.id, user_id=p.user_id, content=p.content,
+        likes_count=p.likes_count, comments_count=p.comments_count,
+        created_at=p.created_at
+    ) for p in posts]
+
+
+@app.get("/api/posts/{post_id}")
+def get_post(post_id: str, db: Session = Depends(get_db)):
+    post = db.query(PostDB).filter(PostDB.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    return Post(
+        id=post.id, user_id=post.user_id, content=post.content,
+        likes_count=post.likes_count, comments_count=post.comments_count,
+        created_at=post.created_at
+    )
+
+
+@app.post("/api/posts/{post_id}/like")
+def like_post(post_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    existing = db.query(LikeDB).filter(LikeDB.post_id == post_id, LikeDB.user_id == user_id).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Already liked")
+    
+    like = LikeDB(id=str(uuid.uuid4()), post_id=post_id, user_id=user_id)
+    db.add(like)
+    
+    post = db.query(PostDB).filter(PostDB.id == post_id).first()
+    if post:
+        post.likes_count += 1
+    
+    db.commit()
+    return {"liked": True, "post_id": post_id}
+
+
+@app.post("/api/posts/{post_id}/unlike")
+def unlike_post(post_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    like = db.query(LikeDB).filter(LikeDB.post_id == post_id, LikeDB.user_id == user_id).first()
+    if not like:
+        raise HTTPException(status_code=404, detail="Not liked")
+    
+    db.delete(like)
+    
+    post = db.query(PostDB).filter(PostDB.id == post_id).first()
+    if post and post.likes_count > 0:
+        post.likes_count -= 1
+    
+    db.commit()
+    return {"unliked": True, "post_id": post_id}
+
+
+@app.post("/api/posts/{post_id}/comments", response_model=Comment)
+def create_comment(post_id: str, user_id: str = Query(...), content: str = "", db: Session = Depends(get_db)):
+    comment = CommentDB(id=str(uuid.uuid4()), post_id=post_id, user_id=user_id, content=content)
+    db.add(comment)
+    
+    post = db.query(PostDB).filter(PostDB.id == post_id).first()
+    if post:
+        post.comments_count += 1
+    
+    db.commit()
+    db.refresh(comment)
+    
+    return Comment(
+        id=comment.id, post_id=comment.post_id, user_id=comment.user_id,
+        content=comment.content, created_at=comment.created_at
+    )
+
+
+@app.get("/api/users/{user_id}/feed")
+def get_feed(user_id: str, limit: int = 20, db: Session = Depends(get_db)):
+    following = db.query(FollowDB).filter(FollowDB.follower_id == user_id).all()
+    following_ids = [f.following_id for f in following] + [user_id]
+    
+    posts = db.query(PostDB).filter(PostDB.user_id.in_(following_ids)).order_by(PostDB.created_at.desc()).limit(limit).all()
+    
+    return [Post(
+        id=p.id, user_id=p.user_id, content=p.content,
+        likes_count=p.likes_count, comments_count=p.comments_count,
+        created_at=p.created_at
+    ) for p in posts]
+
+
+if __name__ == "__main__":
+    import uvicorn
+    print("=" * 60)
+    print("🚀 Social Graph Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5009")
+    print("\nFeatures: Users, followers, posts, likes, comments, feed")
+    print("\nAvailable endpoints:")
+    print("  GET    /health                    - Health")
+    print("  POST   /api/users                 - Create user")
+    print("  GET    /api/users/{id}            - Get user profile")
+    print("  POST   /api/users/{id}/follow     - Follow user")
+    print("  POST   /api/users/{id}/unfollow   - Unfollow user")
+    print("  GET    /api/users/{id}/followers  - Get followers")
+    print("  GET    /api/users/{id}/following  - Get following")
+    print("  POST   /api/posts                 - Create post")
+    print("  GET    /api/users/{id}/posts     - User posts")
+    print("  GET    /api/posts/{id}           - Get post")
+    print("  POST   /api/posts/{id}/like      - Like post")
+    print("  POST   /api/posts/{id}/unlike    - Unlike post")
+    print("  POST   /api/posts/{id}/comments  - Comment on post")
+    print("  GET    /api/users/{id}/feed      - User feed")
+    print("\nPress Ctrl+C")
+    print("=" * 60)
+    uvicorn.run(app, host="0.0.0.0", port=5009)

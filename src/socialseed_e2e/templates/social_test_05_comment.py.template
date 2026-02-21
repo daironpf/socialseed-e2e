@@ -1,0 +1,13 @@
+"""Test: Comment on post - Social Graph Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    user = page.create_user(username="commenter", display_name="Commenter").json()
+    post = page.create_post(user_id=user["id"], content="Post here").json()
+    
+    result = page.create_comment(post_id=post["id"], user_id=user["id"], content="Great post!")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert data["content"] == "Great post!"
+    return result

@@ -26,6 +26,9 @@ class DemoInstaller:
         ("chat", "api-chat-demo.py", "chat_service_page.py"),
         ("booking", "api-booking-demo.py", "booking_service_page.py"),
         ("notifications", "api_notifications_demo.py", "notifications_service_page.py"),
+        ("filestorage", "api_filestorage_demo.py", "filestorage_service_page.py"),
+        ("social", "api_social_demo.py", "social_service_page.py"),
+        ("payments", "api_payments_demo.py", "payments_service_page.py"),
     ]
 
     def __init__(self, force: bool = False):
@@ -347,6 +350,15 @@ class DemoInstaller:
         # Create notifications demo service
         self._create_notifications_service(target_path)
 
+        # Create filestorage demo service
+        self._create_filestorage_service(target_path)
+
+        # Create social demo service
+        self._create_social_service(target_path)
+
+        # Create payments demo service
+        self._create_payments_service(target_path)
+
     def _create_notifications_service(self, target_path: Path) -> None:
         """Create notifications demo service files."""
         notif_service_path = target_path / "services" / "notifications-demo"
@@ -473,6 +485,187 @@ class DemoInstaller:
             console.print("  [green]✓[/green] Updated: e2e.conf")
         except Exception as e:
             console.print(f"  [yellow]⚠[/yellow] Could not update e2e.conf: {e}")
+
+    def _create_filestorage_service(self, target_path: Path) -> None:
+        """Create filestorage demo service files."""
+        fs_service_path = target_path / "services" / "filestorage-demo"
+        fs_modules_path = fs_service_path / "modules"
+
+        if not fs_service_path.exists() or self.force:
+            fs_service_path.mkdir(parents=True, exist_ok=True)
+            fs_modules_path.mkdir(exist_ok=True)
+
+            (fs_service_path / "__init__.py").write_text("")
+            (fs_modules_path / "__init__.py").write_text("")
+
+            self.engine.render_to_file(
+                "filestorage_service_page.py.template",
+                {},
+                str(fs_service_path / "filestorage_page.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/filestorage-demo/filestorage_page.py"
+            )
+
+            self.engine.render_to_file(
+                "filestorage_data_schema.py.template",
+                {},
+                str(fs_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/filestorage-demo/data_schema.py"
+            )
+
+            self.engine.render_to_file(
+                "filestorage_config.py.template",
+                {},
+                str(fs_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/filestorage-demo/config.py"
+            )
+
+            for prefix in [
+                ("01_create_bucket", "filestorage_test_01_create_bucket.py.template"),
+                ("02_simple_upload", "filestorage_test_02_simple_upload.py.template"),
+                (
+                    "03_multipart_upload",
+                    "filestorage_test_03_multipart_upload.py.template",
+                ),
+                ("04_download", "filestorage_test_04_download.py.template"),
+                ("05_presigned_url", "filestorage_test_05_presigned_url.py.template"),
+                ("06_delete_object", "filestorage_test_06_delete_object.py.template"),
+            ]:
+                self.engine.render_to_file(
+                    prefix[1],
+                    {},
+                    str(fs_modules_path / f"{prefix[0]}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/filestorage-demo/modules/{prefix[0]}.py"
+                )
+
+    def _create_social_service(self, target_path: Path) -> None:
+        """Create social demo service files."""
+        social_service_path = target_path / "services" / "social-demo"
+        social_modules_path = social_service_path / "modules"
+
+        if not social_service_path.exists() or self.force:
+            social_service_path.mkdir(parents=True, exist_ok=True)
+            social_modules_path.mkdir(exist_ok=True)
+
+            (social_service_path / "__init__.py").write_text("")
+            (social_modules_path / "__init__.py").write_text("")
+
+            self.engine.render_to_file(
+                "social_service_page.py.template",
+                {},
+                str(social_service_path / "social_page.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/social-demo/social_page.py"
+            )
+
+            self.engine.render_to_file(
+                "social_data_schema.py.template",
+                {},
+                str(social_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/social-demo/data_schema.py"
+            )
+
+            self.engine.render_to_file(
+                "social_config.py.template",
+                {},
+                str(social_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print("  [green]✓[/green] Created: services/social-demo/config.py")
+
+            for prefix in [
+                ("01_create_user", "social_test_01_create_user.py.template"),
+                ("02_follow", "social_test_02_follow.py.template"),
+                ("03_create_post", "social_test_03_create_post.py.template"),
+                ("04_like_post", "social_test_04_like_post.py.template"),
+                ("05_comment", "social_test_05_comment.py.template"),
+                ("06_feed", "social_test_06_feed.py.template"),
+            ]:
+                self.engine.render_to_file(
+                    prefix[1],
+                    {},
+                    str(social_modules_path / f"{prefix[0]}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/social-demo/modules/{prefix[0]}.py"
+                )
+
+    def _create_payments_service(self, target_path: Path) -> None:
+        """Create payments demo service files."""
+        pay_service_path = target_path / "services" / "payments-demo"
+        pay_modules_path = pay_service_path / "modules"
+
+        if not pay_service_path.exists() or self.force:
+            pay_service_path.mkdir(parents=True, exist_ok=True)
+            pay_modules_path.mkdir(exist_ok=True)
+
+            (pay_service_path / "__init__.py").write_text("")
+            (pay_modules_path / "__init__.py").write_text("")
+
+            self.engine.render_to_file(
+                "payments_service_page.py.template",
+                {},
+                str(pay_service_path / "payments_page.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/payments-demo/payments_page.py"
+            )
+
+            self.engine.render_to_file(
+                "payments_data_schema.py.template",
+                {},
+                str(pay_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/payments-demo/data_schema.py"
+            )
+
+            self.engine.render_to_file(
+                "payments_config.py.template",
+                {},
+                str(pay_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/payments-demo/config.py"
+            )
+
+            for prefix in [
+                ("01_create_intent", "payments_test_01_create_intent.py.template"),
+                ("02_confirm", "payments_test_02_confirm.py.template"),
+                ("03_methods", "payments_test_03_methods.py.template"),
+                ("04_refund", "payments_test_04_refund.py.template"),
+                ("05_idempotency", "payments_test_05_idempotency.py.template"),
+                ("06_list_charges", "payments_test_06_list_charges.py.template"),
+            ]:
+                self.engine.render_to_file(
+                    prefix[1],
+                    {},
+                    str(pay_modules_path / f"{prefix[0]}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/payments-demo/modules/{prefix[0]}.py"
+                )
 
 
 @click.command()

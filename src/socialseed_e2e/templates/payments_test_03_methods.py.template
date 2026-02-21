@@ -1,0 +1,11 @@
+"""Test: Payment methods - Payments Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    result = page.create_payment_method(user_id="user1", card_last4="4242")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "card_last4" in data
+    assert data["card_last4"] == "4242"
+    return result

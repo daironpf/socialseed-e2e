@@ -1,0 +1,13 @@
+"""Test: Follow user - Social Graph Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    user1 = page.create_user(username="user1", display_name="User One").json()
+    user2 = page.create_user(username="user2", display_name="User Two").json()
+    
+    result = page.follow_user(user_id=user2["id"], follower_id=user1["id"])
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert data.get("followed") == True
+    return result

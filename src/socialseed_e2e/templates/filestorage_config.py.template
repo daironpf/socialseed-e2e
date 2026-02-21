@@ -1,0 +1,9 @@
+"""Configuration for File Storage Demo API."""
+from pydantic import BaseModel
+
+
+class FilestorageConfig(BaseModel):
+    base_url: str = "http://localhost:5008"
+    health_endpoint: str = "/health"
+    timeout: int = 30000
+    owner: str = "user1"

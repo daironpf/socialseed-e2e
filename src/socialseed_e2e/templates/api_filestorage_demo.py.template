@@ -1,0 +1,316 @@
+"""File Storage API Demo for socialseed-e2e Testing
+
+S3-like file storage API with buckets, objects, multipart uploads, and presigned URLs.
+"""
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Header
+from fastapi.responses import Response, JSONResponse
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Boolean, Text, JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+app = FastAPI(title="File Storage Demo API")
+
+DATABASE_URL = "sqlite:///./filestorage_demo.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class BucketDB(Base):
+    __tablename__ = "buckets"
+    id = Column(String, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    owner = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ObjectDB(Base):
+    __tablename__ = "objects"
+    id = Column(String, primary_key=True)
+    key = Column(String, nullable=False)
+    bucket = Column(String, nullable=False)
+    size = Column(Integer, default=0)
+    content_type = Column(String, default="application/octet-stream")
+    metadata_json = Column(JSON, nullable=True)
+    data = Column(Text, nullable=True)
+    etag = Column(String, default=lambda: uuid.uuid4().hex)
+    last_modified = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class MultipartUploadDB(Base):
+    __tablename__ = "multipart_uploads"
+    id = Column(String, primary_key=True)
+    key = Column(String, nullable=False)
+    bucket = Column(String, nullable=False)
+    parts = Column(JSON, default=list)
+    initiated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+Base.metadata.create_all(bind=engine)
+
+
+class Bucket(BaseModel):
+    id: str
+    name: str
+    owner: str
+    created_at: datetime
+
+
+class Object(BaseModel):
+    id: str
+    key: str
+    bucket: str
+    size: int
+    content_type: str
+    metadata: Optional[dict] = None
+    etag: str
+    last_modified: datetime
+
+
+class MultipartUpload(BaseModel):
+    upload_id: str
+    key: str
+    bucket: str
+    parts: list = []
+    initiated_at: datetime
+
+
+class PresignedURLResponse(BaseModel):
+    url: str
+    expires_in: int = 3600
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "filestorage-demo", "version": "1.0.0"}
+
+
+@app.get("/api/buckets", response_model=list[Bucket])
+def list_buckets(owner: str = Query(...), db: Session = Depends(get_db)):
+    buckets = db.query(BucketDB).filter(BucketDB.owner == owner).all()
+    return [Bucket(id=b.id, name=b.name, owner=b.owner, created_at=b.created_at) for b in buckets]
+
+
+@app.post("/api/buckets", response_model=Bucket)
+def create_bucket(name: str, owner: str = Query(...), db: Session = Depends(get_db)):
+    existing = db.query(BucketDB).filter(BucketDB.name == name).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Bucket already exists")
+    
+    bucket = BucketDB(id=str(uuid.uuid4()), name=name, owner=owner)
+    db.add(bucket)
+    db.commit()
+    db.refresh(bucket)
+    return Bucket(id=bucket.id, name=bucket.name, owner=bucket.owner, created_at=bucket.created_at)
+
+
+@app.get("/api/buckets/{bucket_name}/objects", response_model=list[Object])
+def list_objects(bucket_name: str, owner: str = Query(...), db: Session = Depends(get_db)):
+    objects = db.query(ObjectDB).filter(
+        ObjectDB.bucket == bucket_name,
+        ObjectDB.id.like(f"{owner}%")
+    ).all()
+    return [Object(
+        id=o.id, key=o.key, bucket=o.bucket, size=o.size,
+        content_type=o.content_type, metadata=o.metadata_json,
+        etag=o.etag, last_modified=o.last_modified
+    ) for o in objects]
+
+
+@app.post("/api/buckets/{bucket_name}/objects", response_model=Object)
+def upload_object(
+    bucket_name: str,
+    key: str,
+    owner: str = Query(...),
+    content_type: str = "application/octet-stream",
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    content = file.file.read()
+    size = len(content)
+    
+    obj = ObjectDB(
+        id=str(uuid.uuid4()),
+        key=key,
+        bucket=bucket_name,
+        size=size,
+        content_type=content_type,
+        data=content.decode("utf-8", errors="replace"),
+        etag=uuid.uuid4().hex,
+    )
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    
+    return Object(
+        id=obj.id, key=obj.key, bucket=obj.bucket, size=obj.size,
+        content_type=obj.content_type, metadata=obj.metadata_json,
+        etag=obj.etag, last_modified=obj.last_modified
+    )
+
+
+@app.post("/api/buckets/{bucket_name}/objects/multipart", response_model=MultipartUpload)
+def initiate_multipart(
+    bucket_name: str,
+    key: str,
+    owner: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    upload = MultipartUploadDB(
+        id=str(uuid.uuid4()),
+        key=key,
+        bucket=bucket_name,
+    )
+    db.add(upload)
+    db.commit()
+    db.refresh(upload)
+    
+    return MultipartUpload(
+        upload_id=upload.id, key=upload.key, bucket=upload.bucket,
+        parts=[], initiated_at=upload.initiated_at
+    )
+
+
+@app.put("/api/buckets/{bucket_name}/objects/{key}/part/{part_number}")
+def upload_part(
+    bucket_name: str,
+    key: str,
+    part_number: int,
+    upload_id: str = Query(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    upload = db.query(MultipartUploadDB).filter(MultipartUploadDB.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    
+    content = file.file.read()
+    part_data = {"part_number": part_number, "etag": uuid.uuid4().hex, "size": len(content)}
+    
+    parts = upload.parts or []
+    parts.append(part_data)
+    upload.parts = parts
+    db.commit()
+    
+    return {"part_number": part_number, "etag": part_data["etag"]}
+
+
+@app.post("/api/buckets/{bucket_name}/objects/{key}/complete", response_model=Object)
+def complete_multipart(
+    bucket_name: str,
+    key: str,
+    upload_id: str = Query(...),
+    owner: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    upload = db.query(MultipartUploadDB).filter(MultipartUploadDB.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    
+    total_size = sum(p.get("size", 0) for p in (upload.parts or []))
+    
+    obj = ObjectDB(
+        id=str(uuid.uuid4()),
+        key=key,
+        bucket=bucket_name,
+        size=total_size,
+        content_type="application/octet-stream",
+        data=f"Multipart upload with {len(upload.parts or [])} parts",
+        etag=uuid.uuid4().hex,
+    )
+    db.add(obj)
+    db.delete(upload)
+    db.commit()
+    db.refresh(obj)
+    
+    return Object(
+        id=obj.id, key=obj.key, bucket=obj.bucket, size=obj.size,
+        content_type=obj.content_type, metadata=obj.metadata_json,
+        etag=obj.etag, last_modified=obj.last_modified
+    )
+
+
+@app.get("/api/buckets/{bucket_name}/objects/{key}")
+def download_object(bucket_name: str, key: str, owner: str = Query(...), db: Session = Depends(get_db)):
+    obj = db.query(ObjectDB).filter(ObjectDB.key == key, ObjectDB.bucket == bucket_name).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+    
+    return Response(
+        content=obj.data or "",
+        media_type=obj.content_type,
+        headers={"ETag": obj.etag, "Content-Length": str(obj.size)}
+    )
+
+
+@app.get("/api/buckets/{bucket_name}/objects/{key}/presigned", response_model=PresignedURLResponse)
+def get_presigned_url(bucket_name: str, key: str, expires_in: int = 3600):
+    url = f"/api/buckets/{bucket_name}/objects/{key}?expires={expires_in}"
+    return PresignedURLResponse(url=url, expires_in=expires_in)
+
+
+@app.delete("/api/buckets/{bucket_name}/objects/{key}")
+def delete_object(bucket_name: str, key: str, owner: str = Query(...), db: Session = Depends(get_db)):
+    obj = db.query(ObjectDB).filter(ObjectDB.key == key, ObjectDB.bucket == bucket_name).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+    
+    db.delete(obj)
+    db.commit()
+    return {"deleted": True, "key": key}
+
+
+@app.head("/api/buckets/{bucket_name}/objects/{key}")
+def head_object(bucket_name: str, key: str, owner: str = Query(...), db: Session = Depends(get_db)):
+    obj = db.query(ObjectDB).filter(ObjectDB.key == key, ObjectDB.bucket == bucket_name).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+    
+    return Response(
+        status_code=200,
+        headers={
+            "ETag": obj.etag,
+            "Content-Length": str(obj.size),
+            "Content-Type": obj.content_type,
+            "Last-Modified": obj.last_modified.isoformat()
+        }
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    print("=" * 60)
+    print("🚀 File Storage Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5008")
+    print("\nFeatures: S3-like storage with buckets, objects, multipart upload")
+    print("\nAvailable endpoints:")
+    print("  GET    /health                    - Health")
+    print("  GET    /api/buckets              - List buckets")
+    print("  POST   /api/buckets              - Create bucket")
+    print("  GET    /api/buckets/{name}/objects - List objects")
+    print("  POST   /api/buckets/{name}/objects - Upload object")
+    print("  POST   /api/buckets/{name}/objects/multipart - Start multipart")
+    print("  PUT    /api/buckets/{name}/objects/{key}/part/{n} - Upload part")
+    print("  POST   /api/buckets/{name}/objects/{key}/complete - Complete multipart")
+    print("  GET    /api/buckets/{name}/objects/{key} - Download object")
+    print("  GET    /api/buckets/{name}/objects/{key}/presigned - Presigned URL")
+    print("  DELETE /api/buckets/{name}/objects/{key} - Delete object")
+    print("  HEAD   /api/buckets/{name}/objects/{key} - Object metadata")
+    print("\nPress Ctrl+C")
+    print("=" * 60)
+    uvicorn.run(app, host="0.0.0.0", port=5008)

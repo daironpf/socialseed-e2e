@@ -1,0 +1,33 @@
+"""Data schemas for Social Graph Demo API."""
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class User(BaseModel):
+    id: str
+    username: str
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    followers_count: int = 0
+    following_count: int = 0
+    posts_count: int = 0
+    created_at: datetime
+
+
+class Post(BaseModel):
+    id: str
+    user_id: str
+    content: str
+    media_urls: Optional[list] = None
+    likes_count: int = 0
+    comments_count: int = 0
+    created_at: datetime
+
+
+class Comment(BaseModel):
+    id: str
+    post_id: str
+    user_id: str
+    content: str
+    created_at: datetime

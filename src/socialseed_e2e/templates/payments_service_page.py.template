@@ -1,0 +1,33 @@
+"""Service page for Payments Demo API."""
+from socialseed_e2e.core import BasePage
+
+
+class PaymentsPage(BasePage):
+    """Service page for Payments (Stripe-like) Demo API."""
+
+    def create_payment_intent(self, amount: int, idempotency_key: str, user_id: str, currency: str = "usd", **kwargs):
+        return self.post(f"/api/payment_intents?amount={amount}&currency={currency}&idempotency_key={idempotency_key}&user_id={user_id}", **kwargs)
+
+    def get_payment_intent(self, intent_id: str, **kwargs):
+        return self.get(f"/api/payment_intents/{intent_id}", **kwargs)
+
+    def confirm_payment_intent(self, intent_id: str, payment_method_id: str, **kwargs):
+        return self.post(f"/api/payment_intents/{intent_id}/confirm?payment_method_id={payment_method_id}", **kwargs)
+
+    def cancel_payment_intent(self, intent_id: str, **kwargs):
+        return self.post(f"/api/payment_intents/{intent_id}/cancel", **kwargs)
+
+    def create_payment_method(self, user_id: str, card_last4: str = "4242", **kwargs):
+        return self.post(f"/api/payment_methods?user_id={user_id}&card_last4={card_last4}", **kwargs)
+
+    def list_payment_methods(self, user_id: str, **kwargs):
+        return self.get(f"/api/payment_methods?user_id={user_id}", **kwargs)
+
+    def create_refund(self, charge_id: str, amount: int, reason: str = "", **kwargs):
+        return self.post(f"/api/refunds?charge_id={charge_id}&amount={amount}&reason={reason}", **kwargs)
+
+    def get_refund(self, refund_id: str, **kwargs):
+        return self.get(f"/api/refunds/{refund_id}", **kwargs)
+
+    def list_charges(self, user_id: str, **kwargs):
+        return self.get(f"/api/charges?user_id={user_id}", **kwargs)

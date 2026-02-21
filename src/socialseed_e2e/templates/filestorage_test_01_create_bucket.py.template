@@ -1,0 +1,11 @@
+"""Test: Create bucket - File Storage Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    result = page.create_bucket(name="test-bucket", owner="user1")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "name" in data, "Bucket name not in response"
+    assert data["name"] == "test-bucket", f"Expected 'test-bucket', got {data['name']}"
+    return result

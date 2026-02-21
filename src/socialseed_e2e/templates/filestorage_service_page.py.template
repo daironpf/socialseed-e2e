@@ -1,0 +1,52 @@
+"""Service page for File Storage Demo API."""
+from socialseed_e2e.core import BasePage
+
+
+class FilestoragePage(BasePage):
+    """Service page for File Storage (S3-like) Demo API."""
+
+    def list_buckets(self, owner: str, **kwargs):
+        return self.get(f"/api/buckets?owner={owner}", **kwargs)
+
+    def create_bucket(self, name: str, owner: str, **kwargs):
+        return self.post(f"/api/buckets?name={name}&owner={owner}", **kwargs)
+
+    def list_objects(self, bucket_name: str, owner: str, **kwargs):
+        return self.get(f"/api/buckets/{bucket_name}/objects?owner={owner}", **kwargs)
+
+    def upload_object(self, bucket_name: str, key: str, content: bytes, 
+                      content_type: str = "application/octet-stream", owner: str = "user1", **kwargs):
+        files = {"file": (key, content, content_type)}
+        data = {"key": key}
+        params = {"owner": owner}
+        return self.post(f"/api/buckets/{bucket_name}/objects", 
+                        params=params, data=data, files=files, **kwargs)
+
+    def initiate_multipart(self, bucket_name: str, key: str, owner: str, **kwargs):
+        return self.post(f"/api/buckets/{bucket_name}/objects/multipart?key={key}&owner={owner}", **kwargs)
+
+    def upload_part(self, bucket_name: str, key: str, part_number: int, 
+                    upload_id: str, content: bytes, **kwargs):
+        files = {"file": ("part", content)}
+        return self.put(
+            f"/api/buckets/{bucket_name}/objects/{key}/part/{part_number}?upload_id={upload_id}",
+            files=files, **kwargs
+        )
+
+    def complete_multipart(self, bucket_name: str, key: str, upload_id: str, owner: str, **kwargs):
+        return self.post(
+            f"/api/buckets/{bucket_name}/objects/{key}/complete?upload_id={upload_id}&owner={owner}",
+            **kwargs
+        )
+
+    def download_object(self, bucket_name: str, key: str, owner: str, **kwargs):
+        return self.get(f"/api/buckets/{bucket_name}/objects/{key}?owner={owner}", **kwargs)
+
+    def get_presigned_url(self, bucket_name: str, key: str, expires_in: int = 3600, **kwargs):
+        return self.get(f"/api/buckets/{bucket_name}/objects/{key}/presigned?expires_in={expires_in}", **kwargs)
+
+    def delete_object(self, bucket_name: str, key: str, owner: str, **kwargs):
+        return self.delete(f"/api/buckets/{bucket_name}/objects/{key}?owner={owner}", **kwargs)
+
+    def head_object(self, bucket_name: str, key: str, owner: str, **kwargs):
+        return self.head(f"/api/buckets/{bucket_name}/objects/{key}?owner={owner}", **kwargs)

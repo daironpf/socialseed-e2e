@@ -1,0 +1,8 @@
+"""Configuration for Payments Demo API."""
+from pydantic import BaseModel
+
+
+class PaymentsConfig(BaseModel):
+    base_url: str = "http://localhost:5010"
+    health_endpoint: str = "/health"
+    timeout: int = 30000

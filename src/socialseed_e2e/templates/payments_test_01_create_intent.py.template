@@ -1,0 +1,12 @@
+"""Test: Create payment intent - Payments Demo."""
+import uuid
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    idempotency_key = f"test-{uuid.uuid4().hex}"
+    result = page.create_payment_intent(amount=5000, idempotency_key=idempotency_key, user_id="user1")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "client_secret" in data, "Client secret not in response"
+    return result

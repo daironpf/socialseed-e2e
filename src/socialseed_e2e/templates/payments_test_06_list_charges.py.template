@@ -1,0 +1,10 @@
+"""Test: List charges - Payments Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    result = page.list_charges(user_id="user1")
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert isinstance(data, list), "Charges should be a list"
+    return result

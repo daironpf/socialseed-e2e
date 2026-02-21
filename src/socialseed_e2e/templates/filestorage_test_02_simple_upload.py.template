@@ -1,0 +1,22 @@
+"""Test: Simple upload - File Storage Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    bucket_name = "test-bucket"
+    key = "test-object.txt"
+    content = b"Hello, World!"
+    
+    result = page.upload_object(
+        bucket_name=bucket_name,
+        key=key,
+        content=content,
+        content_type="text/plain",
+        owner="user1"
+    )
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    data = result.json()
+    assert "key" in data, "Object key not in response"
+    assert data["key"] == key, f"Expected '{key}', got {data['key']}"
+    assert data["size"] == len(content), f"Expected size {len(content)}, got {data['size']}"
+    return result
