@@ -213,6 +213,9 @@ class ComparisonConfig(BaseModel):
     antialiasing_tolerance: int = Field(
         default=2, description="Tolerance for antialiasing"
     )
+    ignore_antialiasing: bool = Field(
+        default=True, description="Ignore antialiasing differences"
+    )
     color_threshold: int = Field(
         default=10, ge=0, le=255, description="Color difference threshold"
     )
