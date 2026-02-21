@@ -1,0 +1,94 @@
+"""Chat Demo Data Schema for socialseed-e2e
+
+This module contains Pydantic models for the chat API.
+"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class User(BaseModel):
+    id: str
+    username: str
+    display_name: str
+    avatar_url: Optional[str] = None
+    status: str
+    created_at: datetime
+
+
+class UserCreate(BaseModel):
+    username: str
+    display_name: str
+    password: str
+    avatar_url: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    user: User
+    token: str
+
+
+class Room(BaseModel):
+    id: str
+    name: str
+    room_type: str
+    created_by: str
+    is_private: bool
+    created_at: datetime
+
+
+class RoomCreate(BaseModel):
+    name: str
+    room_type: str = "group"
+    is_private: bool = False
+    member_ids: list[str] = []
+
+
+class RoomMember(BaseModel):
+    id: str
+    room_id: str
+    user_id: str
+    role: str
+    joined_at: datetime
+
+
+class Message(BaseModel):
+    id: str
+    room_id: str
+    sender_id: str
+    content: str
+    message_type: str
+    metadata: Optional[dict] = None
+    reply_to: Optional[str] = None
+    created_at: datetime
+    reactions: list[dict] = []
+    read_by: list[str] = []
+
+
+class MessageCreate(BaseModel):
+    sender_id: str
+    content: str
+    message_type: str = "text"
+    metadata: Optional[dict] = None
+    reply_to: Optional[str] = None
+
+
+class Reaction(BaseModel):
+    user_id: str
+    emoji: str
+
+
+class TypingIndicator(BaseModel):
+    user_id: str
+    is_typing: bool
+
+
+DEFAULT_USERS = ["alice", "bob", "charlie", "diana", "eve"]
+DEFAULT_PASSWORD = "password123"
+DEFAULT_ROOMS = ["room_1", "room_2", "room_3"]

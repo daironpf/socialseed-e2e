@@ -1,0 +1,641 @@
+#!/usr/bin/env python3
+"""
+Demo Chat/Mensajería API for socialseed-e2e Testing
+
+FastAPI-based chat API with SQLite database.
+Use this API to test real-time messaging flows in socialseed-e2e.
+
+Usage:
+    pip install fastapi uvicorn sqlalchemy
+    
+    # Start the API server
+    python api-chat-demo.py
+    
+    # The API will be available at http://localhost:5005
+
+Endpoints:
+    GET    /health                    - Health check
+    POST   /api/auth/login            - User authentication
+    GET    /api/users                 - List users
+    GET    /api/users/{id}            - Get user profile
+    PUT    /api/users/{id}/presence  - Update presence status
+    GET    /api/rooms                 - List rooms
+    POST   /api/rooms                 - Create room
+    GET    /api/rooms/{id}            - Get room details
+    GET    /api/rooms/{id}/messages   - Get room messages
+    POST   /api/rooms/{id}/messages   - Send message
+    POST   /api/rooms/{id}/join       - Join room
+    POST   /api/rooms/{id}/leave      - Leave room
+    GET    /api/rooms/{id}/members    - Get room members
+    POST   /api/rooms/{id}/typing     - Send typing indicator
+
+Examples:
+    # Health check
+    curl http://localhost:5005/health
+    
+    # Login
+    curl -X POST http://localhost:5005/api/auth/login \\
+         -H "Content-Type: application/json" \\
+         -d '{"username":"alice","password":"password123"}'
+    
+    # List rooms
+    curl http://localhost:5005/api/rooms
+    
+    # Send message
+    curl -X POST http://localhost:5005/api/rooms/room_1/messages \\
+         -H "Content-Type: application/json" \\
+         -d '{"sender_id":"user_1","content":"Hello World"}'
+"""
+
+import uuid
+from datetime import datetime, timezone, timedelta
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Query, Depends, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import create_engine, Column, String, Integer, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
+
+DATABASE_URL = "sqlite:///./chat_demo.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+
+class UserDB(Base):
+    __tablename__ = "users"
+    
+    id = Column(String, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    display_name = Column(String, nullable=False)
+    avatar_url = Column(String, nullable=True)
+    status = Column(String, default="offline")  # online, offline, away, busy
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class RoomDB(Base):
+    __tablename__ = "rooms"
+    
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    room_type = Column(String, default="group")  # direct, group, channel
+    created_by = Column(String, ForeignKey("users.id"), nullable=False)
+    is_private = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class RoomMemberDB(Base):
+    __tablename__ = "room_members"
+    
+    id = Column(String, primary_key=True, index=True)
+    room_id = Column(String, ForeignKey("rooms.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    role = Column(String, default="member")  # admin, moderator, member
+    joined_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class MessageDB(Base):
+    __tablename__ = "messages"
+    
+    id = Column(String, primary_key=True, index=True)
+    room_id = Column(String, ForeignKey("rooms.id"), nullable=False, index=True)
+    sender_id = Column(String, ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    message_type = Column(String, default="text")  # text, image, file, system
+    msg_msg_metadata = Column(JSON, nullable=True)
+    reply_to = Column(String, ForeignKey("messages.id"), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ReactionDB(Base):
+    __tablename__ = "reactions"
+    
+    id = Column(String, primary_key=True, index=True)
+    message_id = Column(String, ForeignKey("messages.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    emoji = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ReadReceiptDB(Base):
+    __tablename__ = "read_receipts"
+    
+    id = Column(String, primary_key=True, index=True)
+    message_id = Column(String, ForeignKey("messages.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    read_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class TypingDB(Base):
+    __tablename__ = "typing_indicators"
+    
+    id = Column(String, primary_key=True, index=True)
+    room_id = Column(String, ForeignKey("rooms.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    is_typing = Column(Boolean, default=True)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+from pydantic import ConfigDict
+
+
+class UserSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    username: str
+    display_name: str
+    avatar_url: Optional[str] = None
+    status: str
+    created_at: datetime
+
+
+class UserCreate(BaseModel):
+    username: str
+    display_name: str
+    password: str
+    avatar_url: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    user: UserSchema
+    token: str
+
+
+class RoomSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    name: str
+    room_type: str
+    created_by: str
+    is_private: bool
+    created_at: datetime
+
+
+class RoomCreate(BaseModel):
+    name: str
+    room_type: str = "group"
+    is_private: bool = False
+    member_ids: list[str] = []
+
+
+class RoomMemberSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    room_id: str
+    user_id: str
+    role: str
+    joined_at: datetime
+    user: Optional[UserSchema] = None
+
+
+class MessageSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    room_id: str
+    sender_id: str
+    content: str
+    message_type: str
+    msg_metadata: Optional[dict] = None
+    reply_to: Optional[str] = None
+    created_at: datetime
+    sender: Optional[UserSchema] = None
+    reactions: list[dict] = []
+    read_by: list[str] = []
+
+
+class MessageCreate(BaseModel):
+    sender_id: str
+    content: str
+    message_type: str = "text"
+    msg_metadata: Optional[dict] = None
+    reply_to: Optional[str] = None
+
+
+class ReactionCreate(BaseModel):
+    user_id: str
+    emoji: str
+
+
+class TypingCreate(BaseModel):
+    user_id: str
+    is_typing: bool = True
+
+
+class PresenceUpdate(BaseModel):
+    status: str = Field(..., pattern="^(online|offline|away|busy)$")
+
+
+app = FastAPI(
+    title="Chat Demo API",
+    description="Demo Chat/Mensajería API for socialseed-e2e Testing",
+    version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def seed_database(db: Session):
+    if db.query(UserDB).first():
+        return
+    
+    users = [
+        UserDB(id="user_1", username="alice", display_name="Alice Johnson", 
+               password_hash="hashed_password", status="online"),
+        UserDB(id="user_2", username="bob", display_name="Bob Smith",
+               password_hash="hashed_password", status="online"),
+        UserDB(id="user_3", username="charlie", display_name="Charlie Brown",
+               password_hash="hashed_password", status="away"),
+        UserDB(id="user_4", username="diana", display_name="Diana Prince",
+               password_hash="hashed_password", status="offline"),
+        UserDB(id="user_5", username="eve", display_name="Eve Adams",
+               password_hash="hashed_password", status="busy"),
+    ]
+    db.add_all(users)
+    
+    rooms = [
+        RoomDB(id="room_1", name="general", room_type="channel", created_by="user_1", is_private=False),
+        RoomDB(id="room_2", name="random", room_type="channel", created_by="user_1", is_private=False),
+        RoomDB(id="room_3", name="engineering", room_type="channel", created_by="user_2", is_private=True),
+    ]
+    db.add_all(rooms)
+    
+    members = [
+        RoomMemberDB(id=f"rm_{i}", room_id="room_1", user_id=f"user_{i}", role="member")
+        for i in range(1, 6)
+    ]
+    db.add_all(members)
+    
+    messages = [
+        MessageDB(id="msg_1", room_id="room_1", sender_id="user_1", content="Welcome to the chat!"),
+        MessageDB(id="msg_2", room_id="room_1", sender_id="user_2", content="Thanks! Hello everyone."),
+        MessageDB(id="msg_3", room_id="room_1", sender_id="user_3", content="Hey there!"),
+    ]
+    db.add_all(messages)
+    
+    db.commit()
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "chat-demo",
+        "version": "1.0.0",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@app.post("/api/auth/register", response_model=UserSchema)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(UserDB).filter(UserDB.username == user.username).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Username already exists")
+    
+    import hashlib
+    db_user = UserDB(
+        id=f"user_{uuid.uuid4().hex[:8]}",
+        username=user.username,
+        display_name=user.display_name,
+        avatar_url=user.avatar_url,
+        password_hash=hashlib.sha256(user.password.encode()).hexdigest(),
+        status="online"
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+@app.post("/api/auth/login", response_model=LoginResponse)
+def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+    import hashlib
+    password_hash = hashlib.sha256(credentials.password.encode()).hexdigest()
+    
+    user = db.query(UserDB).filter(
+        UserDB.username == credentials.username,
+        UserDB.password_hash == password_hash
+    ).first()
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = f"token_{uuid.uuid4().hex}"
+    user.status = "online"
+    db.commit()
+    
+    return {
+        "user": user,
+        "token": token
+    }
+
+
+@app.get("/api/users", response_model=list[UserSchema])
+def list_users(db: Session = Depends(get_db)):
+    return db.query(UserDB).all()
+
+
+@app.get("/api/users/{user_id}", response_model=UserSchema)
+def get_user(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@app.put("/api/users/{user_id}/presence", response_model=UserSchema)
+def update_presence(user_id: str, presence: PresenceUpdate, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.status = presence.status
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.get("/api/rooms", response_model=list[RoomSchema])
+def list_rooms(db: Session = Depends(get_db)):
+    return db.query(RoomDB).all()
+
+
+@app.post("/api/rooms", response_model=RoomSchema)
+def create_room(room: RoomCreate, db: Session = Depends(get_db)):
+    room_id = f"room_{uuid.uuid4().hex[:8]}"
+    db_room = RoomDB(
+        id=room_id,
+        name=room.name,
+        room_type=room.room_type,
+        created_by=room.member_ids[0] if room.member_ids else "user_1",
+        is_private=room.is_private
+    )
+    db.add(db_room)
+    
+    for member_id in room.member_ids:
+        db_member = RoomMemberDB(
+            id=f"rm_{uuid.uuid4().hex[:8]}",
+            room_id=room_id,
+            user_id=member_id,
+            role="member"
+        )
+        db.add(db_member)
+    
+    db.commit()
+    db.refresh(db_room)
+    return db_room
+
+
+@app.get("/api/rooms/{room_id}", response_model=RoomSchema)
+def get_room(room_id: str, db: Session = Depends(get_db)):
+    room = db.query(RoomDB).filter(RoomDB.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    return room
+
+
+@app.get("/api/rooms/{room_id}/messages", response_model=list[MessageSchema])
+def get_messages(
+    room_id: str,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    query = db.query(MessageDB).filter(MessageDB.room_id == room_id).order_by(MessageDB.created_at.desc())
+    
+    offset = (page - 1) * per_page
+    messages = query.offset(offset).limit(per_page).all()
+    
+    result = []
+    for msg in messages:
+        msg_dict = {
+            "id": msg.id,
+            "room_id": msg.room_id,
+            "sender_id": msg.sender_id,
+            "content": msg.content,
+            "message_type": msg.message_type,
+            "msg_metadata": msg.msg_metadata,
+            "reply_to": msg.reply_to,
+            "created_at": msg.created_at,
+            "sender": None,
+            "reactions": [],
+            "read_by": []
+        }
+        result.append(msg_dict)
+    
+    return result
+
+
+@app.post("/api/rooms/{room_id}/messages", response_model=MessageSchema)
+def send_message(room_id: str, message: MessageCreate, db: Session = Depends(get_db)):
+    room = db.query(RoomDB).filter(RoomDB.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    db_message = MessageDB(
+        id=f"msg_{uuid.uuid4().hex[:8]}",
+        room_id=room_id,
+        sender_id=message.sender_id,
+        content=message.content,
+        message_type=message.message_type,
+        msg_metadata=message.msg_metadata,
+        reply_to=message.reply_to
+    )
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    
+    return {
+        "id": db_message.id,
+        "room_id": db_message.room_id,
+        "sender_id": db_message.sender_id,
+        "content": db_message.content,
+        "message_type": db_message.message_type,
+        "msg_metadata": db_message.msg_metadata,
+        "reply_to": db_message.reply_to,
+        "created_at": db_message.created_at,
+        "sender": None,
+        "reactions": [],
+        "read_by": []
+    }
+
+
+@app.post("/api/rooms/{room_id}/join")
+def join_room(room_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    room = db.query(RoomDB).filter(RoomDB.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    existing = db.query(RoomMemberDB).filter(
+        RoomMemberDB.room_id == room_id,
+        RoomMemberDB.user_id == user_id
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Already a member")
+    
+    db_member = RoomMemberDB(
+        id=f"rm_{uuid.uuid4().hex[:8]}",
+        room_id=room_id,
+        user_id=user_id,
+        role="member"
+    )
+    db.add(db_member)
+    db.commit()
+    
+    return {"message": "Joined room successfully"}
+
+
+@app.post("/api/rooms/{room_id}/leave")
+def leave_room(room_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    member = db.query(RoomMemberDB).filter(
+        RoomMemberDB.room_id == room_id,
+        RoomMemberDB.user_id == user_id
+    ).first()
+    
+    if not member:
+        raise HTTPException(status_code=404, detail="Not a member")
+    
+    db.delete(member)
+    db.commit()
+    
+    return {"message": "Left room successfully"}
+
+
+@app.get("/api/rooms/{room_id}/members", response_model=list[RoomMemberSchema])
+def get_room_members(room_id: str, db: Session = Depends(get_db)):
+    members = db.query(RoomMemberDB).filter(RoomMemberDB.room_id == room_id).all()
+    return members
+
+
+@app.post("/api/rooms/{room_id}/typing")
+def send_typing(room_id: str, typing: TypingCreate, db: Session = Depends(get_db)):
+    existing = db.query(TypingDB).filter(
+        TypingDB.room_id == room_id,
+        TypingDB.user_id == typing.user_id
+    ).first()
+    
+    if existing:
+        existing.is_typing = typing.is_typing
+        existing.updated_at = datetime.now(timezone.utc)
+    else:
+        db_typing = TypingDB(
+            id=f"typ_{uuid.uuid4().hex[:8]}",
+            room_id=room_id,
+            user_id=typing.user_id,
+            is_typing=typing.is_typing
+        )
+        db.add(db_typing)
+    
+    db.commit()
+    return {"message": "Typing status updated"}
+
+
+@app.get("/api/rooms/{room_id}/typing")
+def get_typing_users(room_id: str, db: Session = Depends(get_db)):
+    typing_users = db.query(TypingDB).filter(
+        TypingDB.room_id == room_id,
+        TypingDB.is_typing == True
+    ).all()
+    
+    return [{"user_id": t.user_id, "is_typing": t.is_typing} for t in typing_users]
+
+
+@app.post("/api/messages/{message_id}/reactions")
+def add_reaction(message_id: str, reaction: ReactionCreate, db: Session = Depends(get_db)):
+    message = db.query(MessageDB).filter(MessageDB.id == message_id).first()
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    existing = db.query(ReactionDB).filter(
+        ReactionDB.message_id == message_id,
+        ReactionDB.user_id == reaction.user_id,
+        ReactionDB.emoji == reaction.emoji
+    ).first()
+    
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"message": "Reaction removed"}
+    
+    db_reaction = ReactionDB(
+        id=f"rxn_{uuid.uuid4().hex[:8]}",
+        message_id=message_id,
+        user_id=reaction.user_id,
+        emoji=reaction.emoji
+    )
+    db.add(db_reaction)
+    db.commit()
+    
+    return {"message": "Reaction added"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    Base.metadata.create_all(bind=engine)
+    
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
+    
+    print("=" * 60)
+    print("🚀 Chat Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5005")
+    print("\nDatabase: SQLite (chat_demo.db)")
+    print("\nDefault users:")
+    print("  alice / password123")
+    print("  bob / password123")
+    print("  charlie / password123")
+    print("\nAvailable endpoints:")
+    print("  GET    /health                    - Health check")
+    print("  POST   /api/auth/register        - Register user")
+    print("  POST   /api/auth/login           - Login")
+    print("  GET    /api/users                - List users")
+    print("  GET    /api/users/{id}           - Get user")
+    print("  PUT    /api/users/{id}/presence - Update presence")
+    print("  GET    /api/rooms               - List rooms")
+    print("  POST   /api/rooms               - Create room")
+    print("  GET    /api/rooms/{id}          - Get room")
+    print("  GET    /api/rooms/{id}/messages - Get messages")
+    print("  POST   /api/rooms/{id}/messages - Send message")
+    print("  POST   /api/rooms/{id}/join     - Join room")
+    print("  POST   /api/rooms/{id}/leave    - Leave room")
+    print("  POST   /api/rooms/{id}/typing    - Typing indicator")
+    print("\nPress Ctrl+C to stop the server")
+    print("=" * 60 + "\n")
+    
+    uvicorn.run(app, host="0.0.0.0", port=5005)

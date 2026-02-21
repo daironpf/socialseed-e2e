@@ -1,0 +1,61 @@
+"""Test: List and Create Rooms
+
+This test demonstrates:
+- List resources
+- POST with nested objects
+
+Run:
+    pytest services/chat_demo/modules/04_rooms.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run_list(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/rooms")
+    assert response.status == 200
+    data = response.json()
+    assert len(data) >= 3
+    return response
+
+
+async def run_create(page: BasePage):
+    response = await page.post(
+        f"{BASE_URL}/api/rooms",
+        data={
+            "name": "test-room",
+            "room_type": "group",
+            "is_private": False,
+            "member_ids": ["user_1", "user_2"]
+        }
+    )
+    assert response.status == 200
+    data = response.json()
+    assert data["name"] == "test-room"
+    assert data["room_type"] == "group"
+    return response
+
+
+async def run_get_room(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/rooms/room_1")
+    assert response.status == 200
+    data = response.json()
+    assert data["id"] == "room_1"
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_list(base_page)
+            await browser.close()
+    asyncio.run(main())

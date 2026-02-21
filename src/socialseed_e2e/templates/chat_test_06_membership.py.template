@@ -1,0 +1,54 @@
+"""Test: Room Membership
+
+This test demonstrates:
+- Join/leave room
+- Membership management
+
+Run:
+    pytest services/chat_demo/modules/06_membership.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run_join(page: BasePage):
+    response = await page.post(
+        f"{BASE_URL}/api/rooms/room_1/join",
+        params={"user_id": "user_1"}
+    )
+    assert response.status in [200, 400]
+    return response
+
+
+async def run_leave(page: BasePage):
+    response = await page.post(
+        f"{BASE_URL}/api/rooms/room_1/leave",
+        params={"user_id": "user_1"}
+    )
+    assert response.status in [200, 404]
+    return response
+
+
+async def run_members(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/rooms/room_1/members")
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_members(base_page)
+            await browser.close()
+    asyncio.run(main())

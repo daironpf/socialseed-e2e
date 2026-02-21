@@ -1,0 +1,48 @@
+"""Test: Presence Management
+
+This test demonstrates:
+- PUT requests
+- State updates
+
+Run:
+    pytest services/chat_demo/modules/03_presence.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run(page: BasePage):
+    response = await page.put(
+        f"{BASE_URL}/api/users/user_1/presence",
+        data={"status": "away"}
+    )
+    assert response.status == 200
+    data = response.json()
+    assert data["status"] == "away"
+    return response
+
+
+async def run_invalid_status(page: BasePage):
+    response = await page.put(
+        f"{BASE_URL}/api/users/user_1/presence",
+        data={"status": "invalid_status"}
+    )
+    assert response.status == 422
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run(base_page)
+            await browser.close()
+    asyncio.run(main())

@@ -23,6 +23,7 @@ class DemoInstaller:
         ("websocket", "api-websocket-demo.py", None),
         ("auth", "api-auth-demo.py", None),
         ("ecommerce", "api-ecommerce-demo.py", "ecommerce_service_page.py"),
+        ("chat", "api-chat-demo.py", "chat_service_page.py"),
     ]
 
     def __init__(self, force: bool = False):
@@ -200,6 +201,71 @@ class DemoInstaller:
                     f"  [green]✓[/green] Created: services/ecommerce-demo/modules/{prefix}.py"
                 )
 
+        # Create chat demo service
+        self._create_chat_service(target_path)
+
+    def _create_chat_service(self, target_path: Path) -> None:
+        """Create chat demo service files."""
+        chat_service_path = target_path / "services" / "chat-demo"
+        chat_modules_path = chat_service_path / "modules"
+
+        if not chat_service_path.exists() or self.force:
+            chat_service_path.mkdir(parents=True, exist_ok=True)
+            chat_modules_path.mkdir(exist_ok=True)
+
+            (chat_service_path / "__init__.py").write_text("")
+            (chat_modules_path / "__init__.py").write_text("")
+
+            self.engine.render_to_file(
+                "chat_service_page.py.template",
+                {},
+                str(chat_service_path / "chat_page.py"),
+                overwrite=self.force,
+            )
+            console.print("  [green]✓[/green] Created: services/chat-demo/chat_page.py")
+
+            self.engine.render_to_file(
+                "chat_data_schema.py.template",
+                {},
+                str(chat_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/chat-demo/data_schema.py"
+            )
+
+            self.engine.render_to_file(
+                "chat_config.py.template",
+                {},
+                str(chat_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print("  [green]✓[/green] Created: services/chat-demo/config.py")
+
+            test_files = [
+                ("01_auth", "chat_test_01_auth.py.template"),
+                ("02_list_users", "chat_test_02_list_users.py.template"),
+                ("03_presence", "chat_test_03_presence.py.template"),
+                ("04_rooms", "chat_test_04_rooms.py.template"),
+                ("05_messages", "chat_test_05_messages.py.template"),
+                ("06_membership", "chat_test_06_membership.py.template"),
+                ("07_typing", "chat_test_07_typing.py.template"),
+                ("08_reactions", "chat_test_08_reactions.py.template"),
+                ("09_threads", "chat_test_09_threads.py.template"),
+                ("10_chat_workflow", "chat_test_10_chat_workflow.py.template"),
+            ]
+
+            for prefix, template in test_files:
+                self.engine.render_to_file(
+                    template,
+                    {},
+                    str(chat_modules_path / f"{prefix}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/chat-demo/modules/{prefix}.py"
+                )
+
     def _update_e2e_conf(self) -> None:
         """Update e2e.conf with demo service."""
         from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
@@ -220,6 +286,12 @@ class DemoInstaller:
             config.services["ecommerce-demo"] = ServiceConfig(
                 name="ecommerce-demo",
                 base_url="http://localhost:5004",
+                health_endpoint="/health",
+            )
+
+            config.services["chat-demo"] = ServiceConfig(
+                name="chat-demo",
+                base_url="http://localhost:5005",
                 health_endpoint="/health",
             )
 

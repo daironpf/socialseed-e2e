@@ -1,0 +1,48 @@
+"""Test: Message Reactions
+
+This test demonstrates:
+- Resource relationships
+- Toggle operations
+
+Run:
+    pytest services/chat_demo/modules/08_reactions.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run_add_reaction(page: BasePage):
+    response = await page.post(
+        f"{BASE_URL}/api/messages/msg_1/reactions",
+        data={"user_id": "user_1", "emoji": "👍"}
+    )
+    assert response.status == 200
+    data = response.json()
+    assert "Reaction" in data["message"]
+    return response
+
+
+async def run_remove_reaction(page: BasePage):
+    response = await page.post(
+        f"{BASE_URL}/api/messages/msg_1/reactions",
+        data={"user_id": "user_1", "emoji": "👍"}
+    )
+    assert response.status == 200
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_add_reaction(base_page)
+            await browser.close()
+    asyncio.run(main())

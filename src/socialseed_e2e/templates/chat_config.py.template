@@ -1,0 +1,18 @@
+"""Chat Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class ChatConfig(BaseModel):
+    base_url: str = "http://localhost:5005"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    default_users: list[str] = ["alice", "bob", "charlie", "diana", "eve"]
+    default_password: str = "password123"
+    
+    room_types: list[str] = ["direct", "group", "channel"]
+    presence_statuses: list[str] = ["online", "offline", "away", "busy"]
+
+
+CONFIG = ChatConfig()

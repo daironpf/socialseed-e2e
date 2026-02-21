@@ -1,0 +1,50 @@
+"""Test: Message Threading
+
+This test demonstrates:
+- Reply/reply_to relationships
+- Threaded conversations
+
+Run:
+    pytest services/chat_demo/modules/09_threads.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run_reply(page: BasePage):
+    response = await page.post(
+        f"{BASE_URL}/api/rooms/room_1/messages",
+        data={
+            "sender_id": "user_2",
+            "content": "This is a reply",
+            "message_type": "text",
+            "reply_to": "msg_1"
+        }
+    )
+    assert response.status == 200
+    data = response.json()
+    assert data["reply_to"] == "msg_1"
+    return data
+
+
+async def run_get_threaded(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/rooms/room_1/messages?per_page=20")
+    assert response.status == 200
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_reply(base_page)
+            await browser.close()
+    asyncio.run(main())

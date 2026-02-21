@@ -1,0 +1,64 @@
+"""Test: Chat Workflow
+
+This test demonstrates:
+- End-to-end chat workflow
+- Multiple operations in sequence
+
+Run:
+    pytest services/chat_demo/modules/10_chat_workflow.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run_workflow(page: BasePage):
+    login_resp = await page.post(
+        f"{BASE_URL}/api/auth/login",
+        data={"username": "alice", "password": "password123"}
+    )
+    assert login_resp.status == 200
+    
+    rooms_resp = await page.get(f"{BASE_URL}/api/rooms")
+    assert rooms_resp.status == 200
+    rooms = rooms_resp.json()
+    room_id = rooms[0]["id"]
+    
+    msg_resp = await page.post(
+        f"{BASE_URL}/api/rooms/{room_id}/messages",
+        data={"sender_id": "user_1", "content": "Test message"}
+    )
+    assert msg_resp.status == 200
+    
+    typing_resp = await page.post(
+        f"{BASE_URL}/api/rooms/{room_id}/typing",
+        data={"user_id": "user_1", "is_typing": True}
+    )
+    assert typing_resp.status == 200
+    
+    members_resp = await page.get(f"{BASE_URL}/api/rooms/{room_id}/members")
+    assert members_resp.status == 200
+    
+    presence_resp = await page.put(
+        f"{BASE_URL}/api/users/user_1/presence",
+        data={"status": "away"}
+    )
+    assert presence_resp.status == 200
+    
+    return presence_resp
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_workflow(base_page)
+            await browser.close()
+    asyncio.run(main())

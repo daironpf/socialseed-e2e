@@ -1,0 +1,107 @@
+"""Chat Demo Service Page for socialseed-e2e
+
+This module provides the page object for the chat API.
+"""
+
+from typing import Optional
+from socialseed_e2e import BasePage, DynamicStateMixin
+
+
+class ChatPage(BasePage, DynamicStateMixin):
+    """Page object for Chat Demo API."""
+
+    def __init__(self, base_url: str = "http://localhost:5005", **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
+        self.init_dynamic_state()
+
+    def _get_headers(self) -> dict:
+        return {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+    async def health_check(self):
+        return await self.get("/health")
+
+    async def register(self, username: str, display_name: str, password: str):
+        return await self.post("/api/auth/register", data={
+            "username": username,
+            "display_name": display_name,
+            "password": password
+        })
+
+    async def login(self, username: str, password: str):
+        return await self.post("/api/auth/login", data={
+            "username": username,
+            "password": password
+        })
+
+    async def list_users(self):
+        return await self.get("/api/users")
+
+    async def get_user(self, user_id: str):
+        return await self.get(f"/api/users/{user_id}")
+
+    async def update_presence(self, user_id: str, status: str):
+        return await self.put(
+            f"/api/users/{user_id}/presence",
+            data={"status": status}
+        )
+
+    async def list_rooms(self):
+        return await self.get("/api/rooms")
+
+    async def create_room(self, name: str, room_type: str = "group", is_private: bool = False, member_ids: list[str] = None):
+        data = {"name": name, "room_type": room_type, "is_private": is_private}
+        if member_ids:
+            data["member_ids"] = member_ids
+        return await self.post("/api/rooms", data=data)
+
+    async def get_room(self, room_id: str):
+        return await self.get(f"/api/rooms/{room_id}")
+
+    async def get_messages(self, room_id: str, page: int = 1, per_page: int = 50):
+        return await self.get(
+            f"/api/rooms/{room_id}/messages",
+            params={"page": page, "per_page": per_page}
+        )
+
+    async def send_message(self, room_id: str, sender_id: str, content: str, message_type: str = "text"):
+        return await self.post(
+            f"/api/rooms/{room_id}/messages",
+            data={
+                "sender_id": sender_id,
+                "content": content,
+                "message_type": message_type
+            }
+        )
+
+    async def join_room(self, room_id: str, user_id: str):
+        return await self.post(
+            f"/api/rooms/{room_id}/join",
+            params={"user_id": user_id}
+        )
+
+    async def leave_room(self, room_id: str, user_id: str):
+        return await self.post(
+            f"/api/rooms/{room_id}/leave",
+            params={"user_id": user_id}
+        )
+
+    async def get_room_members(self, room_id: str):
+        return await self.get(f"/api/rooms/{room_id}/members")
+
+    async def send_typing(self, room_id: str, user_id: str, is_typing: bool = True):
+        return await self.post(
+            f"/api/rooms/{room_id}/typing",
+            data={"user_id": user_id, "is_typing": is_typing}
+        )
+
+    async def get_typing_users(self, room_id: str):
+        return await self.get(f"/api/rooms/{room_id}/typing")
+
+    async def add_reaction(self, message_id: str, user_id: str, emoji: str):
+        return await self.post(
+            f"/api/messages/{message_id}/reactions",
+            data={"user_id": user_id, "emoji": emoji}
+        )

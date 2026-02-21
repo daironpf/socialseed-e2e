@@ -1,0 +1,86 @@
+"""Test: User Authentication
+
+This test demonstrates:
+- User registration
+- User login
+- Token handling
+
+Run:
+    pytest services/chat_demo/modules/01_auth.py
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5005"
+
+
+async def run_register(page: BasePage):
+    """Execute the test - register new user."""
+    response = await page.post(
+        f"{BASE_URL}/api/auth/register",
+        data={
+            "username": "newuser",
+            "display_name": "New User",
+            "password": "password123"
+        }
+    )
+    
+    assert response.status == 200
+    data = response.json()
+    assert data["username"] == "newuser"
+    assert data["status"] == "online"
+    
+    return response
+
+
+async def run_login(page: BasePage):
+    """Execute the test - login user."""
+    response = await page.post(
+        f"{BASE_URL}/api/auth/login",
+        data={
+            "username": "alice",
+            "password": "password123"
+        }
+    )
+    
+    assert response.status == 200
+    data = response.json()
+    assert "token" in data
+    assert data["user"]["username"] == "alice"
+    
+    return response
+
+
+async def run_login_invalid(page: BasePage):
+    """Execute the test - login with invalid credentials."""
+    response = await page.post(
+        f"{BASE_URL}/api/auth/login",
+        data={
+            "username": "alice",
+            "password": "wrongpassword"
+        }
+    )
+    
+    assert response.status == 401
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run_login(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())
