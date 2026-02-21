@@ -48,15 +48,15 @@ This document outlines major architectural improvements for the socialseed-e2e f
   - CI/CD (setup-ci) ✅
   - UI (dashboard, tui) ✅
   - Monitoring (telemetry) ✅
-  - Discovery (observe, deep-scan) ✅
+  - Discovery (observe, deep-scan, watch) ✅
   - Translation (translate) ✅
   - Community (community - 6 subcommands) ✅
   - Import (import - 4 subcommands) ✅
   - Performance (perf-profile, perf-report) ✅
   - Learning (regression, ai-learning - 4 subcommands) ✅
-  - AI Orchestration (analyze-flaky, watch) ✅
+  - AI Orchestration (analyze-flaky, healing-stats, debug-execution) ✅
 
-**Progress:** ~28+ commands extracted (72%)
+**Progress:** ~30+ commands extracted (77%)
 
 ---
 
