@@ -111,6 +111,7 @@ def _lazy_import_command(name: str) -> Optional[Callable]:
         "healing-stats": "healing_stats_cmd",
         "debug-execution": "debug_execution_cmd",
         "security-test": "security_test_cmd",
+        "search": "search_cmd",
         "new-service": "new_service_cmd",
         "new-test": "new_test_cmd",
         "install-demo": "install_demo_cmd",
