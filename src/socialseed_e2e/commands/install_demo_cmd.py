@@ -450,8 +450,26 @@ class DemoInstaller:
         from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
 
         try:
+            target_path = Path.cwd()
+            config_path = target_path / "e2e.conf"
+
+            # Check if config exists, if not create it with proper structure
+            if not config_path.exists():
+                config_content = """# SocialSeed E2E Configuration
+general:
+  environment: dev
+  timeout: 30000
+  verbose: true
+  user_agent: socialseed-e2e/1.0
+  project_name: demo-project
+
+services: {}
+"""
+                config_path.write_text(config_content)
+                console.print("  [green]✓[/green] Created: e2e.conf")
+
             loader = ApiConfigLoader()
-            config = loader.load()
+            config = loader.load(str(config_path))
 
             if config.services is None:
                 config.services = {}

@@ -264,6 +264,69 @@ class ApiConfigLoader:
         return cls.load()
 
     @classmethod
+    def save(cls, config: AppConfig, config_path: Optional[str] = None) -> None:
+        """Save configuration to file.
+
+        Args:
+            config: AppConfig object to save
+            config_path: Path to save the configuration file.
+                         If None, uses the currently loaded config path.
+        """
+        if config_path is None:
+            config_path = str(cls._config_path) if cls._config_path else "e2e.conf"
+
+        config_file = Path(config_path)
+
+        # Convert to dictionary - handle both dataclass and Pydantic models
+        try:
+            # Try Pydantic model_dump first
+            config_dict = config.model_dump(mode="json")
+        except AttributeError:
+            try:
+                # Try dataclass asdict
+                from dataclasses import asdict
+
+                config_dict = asdict(config)
+            except Exception:
+                # Last resort - use __dict__
+                config_dict = vars(config)
+
+        # Build YAML content manually for better control
+        content_lines = []
+
+        # Write general section
+        if hasattr(config, "environment"):
+            content_lines.append("general:")
+            content_lines.append(
+                f"  environment: {getattr(config, 'environment', 'dev')}"
+            )
+            content_lines.append(f"  timeout: {getattr(config, 'timeout', 30000)}")
+            content_lines.append(f"  verbose: {getattr(config, 'verbose', True)}")
+            content_lines.append(
+                f"  user_agent: {getattr(config, 'user_agent', 'socialseed-e2e/1.0')}"
+            )
+            content_lines.append(
+                f"  project_name: {getattr(config, 'project_name', 'socialseed-e2e')}"
+            )
+            content_lines.append("")
+
+        # Write services section
+        content_lines.append("services:")
+        if hasattr(config, "services") and config.services:
+            for name, svc in config.services.items():
+                content_lines.append(f"  {name}:")
+                if hasattr(svc, "base_url"):
+                    content_lines.append(f"    base_url: {svc.base_url}")
+                if hasattr(svc, "health_endpoint"):
+                    content_lines.append(f"    health_endpoint: {svc.health_endpoint}")
+                if hasattr(svc, "timeout"):
+                    content_lines.append(f"    timeout: {svc.timeout}")
+        else:
+            content_lines.append("  {}")
+
+        config_file.write_text("\n".join(content_lines))
+
+    @classmethod
     def get_config_path(cls) -> Optional[Path]:
         """Get the path of the currently loaded configuration file."""
         return cls._config_path

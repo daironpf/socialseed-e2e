@@ -25,6 +25,7 @@ docs/chaos-testing.md
 docs/ci-cd-templates.md
 docs/ci-cd.md
 docs/cli-architecture.md
+docs/cli-commands.md
 docs/cli-reference.md
 docs/cloud-integrations.md
 docs/collaboration.md
