@@ -71,6 +71,26 @@ e2e new-test create-user -s users -d "Test user creation"
 
 ---
 
+### `e2e new-demo NAME`
+Create a new demo API using the factory system.
+
+```bash
+e2e new-demo myapi --port 5016           # Generic CRUD demo
+e2e new-demo blog --preset blog         # Blog preset
+e2e new-demo tasks --preset task        # Task management preset
+```
+
+**Presets:**
+- `crud` - Simple CRUD API
+- `blog` - Blog with posts and comments
+- `task` - Task management with boards
+
+Creates:
+- `demos/<name>/api_<name>_demo.py`
+- `services/<name>-demo/` with service page, schema, config, tests
+
+---
+
 ### `e2e lint`
 Validate test files for common issues.
 
