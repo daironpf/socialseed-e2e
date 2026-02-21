@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: socialseed-e2e
-Version: 0.1.4
+Version: 0.1.5
 Summary: Framework E2E para testing de APIs REST con Playwright
 Author: Dairon Pérez Frías
 Author-email: Dairon Pérez Frías <dairon.perezfrias@gmail.com>
@@ -35,33 +35,15 @@ Requires-Dist: rich>=13.0.0
 Requires-Dist: jsonschema>=4.0.0
 Requires-Dist: jinja2>=3.0.0
 Requires-Dist: websocket-client>=1.0.0
-Requires-Dist: grpcio>=1.59.0
-Requires-Dist: grpcio-tools>=1.59.0
-Requires-Dist: protobuf>=4.24.0
 Requires-Dist: Faker>=19.0.0
-Requires-Dist: Pillow>=10.0.0
 Requires-Dist: aiohttp>=3.9.0
 Requires-Dist: email-validator>=2.0.0
-Requires-Dist: flask>=2.0.0
-Requires-Dist: pytest>=7.0.0
-Requires-Dist: pytest-asyncio>=0.21.0
-Requires-Dist: pytest-cov>=4.0.0
-Requires-Dist: pytest-timeout>=2.2.0
+Provides-Extra: grpc
+Requires-Dist: grpcio>=1.59.0; extra == "grpc"
+Requires-Dist: grpcio-tools>=1.59.0; extra == "grpc"
+Requires-Dist: protobuf>=4.24.0; extra == "grpc"
 Provides-Extra: tui
 Requires-Dist: textual>=0.41.0; extra == "tui"
-Provides-Extra: dev
-Requires-Dist: pytest>=7.0.0; extra == "dev"
-Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
-Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
-Requires-Dist: pytest-timeout>=2.2.0; extra == "dev"
-Requires-Dist: black>=23.0.0; extra == "dev"
-Requires-Dist: isort>=5.12.0; extra == "dev"
-Requires-Dist: flake8>=6.0.0; extra == "dev"
-Requires-Dist: mypy>=1.0.0; extra == "dev"
-Requires-Dist: pre-commit>=3.0.0; extra == "dev"
-Requires-Dist: twine>=4.0.0; extra == "dev"
-Requires-Dist: build>=0.10.0; extra == "dev"
-Requires-Dist: flask>=2.0.0; extra == "dev"
 Provides-Extra: mock
 Requires-Dist: flask>=2.0.0; extra == "mock"
 Provides-Extra: rag
@@ -70,6 +52,28 @@ Requires-Dist: numpy>=1.24.0; extra == "rag"
 Provides-Extra: secrets
 Requires-Dist: hvac>=1.0.0; extra == "secrets"
 Requires-Dist: boto3>=1.26.0; extra == "secrets"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-xdist>=3.5.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Requires-Dist: twine>=4.0.0; extra == "dev"
+Requires-Dist: build>=0.10.0; extra == "dev"
+Provides-Extra: full
+Requires-Dist: grpcio>=1.59.0; extra == "full"
+Requires-Dist: grpcio-tools>=1.59.0; extra == "full"
+Requires-Dist: protobuf>=4.24.0; extra == "full"
+Requires-Dist: textual>=0.41.0; extra == "full"
+Requires-Dist: flask>=2.0.0; extra == "full"
+Requires-Dist: sentence-transformers>=2.2.0; extra == "full"
+Requires-Dist: numpy>=1.24.0; extra == "full"
+Requires-Dist: hvac>=1.0.0; extra == "full"
+Requires-Dist: boto3>=1.26.0; extra == "full"
 Dynamic: license-file
 
 # 🌱 SocialSeed E2E
@@ -579,17 +583,91 @@ services:
 
 ## 🎯 CLI Commands
 
+### Core Commands
 ```bash
 e2e init [dir]              # Initialize project
 e2e new-service <name>      # Create service structure
 e2e new-test <name>         # Create test module
 e2e run                     # Run all tests
-e2e setup-ci <platform>     # Generate CI/CD pipelines
-e2e manifest                # Generate API knowledge
-e2e search "auth"           # Semantic search (RAG)
-e2e build-index             # Build vector index
-e2e watch                   # Auto-update on changes
+e2e lint                    # Validate test files
+e2e config                  # Show configuration
 ```
+
+### AI Features
+```bash
+e2e manifest                # Generate API knowledge manifest
+e2e manifest-query          # Query manifest
+e2e build-index            # Build vector index for semantic search
+e2e search "query"         # Semantic search (RAG)
+e2e retrieve "task"        # Retrieve context for task
+e2e watch                  # Auto-update manifest on file changes
+e2e discover               # Generate AI Discovery Report
+e2e generate-tests         # Autonomous test generation
+e2e plan-strategy          # Generate test strategy
+e2e autonomous-run         # Run tests with AI orchestration
+```
+
+### Testing & Debugging
+```bash
+e2e doctor                 # Verify installation
+e2e deep-scan              # Zero-config project mapping
+e2e observe                # Auto-detect services and ports
+e2e debug-execution        # Debug failed tests with AI
+e2e analyze-flaky         # Analyze flaky test patterns
+e2e healing-stats          # View self-healing statistics
+e2e regression             # AI regression analysis
+e2e semantic-analyze       # Semantic drift detection
+```
+
+### Performance & Security
+```bash
+e2e perf-profile           # Performance profiling
+e2e perf-report           # Generate performance report
+e2e security-test          # AI-driven security fuzzing
+e2e red-team assess        # Adversarial security testing
+```
+
+### Mocking & Recording
+```bash
+e2e mock-analyze          # Analyze external API dependencies
+e2e mock-generate <svc>   # Generate mock server
+e2e mock-run              # Run mock servers
+e2e mock-validate         # Validate API contracts
+e2e recorder record        # Record API session
+e2e recorder replay       # Replay session
+e2e shadow capture        # Capture production traffic
+```
+
+### Import & Export
+```bash
+e2e import postman <file> # Import Postman collection
+e2e import openapi <file> # Import OpenAPI spec
+e2e import curl <cmd>      # Import curl command
+e2e gherkin-translate     # Convert Gherkin to tests
+e2e translate             # Natural language to test code
+```
+
+### CI/CD & Community
+```bash
+e2e setup-ci <platform>   # Generate CI/CD templates
+e2e community templates   # List community templates
+e2e community plugins     # List plugins
+```
+
+### Additional Commands
+```bash
+e2e install-demo          # Install demo APIs
+e2e install-extras       # Install optional dependencies
+e2e telemetry             # Token usage monitoring
+e2e ai-learning feedback  # View AI feedback
+e2e dashboard             # Launch web dashboard
+e2e tui                  # Launch terminal interface
+e2e set url <svc> <url>  # Configure service URL
+e2e --version            # Show version
+```
+
+### Full Command Reference
+See [docs/cli-reference.md](docs/cli-reference.md) for complete documentation.
 
 ---
 
