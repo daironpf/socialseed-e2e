@@ -1,0 +1,9 @@
+"""Generic Test Template - Health Check."""
+from socialseed_e2e.core.interfaces import IServicePage
+
+
+def run(page: IServicePage):
+    """Test health endpoint."""
+    result = page.health()
+    assert result.status == 200, f"Expected 200, got {result.status}"
+    return result

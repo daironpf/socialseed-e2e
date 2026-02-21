@@ -8060,6 +8060,7 @@ def _register_modular_commands():
         # Service commands
         ("new-service", "new_service_cmd", "get_new_service_command"),
         ("new-test", "new_test_cmd", "get_new_test_command"),
+        ("new-demo", "new_demo_cmd", "get_new_demo_command"),
         # Installation commands
         ("install-demo", "install_demo_cmd", "get_install_demo_command"),
         ("install-extras", "install_extras_cmd", "get_install_extras_command"),

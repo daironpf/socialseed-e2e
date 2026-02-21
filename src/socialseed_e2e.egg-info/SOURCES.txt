@@ -141,6 +141,7 @@ src/socialseed_e2e/__init__.py
 src/socialseed_e2e/__main__.py
 src/socialseed_e2e/__version__.py
 src/socialseed_e2e/cli.py
+src/socialseed_e2e/demo_factory.py
 src/socialseed_e2e/mock_server.py
 src/socialseed_e2e/verify_fixes.py
 src/socialseed_e2e.egg-info/PKG-INFO
@@ -255,6 +256,7 @@ src/socialseed_e2e/commands/learning_cmd.py
 src/socialseed_e2e/commands/lint_cmd.py
 src/socialseed_e2e/commands/manifest_cmd.py
 src/socialseed_e2e/commands/mock_cmd.py
+src/socialseed_e2e/commands/new_demo_cmd.py
 src/socialseed_e2e/commands/new_service_cmd.py
 src/socialseed_e2e/commands/new_test_cmd.py
 src/socialseed_e2e/commands/observe_cmd.py
@@ -490,6 +492,7 @@ src/socialseed_e2e/templates/api_booking_demo.py.template
 src/socialseed_e2e/templates/api_chat_demo.py.template
 src/socialseed_e2e/templates/api_ecommerce_demo.py.template
 src/socialseed_e2e/templates/api_filestorage_demo.py.template
+src/socialseed_e2e/templates/api_generic_demo.py.template
 src/socialseed_e2e/templates/api_grpc_demo.proto.template
 src/socialseed_e2e/templates/api_grpc_demo.py.template
 src/socialseed_e2e/templates/api_iot_demo.py.template
@@ -565,6 +568,7 @@ src/socialseed_e2e/templates/filestorage_test_03_multipart_upload.py.template
 src/socialseed_e2e/templates/filestorage_test_04_download.py.template
 src/socialseed_e2e/templates/filestorage_test_05_presigned_url.py.template
 src/socialseed_e2e/templates/filestorage_test_06_delete_object.py.template
+src/socialseed_e2e/templates/generic_test_health_check.py.template
 src/socialseed_e2e/templates/grpc_service_page.py.template
 src/socialseed_e2e/templates/iot_service_page.py.template
 src/socialseed_e2e/templates/ml_service_page.py.template
