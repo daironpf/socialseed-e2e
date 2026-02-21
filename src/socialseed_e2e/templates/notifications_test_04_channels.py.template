@@ -1,0 +1,32 @@
+"""Test: Channels and Priorities
+
+Run: pytest services/notifications_demo/modules/04_channels.py
+"""
+from socialseed_e2e import BasePage
+BASE_URL = "http://localhost:5007"
+
+async def run_channels(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/channels")
+    assert response.status == 200
+    data = response.json()
+    assert "channels" in data
+    return response
+
+async def run_priority(page: BasePage):
+    response = await page.post(f"{BASE_URL}/api/notifications", data={"user_id": "user1", "channel": "push", "body": "Urgent!", "priority": "high"})
+    assert response.status == 200
+    assert response.json()["priority"] == "high"
+    return response
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_channels(base_page)
+            await browser.close()
+    asyncio.run(main())

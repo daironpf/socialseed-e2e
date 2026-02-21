@@ -1,0 +1,26 @@
+"""Test: Delete Webhook
+
+Run: pytest services/notifications_demo/modules/07_delete_webhook.py
+"""
+from socialseed_e2e import BasePage
+BASE_URL = "http://localhost:5007"
+
+async def run(page: BasePage):
+    create_resp = await page.post(f"{BASE_URL}/api/webhooks", data={"url": "https://test.com/hook", "events": ["test"]})
+    webhook = create_resp.json()
+    del_resp = await page.delete(f"{BASE_URL}/api/webhooks/{webhook['id']}")
+    assert del_resp.status == 200
+    return del_resp
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run(base_page)
+            await browser.close()
+    asyncio.run(main())

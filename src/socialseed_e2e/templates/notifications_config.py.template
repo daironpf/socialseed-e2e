@@ -1,0 +1,16 @@
+"""Notifications Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class NotificationsConfig(BaseModel):
+    base_url: str = "http://localhost:5007"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    channels: list[str] = ["email", "sms", "push", "webhook"]
+    priorities: list[str] = ["high", "normal", "low"]
+    statuses: list[str] = ["pending", "sent", "delivered", "failed", "scheduled"]
+
+
+CONFIG = NotificationsConfig()

@@ -1,0 +1,34 @@
+"""Test: Webhooks
+
+Run: pytest services/notifications_demo/modules/06_webhooks.py
+"""
+from socialseed_e2e import BasePage
+BASE_URL = "http://localhost:5007"
+
+async def run_create(page: BasePage):
+    response = await page.post(f"{BASE_URL}/api/webhooks", data={"url": "https://example.com/hook", "events": ["notification.sent"]})
+    assert response.status == 200
+    return response
+
+async def run_list(page: BasePage):
+    response = await page.get(f"{BASE_URL}/api/webhooks")
+    assert response.status == 200
+    return response
+
+async def run_test(page: BasePage):
+    response = await page.post(f"{BASE_URL}/api/webhooks/wh_1/test")
+    assert response.status == 200
+    return response
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            await run_list(base_page)
+            await browser.close()
+    asyncio.run(main())

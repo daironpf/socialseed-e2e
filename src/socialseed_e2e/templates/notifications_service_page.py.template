@@ -1,0 +1,63 @@
+"""Notifications Demo Service Page for socialseed-e2e"""
+
+from typing import Optional
+from socialseed_e2e import BasePage, DynamicStateMixin
+
+
+class NotificationsPage(BasePage, DynamicStateMixin):
+    def __init__(self, base_url: str = "http://localhost:5007", **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
+        self.init_dynamic_state()
+
+    def _get_headers(self) -> dict:
+        return {"Content-Type": "application/json", "Accept": "application/json"}
+
+    async def health_check(self):
+        return await self.get("/health")
+
+    async def list_channels(self):
+        return await self.get("/api/channels")
+
+    async def send_notification(self, user_id: str, channel: str, body: str, subject: Optional[str] = None, priority: str = "normal"):
+        data = {"user_id": user_id, "channel": channel, "body": body, "priority": priority}
+        if subject:
+            data["subject"] = subject
+        return await self.post("/api/notifications", data=data)
+
+    async def list_notifications(self, user_id: str, status: Optional[str] = None, channel: Optional[str] = None):
+        params = {"user_id": user_id}
+        if status:
+            params["status"] = status
+        if channel:
+            params["channel"] = channel
+        return await self.get("/api/notifications", params=params)
+
+    async def get_notification(self, notification_id: str):
+        return await self.get(f"/api/notifications/{notification_id}")
+
+    async def create_template(self, name: str, channel: str, body_template: str, subject_template: Optional[str] = None):
+        data = {"name": name, "channel": channel, "body_template": body_template}
+        if subject_template:
+            data["subject_template"] = subject_template
+        return await self.post("/api/templates", data=data)
+
+    async def list_templates(self):
+        return await self.get("/api/templates")
+
+    async def get_template(self, template_id: str):
+        return await self.get(f"/api/templates/{template_id}")
+
+    async def create_webhook(self, url: str, events: list[str]):
+        return await self.post("/api/webhooks", data={"url": url, "events": events})
+
+    async def list_webhooks(self):
+        return await self.get("/api/webhooks")
+
+    async def test_webhook(self, webhook_id: str):
+        return await self.post(f"/api/webhooks/{webhook_id}/test")
+
+    async def delete_webhook(self, webhook_id: str):
+        return await self.delete(f"/api/webhooks/{webhook_id}")
+
+    async def list_scheduled(self, user_id: str):
+        return await self.get("/api/scheduled", params={"user_id": user_id})

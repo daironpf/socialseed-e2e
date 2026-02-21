@@ -1,0 +1,70 @@
+"""Notifications Demo Data Schema for socialseed-e2e"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class Notification(BaseModel):
+    id: str
+    user_id: str
+    channel: str
+    subject: Optional[str] = None
+    body: str
+    template_id: Optional[str] = None
+    status: str
+    priority: str
+    scheduled_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
+    metadata: Optional[dict] = None
+    created_at: datetime
+
+
+class NotificationCreate(BaseModel):
+    user_id: str
+    channel: str = "email"
+    subject: Optional[str] = None
+    body: str
+    template_id: Optional[str] = None
+    priority: str = "normal"
+    scheduled_at: Optional[str] = None
+    metadata: Optional[dict] = None
+
+
+class Template(BaseModel):
+    id: str
+    name: str
+    channel: str
+    subject_template: Optional[str] = None
+    body_template: str
+    variables: Optional[dict] = None
+    is_active: bool
+    created_at: datetime
+
+
+class TemplateCreate(BaseModel):
+    name: str
+    channel: str
+    subject_template: Optional[str] = None
+    body_template: str
+    variables: Optional[dict] = None
+
+
+class Webhook(BaseModel):
+    id: str
+    url: str
+    events: list[str]
+    secret: str
+    is_active: bool
+    created_at: datetime
+
+
+class WebhookCreate(BaseModel):
+    url: str
+    events: list[str]
+
+
+CHANNELS = ["email", "sms", "push", "webhook"]
+PRIORITIES = ["high", "normal", "low"]
+STATUSES = ["pending", "sent", "delivered", "failed", "scheduled"]

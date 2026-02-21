@@ -25,6 +25,7 @@ class DemoInstaller:
         ("ecommerce", "api-ecommerce-demo.py", "ecommerce_service_page.py"),
         ("chat", "api-chat-demo.py", "chat_service_page.py"),
         ("booking", "api-booking-demo.py", "booking_service_page.py"),
+        ("notifications", "api_notifications_demo.py", "notifications_service_page.py"),
     ]
 
     def __init__(self, force: bool = False):
@@ -343,6 +344,90 @@ class DemoInstaller:
                     f"  [green]✓[/green] Created: services/booking-demo/modules/{prefix}.py"
                 )
 
+        # Create notifications demo service
+        self._create_notifications_service(target_path)
+
+    def _create_notifications_service(self, target_path: Path) -> None:
+        """Create notifications demo service files."""
+        notif_service_path = target_path / "services" / "notifications-demo"
+        notif_modules_path = notif_service_path / "modules"
+
+        if not notif_service_path.exists() or self.force:
+            notif_service_path.mkdir(parents=True, exist_ok=True)
+            notif_modules_path.mkdir(exist_ok=True)
+
+            (notif_service_path / "__init__.py").write_text("")
+            (notif_modules_path / "__init__.py").write_text("")
+
+            self.engine.render_to_file(
+                "notifications_service_page.py.template",
+                {},
+                str(notif_service_path / "notifications_page.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/notifications-demo/notifications_page.py"
+            )
+
+            self.engine.render_to_file(
+                "notifications_data_schema.py.template",
+                {},
+                str(notif_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/notifications-demo/data_schema.py"
+            )
+
+            self.engine.render_to_file(
+                "notifications_config.py.template",
+                {},
+                str(notif_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/notifications-demo/config.py"
+            )
+
+            test_files = [
+                (
+                    "01_send_notification",
+                    "notifications_test_01_send_notification.py.template",
+                ),
+                (
+                    "02_list_notifications",
+                    "notifications_test_02_list_notifications.py.template",
+                ),
+                (
+                    "03_get_notification",
+                    "notifications_test_03_get_notification.py.template",
+                ),
+                ("04_channels", "notifications_test_04_channels.py.template"),
+                ("05_templates", "notifications_test_05_templates.py.template"),
+                ("06_webhooks", "notifications_test_06_webhooks.py.template"),
+                (
+                    "07_delete_webhook",
+                    "notifications_test_07_delete_webhook.py.template",
+                ),
+                ("08_multi_channel", "notifications_test_08_multi_channel.py.template"),
+                ("09_statuses", "notifications_test_09_statuses.py.template"),
+                (
+                    "10_notifications_workflow",
+                    "notifications_test_10_notifications_workflow.py.template",
+                ),
+            ]
+
+            for prefix, template in test_files:
+                self.engine.render_to_file(
+                    template,
+                    {},
+                    str(notif_modules_path / f"{prefix}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/notifications-demo/modules/{prefix}.py"
+                )
+
     def _update_e2e_conf(self) -> None:
         """Update e2e.conf with demo service."""
         from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
@@ -375,6 +460,12 @@ class DemoInstaller:
             config.services["booking-demo"] = ServiceConfig(
                 name="booking-demo",
                 base_url="http://localhost:5006",
+                health_endpoint="/health",
+            )
+
+            config.services["notifications-demo"] = ServiceConfig(
+                name="notifications-demo",
+                base_url="http://localhost:5007",
                 health_endpoint="/health",
             )
 
