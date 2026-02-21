@@ -1542,6 +1542,8 @@ def run(
         console.print(f"[red]❌ Unexpected error:[/red] {e}")
         sys.exit(1)
 
+    # Verify services directory
+
     # Import test runner
     from .core.test_runner import (
         generate_junit_report,

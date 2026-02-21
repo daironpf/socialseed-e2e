@@ -997,7 +997,22 @@ def run_all_tests(
 
     # Discover services
     if specific_service:
-        services = [specific_service]
+        # Normalize service name: accept both kebab-case and snake_case
+        normalized = normalize_service_name(specific_service)
+
+        # Find actual directory name by checking all directories
+        actual_service_name = None
+        if services_path.exists():
+            for dir_name in services_path.iterdir():
+                if dir_name.is_dir() and not dir_name.name.startswith("_"):
+                    if normalize_service_name(dir_name.name) == normalized:
+                        actual_service_name = dir_name.name
+                        break
+
+        if actual_service_name:
+            services = [actual_service_name]
+        else:
+            services = [specific_service]  # Use original as fallback
     else:
         services = discover_services(services_path)
 
