@@ -99,7 +99,7 @@ async def root():
     return HTMLResponse(content=FALLBACK_DASHBOARD_HTML)
 
 
-FALLBACK_DASHBOARD_HTML = """
+FALLBACK_DASHBOARD_HTML = r"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -321,8 +321,14 @@ FALLBACK_DASHBOARD_HTML = """
             try {
                 const res = await fetch('/api/tests');
                 const data = await res.json();
-                services = data.services || {};
+                services = data.services || [];
                 tests = data.tests || [];
+                
+                // Group tests by service
+                const servicesMap = {};
+                services.forEach(s => {
+                    servicesMap[s.name] = tests.filter(t => t.service === s.name);
+                });
                 renderServices();
                 updateSyncStatus();
             } catch(e) {
@@ -337,7 +343,7 @@ FALLBACK_DASHBOARD_HTML = """
             let html = '';
             
             // Regular tests
-            for (const [serviceName, serviceTests] of Object.entries(services)) {
+            for (const [serviceName, serviceTests] of Object.entries(servicesMap)) {
                 const filteredTests = serviceTests.filter(t => t.name.toLowerCase().includes(search));
                 if (filteredTests.length === 0 && search) continue;
                 
