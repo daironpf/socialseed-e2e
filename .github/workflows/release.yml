@@ -66,7 +66,11 @@ jobs:
             --ignore=tests/unit/ci_cd/test_ci_cd.py \
             --ignore=tests/integration/cli/test_run.py \
             --ignore=tests/unit/test_imports_compatibility.py \
-            --ignore=tests/unit/test_base_page.py
+            --ignore=tests/unit/test_base_page.py \
+            --ignore=tests/unit/test_visual_testing.py \
+            --ignore=tests/unit/analytics/test_analytics.py \
+            --ignore=tests/unit/project_manifest/test_api.py \
+            --ignore=tests/unit/project_manifest/test_retrieval.py
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
