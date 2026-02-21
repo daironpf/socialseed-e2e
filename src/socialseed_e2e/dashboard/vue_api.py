@@ -369,6 +369,29 @@ async def run_all_tests(sid, data):
 app.mount("/ws", socket_app)
 
 
+def run_server(
+    host: str = "localhost", port: int = 5173, open_browser: bool = True
+) -> None:
+    """Run the Vue dashboard server."""
+    import uvicorn
+
+    url = f"http://{host}:{port}"
+
+    print("=" * 60)
+    print("🚀 SocialSeed E2E Dashboard (Vue.js)")
+    print("=" * 60)
+    print(f"\n📍 Dashboard URL: {url}")
+    print("\nPress Ctrl+C to stop")
+    print("=" * 60)
+
+    if open_browser:
+        import webbrowser
+
+        webbrowser.open(url)
+
+    uvicorn.run(app, host="0.0.0.0", port=port)
+
+
 if __name__ == "__main__":
     import uvicorn
 

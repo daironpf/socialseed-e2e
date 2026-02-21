@@ -1,30 +1,38 @@
 # SocialSeed E2E Dashboard
 
-Interfaz web local para ejecución y depuración manual de tests. Este dashboard sirve como el "Centro de Control" del framework, permitiendo a los usuarios explorar, ejecutar y depurar tests sin escribir código constantemente.
+Interfaz web moderna para ejecución y depuración de tests E2E. Este dashboard sirve como el "Centro de Control" del framework, construido con Vue.js 3 y FastAPI.
 
 ## 🚀 Características
 
 ### ✅ Implementadas
 
+- **Dashboard**: Vista general con estadísticas y acciones rápidas
 - **Test Explorer**: Vista en árbol de todos los módulos de tests
-- **One-Click Run**: Ejecutar tests individuales, suites o carpetas con un clic
-- **Rich Request/Response Viewer**: Inspeccionar headers, bodies (JSON/HTML) y códigos de estado
-- **Parameterization**: Inputs de UI para sobrescribir variables de tests en runtime
-- **Live Logs**: Streaming en tiempo real de logs de ejecución
-- **Run History**: Ver ejecuciones anteriores y sus resultados
+- **Run Tests**: Ejecutar tests individuales o todos con progreso en tiempo real
+- **Live Logs**: Streaming de logs via WebSocket
+- **History**: Ver historial de ejecuciones anteriores
+- **Settings**: Configuración de preferencias del dashboard
 
 ## 📦 Instalación
 
-El dashboard requiere Streamlit:
+El dashboard se instala con el comando `e2e install-extras`:
 
 ```bash
-pip install streamlit
+# Instalar dependencias del dashboard
+e2e install-extras dashboard
+
+# O instalar todos los extras
+e2e install-extras --all
+
+# Ver todos los extras disponibles
+e2e install-extras --list
 ```
 
-O instalar con el extra dashboard:
+Para desarrollo (con Node.js):
 
 ```bash
-pip install socialseed-e2e[dashboard]
+cd src/socialseed_e2e/dashboard/vue
+npm install
 ```
 
 ## 🎯 Uso
@@ -32,267 +40,214 @@ pip install socialseed-e2e[dashboard]
 ### Lanzar el Dashboard
 
 ```bash
-# Lanzar en el puerto por defecto (8501)
+# Producción (servir archivos Vue construidos)
 e2e dashboard
 
-# Lanzar en puerto personalizado
+# Puerto personalizado
 e2e dashboard --port 8080
 
 # No abrir navegador automáticamente
 e2e dashboard --no-browser
 
-# Especificar host
-e2e dashboard --host 0.0.0.0
+# Desarrollo (requiere Node.js)
+e2e dashboard --dev
 ```
 
-### Interfaz de Usuario
+### Opciones del Comando
 
-#### 1. Test Explorer (Sidebar)
-- Visualización en árbol de todos los servicios y tests
-- Contador de tests por servicio
-- Selección de servicios específicos
-- Navegación rápida entre tests
+| Opción | Descripción | Default |
+|--------|-------------|---------|
+| `-p, --port` | Puerto del servidor | 5173 |
+| `-h, --host` | Host del servidor | localhost |
+| `--no-browser` | No abrir navegador | false |
+| `--dev` | Modo desarrollo (Node.js) | false |
 
-#### 2. Panel de Ejecución
-- Visualización del test seleccionado
-- Configuración de parámetros:
-  - Base URL
-  - Timeout
-  - Retries
-  - Variables personalizadas (JSON)
-- Botón de ejecución con spinner de carga
-- Limpieza de resultados
+## 📱 Interfaz de Usuario
 
-#### 3. Visualización de Resultados
-- Estado de ejecución (✅ Pasado / ❌ Fallado)
-- Duración en milisegundos
-- Timestamp
-- Request/Response detallado:
-  - Método HTTP
-  - URL
-  - Headers
-  - Body (formateado JSON)
-- Output y errores
+### 1. Dashboard (Inicio)
 
-#### 4. Live Logs
-- Streaming en tiempo real
-- Filtro por nivel (All, Info, Success, Error)
-- Últimos 50 logs visibles
-- Limpieza de logs
+Vista general con:
+- **Estadísticas**: Total tests, pasados, fallados, duración
+- **Recent Runs**: Últimas ejecuciones con estado
+- **Services Overview**: Tests por servicio
+- **Quick Actions**: Acciones rápidas (Run All, Explore, History, Settings)
 
-#### 5. Historial de Ejecuciones
-- Base de datos SQLite local (`.e2e/dashboard.db`)
-- Últimas 20 ejecuciones
-- Tabla con timestamp, nombre, estado y duración
-- Persistente entre sesiones
+### 2. Test Explorer
 
-## 🏗️ Estructura del Módulo
+- Vista en árbol de servicios y tests
+- Filtrado por nombre
+- Selección de tests individuales
+- Ver detalles de cada test
+
+### 3. Run Tests
+
+- Seleccionar tests a ejecutar
+- Ver progreso en tiempo real
+- Streaming de logs via WebSocket
+- Resultados detallados al finalizar
+
+### 4. History
+
+- Tabla de ejecuciones anteriores
+- Filtros por status y servicio
+- Ver detalles de cada ejecución
+- Re-ejecutar tests desde historial
+- Eliminar entradas
+
+### 5. Settings
+
+- **General**: Auto-refresh, max history
+- **Test Execution**: Parallel execution, retries, timeout
+- **Notifications**: Notificaciones desktop, sonidos
+- **API Configuration**: Base URL, API key
+- **Dashboard**: Dark mode, theme color
+- **Data Management**: Export/Import, Clear history
+
+## 🏗️ Arquitectura
 
 ```
 dashboard/
-├── __init__.py         # Exporta DashboardServer
-├── app.py              # Aplicación Streamlit principal
-├── server.py           # Lógica del servidor y CLI
-└── components/         # Componentes UI (para extensión futura)
+├── vue/                      # Frontend Vue.js 3
+│   ├── src/
+│   │   ├── App.vue          # Layout principal
+│   │   ├── main.js          # Bootstrap Vue
+│   │   ├── router/          # Vue Router
+│   │   ├── stores/          # Pinia stores
+│   │   │   ├── testStore.js # Estado de tests
+│   │   │   └── logStore.js  # Estado de logs
+│   │   └── views/           # Vistas
+│   │       ├── Dashboard.vue
+│   │       ├── TestExplorer.vue
+│   │       ├── RunTests.vue
+│   │       ├── History.vue
+│   │       └── Settings.vue
+│   ├── package.json
+│   └── vite.config.js
+├── vue_api.py                # Backend FastAPI
+└── README.md
 ```
 
-## 🎨 Personalización
+## 🔌 API Backend
 
-### CSS Personalizado
+El dashboard expone una API REST y WebSocket:
 
-El dashboard incluye estilos CSS personalizados para:
-- Headers principales
-- Indicadores de estado (passed/failed/skipped)
-- Badges de estado
-- Logs en monospaced
-- Visualizador JSON
+### Endpoints REST
 
-### Configuración de Streamlit
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/tests` | Obtener todos los tests |
+| POST | `/api/tests/run` | Ejecutar un test |
+| GET | `/api/history` | Obtener historial |
+| GET | `/api/config` | Obtener configuración |
+| POST | `/api/config` | Guardar configuración |
 
-La aplicación se configura con:
-- Título: "SocialSeed E2E Dashboard"
-- Icono: 🌱
-- Layout: wide
-- Sidebar: expandido por defecto
+### WebSocket Events
+
+| Evento | Descripción |
+|--------|-------------|
+| `connect` | Cliente conectado |
+| `test_progress` | Progreso de test |
+| `test_log` | Log en tiempo real |
+| `test_complete` | Test completado |
+| `all_tests_complete` | Todos los tests completados |
 
 ## 💾 Base de Datos
 
-El dashboard utiliza SQLite para persistir:
+SQLite en `.e2e/dashboard.db`:
 
-### Tabla: test_runs
 ```sql
+-- Tabla de ejecuciones
 CREATE TABLE test_runs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     timestamp TEXT,
     test_name TEXT,
     test_path TEXT,
+    service_name TEXT,
     status TEXT,
     duration_ms INTEGER,
     output TEXT,
     error_message TEXT
 );
-```
 
-### Tabla: test_suites
-```sql
+-- Tabla de suites
 CREATE TABLE test_suites (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     name TEXT,
     tests TEXT,
     created_at TEXT
 );
 ```
 
-Ubicación: `.e2e/dashboard.db` en el directorio del proyecto.
+## 🔧 Troubleshooting
 
-## 🔧 Integración con el Framework
-
-### Descubrimiento de Tests
-
-El dashboard automáticamente descubre tests en:
-```
-<project_root>/services/<service_name>/modules/*.py
-```
-
-### Ejecución de Tests
-
-Los tests se ejecutan a través de una implementación simplificada que:
-1. Carga el test module
-2. Ejecuta la función `run(page)`
-3. Captura request/response
-4. Almacena resultados
-
-### Session State
-
-Streamlit session state mantiene:
-- `test_history`: Historial de tests ejecutados
-- `live_logs`: Logs en tiempo real
-- `selected_test`: Test actualmente seleccionado
-- `test_results`: Resultados de ejecuciones
-
-## 📝 Ejemplos de Uso
-
-### Escenario 1: Ejecutar un Test Específico
-
-1. Abrir dashboard: `e2e dashboard`
-2. Seleccionar servicio del sidebar
-3. Click en el test deseado
-4. Ajustar parámetros si es necesario
-5. Click en "▶️ Run Test"
-6. Ver resultados y request/response
-
-### Escenario 2: Ejecutar Todos los Tests
-
-1. Click en "🚀 Run All Tests" en el sidebar
-2. Ver progress bar de ejecución
-3. Revisar Live Logs en tiempo real
-4. Ver resumen al finalizar
-
-### Escenario 3: Depuración con Variables Personalizadas
-
-1. Seleccionar test
-2. Expandir "🔧 Custom Variables"
-3. Modificar JSON con valores deseados:
-   ```json
-   {"user_email": "debug@example.com", "timeout": 10000}
-   ```
-4. Ejecutar test
-5. Ver resultado con variables aplicadas
-
-### Escenario 4: Revisar Historial
-
-1. Panel derecho muestra historial
-2. Tabla con últimas 20 ejecuciones
-3. Filtrar por status si es necesario
-4. Identificar tests flaky
-
-## 🐛 Troubleshooting
-
-### "Streamlit not found"
+### Dependencias faltantes
 
 ```bash
-pip install streamlit
+e2e install-extras dashboard
 ```
 
 ### Puerto ocupado
 
 ```bash
-# Usar puerto diferente
 e2e dashboard --port 8080
 ```
 
 ### No se encuentran tests
 
-Asegúrate de:
-1. Estar en un proyecto inicializado (`e2e init`)
-2. Tener tests en `services/<name>/modules/`
-3. Los tests tengan función `run(page)`
+1. Verificar proyecto inicializado: `e2e init`
+2. Verificar tests en `services/<name>/modules/`
+3. Verificar función `run(page)` en cada test
 
-### Error de base de datos
+### Error WebSocket
 
-Limpiar caché:
+El dashboard requiere WebSocket para live logs. Verificar:
+1. Navegador soporta WebSocket
+2. No hay proxy bloqueando conexiones
+
+### Build Vue (Producción)
+
 ```bash
-rm -rf .e2e/dashboard.db
+cd src/socialseed_e2e/dashboard/vue
+npm install
+npm run build
+
+# Luego ejecutar
+e2e dashboard
 ```
 
-## 🔮 Roadmap Futuro
+## 🎨 Desarrollo
 
-### Características Planificadas
+### Modo Desarrollo
 
-- [ ] **Test Suite Management**: Crear y guardar suites de tests
-- [ ] **Comparación de Resultados**: Comparar ejecuciones lado a lado
-- [ ] **Exportación**: Exportar resultados a CSV/JSON/HTML
-- [ ] **Filtros Avanzados**: Filtrar tests por tags, status, etc.
-- [ ] **Autenticación**: Login para acceso protegido
-- [ ] **Dark Mode**: Tema oscuro
-- [ ] **Keyboard Shortcuts**: Atajos de teclado
-- [ ] **Test Editor**: Editar tests desde el dashboard
+```bash
+# Instalar Node.js primero
+# https://nodejs.org/
 
-### Mejoras de UI
+# Terminal 1: Backend
+python -m socialseed_e2e dashboard --no-browser
 
-- [ ] Drag & drop para reordenar tests
-- [ ] Gráficos de tendencias
-- [ ] Heatmap de ejecuciones
-- [ ] Collapsible sections mejorado
+# Terminal 2: Frontend
+cd src/socialseed_e2e/dashboard/vue
+npm run dev
+```
 
-## 🗺️ Roadmap Completo
+### Estructura Vue
 
-Para ver el roadmap detallado del dashboard con todas las features planificadas:
+- **Vue 3** con Composition API
+- **Vite** como bundler
+- **Pinia** para estado
+- **Vue Router** para navegación
+- **Socket.IO client** para WebSocket
 
-📄 **[DASHBOARD_UI_ROADMAP.md](../../DASHBOARD_UI_ROADMAP.md)**
+## 🚀 Roadmap
 
-Este documento incluye:
-- 31 issues bien definidas para el dashboard
-- Priorización (Critical/High/Medium/Low)
-- Versiones planificadas (v0.2.0 a v1.0.0)
-- Guía de contribución específica
-
-**⚠️ Nota:** Este roadmap es **solo para el componente Dashboard UI**. El roadmap del framework core se maneja vía GitHub issues con label `area:core`.
-
-## 🤝 Contribuir
-
-Para extender el dashboard:
-
-1. Revisa el [DASHBOARD_UI_ROADMAP.md](../../DASHBOARD_UI_ROADMAP.md)
-2. Elige una issue abierta o propón una nueva
-3. Crear nuevo componente en `components/`
-4. Importar en `app.py`
-5. Agregar al layout principal
-6. Documentar en este README
-
-**Recuerda:** El dashboard es un componente opcional. El core CLI tiene prioridad.
-
-## 📚 Recursos
-
-- [Streamlit Documentation](https://docs.streamlit.io/)
-- [Component Gallery](https://streamlit.io/components)
-- [Customization Guide](https://docs.streamlit.io/library/advanced-features/configuration)
-- [Dashboard Roadmap](../../DASHBOARD_UI_ROADMAP.md)
+- [ ] Test Suite Management
+- [ ] Comparación de resultados
+- [ ] Exportación (CSV/JSON/HTML)
+- [ ] Autenticación
+- [ ] Editor de tests integrado
 
 ---
 
-**Versión:** 1.0.0  
-**Última actualización:** 2026-02-14  
-**Área:** Dashboard UI  
-**Ubicación:** `src/socialseed_e2e/dashboard/`  
-**Mantenido por:** SocialSeed E2E Team
+**Versión:** 2.0.0 (Vue.js)  
+**Última actualización:** 2026-02-21

@@ -160,7 +160,7 @@ e2e run
 
 **Expected Output:**
 ```
-🚀 socialseed-e2e v0.1.4
+🚀 socialseed-e2e v0.1.5
 ══════════════════════════════════════════════════
 
 📋 Configuration: e2e.conf
@@ -578,11 +578,11 @@ e2e community plugins     # List plugins
 
 ### Additional Commands
 ```bash
-e2e install-demo          # Install demo APIs
-e2e install-extras       # Install optional dependencies
+e2e install-demo          # Install demo APIs (D01-D16)
+e2e install-extras       # Install optional dependencies (tui, rag, dashboard, etc.)
 e2e telemetry             # Token usage monitoring
 e2e ai-learning feedback  # View AI feedback
-e2e dashboard             # Launch web dashboard
+e2e dashboard             # Launch web dashboard (Vue.js + FastAPI)
 e2e tui                  # Launch terminal interface
 e2e set url <svc> <url>  # Configure service URL
 e2e --version            # Show version

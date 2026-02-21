@@ -32,6 +32,14 @@ EXTRA_DEPENDENCIES = {
         "description": "Secret scanning and management",
         "packages": ["hvac>=1.0.0", "boto3>=1.26.0"],
     },
+    "dashboard": {
+        "description": "Web dashboard (Vue.js + FastAPI)",
+        "packages": [
+            "fastapi>=0.104.0",
+            "uvicorn[standard]>=0.24.0",
+            "python-socketio[asyncio]>=5.10.0",
+        ],
+    },
     "full": {
         "description": "All extras combined",
         "packages": [],
@@ -79,7 +87,7 @@ class ExtraInstaller:
                 sys.exit(1)
 
             if extra == "full":
-                extras_to_install = ["tui", "rag", "grpc", "secrets"]
+                extras_to_install = ["tui", "rag", "grpc", "secrets", "dashboard"]
                 break
 
         console.print(
@@ -128,11 +136,13 @@ def install_extras_cmd(extra, list_extras: bool, install_all: bool):
         tui       - Terminal User Interface (textual)
         rag       - Semantic search and embeddings (sentence-transformers)
         grpc      - gRPC protocol support (grpcio)
+        secrets   - Secret scanning and management
+        dashboard - Web dashboard (Vue.js + FastAPI)
         full      - All extras combined
 
     Examples:
         e2e install-extras              # Interactive mode
-        e2e install-extras tui          # Install TUI only
+        e2e install-extras dashboard   # Install dashboard only
         e2e install-extras rag grpc     # Install RAG and gRPC
         e2e install-extras --all        # Install all extras
         e2e install-extras --list       # Show available extras
@@ -146,7 +156,7 @@ def install_extras_cmd(extra, list_extras: bool, install_all: bool):
     extras_to_install = []
 
     if install_all:
-        extras_to_install = ["tui", "rag", "grpc", "secrets"]
+        extras_to_install = ["tui", "rag", "grpc", "secrets", "dashboard"]
     elif extra:
         extras_to_install = list(extra)
     else:

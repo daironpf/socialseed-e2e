@@ -100,6 +100,17 @@ export const useTestStore = defineStore('tests', {
 
     addResult(result) {
       this.testResults.unshift(result)
+    },
+
+    deleteResult(id) {
+      const index = this.testResults.findIndex(r => r.id === id)
+      if (index !== -1) {
+        this.testResults.splice(index, 1)
+      }
+    },
+
+    showNotification(message, type = 'info') {
+      console.log(`[${type}] ${message}`)
     }
   }
 })

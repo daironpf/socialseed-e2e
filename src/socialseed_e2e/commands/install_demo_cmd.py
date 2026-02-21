@@ -154,11 +154,11 @@ class DemoInstaller:
             self.engine.render_to_file(
                 "ecommerce_service_page.py.template",
                 {},
-                str(ecommerce_service_path / "ecommerce_page.py"),
+                str(ecommerce_service_path / "ecommerce_demo_page.py"),
                 overwrite=self.force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/ecommerce-demo/ecommerce_page.py"
+                "  [green]✓[/green] Created: services/ecommerce-demo/ecommerce_demo_page.py"
             )
 
             # Create data schema
@@ -229,10 +229,12 @@ class DemoInstaller:
             self.engine.render_to_file(
                 "chat_service_page.py.template",
                 {},
-                str(chat_service_path / "chat_page.py"),
+                str(chat_service_path / "chat_demo_page.py"),
                 overwrite=self.force,
             )
-            console.print("  [green]✓[/green] Created: services/chat-demo/chat_page.py")
+            console.print(
+                "  [green]✓[/green] Created: services/chat-demo/chat_demo_page.py"
+            )
 
             self.engine.render_to_file(
                 "chat_data_schema.py.template",
@@ -294,11 +296,11 @@ class DemoInstaller:
             self.engine.render_to_file(
                 "booking_service_page.py.template",
                 {},
-                str(booking_service_path / "booking_page.py"),
+                str(booking_service_path / "booking_demo_page.py"),
                 overwrite=self.force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/booking-demo/booking_page.py"
+                "  [green]✓[/green] Created: services/booking-demo/booking_demo_page.py"
             )
 
             self.engine.render_to_file(
@@ -379,11 +381,11 @@ class DemoInstaller:
             self.engine.render_to_file(
                 "notifications_service_page.py.template",
                 {},
-                str(notif_service_path / "notifications_page.py"),
+                str(notif_service_path / "notifications_demo_page.py"),
                 overwrite=self.force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/notifications-demo/notifications_page.py"
+                "  [green]✓[/green] Created: services/notifications-demo/notifications_demo_page.py"
             )
 
             self.engine.render_to_file(
@@ -524,11 +526,11 @@ services: {}
             self.engine.render_to_file(
                 "filestorage_service_page.py.template",
                 {},
-                str(fs_service_path / "filestorage_page.py"),
+                str(fs_service_path / "filestorage_demo_page.py"),
                 overwrite=self.force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/filestorage-demo/filestorage_page.py"
+                "  [green]✓[/green] Created: services/filestorage-demo/filestorage_demo_page.py"
             )
 
             self.engine.render_to_file(
@@ -587,11 +589,11 @@ services: {}
             self.engine.render_to_file(
                 "social_service_page.py.template",
                 {},
-                str(social_service_path / "social_page.py"),
+                str(social_service_path / "social_demo_page.py"),
                 overwrite=self.force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/social-demo/social_page.py"
+                "  [green]✓[/green] Created: services/social-demo/social_demo_page.py"
             )
 
             self.engine.render_to_file(
@@ -645,11 +647,11 @@ services: {}
             self.engine.render_to_file(
                 "payments_service_page.py.template",
                 {},
-                str(pay_service_path / "payments_page.py"),
+                str(pay_service_path / "payments_demo_page.py"),
                 overwrite=self.force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/payments-demo/payments_page.py"
+                "  [green]✓[/green] Created: services/payments-demo/payments_demo_page.py"
             )
 
             self.engine.render_to_file(

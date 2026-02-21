@@ -23,8 +23,10 @@ socialseed-e2e/
 │   │   └── loaders.py          # Carga dinámica de módulos
 │   ├── commands/               # Comandos CLI (init, new-service, run)
 │   ├── templates/              # Plantillas para scaffolding
+│   ├── demo_factory.py         # Factory para generar demos automáticamente
+│   ├── dashboard/              # Dashboard web (Vue.js + FastAPI)
 │   └── __main__.py            # Punto de entrada CLI
-├── demos/                      # APIs de demostración
+├── demos/                      # APIs de demostración (D01-D16)
 │   ├── rest/                  # REST API demo (Flask)
 │   ├── grpc/                  # gRPC API demo
 │   ├── websocket/             # WebSocket demo
@@ -34,17 +36,20 @@ socialseed-e2e/
 ├── examples/                   # Ejemplos de uso
 ├── playground/                 # Playground y tutorials
 ├── .agent/                     # Documentación para agentes IA
+├── .opencode/                  # Chat history para contexto persistente
 └── pyproject.toml             # Configuración de paquete Python
 ```
 
 ## Tecnologías Clave
 
-- **Python 3.8+** - Lenguaje principal
+- **Python 3.9+** - Lenguaje principal
 - **Playwright** - Para testing HTTP (y futuro UI testing)
 - **Pydantic** - Validación de datos y type safety
 - **PyYAML** - Configuración en YAML
 - **Rich** - CLI con output formateado
 - **Jinja2** - Motor de plantillas para scaffolding
+- **FastAPI** - Backend del dashboard
+- **Vue.js 3** - Frontend del dashboard
 
 ## Convenciones Importantes
 
@@ -903,7 +908,7 @@ jinja2>=3.1.0
 - ✅ Plugin System - Sistema de plugins extensible
 
 ### UI & UX ✅
-- ✅ Dashboard Web - Streamlit dashboard
+- ✅ Dashboard Web - Vue.js 3 + FastAPI + WebSocket (moderno y reactivo)
 - ✅ TUI (Terminal User Interface)
 - ✅ Interactive Doctor - Diagnóstico interactivo
 
@@ -921,7 +926,6 @@ jinja2>=3.1.0
 - ✅ Collaboration Tools - Compartir/revisar tests
 
 ### En Progreso 🚧
-- 🚧 Dashboard Components - Estructura básica, algunos componentes vacíos
 - 🚧 Database Adapters - Esqueleto presente, implementación parcial
 - 🚧 Cloud Implementaciones Detalladas - Esqueletos básicos presentes
 
