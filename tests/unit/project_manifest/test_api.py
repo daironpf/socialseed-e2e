@@ -140,8 +140,11 @@ def sample_manifest(tmp_path):
         ],
     )
 
-    # Save manifest to file
-    manifest_path = tmp_path / "project_knowledge.json"
+    # Save manifest to file in the correct location
+    service_name = tmp_path.name
+    manifest_dir = tmp_path / ".e2e" / "manifests" / service_name
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = manifest_dir / "project_knowledge.json"
     manifest_path.write_text(json.dumps(manifest.model_dump(mode="json"), indent=2))
 
     return tmp_path, manifest
@@ -382,8 +385,11 @@ class TestManifestAPI:
         # Initial load
         api.manifest.project_name
 
-        # Modify manifest
-        manifest_path = tmp_path / "project_knowledge.json"
+        # Modify manifest - use correct path
+        service_name = tmp_path.name
+        manifest_path = (
+            tmp_path / ".e2e" / "manifests" / service_name / "project_knowledge.json"
+        )
         data = json.loads(manifest_path.read_text())
         data["project_name"] = "updated-name"
         manifest_path.write_text(json.dumps(data))
@@ -466,7 +472,10 @@ class TestManifestAPIErrorHandling:
 
     def test_invalid_manifest(self, tmp_path):
         """Test error with invalid manifest."""
-        manifest_path = tmp_path / "project_knowledge.json"
+        service_name = tmp_path.name
+        manifest_dir = tmp_path / ".e2e" / "manifests" / service_name
+        manifest_dir.mkdir(parents=True, exist_ok=True)
+        manifest_path = manifest_dir / "project_knowledge.json"
         manifest_path.write_text("invalid json")
 
         with pytest.raises((json.JSONDecodeError, ValueError)):
