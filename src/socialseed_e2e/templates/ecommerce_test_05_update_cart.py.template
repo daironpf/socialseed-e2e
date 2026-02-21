@@ -1,0 +1,59 @@
+"""Test: Update Cart
+
+This test demonstrates:
+- PUT requests
+- Quantity validation
+- Cart updates
+
+Run:
+    pytest services/ecommerce_demo/modules/05_update_cart.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - update cart item quantity."""
+    user_id = "test_user_1"
+    product_id = "prod_1"
+    
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": product_id, "quantity": 1}
+    )
+    
+    response = await page.put(
+        f"{BASE_URL}/api/cart/items/{product_id}",
+        data={"quantity": 5},
+        params={"user_id": user_id}
+    )
+    
+    assert response.status == 200
+    
+    item = response.json()
+    assert item["quantity"] == 5
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

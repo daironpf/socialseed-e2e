@@ -1,0 +1,109 @@
+"""Test: Payment Processing
+
+This test demonstrates:
+- POST with idempotency
+- Payment workflow
+- Transaction handling
+
+Run:
+    pytest services/ecommerce_demo/modules/08_payment.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - process payment."""
+    user_id = "payment_test_user"
+    
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": "prod_3", "quantity": 1}
+    )
+    
+    order_resp = await page.post(
+        f"{BASE_URL}/api/orders",
+        data={"user_id": user_id}
+    )
+    order = order_resp.json()
+    order_id = order["id"]
+    
+    idempotency_key = f"pay_test_{user_id}_{order_id}"
+    
+    payment_resp = await page.post(
+        f"{BASE_URL}/api/payments",
+        data={
+            "order_id": order_id,
+            "method": "credit_card",
+            "idempotency_key": idempotency_key
+        }
+    )
+    
+    assert payment_resp.status == 200
+    
+    payment = payment_resp.json()
+    assert payment["order_id"] == order_id
+    assert payment["method"] == "credit_card"
+    assert payment["status"] in ["completed", "failed"]
+    
+    order_check = await page.get(f"{BASE_URL}/api/orders/{order_id}", params={"user_id": user_id})
+    order_data = order_check.json()
+    assert order_data["payment_status"] == payment["status"]
+    
+    return payment
+
+
+async def run_idempotency(page: BasePage):
+    """Execute the test - idempotent payment."""
+    user_id = "idempotency_test_user"
+    
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": "prod_4", "quantity": 1}
+    )
+    
+    order_resp = await page.post(
+        f"{BASE_URL}/api/orders",
+        data={"user_id": user_id}
+    )
+    order = order_resp.json()
+    order_id = order["id"]
+    
+    idempotency_key = "same_idempotency_key_123"
+    
+    payment1 = await page.post(
+        f"{BASE_URL}/api/payments",
+        data={"order_id": order_id, "method": "credit_card", "idempotency_key": idempotency_key}
+    )
+    
+    payment2 = await page.post(
+        f"{BASE_URL}/api/payments",
+        data={"order_id": order_id, "method": "debit_card", "idempotency_key": idempotency_key}
+    )
+    
+    assert payment1.json()["id"] == payment2.json()["id"]
+    
+    return payment1
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

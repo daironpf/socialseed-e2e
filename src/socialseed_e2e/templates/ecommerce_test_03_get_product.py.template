@@ -1,0 +1,65 @@
+"""Test: Get Product
+
+This test demonstrates:
+- GET single resource
+- 404 handling
+- Response validation
+
+Run:
+    pytest services/ecommerce_demo/modules/03_get_product.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - get existing product."""
+    response = await page.get(f"{BASE_URL}/api/products/prod_1")
+    
+    assert response.status == 200
+    
+    product = response.json()
+    assert product["id"] == "prod_1"
+    assert "name" in product
+    assert "price" in product
+    assert "stock" in product
+    assert product["is_active"] is True
+    
+    return response
+
+
+async def run_not_found(page: BasePage):
+    """Execute the test - get non-existent product."""
+    response = await page.get(f"{BASE_URL}/api/products/nonexistent")
+    
+    assert response.status == 404
+    
+    data = response.json()
+    assert "detail" in data
+    assert data["detail"] == "Product not found"
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            await run_not_found(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

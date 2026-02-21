@@ -1,0 +1,246 @@
+"""E-commerce Demo Service Page for socialseed-e2e
+
+This module provides the page object for the e-commerce API.
+Use this as a reference for implementing tests with the framework.
+
+Usage:
+    from services.ecommerce_demo.ecommerce_page import EcommercePage
+    
+    page = EcommercePage(base_url="http://localhost:5004")
+    products = await page.list_products()
+"""
+
+from typing import Optional
+from socialseed_e2e import BasePage, DynamicStateMixin
+
+
+class EcommercePage(BasePage, DynamicStateMixin):
+    """Page object for E-commerce Demo API.
+    
+    This class demonstrates:
+    - Using BasePage for HTTP operations
+    - Using DynamicStateMixin for state management
+    - Organizing API endpoints by resource
+    """
+
+    def __init__(self, base_url: str = "http://localhost:5004", **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
+        self.init_dynamic_state()
+
+    def _get_headers(self) -> dict:
+        """Get default headers for requests."""
+        return {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+    # ========================================================================
+    # Health Endpoints
+    # ========================================================================
+
+    async def health_check(self):
+        """Check API health status."""
+        return await self.get("/health")
+
+    # ========================================================================
+    # Category Endpoints
+    # ========================================================================
+
+    async def list_categories(self):
+        """List all categories."""
+        return await self.get("/api/categories")
+
+    async def get_products_by_category(
+        self,
+        category_id: str,
+        page: int = 1,
+        per_page: int = 10
+    ):
+        """Get products by category with pagination."""
+        return await self.get(
+            f"/api/categories/{category_id}/products",
+            params={"page": page, "per_page": per_page}
+        )
+
+    # ========================================================================
+    # Product Endpoints
+    # ========================================================================
+
+    async def list_products(
+        self,
+        page: int = 1,
+        per_page: int = 10,
+        category_id: Optional[str] = None,
+        min_price: Optional[int] = None,
+        max_price: Optional[int] = None,
+        search: Optional[str] = None
+    ):
+        """List products with pagination and filters."""
+        params = {"page": page, "per_page": per_page}
+        if category_id:
+            params["category_id"] = category_id
+        if min_price is not None:
+            params["min_price"] = min_price
+        if max_price is not None:
+            params["max_price"] = max_price
+        if search:
+            params["search"] = search
+
+        return await self.get("/api/products", params=params)
+
+    async def get_product(self, product_id: str):
+        """Get a specific product by ID."""
+        return await self.get(f"/api/products/{product_id}")
+
+    async def create_product(self, product_data: dict):
+        """Create a new product (admin)."""
+        return await self.post("/api/products", data=product_data)
+
+    async def update_product(self, product_id: str, product_data: dict):
+        """Update a product (admin)."""
+        return await self.put(f"/api/products/{product_id}", data=product_data)
+
+    async def delete_product(self, product_id: str):
+        """Delete a product (soft delete)."""
+        return await self.delete(f"/api/products/{product_id}")
+
+    # ========================================================================
+    # Cart Endpoints
+    # ========================================================================
+
+    async def get_cart(self, user_id: str):
+        """Get user's cart."""
+        return await self.get("/api/cart", params={"user_id": user_id})
+
+    async def add_to_cart(self, user_id: str, product_id: str, quantity: int = 1):
+        """Add item to cart."""
+        return await self.post(
+            "/api/cart/items",
+            data={
+                "user_id": user_id,
+                "product_id": product_id,
+                "quantity": quantity
+            }
+        )
+
+    async def update_cart_item(
+        self,
+        user_id: str,
+        product_id: str,
+        quantity: int
+    ):
+        """Update cart item quantity."""
+        return await self.put(
+            f"/api/cart/items/{product_id}",
+            data={"quantity": quantity},
+            params={"user_id": user_id}
+        )
+
+    async def remove_from_cart(self, user_id: str, product_id: str):
+        """Remove item from cart."""
+        return await self.delete(
+            f"/api/cart/items/{product_id}",
+            params={"user_id": user_id}
+        )
+
+    async def clear_cart(self, user_id: str):
+        """Clear user's cart."""
+        return await self.delete("/api/cart", params={"user_id": user_id})
+
+    # ========================================================================
+    # Order Endpoints
+    # ========================================================================
+
+    async def create_order(self, user_id: str, shipping_address: Optional[str] = None):
+        """Create order from cart items."""
+        data = {"user_id": user_id}
+        if shipping_address:
+            data["shipping_address"] = shipping_address
+        return await self.post("/api/orders", data=data)
+
+    async def list_orders(
+        self,
+        user_id: str,
+        page: int = 1,
+        per_page: int = 10
+    ):
+        """List user's orders."""
+        return await self.get(
+            "/api/orders",
+            params={"user_id": user_id, "page": page, "per_page": per_page}
+        )
+
+    async def get_order(self, order_id: str, user_id: str):
+        """Get order details."""
+        return await self.get(
+            f"/api/orders/{order_id}",
+            params={"user_id": user_id}
+        )
+
+    async def cancel_order(self, order_id: str, user_id: str):
+        """Cancel order."""
+        return await self.post(
+            f"/api/orders/{order_id}/cancel",
+            params={"user_id": user_id}
+        )
+
+    # ========================================================================
+    # Payment Endpoints
+    # ========================================================================
+
+    async def process_payment(
+        self,
+        order_id: str,
+        method: str = "credit_card",
+        idempotency_key: Optional[str] = None
+    ):
+        """Process payment for an order."""
+        if idempotency_key is None:
+            import uuid
+            idempotency_key = f"pay_{uuid.uuid4().hex[:8]}"
+
+        return await self.post(
+            "/api/payments",
+            data={
+                "order_id": order_id,
+                "method": method,
+                "idempotency_key": idempotency_key
+            }
+        )
+
+    async def get_payment(self, order_id: str):
+        """Get payment status for an order."""
+        return await self.get(f"/api/payments/{order_id}")
+
+    # ========================================================================
+    # Inventory Endpoints
+    # ========================================================================
+
+    async def get_inventory(self, product_id: str):
+        """Get product inventory."""
+        return await self.get(f"/api/inventory/{product_id}")
+
+    async def update_inventory(self, product_id: str, stock: int):
+        """Update product inventory (admin)."""
+        return await self.put(
+            f"/api/inventory/{product_id}",
+            data={"stock": stock}
+        )
+
+    # ========================================================================
+    # State Management Helpers
+    # ========================================================================
+
+    async def setup_test_user(self, user_id: str):
+        """Setup a test user with initial cart."""
+        self.set_state(f"user_{user_id}_cart", [])
+
+    async def get_user_cart_total(self, user_id: str) -> int:
+        """Get user's cart total from state."""
+        cart = self.get_state(f"user_{user_id}_cart", [])
+        return sum(item.get("subtotal", 0) for item in cart)
+
+    async def verify_product_in_cart(self, user_id: str, product_id: str) -> bool:
+        """Check if product is in user's cart."""
+        cart = self.get_state(f"user_{user_id}_cart", [])
+        return any(item.get("product_id") == product_id for item in cart)

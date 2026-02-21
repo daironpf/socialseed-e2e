@@ -1,0 +1,103 @@
+"""Test: Order Status
+
+This test demonstrates:
+- State machine testing
+- Order lifecycle
+- Status transitions
+
+Run:
+    pytest services/ecommerce_demo/modules/09_order_status.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - order status transitions."""
+    user_id = "status_test_user"
+    
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": "prod_5", "quantity": 1}
+    )
+    
+    order_resp = await page.post(
+        f"{BASE_URL}/api/orders",
+        data={"user_id": user_id}
+    )
+    order = order_resp.json()
+    order_id = order["id"]
+    
+    assert order["status"] == "pending"
+    assert order["payment_status"] == "pending"
+    
+    payment_resp = await page.post(
+        f"{BASE_URL}/api/payments",
+        data={"order_id": order_id, "method": "credit_card", "idempotency_key": f"pay_status_{order_id}"}
+    )
+    payment = payment_resp.json()
+    
+    order_check = await page.get(f"{BASE_URL}/api/orders/{order_id}", params={"user_id": user_id})
+    order_data = order_check.json()
+    
+    if payment["status"] == "completed":
+        assert order_data["status"] == "paid"
+        assert order_data["payment_status"] == "completed"
+    
+    return order_data
+
+
+async def run_cancel_order(page: BasePage):
+    """Execute the test - cancel order."""
+    user_id = "cancel_test_user"
+    
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": "prod_6", "quantity": 1}
+    )
+    
+    order_resp = await page.post(
+        f"{BASE_URL}/api/orders",
+        data={"user_id": user_id}
+    )
+    order = order_resp.json()
+    order_id = order["id"]
+    
+    cancel_resp = await page.post(
+        f"{BASE_URL}/api/orders/{order_id}/cancel",
+        params={"user_id": user_id}
+    )
+    
+    assert cancel_resp.status == 200
+    
+    order_check = await page.get(f"{BASE_URL}/api/orders/{order_id}", params={"user_id": user_id})
+    cancelled_order = order_check.json()
+    
+    assert cancelled_order["status"] == "cancelled"
+    assert cancelled_order["payment_status"] == "refunded"
+    
+    return cancelled_order
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            await run_cancel_order(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

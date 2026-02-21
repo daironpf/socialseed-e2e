@@ -22,6 +22,7 @@ class DemoInstaller:
         ("grpc", "api-grpc-demo.py", None),
         ("websocket", "api-websocket-demo.py", None),
         ("auth", "api-auth-demo.py", None),
+        ("ecommerce", "api-ecommerce-demo.py", "ecommerce_service_page.py"),
     ]
 
     def __init__(self, force: bool = False):
@@ -122,6 +123,83 @@ class DemoInstaller:
                 "  [green]✓[/green] Created: services/demo-api/modules/01_health_check.py"
             )
 
+        # Create ecommerce demo service
+        self._create_ecommerce_service(target_path)
+
+    def _create_ecommerce_service(self, target_path: Path) -> None:
+        """Create e-commerce demo service files."""
+        ecommerce_service_path = target_path / "services" / "ecommerce-demo"
+        ecommerce_modules_path = ecommerce_service_path / "modules"
+
+        if not ecommerce_service_path.exists() or self.force:
+            ecommerce_service_path.mkdir(parents=True, exist_ok=True)
+            ecommerce_modules_path.mkdir(exist_ok=True)
+
+            # Create __init__ files
+            (ecommerce_service_path / "__init__.py").write_text("")
+            (ecommerce_modules_path / "__init__.py").write_text("")
+
+            # Create service page
+            self.engine.render_to_file(
+                "ecommerce_service_page.py.template",
+                {},
+                str(ecommerce_service_path / "ecommerce_page.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/ecommerce-demo/ecommerce_page.py"
+            )
+
+            # Create data schema
+            self.engine.render_to_file(
+                "ecommerce_data_schema.py.template",
+                {},
+                str(ecommerce_service_path / "data_schema.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/ecommerce-demo/data_schema.py"
+            )
+
+            # Create config
+            self.engine.render_to_file(
+                "ecommerce_config.py.template",
+                {},
+                str(ecommerce_service_path / "config.py"),
+                overwrite=self.force,
+            )
+            console.print(
+                "  [green]✓[/green] Created: services/ecommerce-demo/config.py"
+            )
+
+            # Create test modules
+            test_files = [
+                ("01_list_products", "ecommerce_test_01_list_products.py.template"),
+                ("02_filter_products", "ecommerce_test_02_filter_products.py.template"),
+                ("03_get_product", "ecommerce_test_03_get_product.py.template"),
+                ("04_add_to_cart", "ecommerce_test_04_add_to_cart.py.template"),
+                ("05_update_cart", "ecommerce_test_05_update_cart.py.template"),
+                ("06_checkout", "ecommerce_test_06_checkout.py.template"),
+                (
+                    "07_concurrent_inventory",
+                    "ecommerce_test_07_concurrent_inventory.py.template",
+                ),
+                ("08_payment", "ecommerce_test_08_payment.py.template"),
+                ("09_order_status", "ecommerce_test_09_order_status.py.template"),
+                ("10_webhook_retry", "ecommerce_test_10_webhook_retry.py.template"),
+            ]
+
+            for prefix, template in test_files:
+                self.engine.render_to_file(
+                    template,
+                    {},
+                    str(ecommerce_modules_path / f"{prefix}.py"),
+                    overwrite=self.force,
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: services/ecommerce-demo/modules/{prefix}.py"
+                )
+
     def _update_e2e_conf(self) -> None:
         """Update e2e.conf with demo service."""
         from socialseed_e2e.core.config_loader import ApiConfigLoader, ServiceConfig
@@ -136,6 +214,12 @@ class DemoInstaller:
             config.services["demo-api"] = ServiceConfig(
                 name="demo-api",
                 base_url="http://localhost:8765",
+                health_endpoint="/health",
+            )
+
+            config.services["ecommerce-demo"] = ServiceConfig(
+                name="ecommerce-demo",
+                base_url="http://localhost:5004",
                 health_endpoint="/health",
             )
 

@@ -1,0 +1,990 @@
+#!/usr/bin/env python3
+"""
+Demo E-commerce API for socialseed-e2e Testing
+
+FastAPI-based e-commerce API with SQLite database.
+Use this API to test e-commerce flows in socialseed-e2e.
+
+Usage:
+    pip install fastapi uvicorn sqlalchemy
+    
+    # Start the API server
+    python api-ecommerce-demo.py
+    
+    # The API will be available at http://localhost:5004
+
+Endpoints:
+    GET    /health                    - Health check
+    GET    /api/products              - List products (paginated)
+    GET    /api/products/{id}         - Get product
+    POST   /api/products              - Create product (admin)
+    PUT    /api/products/{id}         - Update product (admin)
+    DELETE /api/products/{id}         - Delete product (admin)
+    GET    /api/categories            - List categories
+    GET    /api/categories/{id}/products - Products by category
+    GET    /api/cart                  - Get user cart
+    POST   /api/cart/items            - Add to cart
+    PUT    /api/cart/items/{product_id} - Update cart item
+    DELETE /api/cart/items/{product_id} - Remove from cart
+    POST   /api/orders                - Create order
+    GET    /api/orders                - List user orders
+    GET    /api/orders/{id}           - Get order details
+    POST   /api/orders/{id}/cancel    - Cancel order
+    POST   /api/payments             - Process payment
+    GET    /api/payments/{order_id}  - Get payment status
+    GET    /api/inventory/{product_id} - Check inventory
+    PUT    /api/inventory/{product_id} - Update inventory (admin)
+    POST   /api/webhooks/payment     - Payment webhook endpoint
+
+Examples:
+    # Health check
+    curl http://localhost:5004/health
+    
+    # List products
+    curl http://localhost:5004/api/products
+    
+    # Get cart
+    curl http://localhost:5004/api/cart?user_id=user1
+    
+    # Add to cart
+    curl -X POST http://localhost:5004/api/cart/items \\
+         -H "Content-Type: application/json" \\
+         -d '{"user_id":"user1","product_id":"1","quantity":2}'
+    
+    # Create order
+    curl -X POST http://localhost:5004/api/orders \\
+         -H "Content-Type: application/json" \\
+         -d '{"user_id":"user1"}'
+    
+    # Process payment
+    curl -X POST http://localhost:5004/api/payments \\
+         -H "Content-Type: application/json" \\
+         -d '{"order_id":"1","method":"credit_card","idempotency_key":"pay-001"}'
+"""
+
+import uuid
+from datetime import datetime, timezone, timedelta
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from sqlalchemy import create_engine, Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, Session, relationship
+
+# ============================================================================
+# DATABASE SETUP
+# ============================================================================
+
+DATABASE_URL = "sqlite:///./ecommerce_demo.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+
+# ============================================================================
+# DATABASE MODELS (MVC - Model)
+# ============================================================================
+
+class CategoryDB(Base):
+    __tablename__ = "categories"
+    
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    parent_id = Column(String, ForeignKey("categories.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+class ProductDB(Base):
+    __tablename__ = "products"
+    
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Integer, nullable=False)  # Price in cents
+    category_id = Column(String, ForeignKey("categories.id"), nullable=False)
+    stock = Column(Integer, default=0)
+    sku = Column(String, unique=True, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+
+
+class CartItemDB(Base):
+    __tablename__ = "cart_items"
+    
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, nullable=False, index=True)
+    product_id = Column(String, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+class OrderDB(Base):
+    __tablename__ = "orders"
+    
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, nullable=False, index=True)
+    total = Column(Integer, nullable=False)  # Total in cents
+    status = Column(String, default="pending")  # pending, paid, shipped, delivered, cancelled
+    payment_status = Column(String, default="pending")  # pending, completed, failed, refunded
+    shipping_address = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+
+
+class OrderItemDB(Base):
+    __tablename__ = "order_items"
+    
+    id = Column(String, primary_key=True, index=True)
+    order_id = Column(String, ForeignKey("orders.id"), nullable=False)
+    product_id = Column(String, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, default=1)
+    unit_price = Column(Integer, nullable=False)  # Price in cents
+
+
+class PaymentDB(Base):
+    __tablename__ = "payments"
+    
+    id = Column(String, primary_key=True, index=True)
+    order_id = Column(String, ForeignKey("orders.id"), nullable=False, index=True)
+    amount = Column(Integer, nullable=False)
+    method = Column(String, nullable=False)  # credit_card, debit_card, paypal
+    status = Column(String, default="pending")
+    transaction_id = Column(String, nullable=True)
+    idempotency_key = Column(String, unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+class WebhookDB(Base):
+    __tablename__ = "webhooks"
+    
+    id = Column(String, primary_key=True, index=True)
+    url = Column(String, nullable=False)
+    events = Column(Text, nullable=False)  # JSON array
+    secret = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+# ============================================================================
+# PYDANTIC SCHEMAS (MVC - Schema)
+# ============================================================================
+
+from pydantic import ConfigDict
+
+class CategorySchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    name: str
+    description: Optional[str] = None
+    parent_id: Optional[str] = None
+    created_at: datetime
+
+
+class ProductSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    name: str
+    description: Optional[str] = None
+    price: int
+    category_id: str
+    stock: int
+    sku: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class ProductCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: int = Field(..., gt=0)
+    category_id: str
+    stock: int = Field(default=0, ge=0)
+    sku: str
+
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[int] = Field(None, gt=0)
+    category_id: Optional[str] = None
+    stock: Optional[int] = Field(None, ge=0)
+    is_active: Optional[bool] = None
+
+
+class CartItemSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    user_id: str
+    product_id: str
+    quantity: int
+    created_at: datetime
+
+
+class CartItemCreate(BaseModel):
+    user_id: str
+    product_id: str
+    quantity: int = Field(default=1, gt=0)
+
+
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(..., gt=0)
+
+
+class OrderItemSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    order_id: str
+    product_id: str
+    quantity: int
+    unit_price: int
+
+
+class OrderSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    user_id: str
+    total: int
+    status: str
+    payment_status: str
+    shipping_address: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    items: list[OrderItemSchema] = []
+
+
+class OrderCreate(BaseModel):
+    user_id: str
+    shipping_address: Optional[str] = None
+
+
+class PaymentSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    order_id: str
+    amount: int
+    method: str
+    status: str
+    transaction_id: Optional[str] = None
+    idempotency_key: str
+    created_at: datetime
+
+
+class PaymentCreate(BaseModel):
+    order_id: str
+    method: str = Field(default="credit_card")
+    idempotency_key: str
+
+
+class InventorySchema(BaseModel):
+    product_id: str
+    product_name: str
+    stock: int
+    available: bool
+
+
+class InventoryUpdate(BaseModel):
+    stock: int = Field(..., ge=0)
+
+
+class PaginationMeta(BaseModel):
+    page: int
+    per_page: int
+    total: int
+    total_pages: int
+
+
+class ProductListResponse(BaseModel):
+    data: list[ProductSchema]
+    pagination: PaginationMeta
+
+
+class CartResponse(BaseModel):
+    items: list[dict]
+    total: int
+    item_count: int
+
+
+class OrderListResponse(BaseModel):
+    data: list[OrderSchema]
+    pagination: PaginationMeta
+
+
+# ============================================================================
+# DATABASE DEPENDENCY (MVC - Controller/Service)
+# ============================================================================
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# ============================================================================
+# SEED DATA
+# ============================================================================
+
+def seed_database(db: Session):
+    """Seed the database with sample data."""
+    
+    # Check if data already exists
+    if db.query(ProductDB).first():
+        return
+    
+    # Create categories
+    categories = [
+        CategoryDB(id="cat_1", name="Electrónica", description="Devices and gadgets"),
+        CategoryDB(id="cat_2", name="Ropa", description="Clothing and accessories"),
+        CategoryDB(id="cat_3", name="Hogar", description="Home and garden"),
+        CategoryDB(id="cat_4", name="Deportes", description="Sports equipment"),
+    ]
+    db.add_all(categories)
+    
+    # Create products
+    products = [
+        ProductDB(id="prod_1", name="Laptop Pro 15", description="High-performance laptop", price=129999, category_id="cat_1", stock=25, sku="LAP-PRO-15"),
+        ProductDB(id="prod_2", name="Smartphone X", description="Latest smartphone", price=69999, category_id="cat_1", stock=50, sku="PHN-X-001"),
+        ProductDB(id="prod_3", name="Wireless Earbuds", description="Noise cancelling", price=14999, category_id="cat_1", stock=100, sku="AUD-WIRE-01"),
+        ProductDB(id="prod_4", name="Smart Watch", description="Fitness tracker", price=24999, category_id="cat_1", stock=75, sku="WATCH-SMART"),
+        ProductDB(id="prod_5", name="Tablet 10", description="Android tablet", price=34999, category_id="cat_1", stock=30, sku="TAB-10-AND"),
+        
+        ProductDB(id="prod_6", name="Camiseta Basic", description="Cotton t-shirt", price=1999, category_id="cat_2", stock=200, sku="SHIRT-BASIC"),
+        ProductDB(id="prod_7", name="Jeans Classic", description="Denim jeans", price=4999, category_id="cat_2", stock=80, sku="JEANS-CLASS"),
+        ProductDB(id="prod_8", name="Zapatillas Running", description="Running shoes", price=7999, category_id="cat_2", stock=60, sku="SHOE-RUN-01"),
+        ProductDB(id="prod_9", name="Chaqueta Invierno", description="Winter jacket", price=9999, category_id="cat_2", stock=40, sku="JACK-WINT-01"),
+        ProductDB(id="prod_10", name="Gorra Sport", description="Sports cap", price=1499, category_id="cat_2", stock=150, sku="CAP-SPORT-01"),
+        
+        ProductDB(id="prod_11", name="Lámpara LED", description="LED desk lamp", price=2499, category_id="cat_3", stock=90, sku="LAMP-LED-01"),
+        ProductDB(id="prod_12", name="Juego Sábanas", description="Bed sheet set", price=3999, category_id="cat_3", stock=55, sku="SHEET-SET-01"),
+        ProductDB(id="prod_13", name="Almohada Memory", description="Memory foam pillow", price=3499, category_id="cat_3", stock=70, sku="PILLOW-MEM-01"),
+        ProductDB(id="prod_14", name="Set Ollas", description="Cookware set", price=8999, category_id="cat_3", stock=25, sku="COOK-SET-01"),
+        ProductDB(id="prod_15", name="Espejo Decorativo", description="Wall mirror", price=5499, category_id="cat_3", stock=35, sku="MIRROR-DEC-01"),
+        
+        ProductDB(id="prod_16", name="Balón Fútbol", description="Professional soccer ball", price=2999, category_id="cat_4", stock=120, sku="BALL-SOC-01"),
+        ProductDB(id="prod_17", name="Raqueta Tennis", description="Tennis racket", price=5999, category_id="cat_4", stock=40, sku="RACK-TEN-01"),
+        ProductDB(id="prod_18", name="Mancuernas 10kg", description="Dumbbells set", price=7999, category_id="cat_4", stock=50, sku="DUMB-10KG-01"),
+        ProductDB(id="prod_19", name="Esterilla Yoga", description="Yoga mat", price=2499, category_id="cat_4", stock=85, sku="MAT-YOGA-01"),
+        ProductDB(id="prod_20", name="Bicicleta Estática", description="Exercise bike", price=34999, category_id="cat_4", stock=15, sku="BIKE-STAT-01"),
+    ]
+    db.add_all(products)
+    db.commit()
+
+
+# ============================================================================
+# APP INITIALIZATION
+# ============================================================================
+
+app = FastAPI(
+    title="E-commerce Demo API",
+    description="Demo E-commerce API for socialseed-e2e Testing",
+    version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================================================
+# HEALTH ENDPOINT
+# ============================================================================
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "service": "ecommerce-demo",
+        "version": "1.0.0",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
+    }
+
+
+# ============================================================================
+# CATEGORIES ENDPOINTS
+# ============================================================================
+
+@app.get("/api/categories", response_model=list[CategorySchema])
+def list_categories(db: Session = Depends(get_db)):
+    """List all categories."""
+    categories = db.query(CategoryDB).all()
+    return categories
+
+
+@app.get("/api/categories/{category_id}/products", response_model=ProductListResponse)
+def get_products_by_category(
+    category_id: str,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """Get products by category with pagination."""
+    query = db.query(ProductDB).filter(ProductDB.category_id == category_id, ProductDB.is_active == True)
+    
+    total = query.count()
+    total_pages = (total + per_page - 1) // per_page
+    offset = (page - 1) * per_page
+    
+    products = query.offset(offset).limit(per_page).all()
+    
+    return {
+        "data": products,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages
+        }
+    }
+
+
+# ============================================================================
+# PRODUCTS ENDPOINTS
+# ============================================================================
+
+@app.get("/api/products", response_model=ProductListResponse)
+def list_products(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    category_id: Optional[str] = None,
+    min_price: Optional[int] = None,
+    max_price: Optional[int] = None,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """List products with pagination and filters."""
+    query = db.query(ProductDB).filter(ProductDB.is_active == True)
+    
+    if category_id:
+        query = query.filter(ProductDB.category_id == category_id)
+    if min_price is not None:
+        query = query.filter(ProductDB.price >= min_price)
+    if max_price is not None:
+        query = query.filter(ProductDB.price <= max_price)
+    if search:
+        search_lower = search.lower()
+        query = query.filter(
+            (ProductDB.name.ilike(f"%{search_lower}%")) |
+            (ProductDB.description.ilike(f"%{search_lower}%"))
+        )
+    
+    total = query.count()
+    total_pages = (total + per_page - 1) // per_page
+    offset = (page - 1) * per_page
+    
+    products = query.offset(offset).limit(per_page).all()
+    
+    return {
+        "data": products,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages
+        }
+    }
+
+
+@app.get("/api/products/{product_id}", response_model=ProductSchema)
+def get_product(product_id: str, db: Session = Depends(get_db)):
+    """Get a specific product by ID."""
+    product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+@app.post("/api/products", response_model=ProductSchema)
+def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+    """Create a new product (admin)."""
+    # Check SKU uniqueness
+    existing = db.query(ProductDB).filter(ProductDB.sku == product.sku).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Product with this SKU already exists")
+    
+    db_product = ProductDB(
+        id=f"prod_{uuid.uuid4().hex[:8]}",
+        name=product.name,
+        description=product.description,
+        price=product.price,
+        category_id=product.category_id,
+        stock=product.stock,
+        sku=product.sku
+    )
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.put("/api/products/{product_id}", response_model=ProductSchema)
+def update_product(product_id: str, product: ProductUpdate, db: Session = Depends(get_db)):
+    """Update a product (admin)."""
+    db_product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    update_data = product.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_product, field, value)
+    
+    db_product.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.delete("/api/products/{product_id}")
+def delete_product(product_id: str, db: Session = Depends(get_db)):
+    """Delete a product (soft delete - deactivates)."""
+    db_product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    db_product.is_active = False
+    db_product.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Product deleted successfully"}
+
+
+# ============================================================================
+# CART ENDPOINTS
+# ============================================================================
+
+@app.get("/api/cart", response_model=CartResponse)
+def get_cart(user_id: str = Query(...), db: Session = Depends(get_db)):
+    """Get user's cart."""
+    cart_items = db.query(CartItemDB).filter(CartItemDB.user_id == user_id).all()
+    
+    items = []
+    total = 0
+    
+    for item in cart_items:
+        product = db.query(ProductDB).filter(ProductDB.id == item.product_id).first()
+        if product:
+            item_total = product.price * item.quantity
+            total += item_total
+            items.append({
+                "id": item.id,
+                "product_id": product.id,
+                "product_name": product.name,
+                "quantity": item.quantity,
+                "unit_price": product.price,
+                "subtotal": item_total
+            })
+    
+    return {
+        "items": items,
+        "total": total,
+        "item_count": len(items)
+    }
+
+
+@app.post("/api/cart/items", response_model=CartItemSchema)
+def add_to_cart(item: CartItemCreate, db: Session = Depends(get_db)):
+    """Add item to cart."""
+    # Check product exists and has stock
+    product = db.query(ProductDB).filter(ProductDB.id == item.product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if not product.is_active:
+        raise HTTPException(status_code=400, detail="Product is not available")
+    if product.stock < item.quantity:
+        raise HTTPException(status_code=400, detail="Insufficient stock")
+    
+    # Check if item already in cart
+    existing_item = db.query(CartItemDB).filter(
+        CartItemDB.user_id == item.user_id,
+        CartItemDB.product_id == item.product_id
+    ).first()
+    
+    if existing_item:
+        # Update quantity
+        new_quantity = existing_item.quantity + item.quantity
+        if product.stock < new_quantity:
+            raise HTTPException(status_code=400, detail="Insufficient stock for total quantity")
+        existing_item.quantity = new_quantity
+        db.commit()
+        db.refresh(existing_item)
+        return existing_item
+    
+    # Create new cart item
+    db_item = CartItemDB(
+        id=f"cart_{uuid.uuid4().hex[:8]}",
+        user_id=item.user_id,
+        product_id=item.product_id,
+        quantity=item.quantity
+    )
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+@app.put("/api/cart/items/{product_id}", response_model=CartItemSchema)
+def update_cart_item(
+    product_id: str,
+    item: CartItemUpdate,
+    user_id: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Update cart item quantity."""
+    db_item = db.query(CartItemDB).filter(
+        CartItemDB.user_id == user_id,
+        CartItemDB.product_id == product_id
+    ).first()
+    
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found in cart")
+    
+    # Check stock
+    product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+    if product.stock < item.quantity:
+        raise HTTPException(status_code=400, detail="Insufficient stock")
+    
+    db_item.quantity = item.quantity
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+@app.delete("/api/cart/items/{product_id}")
+def remove_from_cart(
+    product_id: str,
+    user_id: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Remove item from cart."""
+    db_item = db.query(CartItemDB).filter(
+        CartItemDB.user_id == user_id,
+        CartItemDB.product_id == product_id
+    ).first()
+    
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found in cart")
+    
+    db.delete(db_item)
+    db.commit()
+    return {"message": "Item removed from cart"}
+
+
+@app.delete("/api/cart")
+def clear_cart(user_id: str = Query(...), db: Session = Depends(get_db)):
+    """Clear user's cart."""
+    db.query(CartItemDB).filter(CartItemDB.user_id == user_id).delete()
+    db.commit()
+    return {"message": "Cart cleared"}
+
+
+# ============================================================================
+# ORDERS ENDPOINTS
+# ============================================================================
+
+@app.post("/api/orders", response_model=OrderSchema)
+def create_order(order: OrderCreate, db: Session = Depends(get_db)):
+    """Create order from cart items."""
+    # Get cart items
+    cart_items = db.query(CartItemDB).filter(CartItemDB.user_id == order.user_id).all()
+    
+    if not cart_items:
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    
+    # Calculate total and verify stock
+    total = 0
+    order_items_data = []
+    
+    for cart_item in cart_items:
+        product = db.query(ProductDB).filter(ProductDB.id == cart_item.product_id).first()
+        if not product or not product.is_active:
+            raise HTTPException(status_code=400, detail=f"Product {cart_item.product_id} not available")
+        if product.stock < cart_item.quantity:
+            raise HTTPException(status_code=400, detail=f"Insufficient stock for {product.name}")
+        
+        item_total = product.price * cart_item.quantity
+        total += item_total
+        order_items_data.append({
+            "product_id": product.id,
+            "quantity": cart_item.quantity,
+            "unit_price": product.price
+        })
+    
+    # Create order
+    order_id = f"ord_{uuid.uuid4().hex[:8]}"
+    db_order = OrderDB(
+        id=order_id,
+        user_id=order.user_id,
+        total=total,
+        status="pending",
+        payment_status="pending",
+        shipping_address=order.shipping_address
+    )
+    db.add(db_order)
+    
+    # Create order items and decrease stock
+    for item_data in order_items_data:
+        db_item = OrderItemDB(
+            id=f"item_{uuid.uuid4().hex[:8]}",
+            order_id=order_id,
+            product_id=item_data["product_id"],
+            quantity=item_data["quantity"],
+            unit_price=item_data["unit_price"]
+        )
+        db.add(db_item)
+        
+        # Decrease stock
+        product = db.query(ProductDB).filter(ProductDB.id == item_data["product_id"]).first()
+        product.stock -= item_data["quantity"]
+    
+    # Clear cart
+    db.query(CartItemDB).filter(CartItemDB.user_id == order.user_id).delete()
+    
+    db.commit()
+    db.refresh(db_order)
+    
+    # Load items
+    db_order.items = db.query(OrderItemDB).filter(OrderItemDB.order_id == order_id).all()
+    
+    return db_order
+
+
+@app.get("/api/orders", response_model=OrderListResponse)
+def list_orders(
+    user_id: str = Query(...),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """List user's orders."""
+    query = db.query(OrderDB).filter(OrderDB.user_id == user_id).order_by(OrderDB.created_at.desc())
+    
+    total = query.count()
+    total_pages = (total + per_page - 1) // per_page
+    offset = (page - 1) * per_page
+    
+    orders = query.offset(offset).limit(per_page).all()
+    
+    # Load items for each order
+    for order in orders:
+        order.items = db.query(OrderItemDB).filter(OrderItemDB.order_id == order.id).all()
+    
+    return {
+        "data": orders,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages
+        }
+    }
+
+
+@app.get("/api/orders/{order_id}", response_model=OrderSchema)
+def get_order(order_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    """Get order details."""
+    order = db.query(OrderDB).filter(OrderDB.id == order_id, OrderDB.user_id == user_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    order.items = db.query(OrderItemDB).filter(OrderItemDB.order_id == order_id).all()
+    return order
+
+
+@app.post("/api/orders/{order_id}/cancel")
+def cancel_order(order_id: str, user_id: str = Query(...), db: Session = Depends(get_db)):
+    """Cancel order."""
+    order = db.query(OrderDB).filter(OrderDB.id == order_id, OrderDB.user_id == user_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order.status not in ["pending", "paid"]:
+        raise HTTPException(status_code=400, detail="Order cannot be cancelled")
+    
+    # Restore stock
+    order_items = db.query(OrderItemDB).filter(OrderItemDB.order_id == order_id).all()
+    for item in order_items:
+        product = db.query(ProductDB).filter(ProductDB.id == item.product_id).first()
+        if product:
+            product.stock += item.quantity
+    
+    order.status = "cancelled"
+    order.payment_status = "refunded"
+    order.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    
+    return {"message": "Order cancelled successfully"}
+
+
+# ============================================================================
+# PAYMENTS ENDPOINTS
+# ============================================================================
+
+@app.post("/api/payments", response_model=PaymentSchema)
+def process_payment(payment: PaymentCreate, db: Session = Depends(get_db)):
+    """Process payment for an order."""
+    # Check idempotency
+    existing = db.query(PaymentDB).filter(PaymentDB.idempotency_key == payment.idempotency_key).first()
+    if existing:
+        return existing
+    
+    # Get order
+    order = db.query(OrderDB).filter(OrderDB.id == payment.order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order.payment_status == "completed":
+        raise HTTPException(status_code=400, detail="Order already paid")
+    
+    # Simulate payment processing (90% success rate)
+    import random
+    success = random.random() < 0.9
+    
+    payment_id = f"pay_{uuid.uuid4().hex[:8]}"
+    transaction_id = f"txn_{uuid.uuid4().hex[:8]}" if success else None
+    
+    db_payment = PaymentDB(
+        id=payment_id,
+        order_id=payment.order_id,
+        amount=order.total,
+        method=payment.method,
+        status="completed" if success else "failed",
+        transaction_id=transaction_id,
+        idempotency_key=payment.idempotency_key
+    )
+    db.add(db_payment)
+    
+    if success:
+        order.payment_status = "completed"
+        order.status = "paid"
+    else:
+        order.payment_status = "failed"
+    
+    order.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(db_payment)
+    
+    return db_payment
+
+
+@app.get("/api/payments/{order_id}", response_model=PaymentSchema)
+def get_payment(order_id: str, db: Session = Depends(get_db)):
+    """Get payment status for an order."""
+    payment = db.query(PaymentDB).filter(PaymentDB.order_id == order_id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return payment
+
+
+# ============================================================================
+# INVENTORY ENDPOINTS
+# ============================================================================
+
+@app.get("/api/inventory/{product_id}", response_model=InventorySchema)
+def get_inventory(product_id: str, db: Session = Depends(get_db)):
+    """Get product inventory."""
+    product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {
+        "product_id": product.id,
+        "product_name": product.name,
+        "stock": product.stock,
+        "available": product.is_active and product.stock > 0
+    }
+
+
+@app.put("/api/inventory/{product_id}", response_model=InventorySchema)
+def update_inventory(product_id: str, inventory: InventoryUpdate, db: Session = Depends(get_db)):
+    """Update product inventory (admin)."""
+    product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product.stock = inventory.stock
+    product.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(product)
+    
+    return {
+        "product_id": product.id,
+        "product_name": product.name,
+        "stock": product.stock,
+        "available": product.is_active and product.stock > 0
+    }
+
+
+# ============================================================================
+# WEBHOOKS ENDPOINTS
+# ============================================================================
+
+@app.post("/api/webhooks/payment")
+def payment_webhook(db: Session = Depends(get_db)):
+    """Webhook endpoint for payment notifications (external)."""
+    # This endpoint simulates receiving payment webhooks
+    # In a real implementation, this would notify registered webhooks
+    return {"message": "Webhook received", "status": "processed"}
+
+
+# ============================================================================
+# MAIN ENTRY POINT
+# ============================================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+    
+    # Seed database
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
+    
+    print("=" * 60)
+    print("🚀 E-commerce Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5004")
+    print("\nDatabase: SQLite (ecommerce_demo.db)")
+    print("\nAvailable endpoints:")
+    print("  GET    /health                    - Health check")
+    print("  GET    /api/products             - List products")
+    print("  GET    /api/products/{id}        - Get product")
+    print("  POST   /api/products             - Create product (admin)")
+    print("  GET    /api/categories           - List categories")
+    print("  GET    /api/cart                 - Get cart")
+    print("  POST   /api/cart/items           - Add to cart")
+    print("  POST   /api/orders               - Create order")
+    print("  GET    /api/orders              - List orders")
+    print("  POST   /api/orders/{id}/cancel   - Cancel order")
+    print("  POST   /api/payments             - Process payment")
+    print("  GET    /api/payments/{order_id} - Get payment")
+    print("  GET    /api/inventory/{id}      - Check inventory")
+    print("  PUT    /api/inventory/{id}      - Update inventory")
+    print("\nPress Ctrl+C to stop the server")
+    print("=" * 60 + "\n")
+    
+    uvicorn.run(app, host="0.0.0.0", port=5004)

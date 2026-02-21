@@ -1,0 +1,28 @@
+"""E-commerce Demo Configuration for socialseed-e2e
+
+This module contains the configuration for the e-commerce demo service.
+"""
+
+from pydantic import BaseModel
+from typing import Optional
+
+
+class EcommerceConfig(BaseModel):
+    """Configuration for E-commerce Demo API."""
+    
+    base_url: str = "http://localhost:5004"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    test_users: list[str] = ["user1", "user2", "user3", "admin"]
+    
+    default_category: str = "cat_1"
+    default_product: str = "prod_1"
+    
+    payment_methods: list[str] = ["credit_card", "debit_card", "paypal"]
+    
+    order_statuses: list[str] = ["pending", "paid", "shipped", "delivered", "cancelled"]
+    payment_statuses: list[str] = ["pending", "completed", "failed", "refunded"]
+
+
+CONFIG = EcommerceConfig()

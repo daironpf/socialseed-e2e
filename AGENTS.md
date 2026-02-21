@@ -926,8 +926,8 @@ jinja2>=3.1.0
 - 🚧 Cloud Implementaciones Detalladas - Esqueletos básicos presentes
 
 ### Pendiente 📋
-- [ ] Publicar versión 0.1.2 a PyPI
-- [ ] Crear tag v0.1.2 definitivo
+- [x] ~~Publicar versión 0.1.2 a PyPI~~ (ya publicado)
+- [x] ~~Crear tag v0.1.2 definitivo~~ (ya creado)
 - [ ] Agregar más ejemplos en `examples/`
 - [ ] Crear plugin para VS Code
 - [ ] Tests unitarios adicionales para módulos recientes

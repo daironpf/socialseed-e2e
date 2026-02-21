@@ -1,0 +1,71 @@
+"""Test: Concurrent Inventory - Race Condition
+
+This test demonstrates:
+- Race condition testing
+- Concurrent requests
+- Inventory validation
+
+Run:
+    pytest services/ecommerce_demo/modules/07_concurrent_inventory.py
+"""
+
+import pytest
+import asyncio
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - concurrent purchases."""
+    product_id = "prod_1"
+    
+    inventory_before = await page.get(f"{BASE_URL}/api/inventory/{product_id}")
+    stock_before = inventory_before.json()["stock"]
+    
+    user_ids = [f"concurrent_user_{i}" for i in range(5)]
+    
+    async def try_purchase(user_id: str):
+        try:
+            await page.post(
+                f"{BASE_URL}/api/cart/items",
+                data={"user_id": user_id, "product_id": product_id, "quantity": 1}
+            )
+            order_resp = await page.post(
+                f"{BASE_URL}/api/orders",
+                data={"user_id": user_id}
+            )
+            return order_resp.status == 200
+        except Exception:
+            return False
+    
+    results = await asyncio.gather(*[try_purchase(uid) for uid in user_ids])
+    
+    successful = sum(1 for r in results if r)
+    
+    inventory_after = await page.get(f"{BASE_URL}/api/inventory/{product_id}")
+    stock_after = inventory_after.json()["stock"]
+    
+    assert stock_after == stock_before - successful
+    
+    return successful
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

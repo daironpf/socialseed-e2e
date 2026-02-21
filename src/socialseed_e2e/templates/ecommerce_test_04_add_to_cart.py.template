@@ -1,0 +1,80 @@
+"""Test: Add to Cart
+
+This test demonstrates:
+- POST with JSON body
+- Cart management
+- State verification
+
+Run:
+    pytest services/ecommerce_demo/modules/04_add_to_cart.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - add item to cart."""
+    user_id = "test_user_1"
+    product_id = "prod_1"
+    quantity = 2
+    
+    response = await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={
+            "user_id": user_id,
+            "product_id": product_id,
+            "quantity": quantity
+        }
+    )
+    
+    assert response.status == 200
+    
+    item = response.json()
+    assert item["user_id"] == user_id
+    assert item["product_id"] == product_id
+    assert item["quantity"] == quantity
+    
+    return response
+
+
+async def run_insufficient_stock(page: BasePage):
+    """Execute the test - add item with insufficient stock."""
+    response = await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={
+            "user_id": "test_user_2",
+            "product_id": "prod_1",
+            "quantity": 99999
+        }
+    )
+    
+    assert response.status == 400
+    
+    data = response.json()
+    assert "detail" in data
+    assert "Insufficient stock" in data["detail"]
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

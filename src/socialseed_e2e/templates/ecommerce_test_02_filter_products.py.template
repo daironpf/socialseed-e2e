@@ -1,0 +1,74 @@
+"""Test: Filter Products
+
+This test demonstrates:
+- Query parameter filtering
+- Category filtering
+- Price range filtering
+- Search functionality
+
+Run:
+    pytest services/ecommerce_demo/modules/02_filter_products.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - filter products by category."""
+    response = await page.get(
+        f"{BASE_URL}/api/products",
+        params={"category_id": "cat_1", "min_price": 10000, "max_price": 50000}
+    )
+    
+    assert response.status == 200
+    
+    data = response.json()
+    products = data["data"]
+    
+    for product in products:
+        assert product["category_id"] == "cat_1"
+        assert 10000 <= product["price"] <= 50000
+    
+    return response
+
+
+async def run_search(page: BasePage):
+    """Execute the test - search products."""
+    response = await page.get(
+        f"{BASE_URL}/api/products",
+        params={"search": "laptop"}
+    )
+    
+    assert response.status == 200
+    
+    data = response.json()
+    products = data["data"]
+    
+    for product in products:
+        assert "laptop" in product["name"].lower() or "laptop" in product.get("description", "").lower()
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            await run_search(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

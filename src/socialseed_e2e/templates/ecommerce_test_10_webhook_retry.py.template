@@ -1,0 +1,74 @@
+"""Test: Webhook Retry
+
+This test demonstrates:
+- Webhook endpoint testing
+- Resilience patterns
+- External integrations
+
+Run:
+    pytest services/ecommerce_demo/modules/10_webhook_retry.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - webhook endpoint."""
+    response = await page.post(
+        f"{BASE_URL}/api/webhooks/payment",
+        data={
+            "event": "payment.completed",
+            "order_id": "ord_test_123",
+            "status": "completed"
+        }
+    )
+    
+    assert response.status == 200
+    
+    data = response.json()
+    assert data["message"] == "Webhook received"
+    assert data["status"] == "processed"
+    
+    return response
+
+
+async def run_multiple_webhooks(page: BasePage):
+    """Execute the test - multiple webhook events."""
+    events = [
+        {"event": "payment.completed", "order_id": "ord_1"},
+        {"event": "payment.failed", "order_id": "ord_2"},
+        {"event": "order.cancelled", "order_id": "ord_3"},
+    ]
+    
+    for event_data in events:
+        response = await page.post(
+            f"{BASE_URL}/api/webhooks/payment",
+            data=event_data
+        )
+        assert response.status == 200
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            await run_multiple_webhooks(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

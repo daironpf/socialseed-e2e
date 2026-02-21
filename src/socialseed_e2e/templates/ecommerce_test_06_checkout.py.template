@@ -1,0 +1,81 @@
+"""Test: Checkout - Create Order
+
+This test demonstrates:
+- Multi-step workflow (cart -> order)
+- POST requests
+- Transaction testing
+
+Run:
+    pytest services/ecommerce_demo/modules/06_checkout.py
+"""
+
+import pytest
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5004"
+
+
+async def run(page: BasePage):
+    """Execute the test - create order from cart."""
+    user_id = "test_checkout_user"
+    
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": "prod_1", "quantity": 1}
+    )
+    await page.post(
+        f"{BASE_URL}/api/cart/items",
+        data={"user_id": user_id, "product_id": "prod_2", "quantity": 2}
+    )
+    
+    response = await page.post(
+        f"{BASE_URL}/api/orders",
+        data={"user_id": user_id, "shipping_address": "123 Test St"}
+    )
+    
+    assert response.status == 200
+    
+    order = response.json()
+    assert order["user_id"] == user_id
+    assert order["status"] == "pending"
+    assert order["payment_status"] == "pending"
+    assert len(order["items"]) == 2
+    assert order["shipping_address"] == "123 Test St"
+    assert order["total"] > 0
+    
+    return response
+
+
+async def run_empty_cart(page: BasePage):
+    """Execute the test - checkout with empty cart."""
+    response = await page.post(
+        f"{BASE_URL}/api/orders",
+        data={"user_id": "empty_cart_user"}
+    )
+    
+    assert response.status == 400
+    
+    data = response.json()
+    assert "Cart is empty" in data["detail"]
+    
+    return response
+
+
+if __name__ == "__main__":
+    import asyncio
+    from playwright.async_api import async_playwright
+    
+    async def main():
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            base_page = BasePage(base_url=BASE_URL)
+            base_page.set_page(page)
+            
+            await run(base_page)
+            
+            await browser.close()
+    
+    asyncio.run(main())

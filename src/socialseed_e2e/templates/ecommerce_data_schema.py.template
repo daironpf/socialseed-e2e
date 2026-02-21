@@ -1,0 +1,196 @@
+"""E-commerce Demo Data Schema for socialseed-e2e
+
+This module contains Pydantic models (DTOs) for the e-commerce API.
+Use these schemas when writing tests for the e-commerce demo service.
+
+Usage:
+    from services.ecommerce_demo.data_schema import (
+        Product, Category, CartItem, Order, Payment, etc.
+    )
+"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field
+
+
+class Category(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    parent_id: Optional[str] = None
+    created_at: datetime
+
+
+class Product(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    price: int
+    category_id: str
+    stock: int
+    sku: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    @property
+    def price_display(self) -> str:
+        return f"${self.price / 100:.2f}"
+
+    @property
+    def available(self) -> bool:
+        return self.is_active and self.stock > 0
+
+
+class ProductCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: int = Field(..., gt=0)
+    category_id: str
+    stock: int = Field(default=0, ge=0)
+    sku: str
+
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[int] = Field(None, gt=0)
+    category_id: Optional[str] = None
+    stock: Optional[int] = Field(None, ge=0)
+    is_active: Optional[bool] = None
+
+
+class CartItem(BaseModel):
+    id: str
+    user_id: str
+    product_id: str
+    quantity: int
+    created_at: datetime
+
+
+class CartItemCreate(BaseModel):
+    user_id: str
+    product_id: str
+    quantity: int = Field(default=1, gt=0)
+
+
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(..., gt=0)
+
+
+class OrderItem(BaseModel):
+    id: str
+    order_id: str
+    product_id: str
+    quantity: int
+    unit_price: int
+
+    @property
+    def subtotal(self) -> int:
+        return self.unit_price * self.quantity
+
+
+class Order(BaseModel):
+    id: str
+    user_id: str
+    total: int
+    status: str
+    payment_status: str
+    shipping_address: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    items: list[OrderItem] = []
+
+    @property
+    def total_display(self) -> str:
+        return f"${self.total / 100:.2f}"
+
+    @property
+    def is_paid(self) -> bool:
+        return self.payment_status == "completed"
+
+    @property
+    def can_cancel(self) -> bool:
+        return self.status in ["pending", "paid"]
+
+
+class OrderCreate(BaseModel):
+    user_id: str
+    shipping_address: Optional[str] = None
+
+
+class Payment(BaseModel):
+    id: str
+    order_id: str
+    amount: int
+    method: str
+    status: str
+    transaction_id: Optional[str] = None
+    idempotency_key: str
+    created_at: datetime
+
+    @property
+    def amount_display(self) -> str:
+        return f"${self.amount / 100:.2f}"
+
+    @property
+    def is_successful(self) -> bool:
+        return self.status == "completed"
+
+
+class PaymentCreate(BaseModel):
+    order_id: str
+    method: str = Field(default="credit_card")
+    idempotency_key: str
+
+
+class Inventory(BaseModel):
+    product_id: str
+    product_name: str
+    stock: int
+    available: bool
+
+
+class InventoryUpdate(BaseModel):
+    stock: int = Field(..., ge=0)
+
+
+class PaginationMeta(BaseModel):
+    page: int
+    per_page: int
+    total: int
+    total_pages: int
+
+
+class ProductListResponse(BaseModel):
+    data: list[Product]
+    pagination: PaginationMeta
+
+
+class CartResponse(BaseModel):
+    items: list[dict]
+    total: int
+    item_count: int
+
+
+class OrderListResponse(BaseModel):
+    data: list[Order]
+    pagination: PaginationMeta
+
+
+CATEGORIES = {
+    "cat_1": "Electrónica",
+    "cat_2": "Ropa",
+    "cat_3": "Hogar",
+    "cat_4": "Deportes",
+}
+
+PRODUCTS_BY_CATEGORY = {
+    "cat_1": ["prod_1", "prod_2", "prod_3", "prod_4", "prod_5"],
+    "cat_2": ["prod_6", "prod_7", "prod_8", "prod_9", "prod_10"],
+    "cat_3": ["prod_11", "prod_12", "prod_13", "prod_14", "prod_15"],
+    "cat_4": ["prod_16", "prod_17", "prod_18", "prod_19", "prod_20"],
+}
+
+TEST_USERS = ["user1", "user2", "user3", "admin"]
