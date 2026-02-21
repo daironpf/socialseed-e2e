@@ -1,0 +1,6 @@
+"""Config for Analytics Demo."""
+from pydantic import BaseModel
+class AnalyticsConfig(BaseModel):
+    base_url: str = "http://localhost:5011"
+    health_endpoint: str = "/health"
+    timeout: int = 30000

@@ -1,0 +1,21 @@
+"""Service page for Analytics Demo API."""
+from socialseed_e2e.core import BasePage
+
+
+class AnalyticsPage(BasePage):
+    def track_event(self, name: str, user_id: str = "", session_id: str = "", properties: dict = None, **kwargs):
+        params = {"name": name, "user_id": user_id, "session_id": session_id}
+        if properties:
+            params["properties"] = str(properties)
+        return self.post("/api/events", params=params, **kwargs)
+
+    def track_batch(self, events: list, **kwargs):
+        return self.post("/api/events/batch", json=events, **kwargs)
+
+    def query_events(self, name: str = "", user_id: str = "", limit: int = 100, **kwargs):
+        params = {"name": name, "user_id": user_id, "limit": limit}
+        return self.get("/api/events", params=params, **kwargs)
+
+    def count_events(self, name: str = "", **kwargs):
+        params = {"name": name} if name else {}
+        return self.get("/api/aggregations/count", params=params, **kwargs)

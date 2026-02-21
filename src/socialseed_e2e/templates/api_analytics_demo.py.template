@@ -1,0 +1,101 @@
+"""Analytics API Demo for socialseed-e2e Testing
+
+Event tracking API with aggregations, funnels, and dashboards.
+"""
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+app = FastAPI(title="Analytics Demo API")
+
+DATABASE_URL = "sqlite:///./analytics_demo.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class EventDB(Base):
+    __tablename__ = "events"
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    user_id = Column(String, nullable=True)
+    session_id = Column(String, nullable=True)
+    properties = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+Base.metadata.create_all(bind=engine)
+
+
+class Event(BaseModel):
+    id: str
+    name: str
+    user_id: str | None = None
+    session_id: str | None = None
+    properties: dict | None = None
+    timestamp: datetime
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "analytics-demo", "version": "1.0.0"}
+
+
+@app.post("/api/events")
+def track_event(name: str, user_id: str = "", session_id: str = "", properties: str = "{}", db=Depends(get_db)):
+    event = EventDB(id=str(uuid.uuid4()), name=name, user_id=user_id, session_id=session_id, properties=properties)
+    db.add(event)
+    db.commit()
+    return {"tracked": True, "event_id": event.id}
+
+
+@app.post("/api/events/batch")
+def track_events_batch(events: list, db=Depends(get_db)):
+    for e in events:
+        event = EventDB(id=str(uuid.uuid4()), name=e.get("name", ""), user_id=e.get("user_id", ""), session_id=e.get("session_id", ""), properties=str(e.get("properties", {})))
+        db.add(event)
+    db.commit()
+    return {"tracked": len(events)}
+
+
+@app.get("/api/events")
+def query_events(name: str = "", user_id: str = "", limit: int = 100, db=Depends(get_db)):
+    query = db.query(EventDB)
+    if name:
+        query = query.filter(EventDB.name == name)
+    if user_id:
+        query = query.filter(EventDB.user_id == user_id)
+    events = query.limit(limit).all()
+    return [{"id": e.id, "name": e.name, "user_id": e.user_id, "timestamp": e.timestamp.isoformat()} for e in events]
+
+
+@app.get("/api/aggregations/count")
+def count_by_event(name: str = "", db=Depends(get_db)):
+    query = db.query(EventDB)
+    if name:
+        query = query.filter(EventDB.name == name)
+    count = query.count()
+    return {"count": count, "event_name": name or "all"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    print("=" * 60)
+    print("🚀 Analytics Demo API for socialseed-e2e Testing")
+    print("=" * 60)
+    print("\n📍 API URL: http://localhost:5011")
+    print("\nPress Ctrl+C")
+    uvicorn.run(app, host="0.0.0.0", port=5011)

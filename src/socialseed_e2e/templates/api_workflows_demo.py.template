@@ -1,0 +1,51 @@
+"""Workflow/Automation API Demo for socialseed-e2e Testing"""
+import uuid
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+
+app = FastAPI(title="Workflows Demo API")
+workflows = {}
+executions = {}
+
+class Workflow(BaseModel):
+    id: str
+    name: str
+    trigger_type: str
+    is_active: bool = True
+
+class Execution(BaseModel):
+    id: str
+    workflow_id: str
+    status: str = "pending"
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "workflows-demo", "version": "1.0.0"}
+
+@app.post("/api/workflows")
+def create_workflow(name: str, trigger_type: str = "webhook"):
+    wf_id = f"wf_{uuid.uuid4().hex[:8]}"
+    workflows[wf_id] = {"id": wf_id, "name": name, "trigger_type": trigger_type, "is_active": True}
+    return workflows[wf_id]
+
+@app.get("/api/workflows")
+def list_workflows():
+    return list(workflows.values())
+
+@app.post("/api/workflows/{wf_id}/trigger")
+def trigger_workflow(wf_id: str):
+    if wf_id not in workflows:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    exec_id = f"exec_{uuid.uuid4().hex[:8]}"
+    executions[exec_id] = {"id": exec_id, "workflow_id": wf_id, "status": "completed"}
+    return executions[exec_id]
+
+@app.get("/api/executions")
+def list_executions():
+    return list(executions.values())
+
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 Workflows Demo API - port 5015")
+    uvicorn.run(app, host="0.0.0.0", port=5015)

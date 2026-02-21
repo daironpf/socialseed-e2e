@@ -1,0 +1,7 @@
+"""Service page for ML Demo."""
+from socialseed_e2e.core import BasePage
+class MlPage(BasePage):
+    def predict(self, model_id: str, inputs: dict, **kwargs):
+        return self.post("/api/predict", json={"model_id": model_id, "inputs": inputs}, **kwargs)
+    def list_models(self, **kwargs):
+        return self.get("/api/models", **kwargs)

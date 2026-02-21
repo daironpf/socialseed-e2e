@@ -1,0 +1,38 @@
+"""IoT Device Management API Demo for socialseed-e2e Testing"""
+import uuid
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+
+app = FastAPI(title="IoT Demo API")
+devices = {}
+
+class Device(BaseModel):
+    id: str
+    name: str
+    type: str
+    status: str = "online"
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "iot-demo", "version": "1.0.0"}
+
+@app.post("/api/devices")
+def register_device(name: str, device_type: str = "sensor"):
+    device_id = f"device_{uuid.uuid4().hex[:8]}"
+    devices[device_id] = {"id": device_id, "name": name, "type": device_type, "status": "online"}
+    return devices[device_id]
+
+@app.get("/api/devices")
+def list_devices():
+    return list(devices.values())
+
+@app.post("/api/devices/{device_id}/telemetry")
+def send_telemetry(device_id: str, temperature: float = 0.0, humidity: float = 0.0):
+    if device_id not in devices:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return {"device_id": device_id, "temperature": temperature, "humidity": humidity, "timestamp": "2026-01-01T00:00:00Z"}
+
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 IoT Demo API - port 5013")
+    uvicorn.run(app, host="0.0.0.0", port=5013)

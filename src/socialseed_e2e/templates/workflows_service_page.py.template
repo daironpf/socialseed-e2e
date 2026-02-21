@@ -1,0 +1,11 @@
+"""Service page for Workflows Demo."""
+from socialseed_e2e.core import BasePage
+class WorkflowsPage(BasePage):
+    def create_workflow(self, name: str, trigger_type: str = "webhook", **kwargs):
+        return self.post(f"/api/workflows?name={name}&trigger_type={trigger_type}", **kwargs)
+    def list_workflows(self, **kwargs):
+        return self.get("/api/workflows", **kwargs)
+    def trigger_workflow(self, wf_id: str, **kwargs):
+        return self.post(f"/api/workflows/{wf_id}/trigger", **kwargs)
+    def list_executions(self, **kwargs):
+        return self.get("/api/executions", **kwargs)

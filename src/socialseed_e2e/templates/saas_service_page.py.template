@@ -1,0 +1,9 @@
+"""Service page for SaaS Demo."""
+from socialseed_e2e.core import BasePage
+class SaasPage(BasePage):
+    def create_org(self, name: str, plan: str = "free", **kwargs):
+        return self.post(f"/api/organizations?name={name}&plan={plan}", **kwargs)
+    def get_org(self, org_id: str, **kwargs):
+        return self.get(f"/api/organizations/{org_id}", **kwargs)
+    def create_user(self, email: str, organization_id: str, role: str = "member", **kwargs):
+        return self.post(f"/api/users?email={email}&organization_id={organization_id}&role={role}", **kwargs)

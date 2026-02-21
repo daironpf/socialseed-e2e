@@ -1,0 +1,6 @@
+"""Config for ML, IoT, SaaS, Workflows demos."""
+from pydantic import BaseModel
+class MlConfig(BaseModel): base_url: str = "http://localhost:5012"; health_endpoint: str = "/health"
+class IotConfig(BaseModel): base_url: str = "http://localhost:5013"; health_endpoint: str = "/health"
+class SaasConfig(BaseModel): base_url: str = "http://localhost:5014"; health_endpoint: str = "/health"
+class WorkflowsConfig(BaseModel): base_url: str = "http://localhost:5015"; health_endpoint: str = "/health"

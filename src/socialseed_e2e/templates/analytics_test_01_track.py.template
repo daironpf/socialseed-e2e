@@ -1,0 +1,6 @@
+"""Test: Track event - Analytics Demo."""
+from socialseed_e2e.core.interfaces import IServicePage
+def run(page: IServicePage):
+    result = page.track_event(name="page_view", user_id="user1")
+    assert result.status == 200
+    return result

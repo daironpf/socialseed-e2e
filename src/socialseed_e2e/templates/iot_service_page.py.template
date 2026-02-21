@@ -1,0 +1,9 @@
+"""Service page for IoT Demo."""
+from socialseed_e2e.core import BasePage
+class IotPage(BasePage):
+    def register_device(self, name: str, device_type: str = "sensor", **kwargs):
+        return self.post(f"/api/devices?name={name}&device_type={device_type}", **kwargs)
+    def list_devices(self, **kwargs):
+        return self.get("/api/devices", **kwargs)
+    def send_telemetry(self, device_id: str, temperature: float, humidity: float = 0.0, **kwargs):
+        return self.post(f"/api/devices/{device_id}/telemetry?temperature={temperature}&humidity={humidity}", **kwargs)

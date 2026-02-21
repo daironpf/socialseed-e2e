@@ -1,0 +1,6 @@
+"""Tests for ML, IoT, SaaS, Workflows demos."""
+from socialseed_e2e.core.interfaces import IServicePage
+def run(page: IServicePage):
+    result = page.health()
+    assert result.status == 200
+    return result

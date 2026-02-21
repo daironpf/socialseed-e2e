@@ -1,0 +1,38 @@
+"""ML Model Serving API Demo for socialseed-e2e Testing"""
+import uuid
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+
+app = FastAPI(title="ML Serving Demo API")
+
+models_db = {"model1": {"id": "model1", "name": "Sentiment Analyzer", "version": "1.0", "status": "active"}}
+
+class PredictionRequest(BaseModel):
+    model_id: str
+    inputs: dict
+    version: str | None = None
+
+class PredictionResponse(BaseModel):
+    prediction: dict
+    model_id: str
+    version: str
+    latency_ms: float
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "ml-serving-demo", "version": "1.0.0"}
+
+@app.post("/api/predict", response_model=PredictionResponse)
+def predict(req: PredictionRequest):
+    if req.model_id not in models_db:
+        raise HTTPException(status_code=404, detail="Model not found")
+    return PredictionResponse(prediction={"sentiment": "positive", "confidence": 0.95}, model_id=req.model_id, version="1.0", latency_ms=50.0)
+
+@app.get("/api/models")
+def list_models():
+    return list(models_db.values())
+
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 ML Serving Demo API - port 5012")
+    uvicorn.run(app, host="0.0.0.0", port=5012)

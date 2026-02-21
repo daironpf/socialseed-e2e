@@ -29,6 +29,11 @@ class DemoInstaller:
         ("filestorage", "api_filestorage_demo.py", "filestorage_service_page.py"),
         ("social", "api_social_demo.py", "social_service_page.py"),
         ("payments", "api_payments_demo.py", "payments_service_page.py"),
+        ("analytics", "api_analytics_demo.py", "analytics_service_page.py"),
+        ("ml", "api_ml_demo.py", "ml_service_page.py"),
+        ("iot", "api_iot_demo.py", "iot_service_page.py"),
+        ("saas", "api_saas_demo.py", "saas_service_page.py"),
+        ("workflows", "api_workflows_demo.py", "workflows_service_page.py"),
     ]
 
     def __init__(self, force: bool = False):
