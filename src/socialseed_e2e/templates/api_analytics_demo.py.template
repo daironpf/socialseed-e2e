@@ -5,11 +5,11 @@ Event tracking API with aggregations, funnels, and dashboards.
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 app = FastAPI(title="Analytics Demo API")
 
@@ -55,7 +55,7 @@ def health_check():
 
 
 @app.post("/api/events")
-def track_event(name: str, user_id: str = "", session_id: str = "", properties: str = "{}", db=Depends(get_db)):
+def track_event(name: str, user_id: str = "", session_id: str = "", properties: str = "{}", db: Session = Depends(get_db)):
     event = EventDB(id=str(uuid.uuid4()), name=name, user_id=user_id, session_id=session_id, properties=properties)
     db.add(event)
     db.commit()
@@ -63,7 +63,7 @@ def track_event(name: str, user_id: str = "", session_id: str = "", properties: 
 
 
 @app.post("/api/events/batch")
-def track_events_batch(events: list, db=Depends(get_db)):
+def track_events_batch(events: list, db: Session = Depends(get_db)):
     for e in events:
         event = EventDB(id=str(uuid.uuid4()), name=e.get("name", ""), user_id=e.get("user_id", ""), session_id=e.get("session_id", ""), properties=str(e.get("properties", {})))
         db.add(event)
