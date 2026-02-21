@@ -28,11 +28,11 @@ The project manifest is included in `socialseed-e2e` by default. No additional i
 
 ### 1. Generate the Manifest
 
-The manifest is generated for a microservice and stored in a centralized folder within the framework (NOT in the microservice directory).
+The manifest is generated for a microservice and stored in `.e2e/manifests/` within the project root (NOT in the microservice directory).
 
 ```bash
 # Generate manifest for a microservice
-# The manifest is saved at: <framework_root>/manifests/<service_name>/project_knowledge.json
+# The manifest is saved at: <project_root>/.e2e/manifests/<service_name>/project_knowledge.json
 e2e manifest ../services/auth-service
 
 # Force full re-scan (instead of smart sync)
@@ -60,19 +60,21 @@ e2e watch auth-service
 
 ## Project Structure
 
-After running `e2e manifest`, the manifest is stored in the framework's manifests folder:
+After running `e2e manifest`, the manifest is stored in the project's `.e2e/manifests/` folder:
 
 ```
-socialseed-e2e/                          # Framework root
-├── manifests/                            # Centralized manifests folder
-│   ├── auth-service/                   # Manifest for auth service
-│   │   └── project_knowledge.json
-│   ├── user-service/                    # Manifest for user service
-│   │   └── project_knowledge.json
-│   └── payment-service/                 # Manifest for payment service
-│       └── project_knowledge.json
-└── src/
-    └── socialseed_e2e/                  # Framework source code
+my-project/                              # Project root (where e2e.conf is)
+├── .e2e/
+│   └── manifests/                        # Unified manifests folder
+│       ├── auth-service/               # Manifest for auth service
+│       │   └── project_knowledge.json
+│       ├── user-service/                # Manifest for user service
+│       │   └── project_knowledge.json
+│       └── payment-service/             # Manifest for payment service
+│           └── project_knowledge.json
+├── e2e.conf                           # E2E configuration
+├── services/                          # Your services
+└── tests/                            # Your tests
 ```
 
 This approach keeps the microservice code clean while providing a centralized location for AI agents to query project knowledge.

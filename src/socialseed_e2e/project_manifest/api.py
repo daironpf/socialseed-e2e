@@ -51,25 +51,18 @@ class ManifestAPI:
 
         self.project_root = Path(project_root).resolve()
 
-        # If manifest_path is not provided, search in multiple locations:
-        # 1. Framework manifests folder: <framework_root>/manifests/<service_name>/
-        # 2. Project root: <project_root>/project_knowledge.json
+        # Unified manifest location: <project_root>/.e2e/manifests/<service_name>/project_knowledge.json
         if manifest_path is None:
-            # Try to find the manifest in the framework's manifests folder
-            framework_root = Path(inspect.getfile(socialseed_e2e)).parent.parent
             service_name = self.project_root.name
-
-            # Check framework manifests folder first
-            framework_manifest_path = (
-                framework_root / "manifests" / service_name / "project_knowledge.json"
+            manifest_path = (
+                self.project_root
+                / ".e2e"
+                / "manifests"
+                / service_name
+                / "project_knowledge.json"
             )
-            if framework_manifest_path.exists():
-                self.manifest_path = framework_manifest_path
-            else:
-                # Fall back to project root
-                self.manifest_path = self.project_root / "project_knowledge.json"
-        else:
-            self.manifest_path = manifest_path
+
+        self.manifest_path = manifest_path
 
         self._manifest: Optional[ProjectKnowledge] = None
         self._load_manifest()
