@@ -13,8 +13,10 @@ def verify_fixes():
     """Verify that fixes are applied."""
     errors = []
 
+    base_path = Path("src/socialseed_e2e")
+
     # Check 1: Version is bumped
-    version_file = Path("src/socialseed_e2e/__version__.py")
+    version_file = base_path / "__version__.py"
     if version_file.exists():
         content = version_file.read_text()
         if '"0.1.5"' in content or "'0.1.5'" in content:
@@ -25,7 +27,7 @@ def verify_fixes():
         errors.append("Version file not found")
 
     # Check 2: Test runner has kebab-case fix
-    test_runner = Path("src/socialseed_e2e/core/test_runner.py")
+    test_runner = base_path / "core" / "test_runner.py"
     if test_runner.exists():
         content = test_runner.read_text()
         if "normalize_service_name" in content:
@@ -34,7 +36,7 @@ def verify_fixes():
             errors.append("Service name normalization not found")
 
     # Check 3: Commands module has lazy loading
-    commands_init = Path("src/socialseed_e2e/commands/__init__.py")
+    commands_init = base_path / "commands" / "__init__.py"
     if commands_init.exists():
         content = commands_init.read_text()
         if "@register" in content:
@@ -43,7 +45,7 @@ def verify_fixes():
             errors.append("Lazy loading not found")
 
     # Check 4: Project manifest API has unified location
-    manifest_api = Path("src/socialseed_e2e/project_manifest/api.py")
+    manifest_api = base_path / "project_manifest" / "api.py"
     if manifest_api.exists():
         content = manifest_api.read_text()
         if ".e2e" in content and "manifests" in content:

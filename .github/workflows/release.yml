@@ -43,7 +43,7 @@ jobs:
 
       - name: Verify fixes are applied
         run: |
-          python verify_fixes.py
+          python src/socialseed_e2e/verify_fixes.py
 
       - name: Install dependencies
         run: |
