@@ -436,6 +436,9 @@ class RunCommand:
         skip_unhealthy: bool,
         no_agent: bool,
         watch: bool,
+        isolate: bool = False,
+        pii_check: bool = False,
+        enable_xai: bool = False,
     ) -> int:
         """Execute run command.
 
@@ -480,6 +483,46 @@ class RunCommand:
             console.print()
             return 0
 
+        # Setup smart mocking if isolate flag is set
+        mock_isolation_manager = None
+        if isolate:
+            from socialseed_e2e.ai_mocking import (
+                SmartMockOrchestrator,
+                MockIsolationManager,
+            )
+
+            console.print("🔒 [cyan]Starting smart mock isolation mode...[/cyan]")
+            orchestrator = SmartMockOrchestrator()
+            mock_isolation_manager = MockIsolationManager(orchestrator)
+            if service:
+                mock_isolation_manager.start_isolation(service)
+            console.print()
+
+        # Setup PII detection if enabled
+        pii_service = None
+        if pii_check:
+            from socialseed_e2e.pii_masking import PIIMaskingService, PIIMaskingConfig
+
+            def on_pii_detected(masked_values):
+                console.print(
+                    f"🔒 [red]PII detected: {len(masked_values)} instances[/red]"
+                )
+                for mv in masked_values:
+                    console.print(f"   - {mv.pii_type.value}: {mv.masked}")
+
+            pii_service = PIIMaskingService(
+                PIIMaskingConfig(), on_pii_detected=on_pii_detected
+            )
+            console.print("🔍 [cyan]PII detection enabled[/cyan]")
+
+        # Setup XAI if enabled
+        xai_reporter = None
+        if enable_xai:
+            from socialseed_e2e.agents.xai import ExplainableAIReporter
+
+            xai_reporter = ExplainableAIReporter()
+            console.print("🧠 [cyan]Explainable AI reports enabled[/cyan]")
+
         # Execute tests
         executor = RunTestExecutor(services_path)
         results = executor.execute(
@@ -502,6 +545,27 @@ class RunCommand:
         # Generate reports
         report_gen = RunReportGenerator(output, report_dir, report, report_output)
         report_gen.generate_reports(results, verbose)
+
+        # Generate XAI report if enabled
+        if enable_xai and xai_reporter:
+            from pathlib import Path
+
+            xai_report_dir = Path(report_output) / "xai"
+            xai_report_dir.mkdir(parents=True, exist_ok=True)
+
+            for service_name, service_results in results.items():
+                report = xai_reporter.generate_report(
+                    test_name=service_name, test_file=str(services_path / service_name)
+                )
+                html_report = xai_reporter.generate_html_report(report)
+                report_file = xai_report_dir / f"{service_name}_xai.html"
+                report_file.write_text(html_report)
+                console.print(f"📊 [green]XAI report saved: {report_file}[/green]")
+
+        # Cleanup mock isolation if enabled
+        if mock_isolation_manager:
+            mock_isolation_manager.stop_isolation()
+            console.print("🔒 [green]Mock isolation stopped[/green]")
 
         return 0 if all_passed else 1
 
@@ -557,6 +621,9 @@ class RunCommand:
 @click.option("--skip-unhealthy", is_flag=True, help="Skip unhealthy services")
 @click.option("--no-agent", "no_agent", is_flag=True, help="Disable AI features")
 @click.option("-w", "--watch", is_flag=True, help="Watch for file changes")
+@click.option("--isolate", is_flag=True, help="Run with smart dependency mocking")
+@click.option("--pii-check", "pii_check", is_flag=True, help="Enable PII detection")
+@click.option("--xai", "enable_xai", is_flag=True, help="Enable explainable AI reports")
 def run_command(
     service: Optional[str],
     module: Optional[str],
@@ -578,6 +645,9 @@ def run_command(
     skip_unhealthy: bool,
     no_agent: bool,
     watch: bool,
+    isolate: bool,
+    pii_check: bool,
+    enable_xai: bool,
 ) -> None:
     """Execute E2E tests.
 
@@ -590,6 +660,7 @@ def run_command(
         e2e run --verbose
         e2e run --parallel 4
         e2e run --report junit
+        e2e run --isolate --service my_service
     """
     command = RunCommand()
     exit_code = command.execute(
@@ -610,6 +681,9 @@ def run_command(
         skip_unhealthy=skip_unhealthy,
         no_agent=no_agent,
         watch=watch,
+        isolate=isolate,
+        pii_check=pii_check,
+        enable_xai=enable_xai,
     )
     sys.exit(exit_code)
 
