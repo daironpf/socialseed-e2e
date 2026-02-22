@@ -1,0 +1,22 @@
+"""Test: List Rules
+
+This test demonstrates:
+- Rule listing
+- Automation rules
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5013"
+
+
+def run(page: BasePage):
+    """Execute the test - list rules."""
+    response = page.get("/api/rules")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

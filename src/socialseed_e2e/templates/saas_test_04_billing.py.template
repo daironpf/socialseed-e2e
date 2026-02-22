@@ -1,0 +1,22 @@
+"""Test: Get Billing
+
+This test demonstrates:
+- Billing info
+- Subscription management
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5014"
+
+
+def run(page: BasePage):
+    """Execute the test - get billing."""
+    response = page.get("/api/billing")
+    
+    assert response.status == 200
+    data = response.json()
+    assert "plan" in data or "subscription" in data
+    
+    return response

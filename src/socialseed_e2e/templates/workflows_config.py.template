@@ -1,0 +1,16 @@
+"""Workflows Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class WorkflowsConfig(BaseModel):
+    base_url: str = "http://localhost:5015"
+    health_endpoint: str = "/health"
+    timeout: int = 60
+    
+    max_steps_per_workflow: int = 50
+    max_concurrent_executions: int = 100
+    execution_timeout_seconds: int = 3600
+
+
+CONFIG = WorkflowsConfig()

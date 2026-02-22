@@ -1,0 +1,25 @@
+"""Auth Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class AuthConfig(BaseModel):
+    base_url: str = "http://localhost:5003"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    jwt_secret: str = "demo-secret-key"
+    jwt_algorithm: str = "HS256"
+    token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 7
+    
+    default_users: list[dict] = [
+        {"username": "admin", "password": "admin123", "role": "admin"},
+        {"username": "user1", "password": "user123", "role": "user"},
+        {"username": "moderator1", "password": "mod123", "role": "moderator"},
+    ]
+    
+    roles: list[str] = ["admin", "user", "moderator"]
+
+
+CONFIG = AuthConfig()

@@ -1,0 +1,77 @@
+"""Auth Demo Data Schema for socialseed-e2e
+
+This module contains Pydantic models for the auth API.
+"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, EmailStr
+
+
+class User(BaseModel):
+    id: str
+    username: str
+    email: EmailStr
+    role: str
+    is_active: bool
+    created_at: datetime
+    last_login: Optional[datetime] = None
+
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    role: str = "user"
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    user: User
+    token: str
+    refresh_token: str
+    expires_in: int
+
+
+class TokenRefresh(BaseModel):
+    refresh_token: str
+
+
+class TokenResponse(BaseModel):
+    token: str
+    refresh_token: str
+    expires_in: int
+
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
+
+class Role(BaseModel):
+    id: str
+    name: str
+    permissions: list[str]
+
+
+DEFAULT_USERS = [
+    {"username": "admin", "password": "admin123", "role": "admin"},
+    {"username": "user1", "password": "user123", "role": "user"},
+    {"username": "moderator1", "password": "mod123", "role": "moderator"},
+]
+
+ROLES = ["admin", "user", "moderator"]

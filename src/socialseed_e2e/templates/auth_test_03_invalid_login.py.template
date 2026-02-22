@@ -1,0 +1,26 @@
+"""Test: Invalid Login
+
+This test demonstrates:
+- Error handling for invalid credentials
+- HTTP 401 response
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5003"
+
+
+def run(page: BasePage):
+    """Execute the test - login with invalid credentials."""
+    response = page.post(
+        "/api/auth/login",
+        json={
+            "username": "admin",
+            "password": "wrongpassword"
+        }
+    )
+    
+    assert response.status == 401
+    
+    return response

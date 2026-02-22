@@ -1,0 +1,32 @@
+"""WebSocket Demo Service Page for socialseed-e2e"""
+
+from socialseed_e2e import BasePage
+from socialseed_e2e.core.mixins import DynamicStateMixin
+
+
+class WebSocketDemoPage(BasePage, DynamicStateMixin):
+    """Page object for WebSocket Demo API."""
+    
+    def do_get_channels(self):
+        """Get available channels."""
+        return self.get("/api/channels")
+    
+    def do_get_clients(self):
+        """Get connected clients."""
+        return self.get("/api/clients")
+    
+    def do_get_history(self, channel: str):
+        """Get message history for channel."""
+        return self.get(f"/api/channels/{channel}/history")
+    
+    def do_broadcast(self, channel: str, message: str, sender: str):
+        """Broadcast message to channel via HTTP."""
+        return self.post("/api/broadcast", json={
+            "channel": channel,
+            "message": message,
+            "sender": sender
+        })
+    
+    def do_get_stats(self):
+        """Get WebSocket server stats."""
+        return self.get("/api/stats")

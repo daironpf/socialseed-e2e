@@ -1,0 +1,22 @@
+"""Test: List Roles
+
+This test demonstrates:
+- Role management
+- RBAC
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5014"
+
+
+def run(page: BasePage):
+    """Execute the test - list roles."""
+    response = page.get("/api/roles")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

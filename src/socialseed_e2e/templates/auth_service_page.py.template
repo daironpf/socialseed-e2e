@@ -1,0 +1,60 @@
+"""Auth Demo Service Page for socialseed-e2e"""
+
+from socialseed_e2e import BasePage
+from socialseed_e2e.core.mixins import DynamicStateMixin
+
+
+class AuthDemoPage(BasePage, DynamicStateMixin):
+    """Page object for Auth Demo API."""
+    
+    def do_login(self, username: str, password: str):
+        """Login with credentials."""
+        return self.post("/api/auth/login", json={
+            "username": username,
+            "password": password
+        })
+    
+    def do_register(self, username: str, email: str, password: str, role: str = "user"):
+        """Register new user."""
+        return self.post("/api/auth/register", json={
+            "username": username,
+            "email": email,
+            "password": password,
+            "role": role
+        })
+    
+    def do_refresh_token(self, refresh_token: str):
+        """Refresh access token."""
+        return self.post("/api/auth/refresh", json={
+            "refresh_token": refresh_token
+        })
+    
+    def do_logout(self, token: str):
+        """Logout user."""
+        return self.post("/api/auth/logout", headers={
+            "Authorization": f"Bearer {token}"
+        })
+    
+    def do_get_profile(self, token: str):
+        """Get current user profile."""
+        return self.get("/api/auth/profile", headers={
+            "Authorization": f"Bearer {token}"
+        })
+    
+    def do_update_profile(self, token: str, data: dict):
+        """Update user profile."""
+        return self.put("/api/auth/profile", json=data, headers={
+            "Authorization": f"Bearer {token}"
+        })
+    
+    def do_password_reset(self, email: str):
+        """Request password reset."""
+        return self.post("/api/auth/password-reset", json={
+            "email": email
+        })
+    
+    def do_validate_token(self, token: str):
+        """Validate token."""
+        return self.get("/api/auth/validate", headers={
+            "Authorization": f"Bearer {token}"
+        })

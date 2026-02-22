@@ -1,0 +1,23 @@
+"""Test: Trigger Workflow
+
+This test demonstrates:
+- Manual trigger
+- Webhook trigger
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5015"
+
+
+def run(page: BasePage):
+    """Execute the test - trigger workflow."""
+    response = page.post(
+        "/api/workflows/workflow_1/trigger",
+        json={"input": {"test": True}}
+    )
+    
+    assert response.status in [200, 201, 202]
+    
+    return response

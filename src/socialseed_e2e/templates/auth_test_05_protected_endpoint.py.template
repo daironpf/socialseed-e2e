@@ -1,0 +1,33 @@
+"""Test: Protected Endpoint
+
+This test demonstrates:
+- Accessing protected endpoints with token
+- Authorization header handling
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5003"
+
+
+def run(page: BasePage):
+    """Execute the test - access protected endpoint."""
+    login_response = page.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "admin123"}
+    )
+    
+    assert login_response.status == 200
+    token = login_response.json()["token"]
+    
+    response = page.get(
+        "/api/auth/profile",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    
+    assert response.status == 200
+    data = response.json()
+    assert "username" in data
+    
+    return response

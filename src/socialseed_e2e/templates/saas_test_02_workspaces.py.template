@@ -1,0 +1,22 @@
+"""Test: List Workspaces
+
+This test demonstrates:
+- Workspace listing
+- Tenant isolation
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5014"
+
+
+def run(page: BasePage):
+    """Execute the test - list workspaces."""
+    response = page.get("/api/workspaces")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

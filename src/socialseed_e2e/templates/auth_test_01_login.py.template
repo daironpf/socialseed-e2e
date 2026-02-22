@@ -1,0 +1,31 @@
+"""Test: User Login
+
+This test demonstrates:
+- Authentication via login
+- Token validation
+- Error handling for invalid credentials
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5003"
+
+
+def run(page: BasePage):
+    """Execute the test - login user."""
+    response = page.post(
+        "/api/auth/login",
+        json={
+            "username": "admin",
+            "password": "admin123"
+        }
+    )
+    
+    assert response.status == 200
+    data = response.json()
+    assert "token" in data
+    assert "user" in data
+    assert data["user"]["username"] == "admin"
+    
+    return response

@@ -1,0 +1,30 @@
+"""Test: Create Experiment
+
+This test demonstrates:
+- A/B testing
+- Experiment creation
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5012"
+
+
+def run(page: BasePage):
+    """Execute the test - create experiment."""
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    
+    response = page.post(
+        "/api/experiments",
+        json={
+            "name": f"experiment_{unique_id}",
+            "variants": ["control", "treatment"],
+            "traffic_split": {"control": 50, "treatment": 50}
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

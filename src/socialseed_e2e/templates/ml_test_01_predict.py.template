@@ -1,0 +1,28 @@
+"""Test: Predict
+
+This test demonstrates:
+- Synchronous prediction
+- Model inference
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5012"
+
+
+def run(page: BasePage):
+    """Execute the test - predict."""
+    response = page.post(
+        "/api/predict",
+        json={
+            "model_id": "classifier",
+            "inputs": {"features": [1.0, 2.0, 3.0]}
+        }
+    )
+    
+    assert response.status == 200
+    data = response.json()
+    assert "prediction" in data
+    
+    return response

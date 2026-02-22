@@ -1,0 +1,20 @@
+"""Test: Aggregations
+
+This test demonstrates:
+- Metric aggregations
+- Time-series data
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5011"
+
+
+def run(page: BasePage):
+    """Execute the test - get aggregations."""
+    response = page.get("/api/aggregations/count", params={"event": "page_view"})
+    
+    assert response.status == 200
+    
+    return response

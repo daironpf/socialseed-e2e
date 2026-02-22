@@ -1,0 +1,27 @@
+"""Test: Track Event
+
+This test demonstrates:
+- Event tracking
+- Batch events
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5011"
+
+
+def run(page: BasePage):
+    """Execute the test - track event."""
+    response = page.post(
+        "/api/events",
+        json={
+            "name": "page_view",
+            "user_id": "user_123",
+            "properties": {"page": "/home"}
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

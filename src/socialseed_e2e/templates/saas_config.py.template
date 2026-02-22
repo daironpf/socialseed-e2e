@@ -1,0 +1,16 @@
+"""SaaS Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class SaaSConfig(BaseModel):
+    base_url: str = "http://localhost:5014"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    plans: list[str] = ["free", "pro", "enterprise"]
+    default_plan: str = "free"
+    max_workspaces_per_org: int = 10
+
+
+CONFIG = SaaSConfig()

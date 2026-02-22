@@ -1,0 +1,22 @@
+"""Test: List Alerts
+
+This test demonstrates:
+- Alert management
+- Notifications
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5013"
+
+
+def run(page: BasePage):
+    """Execute the test - list alerts."""
+    response = page.get("/api/alerts")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

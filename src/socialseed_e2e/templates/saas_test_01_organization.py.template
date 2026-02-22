@@ -1,0 +1,30 @@
+"""Test: Create Organization
+
+This test demonstrates:
+- Organization creation
+- Multi-tenant setup
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5014"
+
+
+def run(page: BasePage):
+    """Execute the test - create organization."""
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    
+    response = page.post(
+        "/api/organizations",
+        json={
+            "name": f"Test Org {unique_id}",
+            "slug": f"test-org-{unique_id}",
+            "plan": "pro"
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

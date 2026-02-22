@@ -1,0 +1,29 @@
+"""Test: Create Device
+
+This test demonstrates:
+- Device registration
+- Validation
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5013"
+
+
+def run(page: BasePage):
+    """Execute the test - create device."""
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    
+    response = page.post(
+        "/api/devices",
+        json={
+            "name": f"sensor_{unique_id}",
+            "type": "sensor"
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

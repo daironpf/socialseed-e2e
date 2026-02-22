@@ -1,0 +1,32 @@
+"""Workflows Demo Data Schema for socialseed-e2e"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class Workflow(BaseModel):
+    id: str
+    name: str
+    is_active: bool
+    trigger: dict
+    steps: list[dict]
+
+
+class Execution(BaseModel):
+    id: str
+    workflow_id: str
+    status: str
+    current_step: Optional[str]
+    started_at: datetime
+    completed_at: Optional[datetime]
+
+
+class Action(BaseModel):
+    id: str
+    name: str
+    type: str
+    config: dict
+
+
+EXECUTION_STATUSES = ["pending", "running", "completed", "failed", "cancelled"]

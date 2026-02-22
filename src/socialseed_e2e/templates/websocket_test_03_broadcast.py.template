@@ -1,0 +1,27 @@
+"""Test: Broadcast Message
+
+This test demonstrates:
+- Broadcasting via HTTP endpoint
+- Message delivery
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:50052"
+
+
+def run(page: BasePage):
+    """Execute the test - broadcast message."""
+    response = page.post(
+        "/api/broadcast",
+        json={
+            "channel": "general",
+            "message": "Test broadcast message",
+            "sender": "test_user"
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

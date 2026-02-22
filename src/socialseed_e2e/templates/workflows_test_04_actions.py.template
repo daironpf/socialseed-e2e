@@ -1,0 +1,22 @@
+"""Test: List Actions
+
+This test demonstrates:
+- Action library
+- Available actions
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5015"
+
+
+def run(page: BasePage):
+    """Execute the test - list actions."""
+    response = page.get("/api/actions")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

@@ -1,0 +1,35 @@
+"""Test: User Registration
+
+This test demonstrates:
+- User registration
+- Validation
+- Duplicate handling
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5003"
+
+
+def run(page: BasePage):
+    """Execute the test - register user."""
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    
+    response = page.post(
+        "/api/auth/register",
+        json={
+            "username": f"testuser_{unique_id}",
+            "email": f"test_{unique_id}@example.com",
+            "password": "testpass123",
+            "role": "user"
+        }
+    )
+    
+    assert response.status == 201
+    data = response.json()
+    assert "id" in data
+    assert data["username"] == f"testuser_{unique_id}"
+    
+    return response

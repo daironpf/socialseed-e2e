@@ -1,0 +1,35 @@
+"""Test: Auth Workflow
+
+This test demonstrates:
+- Complete auth workflow
+- Login, access protected, logout
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5003"
+
+
+def run(page: BasePage):
+    """Execute the test - complete auth workflow."""
+    login_response = page.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "admin123"}
+    )
+    assert login_response.status == 200
+    token = login_response.json()["token"]
+    
+    profile_response = page.get(
+        "/api/auth/profile",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert profile_response.status == 200
+    
+    logout_response = page.post(
+        "/api/auth/logout",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert logout_response.status in [200, 204]
+    
+    return logout_response

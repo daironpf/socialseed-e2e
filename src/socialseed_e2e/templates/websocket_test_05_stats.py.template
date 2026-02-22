@@ -1,0 +1,22 @@
+"""Test: Get Server Stats
+
+This test demonstrates:
+- Server statistics endpoint
+- Health monitoring
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:50052"
+
+
+def run(page: BasePage):
+    """Execute the test - get stats."""
+    response = page.get("/api/stats")
+    
+    assert response.status == 200
+    data = response.json()
+    assert "clients" in data or "connections" in data or "messages" in data
+    
+    return response

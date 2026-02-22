@@ -1,0 +1,40 @@
+"""Analytics Demo Data Schema for socialseed-e2e"""
+
+from datetime import datetime
+from typing import Optional, Any
+from pydantic import BaseModel
+
+
+class Event(BaseModel):
+    id: str
+    name: str
+    user_id: Optional[str] = None
+    properties: dict = {}
+    timestamp: datetime
+
+
+class EventCreate(BaseModel):
+    name: str
+    user_id: Optional[str] = None
+    properties: dict = {}
+
+
+class EventBatch(BaseModel):
+    events: list[EventCreate]
+
+
+class Aggregation(BaseModel):
+    metric: str
+    value: float
+    period: str
+    timestamp: datetime
+
+
+class Funnel(BaseModel):
+    id: str
+    name: str
+    steps: list[str]
+    conversion_rate: float
+
+
+DEFAULT_EVENTS = ["page_view", "click", "signup", "purchase"]

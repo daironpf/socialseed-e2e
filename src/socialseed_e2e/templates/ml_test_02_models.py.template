@@ -1,0 +1,22 @@
+"""Test: List Models
+
+This test demonstrates:
+- Model listing
+- Model versioning
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5012"
+
+
+def run(page: BasePage):
+    """Execute the test - list models."""
+    response = page.get("/api/models")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

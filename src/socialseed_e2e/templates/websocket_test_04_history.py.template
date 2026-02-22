@@ -1,0 +1,22 @@
+"""Test: Get Message History
+
+This test demonstrates:
+- Retrieving message history
+- Channel-based filtering
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:50052"
+
+
+def run(page: BasePage):
+    """Execute the test - get history."""
+    response = page.get("/api/channels/general/history")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

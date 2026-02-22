@@ -1,0 +1,33 @@
+"""Test: Create Workflow
+
+This test demonstrates:
+- Workflow creation
+- Step definition
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5015"
+
+
+def run(page: BasePage):
+    """Execute the test - create workflow."""
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    
+    response = page.post(
+        "/api/workflows",
+        json={
+            "name": f"workflow_{unique_id}",
+            "trigger": {"type": "webhook"},
+            "steps": [
+                {"action": "notify", "config": {"channel": "email"}},
+                {"action": "log", "config": {"level": "info"}}
+            ]
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

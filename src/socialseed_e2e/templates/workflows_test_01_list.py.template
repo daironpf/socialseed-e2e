@@ -1,0 +1,22 @@
+"""Test: List Workflows
+
+This test demonstrates:
+- Workflow listing
+- Automation overview
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5015"
+
+
+def run(page: BasePage):
+    """Execute the test - list workflows."""
+    response = page.get("/api/workflows")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

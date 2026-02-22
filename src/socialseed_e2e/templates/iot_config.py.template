@@ -1,0 +1,16 @@
+"""IoT Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class IoTConfig(BaseModel):
+    base_url: str = "http://localhost:5013"
+    health_endpoint: str = "/health"
+    timeout: int = 30
+    
+    device_types: list[str] = ["sensor", "actuator", "gateway"]
+    max_devices: int = 1000
+    telemetry_retention_days: int = 30
+
+
+CONFIG = IoTConfig()

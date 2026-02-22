@@ -1,0 +1,15 @@
+"""ML Demo Configuration for socialseed-e2e"""
+
+from pydantic import BaseModel
+
+
+class MLConfig(BaseModel):
+    base_url: str = "http://localhost:5012"
+    health_endpoint: str = "/health"
+    timeout: int = 60
+    
+    default_models: list[str] = ["classifier", "regressor", "embedder"]
+    max_batch_size: int = 100
+
+
+CONFIG = MLConfig()

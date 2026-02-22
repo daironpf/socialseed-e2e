@@ -1,0 +1,22 @@
+"""Test: Get Channels
+
+This test demonstrates:
+- Listing available channels
+- HTTP endpoint for WebSocket info
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:50052"
+
+
+def run(page: BasePage):
+    """Execute the test - get channels."""
+    response = page.get("/api/channels")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

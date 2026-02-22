@@ -1,0 +1,49 @@
+"""WebSocket Demo Data Schema for socialseed-e2e
+
+This module contains Pydantic models for the WebSocket API.
+"""
+
+from datetime import datetime
+from typing import Optional, Any
+from pydantic import BaseModel
+
+
+class WSMessage(BaseModel):
+    type: str
+    payload: Any
+    timestamp: datetime
+
+
+class WSConnect(BaseModel):
+    client_id: str
+    channels: list[str] = []
+
+
+class WSSubscribe(BaseModel):
+    channel: str
+
+
+class WSUnsubscribe(BaseModel):
+    channel: str
+
+
+class WSBroadcast(BaseModel):
+    channel: str
+    message: str
+    sender: str
+
+
+class WSClient(BaseModel):
+    client_id: str
+    channels: list[str]
+    connected_at: datetime
+    is_active: bool
+
+
+class Channel(BaseModel):
+    name: str
+    subscribers: int
+    created_at: datetime
+
+
+DEFAULT_CHANNELS = ["general", "notifications", "updates"]

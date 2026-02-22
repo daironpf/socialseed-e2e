@@ -1,0 +1,22 @@
+"""Test: Get Connected Clients
+
+This test demonstrates:
+- Listing connected clients
+- Server state introspection
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:50052"
+
+
+def run(page: BasePage):
+    """Execute the test - get clients."""
+    response = page.get("/api/clients")
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

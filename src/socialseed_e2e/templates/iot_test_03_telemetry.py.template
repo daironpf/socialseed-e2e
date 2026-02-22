@@ -1,0 +1,28 @@
+"""Test: Send Telemetry
+
+This test demonstrates:
+- Telemetry ingestion
+- High-volume data
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5013"
+
+
+def run(page: BasePage):
+    """Execute the test - send telemetry."""
+    response = page.post(
+        "/api/devices/device_1/telemetry",
+        json={
+            "measurements": {
+                "temperature": 25.5,
+                "humidity": 60.2
+            }
+        }
+    )
+    
+    assert response.status in [200, 201]
+    
+    return response

@@ -1,0 +1,33 @@
+"""ML Demo Data Schema for socialseed-e2e"""
+
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+
+class Model(BaseModel):
+    id: str
+    name: str
+    version: str
+    status: str
+    latency_ms: float
+
+
+class PredictionRequest(BaseModel):
+    model_id: str
+    inputs: dict
+    version: Optional[str] = None
+
+
+class PredictionResponse(BaseModel):
+    prediction: dict
+    model_id: str
+    version: str
+    latency_ms: float
+
+
+class Experiment(BaseModel):
+    id: str
+    name: str
+    variants: list[str]
+    traffic_split: dict

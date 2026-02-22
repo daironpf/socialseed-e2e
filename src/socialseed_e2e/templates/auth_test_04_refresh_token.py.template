@@ -1,0 +1,37 @@
+"""Test: Token Refresh
+
+This test demonstrates:
+- Token refresh flow
+- Token validation
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5003"
+
+
+def run(page: BasePage):
+    """Execute the test - refresh token."""
+    login_response = page.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "admin123"}
+    )
+    
+    assert login_response.status == 200
+    login_data = login_response.json()
+    refresh_token = login_data.get("refresh_token")
+    
+    if not refresh_token:
+        return login_response
+    
+    response = page.post(
+        "/api/auth/refresh",
+        json={"refresh_token": refresh_token}
+    )
+    
+    assert response.status == 200
+    data = response.json()
+    assert "token" in data
+    
+    return response

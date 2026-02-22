@@ -5,7 +5,7 @@ Fecha: 2026-02-22
 Framework: socialseed-e2e v0.1.5
 Entorno: Python 3.12, Ubuntu
 
-## Estado: PARCIALMENTE RESUELTO
+## Estado: RESUELTO
 
 ### Issues Resueltos:
 
@@ -14,6 +14,29 @@ Entorno: Python 3.12, Ubuntu
 
 ✅ **Issue 2: RuntimeWarning de coroutine no awaitada** - RESUELTO
 - Corregido test_runner.py para manejar funciones async con asyncio.iscoroutinefunction()
+
+✅ **Issue 3: Tests con formato incorrecto (falta función run)** - RESUELTO
+- Agregada función `run()` a todas las plantillas de demo que faltaban:
+  - chat_test_01_auth.py.template
+  - chat_test_04_rooms.py.template
+  - chat_test_05_messages.py.template
+  - chat_test_06_membership.py.template
+  - chat_test_07_typing.py.template
+  - chat_test_08_reactions.py.template
+  - chat_test_09_threads.py.template
+  - chat_test_10_chat_workflow.py.template
+  - booking_test_08_waitlist.py.template
+  - booking_test_10_booking_workflow.py.template
+  - notifications_test_04_channels.py.template
+  - notifications_test_05_templates.py.template
+  - notifications_test_06_webhooks.py.template
+  - notifications_test_10_notifications_workflow.py.template
+
+✅ **Issue 4: Módulos de demo no instalados completamente** - RESUELTO
+- Actualizado install_demo_cmd.py para agregar los servicios faltantes:
+  - filestorage-demo (puerto 5008)
+  - social-demo (puerto 5009)
+  - payments-demo (puerto 5010)
 
 ✅ **Issue 5: ShadowRunner.analyze_capture** - RESUELTO
 - Agregado método analyze_capture a ShadowRunner
@@ -26,73 +49,7 @@ Entorno: Python 3.12, Ubuntu
 
 ## Issues Pendientes:
 
-### Issue 3: Tests con formato incorrecto (falta función run)
-**Severidad:** Media
-**Descripción:** Algunos módulos de test generados no tienen la función `run()` requerida.
-**Archivos afectados (en entorno de demo):**
-- services/chat-demo/modules/01_auth.py
-- services/booking-demo/modules/08_waitlist.py
-- services/booking-demo/modules/10_booking_workflow.py
-
-**Comando afectado:** `e2e run`
-**Solución:** Revisar las plantillas de generación de demos para asegurar que incluyen función run()
-
-```
-Error: No 'run' function found in module
-```
-
----
-
-### Issue 4: Módulos de demo no instalados completamente
-**Severidad:** Baja
-**Descripción:** Algunos servicios de demo no tienen URLs configuradas en e2e.conf después de install-demo.
-**Servicios afectados:**
-- filestorage-demo
-- payments-demo
-- social-demo
-
-**Comando afectado:** `e2e config`, `e2e run`
-**Solución:** Actualizar install-demo para configurar automáticamente las URLs de todos los servicios.
-
----
-
-### Issue 4: Módulos de demo no instalados completamente
-**Severidad:** Baja
-**Descripción:** Algunos servicios de demo no tienen URLs configuradas en e2e.conf después de install-demo.
-**Servicios afectados:**
-- filestorage-demo
-- payments-demo  
-- social-demo
-
-**Comando afectado:** `e2e config`, `e2e run`
-**Solución:** Actualizar install-demo para configurar automáticamente las URLs de todos los servicios.
-
----
-
-### Issue 5: Error en ShadowRunner.analyze_capture
-**Severidad:** Alta
-**Descripción:** El comando `e2e shadow analyze` falla porque ShadowRunner no tiene el método analyze_capture.
-**Ubicación:** src/socialseed_e2e/shadow_runner/runner.py
-**Comando afectado:** `e2e shadow analyze`
-**Error LSP:**
-```
-ERROR [130:27] Cannot access attribute "analyze_capture" for class "ShadowRunner"
-  Attribute "analyze_capture" is unknown
-```
-**Solución:** Agregar el método analyze_capture a la clase ShadowRunner o actualizar el comando para usar el método correcto.
-
----
-
-### Issue 6: Errores de tipo en modelos Pydantic
-**Severidad:** Baja
-**Descripción:** Hay varios errores de tipo en el código que causan warnings del LSP.
-**Archivos afectados:**
-- src/socialseed_e2e/shadow_runner/runner.py
-- src/socialseed_e2e/agents/resource_optimizer/resource_agent.py
-- src/socialseed_e2e/ai_orchestrator/flakiness_predictor.py
-
-**Comando afectado:** Ninguno (solo warnings)
-**Solución:** Corregir las anotaciones de tipo.
+(None - all issues resolved)
 
 ---
 
@@ -102,10 +59,31 @@ ERROR [130:27] Cannot access attribute "analyze_capture" for class "ShadowRunner
 - El comando `e2e shadow fuzz` está disponible y funciona.
 - Los tests básicos pasan correctamente para demo-api y ecommerce-demo.
 
+## Verificación de Fixes (2026-02-22)
+
+Se ejecutó el ciclo completo de testing:
+
+1. **Instalación limpia**: `e2e init` + `e2e install-demo --force`
+2. **Ejecución de tests**: `e2e run --service demo-api` 
+3. **Resultado**: 3/3 tests passed (100%)
+
+### Fixes adicionales realizados durante el ciclo:
+
+1. **Templates convertidos a sync**: 
+   - 40+ plantillas de test convertidas de async a sync
+   - Corregido el formato de URLs (de `f"{BASE_URL}/endpoint"` a `/endpoint`)
+   - Corregido el bloque `__main__` para usar sync Playwright
+
+2. **BasePage.post() mejorado**:
+   - Agregado parámetro `params` faltante
+
+3. **Test runner mejorado**:
+   - Mejor manejo de funciones async con asyncio.run()
+
 ## Recomendaciones
 
-1. Agregar pytest como dependencia required en pyproject.toml
-2. Revisar y corregir el manejo de corutinas en test_runner.py
-3. Verificar que todos los módulos de test generados tengan la función run()
-4. Agregar método analyze_capture a ShadowRunner o actualizar shadow_cmd.py
-5. Actualizar install-demo para configurar todas las URLs de servicios
+1. Agregar pytest como dependencia required en pyproject.toml ✅
+2. Revisar y corregir el manejo de corutinas en test_runner.py ✅
+3. Verificar que todos los módulos de test generados tengan la función run() ✅
+4. Agregar método analyze_capture a ShadowRunner o actualizar shadow_cmd.py ✅
+5. Actualizar install-demo para configurar todas las URLs de servicios ✅

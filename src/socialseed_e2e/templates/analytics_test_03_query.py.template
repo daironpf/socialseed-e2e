@@ -1,0 +1,22 @@
+"""Test: Query Events
+
+This test demonstrates:
+- Event querying
+- Filtering
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5011"
+
+
+def run(page: BasePage):
+    """Execute the test - query events."""
+    response = page.get("/api/events", params={"name": "page_view"})
+    
+    assert response.status == 200
+    data = response.json()
+    assert isinstance(data, list)
+    
+    return response

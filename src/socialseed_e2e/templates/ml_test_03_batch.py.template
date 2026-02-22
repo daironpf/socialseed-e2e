@@ -1,0 +1,29 @@
+"""Test: Batch Prediction
+
+This test demonstrates:
+- Batch processing
+- Async inference
+"""
+
+from socialseed_e2e import BasePage
+
+
+BASE_URL = "http://localhost:5012"
+
+
+def run(page: BasePage):
+    """Execute the test - batch predict."""
+    response = page.post(
+        "/api/batch/predict",
+        json={
+            "model_id": "classifier",
+            "inputs": [
+                {"features": [1.0, 2.0, 3.0]},
+                {"features": [4.0, 5.0, 6.0]}
+            ]
+        }
+    )
+    
+    assert response.status == 200
+    
+    return response
