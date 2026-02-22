@@ -109,6 +109,7 @@ class ExtraInstaller:
                         "-m",
                         "pip",
                         "install",
+                        "--break-system-packages",
                         f"socialseed-e2e[{extra}]",
                     ],
                     capture_output=True,
@@ -118,7 +119,7 @@ class ExtraInstaller:
                 if result.returncode == 0:
                     console.print(f"  [green]✓[/green] {extra} installed successfully")
                 else:
-                    console.print(f"  [yellow]⚠[/red] {extra}: {result.stderr}")
+                    console.print(f"  [yellow]⚠[/yellow] {extra}: {result.stderr}")
             except Exception as e:
                 console.print(f"  [red]✗[/red] Failed to install {extra}: {e}")
 

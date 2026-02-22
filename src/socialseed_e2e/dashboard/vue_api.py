@@ -1885,19 +1885,18 @@ async def delete_request(request_id: int) -> Dict[str, Any]:
 
 
 LANGUAGE_TEMPLATES = {
-    "curl": """curl -X {{method}} "{{url}}" \\
-  -H "Content-Type: application/json"{{headers}}{{body}}""",
+    "curl": """curl -X {{method}} "{{url}}"{{headers}}{{body_curl}}""",
     "python": """import requests
 
 response = requests.{{method_lower}}(
-    "{{url}}"{{params}}{{headers}}{{body}}
+    "{{url}}"{{body_py}}
 )
 
 print(response.status_code)
 print(response.json())""",
     "javascript": """fetch("{{url}}", {
   method: "{{method}}",
-  headers: {{headers}}{{body}}
+  headers: {{headers_js}}{{body_js}}
 })
 .then(response => response.json())
 .then(data => console.log(data))
@@ -1906,8 +1905,8 @@ print(response.json())""",
 
 Request request = new Request.Builder()
   .url("{{url}}")
-  .{{method_lower}}()
-{{headers}}  .build();
+  .{{method_lower}}(){{body_java}}
+  .build();
 
 Response response = client.newCall(request).execute();
 System.out.println(response.body().string());""",
@@ -1915,6 +1914,7 @@ System.out.println(response.body().string());""",
 if err != nil {
     log.Fatal(err)
 }
+{{body_go}}
 
 client := &http.Client{}
 resp, err := client.Do(req)
@@ -1941,30 +1941,27 @@ async def generate_snippet(data: Dict[str, Any]) -> Dict[str, Any]:
     if headers:
         headers_dict = json.loads(headers) if isinstance(headers, str) else headers
         for k, v in headers_dict.items():
-            headers_str += f'\\n  -H "{k}: {v}"'
+            headers_str += f' -H "{k}: {v}"'
 
-    body_str = ""
-    if body:
-        body_str += f"\\n  -d '{body}'"
+    headers_js = "{}"
+    if headers:
+        headers_dict = json.loads(headers) if isinstance(headers, str) else headers
+        if headers_dict:
+            headers_js = json.dumps(headers_dict)
 
-    body_js = ""
-    if body:
-        body_js += f",\\n  body: JSON.stringify({body})"
-
+    body_curl = ""
     body_py = ""
-    if body and method in ["POST", "PUT", "PATCH"]:
-        body_py += f",\\n    json={body}"
-
+    body_js = ""
     body_go = ""
-    if body:
-        body_go += f", bytes.NewBuffer([]byte(`{body}`))"
-        body_go += '\\n  .SetHeader("Content-Type", "application/json")'
-
     body_java = ""
+
     if body:
-        body_java += (
-            f'.post(RequestBody.create(MediaType.parse("application/json"), "{body}"))'
-        )
+        if method in ["POST", "PUT", "PATCH"]:
+            body_curl = f" -d '{body}'"
+            body_py = f", json={body}"
+            body_js = f", body: JSON.stringify({body})"
+            body_go = f", bytes.NewBuffer([]byte(`{body}`))"
+            body_java = f'.post(RequestBody.create(MediaType.parse("application/json"), "{body}"))'
 
     template = LANGUAGE_TEMPLATES.get(lang, LANGUAGE_TEMPLATES["curl"])
 
@@ -1972,7 +1969,12 @@ async def generate_snippet(data: Dict[str, Any]) -> Dict[str, Any]:
     result = result.replace("{{method_lower}}", method.lower())
     result = result.replace("{{url}}", url)
     result = result.replace("{{headers}}", headers_str)
-    result = result.replace("{{body}}", body_str)
+    result = result.replace("{{headers_js}}", headers_js)
+    result = result.replace("{{body_curl}}", body_curl)
+    result = result.replace("{{body_py}}", body_py)
+    result = result.replace("{{body_js}}", body_js)
+    result = result.replace("{{body_go}}", body_go)
+    result = result.replace("{{body_java}}", body_java)
 
     return {"snippet": result, "language": lang}
 
