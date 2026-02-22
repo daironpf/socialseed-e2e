@@ -25,6 +25,16 @@ from .penetration.penetration_tester import PenetrationTester
 from .compliance.compliance_validator import ComplianceValidator
 from .detection.secret_detector import SecretDetector
 from .reports.security_reporter import SecurityReporter
+from .pii_detector import (
+    PIIAnalyzer,
+    PIIConfig,
+    PIIDetection,
+    PIIPattern,
+    PIIType,
+    SecurityComplianceReport,
+    SecurityMiddleware,
+    SeverityLevel,
+)
 
 __all__ = [
     "SecurityVulnerability",
@@ -41,4 +51,13 @@ __all__ = [
     "ComplianceValidator",
     "SecretDetector",
     "SecurityReporter",
+    # PII Detection (Issue #3 - Phase 2)
+    "PIIAnalyzer",
+    "PIIConfig",
+    "PIIDetection",
+    "PIIPattern",
+    "PIIType",
+    "SecurityComplianceReport",
+    "SecurityMiddleware",
+    "SeverityLevel",
 ]
