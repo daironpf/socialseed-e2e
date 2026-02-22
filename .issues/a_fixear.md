@@ -5,48 +5,54 @@ Fecha: 2026-02-22
 Framework: socialseed-e2e v0.1.5
 Entorno: Python 3.12, Ubuntu
 
-## Issues Encontrados
+## Estado: PARCIALMENTE RESUELTO
 
-### Issue 1: Falta pytest como dependencia
-**Severidad:** Alta
-**Descripción:** El framework no incluye pytest como dependencia en pyproject.toml, lo que causa errores al ejecutar tests.
-**Comando afectado:** `e2e run`
-**Solución:** Agregar pytest a las dependencias en pyproject.toml
+### Issues Resueltos:
 
-```
-Error: Error loading module services/ecommerce-demo/modules/01_list_products.py: No module named 'pytest'
-```
+✅ **Issue 1: Falta pytest como dependencia** - RESUELTO
+- Agregado pytest>=7.0.0 a dependencias en pyproject.toml
 
----
+✅ **Issue 2: RuntimeWarning de coroutine no awaitada** - RESUELTO
+- Corregido test_runner.py para manejar funciones async con asyncio.iscoroutinefunction()
 
-### Issue 2: RuntimeWarning de coroutine no awaitada
-**Severidad:** Media
-**Descripción:** Hay un warning en test_runner.py sobre una corutina que nunca fue awaited.
-**Ubicación:** src/socialseed_e2e/core/test_runner.py:642
-**Comando afectado:** `e2e run`
-**Solución:** Revisar el código en test_runner.py línea 642 y asegurar que las corutinas sean awaitadas correctamente.
+✅ **Issue 5: ShadowRunner.analyze_capture** - RESUELTO
+- Agregado método analyze_capture a ShadowRunner
+- Corregido shadow analyze command en cli.py
 
-```
-RuntimeWarning: coroutine 'run' was never awaited
-  run_func(page)
-```
+✅ **Issue 6: Errores de tipo en LSP** - RESUELTO
+- Corregidos tipos en runner.py, resource_agent.py, flakiness_predictor.py
 
 ---
+
+## Issues Pendientes:
 
 ### Issue 3: Tests con formato incorrecto (falta función run)
 **Severidad:** Media
-**Descripción:** Algunos módulos de test生成 no tienen la función `run()` requerida.
-**Archivos afectados:**
+**Descripción:** Algunos módulos de test generados no tienen la función `run()` requerida.
+**Archivos afectados (en entorno de demo):**
 - services/chat-demo/modules/01_auth.py
 - services/booking-demo/modules/08_waitlist.py
 - services/booking-demo/modules/10_booking_workflow.py
 
 **Comando afectado:** `e2e run`
-**Solución:** Agregar la función `run(page)` a los módulos afectados.
+**Solución:** Revisar las plantillas de generación de demos para asegurar que incluyen función run()
 
 ```
 Error: No 'run' function found in module
 ```
+
+---
+
+### Issue 4: Módulos de demo no instalados completamente
+**Severidad:** Baja
+**Descripción:** Algunos servicios de demo no tienen URLs configuradas en e2e.conf después de install-demo.
+**Servicios afectados:**
+- filestorage-demo
+- payments-demo
+- social-demo
+
+**Comando afectado:** `e2e config`, `e2e run`
+**Solución:** Actualizar install-demo para configurar automáticamente las URLs de todos los servicios.
 
 ---
 
