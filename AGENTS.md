@@ -215,7 +215,48 @@ e2e shadow capture                 # Capture production traffic
 e2e shadow generate                # Generate tests from traffic
 e2e shadow replay                  # Replay captured traffic
 e2e shadow analyze                 # Analyze captured data
+e2e shadow fuzz <capture> <target> # Semantic fuzzing (Issue #1)
 e2e shadow export-middleware       # Export middleware
+```
+
+### Semantic Fuzzing (Issue #1 - Nuevo Feature)
+El framework ahora soporta **fuzzing semántico en tiempo real** sobre el tráfico capturado:
+
+```bash
+# Ejecutar fuzzing con estrategia inteligente
+e2e shadow fuzz capture.json http://localhost:8080 --strategy intelligent
+
+# Fuzzing con más mutaciones por request
+e2e shadow fuzz capture.json http://localhost:8080 --mutations 10 --output fuzz_report.json
+```
+
+**Estrategias de Fuzzing disponibles:**
+- `random` - Mutaciones aleatorias
+- `intelligent` - Mutaciones inteligentes basadas en tipo de campo
+- `coverage_guided` - Guiado por cobertura de código
+- `ai_powered` - Potenciado por IA para mutaciones semánticas
+
+**Tipos de mutación:**
+- SQL Injection, XSS, Path Traversal
+- Boundary values (strings, numbers)
+- Type mismatches, Null injections
+- Unicode fuzzing, JSON structure violations
+
+**Uso programático:**
+```python
+from socialseed_e2e.shadow_runner import (
+    SemanticShadowRunner,
+    FuzzingConfig,
+    FuzzingStrategy,
+)
+
+runner = SemanticShadowRunner()
+config = FuzzingConfig(
+    strategy=FuzzingStrategy.INTELLIGENT,
+    mutations_per_request=5,
+)
+campaign = runner.generate_fuzzing_campaign("capture.json", "http://localhost:8080", config)
+result = runner.run_fuzzing_campaign(campaign)
 ```
 
 ### AI Learning Commands

@@ -44,6 +44,13 @@ from socialseed_e2e.ai_orchestrator.debugger import (
     LogAnalyzer,
     RootCauseAnalyzer,
 )
+from socialseed_e2e.ai_orchestrator.flakiness_predictor import (
+    FlakinessAnalyzer,
+    FlakinessPredictor,
+    FlakinessPrediction,
+    FlakinessRiskLevel,
+    FlakinessFactor,
+)
 from socialseed_e2e.ai_orchestrator.models import (
     DebugAnalysis,
     FailurePattern,
@@ -64,7 +71,10 @@ from socialseed_e2e.ai_orchestrator.self_healer import (
     TestAnalyzer,
     TestHealer,
 )
-from socialseed_e2e.ai_orchestrator.strategy_planner import CodeAnalyzer, StrategyPlanner
+from socialseed_e2e.ai_orchestrator.strategy_planner import (
+    CodeAnalyzer,
+    StrategyPlanner,
+)
 
 __all__ = [
     # Models
@@ -97,4 +107,10 @@ __all__ = [
     "LogAnalyzer",
     "RootCauseAnalyzer",
     "FixSuggester",
+    # Flakiness Predictor (Issue #3)
+    "FlakinessAnalyzer",
+    "FlakinessPredictor",
+    "FlakinessPrediction",
+    "FlakinessRiskLevel",
+    "FlakinessFactor",
 ]

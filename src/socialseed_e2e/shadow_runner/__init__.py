@@ -8,11 +8,36 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from socialseed_e2e.shadow_runner.fuzzer import IntelligentFuzzer, SemanticFuzzer
+from socialseed_e2e.shadow_runner.models import (
+    CaptureConfig as CaptureConfigModel,
+    CapturedRequest,
+    CapturedTraffic,
+    FuzzingCampaign,
+    FuzzingConfig,
+    FuzzingResult,
+    FuzzingStrategy,
+    HttpMethod,
+    MutationType,
+    MutatedRequest,
+    ReplayConfig as ReplayConfigModel,
+    SemanticMutation,
+    TestGenerationConfig as TestGenerationConfigModel,
+    TestGenerationResult,
+    TrafficAnalysis,
+)
 from socialseed_e2e.shadow_runner.capture_filter import CaptureFilter, SmartFilter
 from socialseed_e2e.shadow_runner.privacy_sanitizer import PrivacySanitizer
 from socialseed_e2e.shadow_runner.session_recorder import SessionRecorder, UserSession
-from socialseed_e2e.shadow_runner.test_generator import GeneratedTest, TestExporter, TestGenerator
-from socialseed_e2e.shadow_runner.traffic_interceptor import CapturedInteraction, TrafficInterceptor
+from socialseed_e2e.shadow_runner.test_generator import (
+    GeneratedTest,
+    TestExporter,
+    TestGenerator,
+)
+from socialseed_e2e.shadow_runner.traffic_interceptor import (
+    CapturedInteraction,
+    TrafficInterceptor,
+)
 
 
 # Configuration classes for CLI
@@ -76,7 +101,9 @@ class ShadowRunner:
         self.filter = SmartFilter() if enable_filtering else CaptureFilter()
         self.sanitizer = PrivacySanitizer() if enable_sanitization else None
         self.session_recorder = (
-            SessionRecorder(self.output_dir / "sessions") if enable_session_tracking else None
+            SessionRecorder(self.output_dir / "sessions")
+            if enable_session_tracking
+            else None
         )
         self.test_generator = TestGenerator()
         self.test_exporter = TestExporter()
@@ -159,7 +186,9 @@ class ShadowRunner:
 
         # Add to session
         if self.session_recorder and self.current_session_id:
-            self.session_recorder.add_interaction_to_session(self.current_session_id, interaction)
+            self.session_recorder.add_interaction_to_session(
+                self.current_session_id, interaction
+            )
 
     def generate_tests(
         self,
@@ -348,6 +377,10 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=middleware.dispatch)
         return code
 
 
+# Semantic Fuzzing Runner (new)
+from socialseed_e2e.shadow_runner.runner import ShadowRunner as SemanticShadowRunner
+
+
 # Convenience functions
 
 
@@ -377,7 +410,31 @@ def capture_with_context(
 
 # Export main components
 __all__ = [
+    # Main runners
     "ShadowRunner",
+    "SemanticShadowRunner",
+    # Fuzzing
+    "SemanticFuzzer",
+    "IntelligentFuzzer",
+    # Fuzzing models
+    "MutationType",
+    "FuzzingStrategy",
+    "FuzzingConfig",
+    "FuzzingCampaign",
+    "FuzzingResult",
+    "MutatedRequest",
+    "SemanticMutation",
+    # Traffic models
+    "CapturedRequest",
+    "CapturedTraffic",
+    "TrafficAnalysis",
+    # Test generation
+    "TestGenerationResult",
+    # Legacy/CLI configs (dataclasses)
+    "CaptureConfig",
+    "TestGenerationConfig",
+    "ReplayConfig",
+    # Components
     "TrafficInterceptor",
     "CaptureFilter",
     "SmartFilter",

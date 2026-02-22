@@ -142,6 +142,70 @@ class ShadowAnalyzeAgent:
             console.print(table)
 
 
+class ShadowFuzzAgent:
+    """Handles semantic fuzzing on captured traffic (Issue #1)."""
+
+    def __init__(
+        self,
+        capture_file: str,
+        target_url: str,
+        strategy: str = "intelligent",
+        mutations: int = 5,
+        output: Optional[str] = None,
+    ):
+        self.capture_file = capture_file
+        self.target_url = target_url
+        self.strategy = strategy
+        self.mutations = mutations
+        self.output = output
+
+    def fuzz(self):
+        """Run semantic fuzzing on captured traffic."""
+        from socialseed_e2e.shadow_runner import (
+            FuzzingConfig,
+            FuzzingStrategy,
+            SemanticShadowRunner,
+        )
+
+        if not Path(self.capture_file).exists():
+            console.print(f"[red]❌ Error:[/red] File not found: {self.capture_file}")
+            sys.exit(1)
+
+        runner = SemanticShadowRunner()
+
+        strategy_map = {
+            "random": FuzzingStrategy.RANDOM,
+            "intelligent": FuzzingStrategy.INTELLIGENT,
+            "coverage_guided": FuzzingStrategy.COVERAGE_GUIDED,
+            "ai_powered": FuzzingStrategy.AI_POWERED,
+        }
+
+        config = FuzzingConfig(
+            strategy=strategy_map.get(self.strategy, FuzzingStrategy.INTELLIGENT),
+            mutations_per_request=self.mutations,
+        )
+
+        console.print(f"[yellow]Starting semantic fuzzing...[/yellow]")
+        console.print(f"   Capture: {self.capture_file}")
+        console.print(f"   Target: {self.target_url}")
+        console.print(f"   Strategy: {self.strategy}")
+        console.print(f"   Mutations per request: {self.mutations}")
+        console.print()
+
+        campaign = runner.generate_fuzzing_campaign(
+            self.capture_file,
+            self.target_url,
+            config,
+        )
+
+        console.print(f"[green]Fuzzing campaign created:[/green] {campaign.name}")
+        console.print(f"   Campaign ID: {campaign.campaign_id}")
+
+        if self.output:
+            runner.export_fuzzing_report(campaign, self.output)
+            console.print(f"   Report saved to: {self.output}")
+
+
 @click.group(name="shadow")
 def get_shadow_group():
     """Shadow Runner - Capture traffic and auto-generate tests (Issue #130)."""
@@ -234,6 +298,36 @@ def get_shadow_analyze_command(capture_file: str, format: str, show_pii: bool):
     try:
         agent = ShadowAnalyzeAgent(capture_file, format, show_pii)
         agent.analyze()
+    except Exception as e:
+        console.print(f"[red]❌ Error:[/red] {e}")
+        sys.exit(1)
+
+
+@click.command(name="fuzz")
+@click.argument("capture_file")
+@click.argument("target_url")
+@click.option(
+    "--strategy",
+    "-s",
+    type=click.Choice(["random", "intelligent", "coverage_guided", "ai_powered"]),
+    default="intelligent",
+    help="Fuzzing strategy to use",
+)
+@click.option(
+    "--mutations", "-m", type=int, default=5, help="Number of mutations per request"
+)
+@click.option("--output", "-o", help="Output file for fuzzing report")
+def get_shadow_fuzz_command(
+    capture_file: str,
+    target_url: str,
+    strategy: str,
+    mutations: int,
+    output: Optional[str],
+):
+    """Run semantic fuzzing on captured traffic (Issue #1 - Fuzzing Semántico)."""
+    try:
+        agent = ShadowFuzzAgent(capture_file, target_url, strategy, mutations, output)
+        agent.fuzz()
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
         sys.exit(1)
