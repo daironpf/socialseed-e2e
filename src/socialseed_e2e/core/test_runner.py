@@ -642,7 +642,18 @@ def execute_single_test(
         import asyncio
 
         if asyncio.iscoroutinefunction(run_func):
-            asyncio.get_event_loop().run_until_complete(run_func(page))
+            try:
+                asyncio.run(run_func(page))
+            except RuntimeError as e:
+                if "asyncio.run() cannot be called from a running event loop" in str(e):
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        loop.run_until_complete(run_func(page))
+                    finally:
+                        loop.close()
+                else:
+                    raise
         else:
             run_func(page)
 

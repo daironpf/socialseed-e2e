@@ -237,7 +237,9 @@ class BasePage:
         if playwright:
             self.playwright = playwright
         else:
-            self.playwright_manager = __import__("playwright").sync_api.sync_playwright()
+            self.playwright_manager = __import__(
+                "playwright"
+            ).sync_api.sync_playwright()
             self.playwright = self.playwright_manager.__enter__()
 
         self.api_context: Optional[APIRequestContext] = None
@@ -370,17 +372,22 @@ class BasePage:
         if len(self._request_times) >= self.rate_limit_config.requests_per_minute:
             sleep_time = 60.0 - (now - self._request_times[0])
             if sleep_time > 0:
-                logger.warning(f"Rate limit (per minute) reached, sleeping for {sleep_time:.2f}s")
+                logger.warning(
+                    f"Rate limit (per minute) reached, sleeping for {sleep_time:.2f}s"
+                )
                 time.sleep(sleep_time)
 
         # Check per-second limit with burst allowance
         recent_requests = len([t for t in self._request_times if t > now - 1.0])
         if (
             recent_requests
-            >= self.rate_limit_config.requests_per_second + self.rate_limit_config.burst_size
+            >= self.rate_limit_config.requests_per_second
+            + self.rate_limit_config.burst_size
         ):
             sleep_time = 1.0 / self.rate_limit_config.requests_per_second
-            logger.warning(f"Rate limit (per second) reached, sleeping for {sleep_time:.2f}s")
+            logger.warning(
+                f"Rate limit (per second) reached, sleeping for {sleep_time:.2f}s"
+            )
             time.sleep(sleep_time)
 
         # Update request tracking
@@ -464,7 +471,8 @@ class BasePage:
             return None
         if len(body) > self.max_log_body_size:
             return (
-                body[: self.max_log_body_size] + f"\n... [truncated, total size: {len(body)} bytes]"
+                body[: self.max_log_body_size]
+                + f"\n... [truncated, total size: {len(body)} bytes]"
             )
         return body
 
@@ -613,7 +621,9 @@ class BasePage:
                 request_log.duration_ms = (time.time() - start_time) * 1000
 
                 # Check if we should retry on exception
-                if attempt < self.retry_config.max_retries and self._should_retry(None, e):
+                if attempt < self.retry_config.max_retries and self._should_retry(
+                    None, e
+                ):
                     backoff = self._calculate_backoff(attempt)
                     logger.warning(
                         f"Retry {attempt + 1}/{self.retry_config.max_retries} "
@@ -665,6 +675,7 @@ class BasePage:
         data: Optional[Union[Dict[str, Any], str]] = None,
         json: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, Any]] = None,
     ) -> APIResponse:
         """Perform a POST request.
 
@@ -673,12 +684,15 @@ class BasePage:
             data: Form data or dict (use either data or json, not both)
             json: JSON payload (use either data or json, not both)
             headers: Optional request-specific headers
+            params: Optional query parameters
 
         Returns:
             APIResponse object
         """
         body = json if json is not None else data
-        return self._make_request("POST", endpoint, data=body, headers=headers)
+        return self._make_request(
+            "POST", endpoint, data=body, headers=headers, params=params
+        )
 
     def put(
         self,
@@ -773,7 +787,9 @@ class BasePage:
             except Exception:
                 body_preview = "<unable to read body>"
 
-            error_msg = message or f"Expected status {expected_status}, got {response.status}"
+            error_msg = (
+                message or f"Expected status {expected_status}, got {response.status}"
+            )
             raise BasePageError(
                 message=error_msg,
                 url=response.url,
@@ -839,10 +855,13 @@ class BasePage:
                 if isinstance(value, dict) and k in value:
                     value = value[k]
                 else:
-                    keys_display = list(value.keys()) if isinstance(value, dict) else "N/A"
+                    keys_display = (
+                        list(value.keys()) if isinstance(value, dict) else "N/A"
+                    )
                     raise BasePageError(
                         message=(
-                            f"Key '{key}' not found in response. " f"Available keys: {keys_display}"
+                            f"Key '{key}' not found in response. "
+                            f"Available keys: {keys_display}"
                         ),
                         url=response.url,
                         status=response.status,
@@ -886,7 +905,8 @@ class BasePage:
         if expected_value and value != expected_value:
             raise BasePageError(
                 message=(
-                    f"Header '{header_name}' has value '{value}', " f"expected '{expected_value}'"
+                    f"Header '{header_name}' has value '{value}', "
+                    f"expected '{expected_value}'"
                 ),
                 url=response.url,
                 status=response.status,
@@ -942,7 +962,8 @@ class BasePage:
                 for key in required:
                     if key not in data:
                         raise BasePageError(
-                            message=message or f"Required field '{key}' missing from response",
+                            message=message
+                            or f"Required field '{key}' missing from response",
                             url=response.url,
                             status=response.status,
                         )
@@ -950,7 +971,9 @@ class BasePage:
                 for key, prop_schema in properties.items():
                     if key in data:
                         expected_type = prop_schema.get("type")
-                        if expected_type and not self._check_type(data[key], expected_type):
+                        if expected_type and not self._check_type(
+                            data[key], expected_type
+                        ):
                             raise BasePageError(
                                 message=message
                                 or f"Field '{key}' has wrong type. Expected {expected_type}",
@@ -1050,7 +1073,9 @@ class BasePage:
             "status_distribution": status_counts,
         }
 
-    def add_response_interceptor(self, interceptor: Callable[[APIResponse], None]) -> None:
+    def add_response_interceptor(
+        self, interceptor: Callable[[APIResponse], None]
+    ) -> None:
         """Add a response interceptor.
 
         Interceptors are called after each successful response.
