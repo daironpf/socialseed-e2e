@@ -77,7 +77,7 @@ class TestCreator:
     ) -> None:
         """Create the test file from template."""
         engine = TemplateEngine()
-        class_name = _to_class_name(service)
+        class_name = to_class_name(service)
         snake_name = to_snake_case(service)
         test_description = description or f"Test flow for {name}"
 

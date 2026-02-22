@@ -506,6 +506,24 @@ services: {}
                 health_endpoint="/health",
             )
 
+            config.services["filestorage-demo"] = ServiceConfig(
+                name="filestorage-demo",
+                base_url="http://localhost:5008",
+                health_endpoint="/health",
+            )
+
+            config.services["social-demo"] = ServiceConfig(
+                name="social-demo",
+                base_url="http://localhost:5009",
+                health_endpoint="/health",
+            )
+
+            config.services["payments-demo"] = ServiceConfig(
+                name="payments-demo",
+                base_url="http://localhost:5010",
+                health_endpoint="/health",
+            )
+
             loader.save(config)
             console.print("  [green]✓[/green] Updated: e2e.conf")
         except Exception as e:

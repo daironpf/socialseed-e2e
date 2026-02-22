@@ -69,7 +69,7 @@ class ServiceCreator:
     def _create_template_files(self, service_path: Path, name: str) -> None:
         """Create service template files."""
         engine = TemplateEngine()
-        class_name = _to_class_name(name)
+        class_name = to_class_name(name)
         snake_name = to_snake_case(name)
 
         template_vars = {
