@@ -106,7 +106,7 @@ class ImportedRequest:
 ## Issue 003: Request History Panel
 
 **Priority:** HIGH  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 2 hours
 
 ### Description
@@ -160,7 +160,7 @@ class RequestHistory:
 ## Issue 004: Collections (Suites)
 
 **Priority:** MEDIUM  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 3 hours
 
 ### Description
@@ -206,7 +206,7 @@ class CollectionRequest:
 ## Issue 005: Code Snippet Generation
 
 **Priority:** MEDIUM  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 2 hours
 
 ### Description
@@ -248,7 +248,7 @@ LANGUAGE_TEMPLATES = {
 ## Issue 006: Dark/Light Theme Toggle
 
 **Priority:** LOW  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 1 hour
 
 ### Description
@@ -271,8 +271,15 @@ Add theme toggle for dark/light mode.
 ## Issue 007: Keyboard Shortcuts
 
 **Priority:** LOW  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 2 hours
+
+### Implemented Shortcuts
+- `Ctrl+Enter` / `Cmd+Enter` - Send request
+- `Ctrl+N` / `Cmd+N` - New request
+- `Ctrl+S` / `Cmd+S` - Save request
+- `Ctrl+D` / `Cmd+D` - Duplicate request
+- `Escape` - Close modals
 
 ### Description
 Add keyboard shortcuts for common actions.
@@ -295,8 +302,15 @@ Add keyboard shortcuts for common actions.
 ## Issue 008: WebSocket Testing Support
 
 **Priority:** LOW  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 4 hours
+
+### Implemented
+- WebSocket method option in dropdown
+- Connect/Disconnect button
+- Message input and send
+- Message log panel with sent/received messages
+- WebSocket endpoint at `/ws/test`
 
 ### Description
 Add support for testing WebSocket connections, similar to how HTTP requests work.
@@ -327,8 +341,18 @@ Add support for testing WebSocket connections, similar to how HTTP requests work
 ## Issue 009: Response Visualization
 
 **Priority:** LOW  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 2 hours
+
+### Implemented
+- Raw view - plain text
+- Pretty view - formatted JSON
+- Preview view - HTML/image preview
+
+### View Options
+- **Raw**: Plain text response
+- **Pretty**: Formatted JSON with indentation
+- **Preview**: Rendered HTML or image preview
 
 ### Description
 Add response body visualization for common formats (JSON, XML, HTML, Images).
@@ -359,8 +383,14 @@ Add response body visualization for common formats (JSON, XML, HTML, Images).
 ## Issue 010: Request/Response Comparison
 
 **Priority:** LOW  
-**Status:** PENDING  
+**Status:** COMPLETED  
 **Estimate:** 3 hours
+
+### Implemented
+- Compare button in History tab
+- Select two requests via checkboxes
+- Side-by-side comparison modal
+- Differences highlighted (method, URL, status, body)
 
 ### Description
 Compare two requests/responses side by side, useful for regression testing.

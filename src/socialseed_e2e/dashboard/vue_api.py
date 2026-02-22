@@ -20,7 +20,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from socialseed_e2e.dashboard.models import Environment
+from socialseed_e2e.dashboard.models import (
+    Environment,
+    RequestHistory,
+    Collection,
+    SavedRequest,
+)
 
 # Initialize FastAPI app
 app = FastAPI(title="SocialSeed E2E Dashboard API", version="2.0.0")
@@ -122,6 +127,17 @@ FALLBACK_DASHBOARD_HTML = r"""
             --success: #22c55e;
             --error: #ef4444;
             --border: #3c3c3c;
+        }
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e5e5e5;
+            --bg-hover: #e0e0e0;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --border: #e0e0e0;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); height: 100vh; overflow: hidden; }
@@ -256,6 +272,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <option value="">No Environment</option>
                 </select>
                 <button class="btn-sm secondary" onclick="openEnvModal()" title="Manage Environments">⚙️</button>
+                <button class="btn-sm secondary" onclick="toggleTheme()" title="Toggle Theme" id="themeToggle">🌙</button>
             </div>
             
             <div class="sidebar-actions">
@@ -287,16 +304,18 @@ FALLBACK_DASHBOARD_HTML = r"""
                 </div>
             </div>
             
-            <div class="request-panel">
+                <div class="request-panel">
                 <div class="request-bar">
-                    <select class="method-select" id="methodSelect">
+                    <select class="method-select" id="methodSelect" onchange="handleMethodChange()">
                         <option value="GET">GET</option>
                         <option value="POST">POST</option>
                         <option value="PUT">PUT</option>
                         <option value="DELETE">DELETE</option>
                         <option value="PATCH">PATCH</option>
+                        <option value="WS">WebSocket</option>
                     </select>
                     <input type="text" class="url-input" id="urlInput" placeholder="Enter URL or select a test" value="">
+                    <button class="btn-sm btn-run" id="wsConnectBtn" onclick="toggleWebSocket()" style="display:none;">Connect</button>
                 </div>
                 
                 <div class="tabs">
@@ -304,6 +323,8 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <div class="tab" onclick="switchTab('headers')">Headers</div>
                     <div class="tab" onclick="switchTab('body')">Body</div>
                     <div class="tab" onclick="switchTab('tests')">Tests</div>
+                    <div class="tab" onclick="switchTab('history')">History</div>
+                    <div class="tab" id="wsTab" onclick="switchTab('ws')" style="display:none;">WebSocket</div>
                 </div>
                 
                 <div class="tab-content">
@@ -319,6 +340,28 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <div class="tab-panel" id="panel-tests">
                         <textarea class="code-editor" id="testsEditor" placeholder="// Assertions\n// response.status === 200\n// response.json().token"></textarea>
                     </div>
+                    <div class="tab-panel" id="panel-history">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                            <input type="text" id="historySearch" placeholder="Search history..." 
+                                   style="flex:1;padding:0.5rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.25rem);color:var(--text-primary);"
+                                   onkeyup="filterHistory()">
+                            <button class="btn-sm secondary" onclick="clearHistory()" style="margin-left:0.5rem;">Clear</button>
+                            <button class="btn-sm secondary" onclick="compareSelected()" style="margin-left:0.5rem;" id="compareBtn" disabled>Compare</button>
+                        </div>
+                        <div class="history-list" id="historyListContent">
+                            <p style="color:var(--text-secondary)">No history yet. Run some requests.</p>
+                        </div>
+                    </div>
+                    <div class="tab-panel" id="panel-ws">
+                        <div style="margin-bottom:1rem;">
+                            <button class="btn-sm btn-run" id="wsSendBtn" onclick="sendWsMessage()" disabled>Send</button>
+                            <input type="text" id="wsMessageInput" placeholder="Enter message..." 
+                                   style="flex:1;padding:0.5rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.25rem;color:var(--text-primary);margin-left:0.5rem;">
+                        </div>
+                        <div class="ws-messages" id="wsMessages" style="height:200px;overflow-y:auto;background:var(--bg-tertiary);border-radius:0.25rem;padding:0.5rem;font-family:monospace;font-size:0.85rem;">
+                            <p style="color:var(--text-secondary)">WebSocket messages will appear here...</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="response-panel">
@@ -326,9 +369,17 @@ FALLBACK_DASHBOARD_HTML = r"""
                         <span class="status-badge" id="statusBadge">--</span>
                         <span id="responseTime">-- ms</span>
                         <span id="responseSize">-- bytes</span>
+                        <div style="margin-left:auto;display:flex;gap:0.5rem;">
+                            <button class="btn-sm secondary" onclick="setResponseView('raw')" id="viewRaw">Raw</button>
+                            <button class="btn-sm secondary" onclick="setResponseView('pretty')" id="viewPretty">Pretty</button>
+                            <button class="btn-sm secondary" onclick="setResponseView('preview')" id="viewPreview">Preview</button>
+                        </div>
                     </div>
                     <div class="response-body" id="responseBody">
                         Response will appear here...
+                    </div>
+                    <div class="response-body" id="responsePreview" style="display:none;height:300px;background:white;">
+                        <iframe id="previewFrame" style="width:100%;height:100%;border:none;"></iframe>
                     </div>
                 </div>
             </div>
@@ -544,7 +595,12 @@ FALLBACK_DASHBOARD_HTML = r"""
                     statusBadge.className = 'status-badge error';
                 }
                 
-                document.getElementById('responseBody').textContent = JSON.stringify(data, null, 2);
+                const responseBody = document.getElementById('responseBody');
+                const bodyText = typeof data.body === 'object' ? JSON.stringify(data.body) : data.body;
+                currentResponseData = bodyText;
+                responseBody.dataset.contentType = data.headers?.['Content-Type'] || '';
+                responseBody.textContent = bodyText;
+                setResponseView(currentResponseView);
             })
             .catch(err => {
                 statusBadge.textContent = 'Error';
@@ -578,12 +634,164 @@ FALLBACK_DASHBOARD_HTML = r"""
             document.getElementById('lastSync').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
         }
         
+        let requestHistory = [];
+        
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const data = await res.json();
+                requestHistory = data.history || [];
+                renderHistory();
+            } catch(e) {
+                console.error('Error loading history:', e);
+            }
+        }
+        
+        function renderHistory() {
+            const search = document.getElementById('historySearch')?.value?.toLowerCase() || '';
+            const container = document.getElementById('historyListContent');
+            
+            const filtered = requestHistory.filter(h => 
+                h.url.toLowerCase().includes(search) ||
+                h.method.toLowerCase().includes(search)
+            );
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary)">No history found</p>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(h => `
+                <div class="history-item" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border-bottom:1px solid var(--border);cursor:pointer;">
+                    <input type="checkbox" class="history-checkbox" value="${h.id}" onchange="updateCompareButton()" onclick="event.stopPropagation()">
+                    <span class="history-time" style="font-size:0.7rem;color:var(--text-secondary)">${new Date(h.timestamp).toLocaleTimeString()}</span>
+                    <span class="history-method" style="color:${h.response_status < 400 ? 'var(--success)' : 'var(--error)'};font-size:0.75rem;">${h.method}</span>
+                    <span class="history-name" style="flex:1;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.url}</span>
+                    <span style="color:var(--text-secondary);font-size:0.75rem;">${h.response_status || '--'}</span>
+                </div>
+            `).join('');
+        }
+        
+        let selectedForCompare = [];
+        
+        function updateCompareButton() {
+            const checkboxes = document.querySelectorAll('.history-checkbox:checked');
+            selectedForCompare = Array.from(checkboxes).map(c => parseInt(c.value));
+            const btn = document.getElementById('compareBtn');
+            btn.disabled = selectedForCompare.length !== 2;
+        }
+        
+        function compareSelected() {
+            if (selectedForCompare.length !== 2) return;
+            
+            const item1 = requestHistory.find(h => h.id === selectedForCompare[0]);
+            const item2 = requestHistory.find(h => h.id === selectedForCompare[1]);
+            
+            if (!item1 || !item2) return;
+            
+            document.getElementById('compare1').innerHTML = formatHistoryItem(item1);
+            document.getElementById('compare2').innerHTML = formatHistoryItem(item2);
+            
+            const diff = computeDiff(item1, item2);
+            document.getElementById('compareDiff').innerHTML = diff;
+            
+            document.getElementById('compareModal').classList.add('active');
+        }
+        
+        function formatHistoryItem(item) {
+            return `
+                <div><strong>${item.method}</strong> ${item.url}</div>
+                <div style="color:var(--text-secondary);margin-top:0.5rem;">Status: ${item.response_status || '--'}</div>
+                <div style="margin-top:0.5rem;"><pre style="margin:0;white-space:pre-wrap;">${item.response_body?.substring(0, 500) || ''}</pre></div>
+            `;
+        }
+        
+        function computeDiff(item1, item2) {
+            let diff = [];
+            
+            if (item1.method !== item2.method) {
+                diff.push(`<div style="color:var(--error)">Method: ${item1.method} → ${item2.method}</div>`);
+            }
+            if (item1.url !== item2.url) {
+                diff.push(`<div style="color:var(--error)">URL changed</div>`);
+            }
+            if (item1.response_status !== item2.response_status) {
+                diff.push(`<div style="color:var(--error)">Status: ${item1.response_status} → ${item2.response_status}</div>`);
+            }
+            
+            const body1 = item1.response_body || '';
+            const body2 = item2.response_body || '';
+            if (body1 !== body2) {
+                diff.push(`<div style="color:var(--accent)">Response body differs</div>`);
+            }
+            
+            if (diff.length === 0) {
+                return '<div style="color:var(--success)">No differences found</div>';
+            }
+            
+            return diff.join('');
+        }
+        
+        function closeCompareModal() {
+            document.getElementById('compareModal').classList.remove('active');
+        }
+        
+        function filterHistory() {
+            renderHistory();
+        }
+            
+            container.innerHTML = filtered.map(h => \`
+                <div class="history-item" onclick="restoreFromHistory(\${h.id})" style="cursor:pointer;">
+                    <span class="history-time">\${new Date(h.timestamp).toLocaleTimeString()}</span>
+                    <span class="history-method" style="color:\${h.response_status < 400 ? 'var(--success)' : 'var(--error)'}">\${h.method}</span>
+                    <span class="history-name">\${h.url}</span>
+                    <span style="color:var(--text-secondary);font-size:0.75rem;">\${h.response_status || '--'}</span>
+                </div>
+            \`).join('');
+        }
+        
+        function filterHistory() {
+            renderHistory();
+        }
+        
+        function restoreFromHistory(id) {
+            const item = requestHistory.find(h => h.id === id);
+            if (item) {
+                document.getElementById('methodSelect').value = item.method;
+                document.getElementById('urlInput').value = item.url;
+                document.getElementById('bodyEditor').value = item.body || '';
+                switchTab('params');
+                alert('Request restored from history');
+            }
+        }
+        
+        async function clearHistory() {
+            if (!confirm('Clear all history?')) return;
+            try {
+                await fetch('/api/history', {method: 'DELETE'});
+                requestHistory = [];
+                renderHistory();
+            } catch(e) {
+                console.error('Error clearing history:', e);
+            }
+        }
+        
+        // Load history when switching to history tab
+        const originalSwitchTab = switchTab;
+        switchTab = function(tabName) {
+            if (tabName === 'history') {
+                loadHistory();
+            }
+            originalSwitchTab(tabName);
+        };
+        
         // Auto-refresh every 5 seconds
         setInterval(loadData, 5000);
         
         // Initial load
         loadData();
         loadEnvironments();
+        loadTheme();
         
         // Environment functions
         let currentEnvironments = [];
@@ -631,6 +839,257 @@ FALLBACK_DASHBOARD_HTML = r"""
         
         function closeEnvModal() {
             document.getElementById('envModal').classList.remove('active');
+        }
+        
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const toggle = document.getElementById('themeToggle');
+            
+            if (current === 'light') {
+                html.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+                toggle.textContent = '🌙';
+            } else {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                toggle.textContent = '☀️';
+            }
+        }
+        
+        function loadTheme() {
+            const saved = localStorage.getItem('theme');
+            const toggle = document.getElementById('themeToggle');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                toggle.textContent = '☀️';
+            }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter - Send request
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runSelectedTest();
+            }
+            // Ctrl/Cmd + N - New request
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                newRequest();
+            }
+            // Ctrl/Cmd + S - Save request
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveCurrentRequest();
+            }
+            // Ctrl/Cmd + D - Duplicate request
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                duplicateTest();
+            }
+            // Escape - Close modals
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+            }
+        });
+        
+        function newRequest() {
+            document.getElementById('requestName').value = 'New Request';
+            document.getElementById('requestMethod').value = 'GET';
+            document.getElementById('requestUrl').value = '';
+            document.getElementById('requestBody').value = '';
+            currentRequestId = null;
+        }
+        
+        function saveCurrentRequest() {
+            const name = document.getElementById('requestName').value;
+            const method = document.getElementById('requestMethod').value;
+            const url = document.getElementById('requestUrl').value;
+            const body = document.getElementById('requestBody').value;
+            
+            if (!name || !url) {
+                alert('Please enter a name and URL');
+                return;
+            }
+            
+            if (currentRequestId) {
+                fetch(`/api/requests/${currentRequestId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, method, url, body})
+                }).then(() => {
+                    loadData();
+                    alert('Request updated!');
+                });
+            } else {
+                fetch('/api/requests', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, method, url, body})
+                }).then(() => {
+                    loadData();
+                    alert('Request saved!');
+                });
+            }
+        }
+        
+        // WebSocket support
+        let ws = null;
+        let wsConnected = false;
+        
+        function handleMethodChange() {
+            const method = document.getElementById('methodSelect').value;
+            const wsBtn = document.getElementById('wsConnectBtn');
+            const wsTab = document.getElementById('wsTab');
+            
+            if (method === 'WS') {
+                wsBtn.style.display = 'inline-block';
+                wsTab.style.display = 'block';
+            } else {
+                wsBtn.style.display = 'none';
+                wsTab.style.display = 'none';
+                if (wsConnected) {
+                    toggleWebSocket();
+                }
+            }
+        }
+        
+        function toggleWebSocket() {
+            const url = document.getElementById('urlInput').value;
+            const btn = document.getElementById('wsConnectBtn');
+            const sendBtn = document.getElementById('wsSendBtn');
+            
+            if (!wsConnected) {
+                if (!url) {
+                    alert('Please enter a WebSocket URL');
+                    return;
+                }
+                try {
+                    ws = new WebSocket(url);
+                    
+                    ws.onopen = function() {
+                        wsConnected = true;
+                        btn.textContent = 'Disconnect';
+                        btn.classList.remove('btn-run');
+                        btn.classList.add('secondary');
+                        sendBtn.disabled = false;
+                        addWsMessage('system', 'Connected to ' + url);
+                    };
+                    
+                    ws.onmessage = function(event) {
+                        addWsMessage('received', event.data);
+                    };
+                    
+                    ws.onclose = function() {
+                        wsConnected = false;
+                        btn.textContent = 'Connect';
+                        btn.classList.add('btn-run');
+                        btn.classList.remove('secondary');
+                        sendBtn.disabled = true;
+                        addWsMessage('system', 'Disconnected');
+                    };
+                    
+                    ws.onerror = function(error) {
+                        addWsMessage('error', 'Error: ' + error);
+                    };
+                } catch (e) {
+                    alert('Failed to connect: ' + e.message);
+                }
+            } else {
+                ws.close();
+            }
+        }
+        
+        function sendWsMessage() {
+            const input = document.getElementById('wsMessageInput');
+            const message = input.value;
+            
+            if (ws && wsConnected && message) {
+                ws.send(message);
+                addWsMessage('sent', message);
+                input.value = '';
+            }
+        }
+        
+        function addWsMessage(type, message) {
+            const container = document.getElementById('wsMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.style.marginBottom = '0.5rem';
+            
+            if (type === 'sent') {
+                msgDiv.innerHTML = '<span style="color:#22c55e;">➤</span> <span style="color:var(--text-primary);">' + escapeHtml(message) + '</span>';
+            } else if (type === 'received') {
+                msgDiv.innerHTML = '<span style="color:#f59e0b;">◀</span> <span style="color:var(--text-primary);">' + escapeHtml(message) + '</span>';
+            } else if (type === 'error') {
+                msgDiv.innerHTML = '<span style="color:#ef4444;">⚠</span> <span style="color:var(--text-primary);">' + escapeHtml(message) + '</span>';
+            } else {
+                msgDiv.innerHTML = '<span style="color:var(--text-secondary);">' + escapeHtml(message) + '</span>';
+            }
+            
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        let currentResponseView = 'raw';
+        let currentResponseData = '';
+        
+        function setResponseView(view) {
+            currentResponseView = view;
+            const rawBody = document.getElementById('responseBody');
+            const previewBody = document.getElementById('responsePreview');
+            const btnRaw = document.getElementById('viewRaw');
+            const btnPretty = document.getElementById('viewPretty');
+            const btnPreview = document.getElementById('viewPreview');
+            
+            btnRaw.classList.remove('btn-run');
+            btnPretty.classList.remove('btn-run');
+            btnPreview.classList.remove('btn-run');
+            btnRaw.classList.add('secondary');
+            btnPretty.classList.add('secondary');
+            btnPreview.classList.add('secondary');
+            
+            if (view === 'raw') {
+                rawBody.style.display = 'block';
+                previewBody.style.display = 'none';
+                btnRaw.classList.remove('secondary');
+                btnRaw.classList.add('btn-run');
+                rawBody.textContent = currentResponseData;
+            } else if (view === 'pretty') {
+                rawBody.style.display = 'block';
+                previewBody.style.display = 'none';
+                btnPretty.classList.remove('secondary');
+                btnPretty.classList.add('btn-run');
+                try {
+                    const json = JSON.parse(currentResponseData);
+                    rawBody.textContent = JSON.stringify(json, null, 2);
+                } catch (e) {
+                    rawBody.textContent = currentResponseData;
+                }
+            } else if (view === 'preview') {
+                btnPreview.classList.remove('secondary');
+                btnPreview.classList.add('btn-run');
+                const contentType = document.getElementById('responseBody').dataset.contentType || '';
+                if (contentType.includes('html')) {
+                    rawBody.style.display = 'none';
+                    previewBody.style.display = 'block';
+                    document.getElementById('previewFrame').srcdoc = currentResponseData;
+                } else if (contentType.includes('image')) {
+                    rawBody.style.display = 'block';
+                    previewBody.style.display = 'none';
+                    rawBody.innerHTML = '<img src="' + currentResponseData + '" style="max-width:100%;">';
+                } else {
+                    rawBody.style.display = 'block';
+                    previewBody.style.display = 'none';
+                    rawBody.textContent = 'Preview not available for this content type';
+                }
+            }
         }
         
         function renderEnvList() {
@@ -748,6 +1207,35 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <button class="btn-sm secondary" onclick="previewImport()">Preview</button>
                 <button class="btn-sm btn-run" onclick="doImport()">Import</button>
                 <button class="btn-sm secondary" onclick="closeImportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Compare Modal -->
+    <div class="modal-overlay" id="compareModal">
+        <div class="modal" style="max-width:900px;">
+            <div class="modal-header">
+                <h3>Compare Requests</h3>
+                <button class="close-btn" onclick="closeCompareModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <h4 style="margin-bottom:0.5rem;">Request 1</h4>
+                        <div id="compare1" style="background:var(--bg-tertiary);padding:0.75rem;border-radius:0.25rem;font-family:monospace;font-size:0.8rem;max-height:200px;overflow:auto;"></div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom:0.5rem;">Request 2</h4>
+                        <div id="compare2" style="background:var(--bg-tertiary);padding:0.75rem;border-radius:0.25rem;font-family:monospace;font-size:0.8rem;max-height:200px;overflow:auto;"></div>
+                    </div>
+                </div>
+                <div style="margin-top:1rem;">
+                    <h4>Differences</h4>
+                    <div id="compareDiff" style="background:var(--bg-tertiary);padding:0.75rem;border-radius:0.25rem;font-family:monospace;font-size:0.8rem;max-height:200px;overflow:auto;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-sm secondary" onclick="closeCompareModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1157,6 +1645,338 @@ async def activate_environment(env_id: int) -> Dict[str, Any]:
     }
 
 
+@app.get("/api/history")
+async def get_request_history(limit: int = 100) -> Dict[str, Any]:
+    """Get request history."""
+    from socialseed_e2e.dashboard.models import RequestHistory
+
+    history = RequestHistory.get_all(limit)
+    return {
+        "history": [
+            {
+                "id": h.id,
+                "timestamp": h.timestamp,
+                "method": h.method,
+                "url": h.url,
+                "headers": h.headers,
+                "body": h.body,
+                "response_status": h.response_status,
+                "response_body": h.response_body,
+                "response_headers": h.response_headers,
+                "duration_ms": h.duration_ms,
+                "environment_id": h.environment_id,
+            }
+            for h in history
+        ]
+    }
+
+
+@app.get("/api/history/{history_id}")
+async def get_request_history_item(history_id: int) -> Dict[str, Any]:
+    """Get a single history entry."""
+    from socialseed_e2e.dashboard.models import RequestHistory
+
+    h = RequestHistory.get_by_id(history_id)
+    if not h:
+        raise HTTPException(status_code=404, detail="History entry not found")
+
+    return {
+        "id": h.id,
+        "timestamp": h.timestamp,
+        "method": h.method,
+        "url": h.url,
+        "headers": h.headers,
+        "body": h.body,
+        "response_status": h.response_status,
+        "response_body": h.response_body,
+        "response_headers": h.response_headers,
+        "duration_ms": h.duration_ms,
+        "environment_id": h.environment_id,
+    }
+
+
+@app.delete("/api/history")
+async def clear_request_history() -> Dict[str, Any]:
+    """Clear all request history."""
+    from socialseed_e2e.dashboard.models import RequestHistory
+
+    RequestHistory.delete_all()
+    return {"message": "History cleared"}
+
+
+@app.delete("/api/history/{history_id}")
+async def delete_request_history_item(history_id: int) -> Dict[str, Any]:
+    """Delete a single history entry."""
+    from socialseed_e2e.dashboard.models import RequestHistory
+
+    h = RequestHistory.get_by_id(history_id)
+    if not h:
+        raise HTTPException(status_code=404, detail="History entry not found")
+
+    h.delete()
+    return {"message": "History entry deleted"}
+
+
+@app.get("/api/collections")
+async def get_collections() -> Dict[str, Any]:
+    """Get all collections with their requests."""
+    collections = Collection.get_all()
+    result = []
+    for col in collections:
+        requests = SavedRequest.get_all(col.id)
+        result.append(
+            {
+                "id": col.id,
+                "name": col.name,
+                "description": col.description,
+                "created_at": col.created_at,
+                "updated_at": col.updated_at,
+                "requests": [
+                    {
+                        "id": r.id,
+                        "name": r.name,
+                        "method": r.method,
+                        "url": r.url,
+                        "headers": r.headers,
+                        "body": r.body,
+                        "params": r.params,
+                        "order_index": r.order_index,
+                    }
+                    for r in requests
+                ],
+            }
+        )
+    return {"collections": result}
+
+
+@app.post("/api/collections")
+async def create_collection(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a new collection."""
+    col = Collection(
+        name=data.get("name", "New Collection"), description=data.get("description", "")
+    )
+    col.save()
+    return {
+        "id": col.id,
+        "name": col.name,
+        "description": col.description,
+        "message": "Collection created",
+    }
+
+
+@app.put("/api/collections/{collection_id}")
+async def update_collection(collection_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Update a collection."""
+    col = Collection.get_by_id(collection_id)
+    if not col:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    if data.get("name"):
+        col.name = data["name"]
+    if "description" in data:
+        col.description = data["description"]
+    col.save()
+
+    return {
+        "id": col.id,
+        "name": col.name,
+        "description": col.description,
+        "message": "Collection updated",
+    }
+
+
+@app.delete("/api/collections/{collection_id}")
+async def delete_collection(collection_id: int) -> Dict[str, Any]:
+    """Delete a collection."""
+    col = Collection.get_by_id(collection_id)
+    if not col:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    col.delete()
+    return {"message": "Collection deleted"}
+
+
+@app.get("/api/requests")
+async def get_requests(collection_id: int = None) -> Dict[str, Any]:
+    """Get all saved requests, optionally filtered by collection."""
+    requests = SavedRequest.get_all(collection_id)
+    return {
+        "requests": [
+            {
+                "id": r.id,
+                "collection_id": r.collection_id,
+                "name": r.name,
+                "method": r.method,
+                "url": r.url,
+                "headers": r.headers,
+                "body": r.body,
+                "params": r.params,
+                "order_index": r.order_index,
+            }
+            for r in requests
+        ]
+    }
+
+
+@app.post("/api/requests")
+async def create_request(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a new saved request."""
+    req = SavedRequest(
+        collection_id=data.get("collection_id"),
+        name=data.get("name", "New Request"),
+        method=data.get("method", "GET"),
+        url=data.get("url", ""),
+        headers=data.get("headers", "{}"),
+        body=data.get("body", ""),
+        params=data.get("params", "{}"),
+        order_index=data.get("order_index", 0),
+    )
+    req.save()
+    return {
+        "id": req.id,
+        "name": req.name,
+        "method": req.method,
+        "url": req.url,
+        "message": "Request saved",
+    }
+
+
+@app.put("/api/requests/{request_id}")
+async def update_request(request_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Update a saved request."""
+    req = SavedRequest.get_by_id(request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    if data.get("name"):
+        req.name = data["name"]
+    if data.get("method"):
+        req.method = data["method"]
+    if data.get("url"):
+        req.url = data["url"]
+    if "headers" in data:
+        req.headers = data["headers"]
+    if "body" in data:
+        req.body = data["body"]
+    if "params" in data:
+        req.params = data["params"]
+    if "collection_id" in data:
+        req.collection_id = data["collection_id"]
+    req.save()
+
+    return {
+        "id": req.id,
+        "name": req.name,
+        "method": req.method,
+        "url": req.url,
+        "message": "Request updated",
+    }
+
+
+@app.delete("/api/requests/{request_id}")
+async def delete_request(request_id: int) -> Dict[str, Any]:
+    """Delete a saved request."""
+    req = SavedRequest.get_by_id(request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    req.delete()
+    return {"message": "Request deleted"}
+
+
+LANGUAGE_TEMPLATES = {
+    "curl": """curl -X {{method}} "{{url}}" \\
+  -H "Content-Type: application/json"{{headers}}{{body}}""",
+    "python": """import requests
+
+response = requests.{{method_lower}}(
+    "{{url}}"{{params}}{{headers}}{{body}}
+)
+
+print(response.status_code)
+print(response.json())""",
+    "javascript": """fetch("{{url}}", {
+  method: "{{method}}",
+  headers: {{headers}}{{body}}
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error(error));""",
+    "java": """OkHttpClient client = new OkHttpClient();
+
+Request request = new Request.Builder()
+  .url("{{url}}")
+  .{{method_lower}}()
+{{headers}}  .build();
+
+Response response = client.newCall(request).execute();
+System.out.println(response.body().string());""",
+    "go": """req, err := http.NewRequest("{{method}}", "{{url}}", nil)
+if err != nil {
+    log.Fatal(err)
+}
+
+client := &http.Client{}
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+
+body, _ := io.ReadAll(resp.Body)
+fmt.Println(string(body))""",
+}
+
+
+@app.post("/api/snippets")
+async def generate_snippet(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate code snippet from request."""
+    method = data.get("method", "GET")
+    url = data.get("url", "")
+    headers = data.get("headers", {})
+    body = data.get("body", "")
+    lang = data.get("language", "curl")
+
+    headers_str = ""
+    if headers:
+        headers_dict = json.loads(headers) if isinstance(headers, str) else headers
+        for k, v in headers_dict.items():
+            headers_str += f'\\n  -H "{k}: {v}"'
+
+    body_str = ""
+    if body:
+        body_str += f"\\n  -d '{body}'"
+
+    body_js = ""
+    if body:
+        body_js += f",\\n  body: JSON.stringify({body})"
+
+    body_py = ""
+    if body and method in ["POST", "PUT", "PATCH"]:
+        body_py += f",\\n    json={body}"
+
+    body_go = ""
+    if body:
+        body_go += f", bytes.NewBuffer([]byte(`{body}`))"
+        body_go += '\\n  .SetHeader("Content-Type", "application/json")'
+
+    body_java = ""
+    if body:
+        body_java += (
+            f'.post(RequestBody.create(MediaType.parse("application/json"), "{body}"))'
+        )
+
+    template = LANGUAGE_TEMPLATES.get(lang, LANGUAGE_TEMPLATES["curl"])
+
+    result = template.replace("{{method}}", method)
+    result = result.replace("{{method_lower}}", method.lower())
+    result = result.replace("{{url}}", url)
+    result = result.replace("{{headers}}", headers_str)
+    result = result.replace("{{body}}", body_str)
+
+    return {"snippet": result, "language": lang}
+
+
 def substitute_variables(text: str, variables: Dict[str, str]) -> str:
     """Substitute {{variable}} placeholders with values."""
     if not text or not variables:
@@ -1181,6 +2001,18 @@ async def get_test_content(path: str) -> Dict[str, Any]:
     return {"error": "Test not found", "path": path}
 
 
+@app.websocket("/ws/test")
+async def websocket_test(websocket):
+    """WebSocket endpoint for testing."""
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Echo: {data}")
+    except Exception:
+        pass
+
+
 @app.post("/api/test-run")
 async def run_test_request(data: Dict[str, Any]) -> Dict[str, Any]:
     """Run a test request (for dashboard testing)."""
@@ -1199,17 +2031,22 @@ async def run_test_request(data: Dict[str, Any]) -> Dict[str, Any]:
 
         response = req.request(method, url, **kwargs)
 
+        response_body = (
+            response.json()
+            if response.headers.get("content-type", "").startswith("application/json")
+            else response.text
+        )
+
         result = {
             "status": response.status_code,
             "headers": dict(response.headers),
-            "body": response.json()
-            if response.headers.get("content-type", "").startswith("application/json")
-            else response.text,
+            "body": response_body,
             "test_name": test_name,
             "sandbox": is_sandbox,
             "timestamp": datetime.now().isoformat(),
         }
 
+        # Save to test_runs (existing table)
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(
@@ -1223,6 +2060,26 @@ async def run_test_request(data: Dict[str, Any]) -> Dict[str, Any]:
                 0,
             ),
         )
+
+        # Save to request_history (new table for detailed history)
+        cursor.execute(
+            """
+            INSERT INTO request_history 
+            (timestamp, method, url, headers, body, response_status, response_body, duration_ms)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                result["timestamp"],
+                method,
+                url,
+                json.dumps({}),
+                json.dumps(body) if body else None,
+                response.status_code,
+                json.dumps(response_body),
+                0,
+            ),
+        )
+
         conn.commit()
         conn.close()
 
