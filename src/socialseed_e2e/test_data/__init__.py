@@ -11,6 +11,7 @@ Exposes:
 """
 
 from .database_fixtures import (
+    ColumnInfo,
     DatabaseFixtureManager,
     DatabaseType,
     IntelligentFixtureGenerator,
@@ -27,6 +28,7 @@ __all__ = [
     # Seeder
     "DataSeeder",
     # Database Fixtures (Issue #6)
+    "ColumnInfo",
     "DatabaseFixtureManager",
     "DatabaseType",
     "IntelligentFixtureGenerator",

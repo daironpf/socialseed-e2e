@@ -17,7 +17,7 @@ class ModelSize(str, Enum):
     SMALL = "small"  # e.g., GPT-4o-mini, Claude Haiku
     MEDIUM = "medium"  # e.g., GPT-4o, Claude Sonnet
     LARGE = "large"  # e.g., GPT-4 Turbo, Claude Opus
-    reasoning = "reasoning"  # e.g., o1, o3-mini
+    REASONING = "reasoning"  # e.g., o1, o3-mini
 
 
 class TaskComplexity(str, Enum):
