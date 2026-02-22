@@ -61,6 +61,17 @@ from socialseed_e2e.nlp.gherkin_parser import (
     GherkinParser,
     GherkinWriter,
 )
+from socialseed_e2e.nlp.living_docs import (
+    BusinessRule,
+    BusinessRuleExtractor,
+    CoverageTracker,
+    DocFormat,
+    LivingDocConfig,
+    LivingDocumentationGenerator,
+    SemanticDriftAlert,
+    SemanticDriftDetector,
+    TestCoverage,
+)
 
 __all__ = [
     # Models
@@ -97,4 +108,14 @@ __all__ = [
     # Gherkin Parser
     "GherkinParser",
     "GherkinWriter",
+    # Living Documentation (Issue #4 - Phase 2)
+    "BusinessRule",
+    "BusinessRuleExtractor",
+    "CoverageTracker",
+    "DocFormat",
+    "LivingDocConfig",
+    "LivingDocumentationGenerator",
+    "SemanticDriftAlert",
+    "SemanticDriftDetector",
+    "TestCoverage",
 ]
