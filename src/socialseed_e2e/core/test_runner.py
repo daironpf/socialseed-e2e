@@ -638,8 +638,13 @@ def execute_single_test(
                 error_message="No 'run' function found in module",
             )
 
-        # Execute the test
-        run_func(page)
+        # Execute the test (handle both sync and async functions)
+        import asyncio
+
+        if asyncio.iscoroutinefunction(run_func):
+            asyncio.get_event_loop().run_until_complete(run_func(page))
+        else:
+            run_func(page)
 
         duration = (time.time() - start_time) * 1000
 
