@@ -38,6 +38,7 @@ Requires-Dist: websocket-client>=1.0.0
 Requires-Dist: Faker>=19.0.0
 Requires-Dist: aiohttp>=3.9.0
 Requires-Dist: email-validator>=2.0.0
+Requires-Dist: pytest>=7.0.0
 Provides-Extra: grpc
 Requires-Dist: grpcio>=1.59.0; extra == "grpc"
 Requires-Dist: grpcio-tools>=1.59.0; extra == "grpc"

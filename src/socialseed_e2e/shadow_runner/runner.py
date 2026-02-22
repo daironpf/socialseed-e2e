@@ -12,7 +12,7 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from socialseed_e2e.shadow_runner.fuzzer import IntelligentFuzzer, SemanticFuzzer
 from socialseed_e2e.shadow_runner.models import (
@@ -143,7 +143,7 @@ class ShadowRunner:
     def run_fuzzing_campaign(
         self,
         campaign: FuzzingCampaign,
-        execute_callback: Optional[callable] = None,
+        execute_callback: Optional[Callable[..., Any]] = None,
     ) -> FuzzingCampaign:
         """
         Execute a fuzzing campaign.
@@ -300,7 +300,7 @@ class ShadowRunner:
             "status_code": request.status_code or 200,
         }
 
-        if request.response_body:
+        if isinstance(request.response_body, dict):
             assertions["response_keys"] = list(request.response_body.keys())
 
         return assertions

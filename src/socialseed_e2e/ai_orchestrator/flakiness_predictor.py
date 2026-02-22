@@ -157,7 +157,7 @@ class FlakinessAnalyzer:
                 if re.search(pattern, func_source or ""):
                     factors.append(factor)
                     factor_details[factor.value] = self._get_factor_details(
-                        factor, func_source
+                        factor, func_source or ""
                     )
 
                     fix = self._suggest_fix(factor)

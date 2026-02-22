@@ -294,6 +294,47 @@ class ShadowRunner:
 
         return stats
 
+    def analyze_capture(self, capture_path: str) -> Dict[str, Any]:
+        """Analyze captured traffic and return statistics.
+
+        Args:
+            capture_path: Path to the capture file
+
+        Returns:
+            Dictionary with analysis results
+        """
+        import json
+        from pathlib import Path
+
+        path = Path(capture_path)
+        if not path.exists():
+            return {"error": f"File not found: {capture_path}"}
+
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        interactions = data.get("interactions", [])
+
+        analysis = {
+            "total_requests": len(interactions),
+            "unique_endpoints": len(set(i.get("path", "") for i in interactions)),
+            "methods": {},
+            "status_codes": {},
+        }
+
+        for interaction in interactions:
+            method = interaction.get("method", "UNKNOWN")
+            analysis["methods"][method] = analysis["methods"].get(method, 0) + 1
+
+            status = interaction.get("status_code", 0)
+            if status:
+                status_str = str(status)
+                analysis["status_codes"][status_str] = (
+                    analysis["status_codes"].get(status_str, 0) + 1
+                )
+
+        return analysis
+
     def get_privacy_report(self) -> Dict[str, Any]:
         """Get privacy sanitization report.
 

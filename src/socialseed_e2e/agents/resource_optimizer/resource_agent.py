@@ -140,7 +140,8 @@ class ModelSelector:
     ) -> ModelRecommendation:
         """Select optimal model based on complexity and budget."""
         strategy = self.strategies[complexity]
-        model_info = self.MODEL_CATALOG.get(strategy.recommended_model)
+        model_key = strategy.recommended_model or "gpt-4o-mini"
+        model_info = self.MODEL_CATALOG.get(model_key)
 
         if not model_info:
             model_info = self.MODEL_CATALOG["gpt-4o-mini"]
@@ -153,7 +154,7 @@ class ModelSelector:
                 return self.select_model(TaskComplexity.SIMPLE, budget)
 
         return ModelRecommendation(
-            model_name=strategy.recommended_model,
+            model_name=model_key,
             provider=model_info["provider"],
             model_size=model_info["size"],
             estimated_cost_usd=estimated_cost,

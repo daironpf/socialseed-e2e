@@ -5647,10 +5647,7 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
         from socialseed_e2e.shadow_runner import ShadowRunner
 
         runner = ShadowRunner()
-        session = runner.load_capture(str(capture_path))
-
-        # Analyze patterns
-        analysis = runner.analyze_patterns(session)
+        analysis = runner.analyze_capture(str(capture_path))
 
         if format == "json":
             import json
@@ -5659,9 +5656,15 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
         else:
             # Display as table
             console.print(
-                f"[bold]Total Interactions:[/bold] {analysis['total_interactions']}"
+                f"[bold]Total Requests:[/bold] {analysis.get('total_requests', 0)}"
             )
-            console.print(f"[bold]Time Range:[/bold] {analysis['time_range']}")
+            console.print(
+                f"[bold]Unique Endpoints:[/bold] {analysis.get('unique_endpoints', 0)}"
+            )
+            console.print(f"[bold]Methods:[/bold] {analysis.get('methods', {})}")
+            console.print(
+                f"[bold]Status Codes:[/bold] {analysis.get('status_codes', {})}"
+            )
             console.print()
 
             if analysis.get("method_distribution"):

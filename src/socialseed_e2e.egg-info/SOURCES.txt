@@ -67,6 +67,8 @@ docs/api/core.rst
 docs/api/models.rst
 docs/api/utils.rst
 docs/community/README.md
+docs/dashboard-issues/001_dashboard_variables.md
+docs/dashboard-issues/README.md
 docs/tutorials/README.md
 docs/tutorials/api-explorer.md
 docs/tutorials/examples/README.md
@@ -140,6 +142,7 @@ examples/websocket/test_websocket.py
 src/socialseed_e2e/__init__.py
 src/socialseed_e2e/__main__.py
 src/socialseed_e2e/__version__.py
+src/socialseed_e2e/business_traceability.py
 src/socialseed_e2e/cli.py
 src/socialseed_e2e/demo_factory.py
 src/socialseed_e2e/mock_server.py
@@ -159,6 +162,9 @@ src/socialseed_e2e/agents/red_team_adversary/models.py
 src/socialseed_e2e/agents/red_team_adversary/red_team_agent.py
 src/socialseed_e2e/agents/red_team_adversary/resilience_scorer.py
 src/socialseed_e2e/agents/red_team_adversary/security_logger.py
+src/socialseed_e2e/agents/resource_optimizer/__init__.py
+src/socialseed_e2e/agents/resource_optimizer/models.py
+src/socialseed_e2e/agents/resource_optimizer/resource_agent.py
 src/socialseed_e2e/agents/semantic_analyzer/__init__.py
 src/socialseed_e2e/agents/semantic_analyzer/grpc_client.py
 src/socialseed_e2e/agents/semantic_analyzer/grpc_server.py
@@ -172,6 +178,7 @@ src/socialseed_e2e/agents/semantic_analyzer/proto/__init__.py
 src/socialseed_e2e/agents/semantic_analyzer/proto/generate.py
 src/socialseed_e2e/agents/semantic_analyzer/proto/semantic_analyzer_pb2.py
 src/socialseed_e2e/agents/semantic_analyzer/proto/semantic_analyzer_pb2_grpc.py
+src/socialseed_e2e/agents/xai/__init__.py
 src/socialseed_e2e/ai_learning/__init__.py
 src/socialseed_e2e/ai_learning/adaptation_engine.py
 src/socialseed_e2e/ai_learning/feedback_collector.py
@@ -181,9 +188,11 @@ src/socialseed_e2e/ai_mocking/contract_validator.py
 src/socialseed_e2e/ai_mocking/external_api_analyzer.py
 src/socialseed_e2e/ai_mocking/external_service_registry.py
 src/socialseed_e2e/ai_mocking/mock_server_generator.py
+src/socialseed_e2e/ai_mocking/stateful_mocks.py
 src/socialseed_e2e/ai_orchestrator/__init__.py
 src/socialseed_e2e/ai_orchestrator/autonomous_runner.py
 src/socialseed_e2e/ai_orchestrator/debugger.py
+src/socialseed_e2e/ai_orchestrator/flakiness_predictor.py
 src/socialseed_e2e/ai_orchestrator/models.py
 src/socialseed_e2e/ai_orchestrator/self_healer.py
 src/socialseed_e2e/ai_orchestrator/strategy_planner.py
@@ -297,7 +306,9 @@ src/socialseed_e2e/core/config_loader.py
 src/socialseed_e2e/core/headers.py
 src/socialseed_e2e/core/interfaces.py
 src/socialseed_e2e/core/loaders.py
+src/socialseed_e2e/core/ml_orchestrator.py
 src/socialseed_e2e/core/models.py
+src/socialseed_e2e/core/multi_env_testing.py
 src/socialseed_e2e/core/organization.py
 src/socialseed_e2e/core/parallel_runner.py
 src/socialseed_e2e/core/test_orchestrator.py
@@ -317,6 +328,7 @@ src/socialseed_e2e/core/traceability/reporter.py
 src/socialseed_e2e/core/traceability/sequence_diagram.py
 src/socialseed_e2e/dashboard/__init__.py
 src/socialseed_e2e/dashboard/app.py
+src/socialseed_e2e/dashboard/models.py
 src/socialseed_e2e/dashboard/server.py
 src/socialseed_e2e/dashboard/vue_api.py
 src/socialseed_e2e/dashboard/components/server.py
@@ -338,6 +350,8 @@ src/socialseed_e2e/database/performance/__init__.py
 src/socialseed_e2e/database/performance/query_analyzer.py
 src/socialseed_e2e/database/transactions/__init__.py
 src/socialseed_e2e/database/transactions/transaction_tester.py
+src/socialseed_e2e/debugging/__init__.py
+src/socialseed_e2e/debugging/time_travel.py
 src/socialseed_e2e/distributed/__init__.py
 src/socialseed_e2e/docker/__init__.py
 src/socialseed_e2e/docker/manager.py
@@ -376,6 +390,7 @@ src/socialseed_e2e/nlp/__init__.py
 src/socialseed_e2e/nlp/code_generator.py
 src/socialseed_e2e/nlp/context_awareness.py
 src/socialseed_e2e/nlp/gherkin_parser.py
+src/socialseed_e2e/nlp/living_docs.py
 src/socialseed_e2e/nlp/models.py
 src/socialseed_e2e/nlp/translator.py
 src/socialseed_e2e/observability/__init__.py
@@ -444,6 +459,7 @@ src/socialseed_e2e/risk_analyzer/impact_calculator.py
 src/socialseed_e2e/risk_analyzer/risk_scorer.py
 src/socialseed_e2e/security/__init__.py
 src/socialseed_e2e/security/models.py
+src/socialseed_e2e/security/pii_detector.py
 src/socialseed_e2e/security/compliance/__init__.py
 src/socialseed_e2e/security/compliance/compliance_validator.py
 src/socialseed_e2e/security/detection/__init__.py
@@ -469,7 +485,10 @@ src/socialseed_e2e/semantic_fuzzing/__init__.py
 src/socialseed_e2e/services/__init__.py
 src/socialseed_e2e/shadow_runner/__init__.py
 src/socialseed_e2e/shadow_runner/capture_filter.py
+src/socialseed_e2e/shadow_runner/fuzzer.py
+src/socialseed_e2e/shadow_runner/models.py
 src/socialseed_e2e/shadow_runner/privacy_sanitizer.py
+src/socialseed_e2e/shadow_runner/runner.py
 src/socialseed_e2e/shadow_runner/session_recorder.py
 src/socialseed_e2e/shadow_runner/test_generator.py
 src/socialseed_e2e/shadow_runner/traffic_interceptor.py
@@ -634,6 +653,7 @@ src/socialseed_e2e/templates/ci-cd/gitlab-ci/gitlab-ci.yml.template
 src/socialseed_e2e/templates/ci-cd/jenkins/Jenkinsfile.template
 src/socialseed_e2e/templates/ci-cd/travis/travis.yml.template
 src/socialseed_e2e/test_data/__init__.py
+src/socialseed_e2e/test_data/database_fixtures.py
 src/socialseed_e2e/test_data/factories.py
 src/socialseed_e2e/test_data/seeder.py
 src/socialseed_e2e/test_data_advanced/__init__.py
