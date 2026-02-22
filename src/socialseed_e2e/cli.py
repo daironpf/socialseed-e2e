@@ -5768,6 +5768,72 @@ def shadow_export_middleware(framework: str, output: Optional[str]):
         sys.exit(1)
 
 
+@shadow.command("fuzz")
+@click.argument("capture_file")
+@click.argument("target_url")
+@click.option(
+    "--strategy",
+    "-s",
+    type=click.Choice(["random", "intelligent", "coverage_guided", "ai_powered"]),
+    default="intelligent",
+    help="Fuzzing strategy to use",
+)
+@click.option(
+    "--mutations", "-m", type=int, default=5, help="Number of mutations per request"
+)
+@click.option("--output", "-o", help="Output file for fuzzing report")
+def shadow_fuzz(
+    capture_file: str,
+    target_url: str,
+    strategy: str,
+    mutations: int,
+    output: Optional[str],
+):
+    """Run semantic fuzzing on captured traffic."""
+    console.print(f"\n🎯 [bold cyan]Shadow Runner - Semantic Fuzzing[/bold cyan]")
+    console.print(f"   Capture: {capture_file}")
+    console.print(f"   Target: {target_url}")
+    console.print(f"   Strategy: {strategy}")
+    console.print(f"   Mutations: {mutations}\n")
+
+    try:
+        from socialseed_e2e.shadow_runner import (
+            FuzzingConfig,
+            FuzzingStrategy,
+            SemanticShadowRunner,
+        )
+
+        runner = SemanticShadowRunner()
+
+        strategy_map = {
+            "random": FuzzingStrategy.RANDOM,
+            "intelligent": FuzzingStrategy.INTELLIGENT,
+            "coverage_guided": FuzzingStrategy.COVERAGE_GUIDED,
+            "ai_powered": FuzzingStrategy.AI_POWERED,
+        }
+
+        config = FuzzingConfig(
+            strategy=strategy_map.get(strategy, FuzzingStrategy.INTELLIGENT),
+            mutations_per_request=mutations,
+        )
+
+        campaign = runner.generate_fuzzing_campaign(capture_file, target_url, config)
+
+        console.print(f"[green]✓ Fuzzing campaign created:[/green] {campaign.name}")
+        console.print(f"   Campaign ID: {campaign.campaign_id}")
+
+        if output:
+            runner.export_fuzzing_report(campaign, output)
+            console.print(f"   Report saved to: {output}")
+
+    except Exception as e:
+        console.print(f"\n[red]❌ Error:[/red] {e}")
+        import traceback
+
+        console.print(traceback.format_exc())
+        sys.exit(1)
+
+
 @ai_learning.command("feedback")
 @click.option("--storage-path", "-s", help="Path to feedback storage directory")
 @click.option(
