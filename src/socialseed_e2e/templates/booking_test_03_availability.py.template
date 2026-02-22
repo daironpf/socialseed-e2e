@@ -8,10 +8,10 @@ from socialseed_e2e import BasePage
 
 BASE_URL = "http://localhost:5006"
 
-async def run(page: BasePage):
+def run(page: BasePage):
     today = datetime.now().date()
     start_date = today.strftime("%Y-%m-%d")
-    response = await page.get(f"{BASE_URL}/api/services/svc_1/availability", params={"start_date": start_date})
+    response = page.get("/api/services/svc_1/availability", params={"start_date": start_date})
     assert response.status == 200
     data = response.json()
     assert "slots" in data
@@ -19,14 +19,15 @@ async def run(page: BasePage):
     return response
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

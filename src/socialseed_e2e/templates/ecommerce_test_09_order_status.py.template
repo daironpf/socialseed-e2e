@@ -16,17 +16,17 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5004"
 
 
-async def run(page: BasePage):
+def run(page: BasePage):
     """Execute the test - order status transitions."""
     user_id = "status_test_user"
     
-    await page.post(
-        f"{BASE_URL}/api/cart/items",
+    page.post(
+        "/api/cart/items",
         data={"user_id": user_id, "product_id": "prod_5", "quantity": 1}
     )
     
-    order_resp = await page.post(
-        f"{BASE_URL}/api/orders",
+    order_resp = page.post(
+        "/api/orders",
         data={"user_id": user_id}
     )
     order = order_resp.json()
@@ -35,13 +35,13 @@ async def run(page: BasePage):
     assert order["status"] == "pending"
     assert order["payment_status"] == "pending"
     
-    payment_resp = await page.post(
-        f"{BASE_URL}/api/payments",
+    payment_resp = page.post(
+        "/api/payments",
         data={"order_id": order_id, "method": "credit_card", "idempotency_key": f"pay_status_{order_id}"}
     )
     payment = payment_resp.json()
     
-    order_check = await page.get(f"{BASE_URL}/api/orders/{order_id}", params={"user_id": user_id})
+    order_check = page.get("/api/orders/{order_id}", params={"user_id": user_id})
     order_data = order_check.json()
     
     if payment["status"] == "completed":
@@ -51,30 +51,30 @@ async def run(page: BasePage):
     return order_data
 
 
-async def run_cancel_order(page: BasePage):
+def run_cancel_order(page: BasePage):
     """Execute the test - cancel order."""
     user_id = "cancel_test_user"
     
-    await page.post(
-        f"{BASE_URL}/api/cart/items",
+    page.post(
+        "/api/cart/items",
         data={"user_id": user_id, "product_id": "prod_6", "quantity": 1}
     )
     
-    order_resp = await page.post(
-        f"{BASE_URL}/api/orders",
+    order_resp = page.post(
+        "/api/orders",
         data={"user_id": user_id}
     )
     order = order_resp.json()
     order_id = order["id"]
     
-    cancel_resp = await page.post(
-        f"{BASE_URL}/api/orders/{order_id}/cancel",
+    cancel_resp = page.post(
+        "/api/orders/{order_id}/cancel",
         params={"user_id": user_id}
     )
     
     assert cancel_resp.status == 200
     
-    order_check = await page.get(f"{BASE_URL}/api/orders/{order_id}", params={"user_id": user_id})
+    order_check = page.get("/api/orders/{order_id}", params={"user_id": user_id})
     cancelled_order = order_check.json()
     
     assert cancelled_order["status"] == "cancelled"
@@ -84,20 +84,15 @@ async def run_cancel_order(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
     
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            
-            await run(base_page)
-            await run_cancel_order(base_page)
-            
-            await browser.close()
+            run(base_page)
+            browser.close()
     
-    asyncio.run(main())
+    main()

@@ -10,41 +10,40 @@ Run:
 """
 
 import pytest
-import asyncio
 from socialseed_e2e import BasePage
 
 
 BASE_URL = "http://localhost:5004"
 
 
-async def run(page: BasePage):
+def run(page: BasePage):
     """Execute the test - concurrent purchases."""
     product_id = "prod_1"
     
-    inventory_before = await page.get(f"{BASE_URL}/api/inventory/{product_id}")
+    inventory_before = page.get("/api/inventory/{product_id}")
     stock_before = inventory_before.json()["stock"]
     
     user_ids = [f"concurrent_user_{i}" for i in range(5)]
     
     async def try_purchase(user_id: str):
         try:
-            await page.post(
-                f"{BASE_URL}/api/cart/items",
+            page.post(
+                "/api/cart/items",
                 data={"user_id": user_id, "product_id": product_id, "quantity": 1}
             )
-            order_resp = await page.post(
-                f"{BASE_URL}/api/orders",
+            order_resp = page.post(
+                "/api/orders",
                 data={"user_id": user_id}
             )
             return order_resp.status == 200
         except Exception:
             return False
     
-    results = await asyncio.gather(*[try_purchase(uid) for uid in user_ids])
+    results = asyncio.gather(*[try_purchase(uid) for uid in user_ids])
     
     successful = sum(1 for r in results if r)
     
-    inventory_after = await page.get(f"{BASE_URL}/api/inventory/{product_id}")
+    inventory_after = page.get("/api/inventory/{product_id}")
     stock_after = inventory_after.json()["stock"]
     
     assert stock_after == stock_before - successful
@@ -53,19 +52,15 @@ async def run(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
     
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            
-            await run(base_page)
-            
-            await browser.close()
+            run(base_page)
+            browser.close()
     
-    asyncio.run(main())
+    main()

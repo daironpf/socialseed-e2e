@@ -14,9 +14,9 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5005"
 
 
-async def run(page: BasePage):
-    response = await page.put(
-        f"{BASE_URL}/api/users/user_1/presence",
+def run(page: BasePage):
+    response = page.put(
+        "/api/users/user_1/presence",
         data={"status": "away"}
     )
     assert response.status == 200
@@ -25,9 +25,9 @@ async def run(page: BasePage):
     return response
 
 
-async def run_invalid_status(page: BasePage):
-    response = await page.put(
-        f"{BASE_URL}/api/users/user_1/presence",
+def run_invalid_status(page: BasePage):
+    response = page.put(
+        "/api/users/user_1/presence",
         data={"status": "invalid_status"}
     )
     assert response.status == 422
@@ -35,14 +35,15 @@ async def run_invalid_status(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

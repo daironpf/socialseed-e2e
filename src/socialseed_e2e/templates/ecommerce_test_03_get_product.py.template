@@ -16,9 +16,9 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5004"
 
 
-async def run(page: BasePage):
+def run(page: BasePage):
     """Execute the test - get existing product."""
-    response = await page.get(f"{BASE_URL}/api/products/prod_1")
+    response = page.get("/api/products/prod_1")
     
     assert response.status == 200
     
@@ -32,9 +32,9 @@ async def run(page: BasePage):
     return response
 
 
-async def run_not_found(page: BasePage):
+def run_not_found(page: BasePage):
     """Execute the test - get non-existent product."""
-    response = await page.get(f"{BASE_URL}/api/products/nonexistent")
+    response = page.get("/api/products/nonexistent")
     
     assert response.status == 404
     
@@ -46,20 +46,15 @@ async def run_not_found(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
     
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            
-            await run(base_page)
-            await run_not_found(base_page)
-            
-            await browser.close()
+            run(base_page)
+            browser.close()
     
-    asyncio.run(main())
+    main()

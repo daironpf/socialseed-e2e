@@ -5,30 +5,37 @@ Run: pytest services/notifications_demo/modules/06_webhooks.py
 from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5007"
 
-async def run_create(page: BasePage):
-    response = await page.post(f"{BASE_URL}/api/webhooks", data={"url": "https://example.com/hook", "events": ["notification.sent"]})
+
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_create(page)
+
+
+def run_create(page: BasePage):
+    response = page.post("/api/webhooks", data={"url": "https://example.com/hook", "events": ["notification.sent"]})
     assert response.status == 200
     return response
 
-async def run_list(page: BasePage):
-    response = await page.get(f"{BASE_URL}/api/webhooks")
+def run_list(page: BasePage):
+    response = page.get("/api/webhooks")
     assert response.status == 200
     return response
 
-async def run_test(page: BasePage):
-    response = await page.post(f"{BASE_URL}/api/webhooks/wh_1/test")
+def run_test(page: BasePage):
+    response = page.post("/api/webhooks/wh_1/test")
     assert response.status == 200
     return response
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run_list(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

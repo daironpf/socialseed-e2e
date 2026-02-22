@@ -8,8 +8,14 @@ from socialseed_e2e import BasePage
 
 BASE_URL = "http://localhost:5006"
 
-async def run_workflow(page: BasePage):
-    services_resp = await page.get(f"{BASE_URL}/api/services")
+
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_workflow(page)
+
+
+def run_workflow(page: BasePage):
+    services_resp = page.get("/api/services")
     assert services_resp.status == 200
     
     service = services_resp.json()[0]
@@ -17,11 +23,11 @@ async def run_workflow(page: BasePage):
     
     today = datetime.now().date()
     start_date = today.strftime("%Y-%m-%d")
-    avail_resp = await page.get(f"{BASE_URL}/api/services/{service_id}/availability", params={"start_date": start_date})
+    avail_resp = page.get("/api/services/{service_id}/availability", params={"start_date": start_date})
     assert avail_resp.status == 200
     
     future_time = (datetime.now() + timedelta(days=7)).replace(hour=16, minute=0, second=0)
-    appt_resp = await page.post(f"{BASE_URL}/api/appointments", data={
+    appt_resp = page.post("/api/appointments", data={
         "service_id": service_id,
         "user_id": "workflow_user",
         "start_time": future_time.isoformat(),
@@ -30,20 +36,21 @@ async def run_workflow(page: BasePage):
     assert appt_resp.status == 200
     appointment = appt_resp.json()
     
-    list_resp = await page.get(f"{BASE_URL}/api/appointments", params={"user_id": "workflow_user"})
+    list_resp = page.get("/api/appointments", params={"user_id": "workflow_user"})
     assert list_resp.status == 200
     
     return appointment
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run_workflow(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

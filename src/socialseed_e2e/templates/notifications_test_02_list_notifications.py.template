@@ -5,27 +5,28 @@ Run: pytest services/notifications_demo/modules/02_list_notifications.py
 from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5007"
 
-async def run(page: BasePage):
-    response = await page.get(f"{BASE_URL}/api/notifications", params={"user_id": "user1"})
+def run(page: BasePage):
+    response = page.get("/api/notifications", params={"user_id": "user1"})
     assert response.status == 200
     data = response.json()
     assert isinstance(data, list)
     return response
 
-async def run_filtered(page: BasePage):
-    response = await page.get(f"{BASE_URL}/api/notifications", params={"user_id": "user1", "status": "sent"})
+def run_filtered(page: BasePage):
+    response = page.get("/api/notifications", params={"user_id": "user1", "status": "sent"})
     assert response.status == 200
     return response
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

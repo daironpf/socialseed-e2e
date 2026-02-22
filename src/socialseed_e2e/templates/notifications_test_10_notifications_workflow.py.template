@@ -5,33 +5,40 @@ Run: pytest services/notifications_demo/modules/10_notifications_workflow.py
 from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5007"
 
-async def run_workflow(page: BasePage):
-    channels_resp = await page.get(f"{BASE_URL}/api/channels")
+
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_workflow(page)
+
+
+def run_workflow(page: BasePage):
+    channels_resp = page.get("/api/channels")
     assert channels_resp.status == 200
     
-    tpl_resp = await page.get(f"{BASE_URL}/api/templates")
+    tpl_resp = page.get("/api/templates")
     assert tpl_resp.status == 200
     
-    send_resp = await page.post(f"{BASE_URL}/api/notifications", data={"user_id": "workflow_user", "channel": "email", "subject": "Workflow Test", "body": "Testing workflow"})
+    send_resp = page.post("/api/notifications", data={"user_id": "workflow_user", "channel": "email", "subject": "Workflow Test", "body": "Testing workflow"})
     assert send_resp.status == 200
     
-    list_resp = await page.get(f"{BASE_URL}/api/notifications", params={"user_id": "workflow_user"})
+    list_resp = page.get("/api/notifications", params={"user_id": "workflow_user"})
     assert list_resp.status == 200
     
-    wh_resp = await page.get(f"{BASE_URL}/api/webhooks")
+    wh_resp = page.get("/api/webhooks")
     assert wh_resp.status == 200
     
     return send_resp
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run_workflow(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

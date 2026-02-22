@@ -14,9 +14,14 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5005"
 
 
-async def run_send(page: BasePage):
-    response = await page.post(
-        f"{BASE_URL}/api/rooms/room_1/messages",
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_send(page)
+
+
+def run_send(page: BasePage):
+    response = page.post(
+        "/api/rooms/room_1/messages",
         data={
             "sender_id": "user_1",
             "content": "Hello from test!",
@@ -29,8 +34,8 @@ async def run_send(page: BasePage):
     return data
 
 
-async def run_get(page: BasePage):
-    response = await page.get(f"{BASE_URL}/api/rooms/room_1/messages?per_page=10")
+def run_get(page: BasePage):
+    response = page.get("/api/rooms/room_1/messages?per_page=10")
     assert response.status == 200
     data = response.json()
     assert len(data) > 0
@@ -38,14 +43,15 @@ async def run_get(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run_send(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

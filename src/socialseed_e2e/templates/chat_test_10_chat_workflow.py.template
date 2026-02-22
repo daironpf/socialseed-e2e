@@ -14,35 +14,40 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5005"
 
 
-async def run_workflow(page: BasePage):
-    login_resp = await page.post(
-        f"{BASE_URL}/api/auth/login",
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_workflow(page)
+
+
+def run_workflow(page: BasePage):
+    login_resp = page.post(
+        "/api/auth/login",
         data={"username": "alice", "password": "password123"}
     )
     assert login_resp.status == 200
     
-    rooms_resp = await page.get(f"{BASE_URL}/api/rooms")
+    rooms_resp = page.get("/api/rooms")
     assert rooms_resp.status == 200
     rooms = rooms_resp.json()
     room_id = rooms[0]["id"]
     
-    msg_resp = await page.post(
-        f"{BASE_URL}/api/rooms/{room_id}/messages",
+    msg_resp = page.post(
+        "/api/rooms/{room_id}/messages",
         data={"sender_id": "user_1", "content": "Test message"}
     )
     assert msg_resp.status == 200
     
-    typing_resp = await page.post(
-        f"{BASE_URL}/api/rooms/{room_id}/typing",
+    typing_resp = page.post(
+        "/api/rooms/{room_id}/typing",
         data={"user_id": "user_1", "is_typing": True}
     )
     assert typing_resp.status == 200
     
-    members_resp = await page.get(f"{BASE_URL}/api/rooms/{room_id}/members")
+    members_resp = page.get("/api/rooms/{room_id}/members")
     assert members_resp.status == 200
     
-    presence_resp = await page.put(
-        f"{BASE_URL}/api/users/user_1/presence",
+    presence_resp = page.put(
+        "/api/users/user_1/presence",
         data={"status": "away"}
     )
     assert presence_resp.status == 200
@@ -51,14 +56,15 @@ async def run_workflow(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run_workflow(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

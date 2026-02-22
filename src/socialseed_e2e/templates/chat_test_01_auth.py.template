@@ -15,10 +15,15 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5005"
 
 
-async def run_register(page: BasePage):
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_login(page)
+
+
+def run_register(page: BasePage):
     """Execute the test - register new user."""
-    response = await page.post(
-        f"{BASE_URL}/api/auth/register",
+    response = page.post(
+        "/api/auth/register",
         data={
             "username": "newuser",
             "display_name": "New User",
@@ -34,10 +39,10 @@ async def run_register(page: BasePage):
     return response
 
 
-async def run_login(page: BasePage):
+def run_login(page: BasePage):
     """Execute the test - login user."""
-    response = await page.post(
-        f"{BASE_URL}/api/auth/login",
+    response = page.post(
+        "/api/auth/login",
         data={
             "username": "alice",
             "password": "password123"
@@ -52,10 +57,10 @@ async def run_login(page: BasePage):
     return response
 
 
-async def run_login_invalid(page: BasePage):
+def run_login_invalid(page: BasePage):
     """Execute the test - login with invalid credentials."""
-    response = await page.post(
-        f"{BASE_URL}/api/auth/login",
+    response = page.post(
+        "/api/auth/login",
         data={
             "username": "alice",
             "password": "wrongpassword"
@@ -68,19 +73,15 @@ async def run_login_invalid(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
     
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            
-            await run_login(base_page)
-            
-            await browser.close()
+            run(base_page)
+            browser.close()
     
-    asyncio.run(main())
+    main()

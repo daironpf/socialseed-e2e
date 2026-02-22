@@ -8,9 +8,9 @@ from socialseed_e2e import BasePage
 
 BASE_URL = "http://localhost:5006"
 
-async def run(page: BasePage):
+def run(page: BasePage):
     future_date = (datetime.now() + timedelta(days=4)).replace(hour=14, minute=0, second=0)
-    create_resp = await page.post(f"{BASE_URL}/api/appointments", data={
+    create_resp = page.post("/api/appointments", data={
         "service_id": "svc_3",
         "user_id": "user3",
         "start_time": future_date.isoformat()
@@ -19,8 +19,8 @@ async def run(page: BasePage):
     appointment_id = appointment["id"]
     
     new_time = (datetime.now() + timedelta(days=5)).replace(hour=15, minute=30, second=0)
-    reschedule_resp = await page.post(
-        f"{BASE_URL}/api/appointments/{appointment_id}/reschedule",
+    reschedule_resp = page.post(
+        "/api/appointments/{appointment_id}/reschedule",
         params={"user_id": "user3"},
         data={"start_time": new_time.isoformat()}
     )
@@ -29,14 +29,15 @@ async def run(page: BasePage):
     return data
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

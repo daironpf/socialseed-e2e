@@ -14,17 +14,22 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5005"
 
 
-async def run_list(page: BasePage):
-    response = await page.get(f"{BASE_URL}/api/rooms")
+def run(page: BasePage):
+    """Execute the test - main entry point."""
+    return run_list(page)
+
+
+def run_list(page: BasePage):
+    response = page.get("/api/rooms")
     assert response.status == 200
     data = response.json()
     assert len(data) >= 3
     return response
 
 
-async def run_create(page: BasePage):
-    response = await page.post(
-        f"{BASE_URL}/api/rooms",
+def run_create(page: BasePage):
+    response = page.post(
+        "/api/rooms",
         data={
             "name": "test-room",
             "room_type": "group",
@@ -39,8 +44,8 @@ async def run_create(page: BasePage):
     return response
 
 
-async def run_get_room(page: BasePage):
-    response = await page.get(f"{BASE_URL}/api/rooms/room_1")
+def run_get_room(page: BasePage):
+    response = page.get("/api/rooms/room_1")
     assert response.status == 200
     data = response.json()
     assert data["id"] == "room_1"
@@ -48,14 +53,15 @@ async def run_get_room(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
+    from playwright.sync_api import sync_playwright
+    
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            await run_list(base_page)
-            await browser.close()
-    asyncio.run(main())
+            run(base_page)
+            browser.close()
+    
+    main()

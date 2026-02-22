@@ -16,17 +16,17 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5004"
 
 
-async def run(page: BasePage):
+def run(page: BasePage):
     """Execute the test - process payment."""
     user_id = "payment_test_user"
     
-    await page.post(
-        f"{BASE_URL}/api/cart/items",
+    page.post(
+        "/api/cart/items",
         data={"user_id": user_id, "product_id": "prod_3", "quantity": 1}
     )
     
-    order_resp = await page.post(
-        f"{BASE_URL}/api/orders",
+    order_resp = page.post(
+        "/api/orders",
         data={"user_id": user_id}
     )
     order = order_resp.json()
@@ -34,8 +34,8 @@ async def run(page: BasePage):
     
     idempotency_key = f"pay_test_{user_id}_{order_id}"
     
-    payment_resp = await page.post(
-        f"{BASE_URL}/api/payments",
+    payment_resp = page.post(
+        "/api/payments",
         data={
             "order_id": order_id,
             "method": "credit_card",
@@ -50,24 +50,24 @@ async def run(page: BasePage):
     assert payment["method"] == "credit_card"
     assert payment["status"] in ["completed", "failed"]
     
-    order_check = await page.get(f"{BASE_URL}/api/orders/{order_id}", params={"user_id": user_id})
+    order_check = page.get("/api/orders/{order_id}", params={"user_id": user_id})
     order_data = order_check.json()
     assert order_data["payment_status"] == payment["status"]
     
     return payment
 
 
-async def run_idempotency(page: BasePage):
+def run_idempotency(page: BasePage):
     """Execute the test - idempotent payment."""
     user_id = "idempotency_test_user"
     
-    await page.post(
-        f"{BASE_URL}/api/cart/items",
+    page.post(
+        "/api/cart/items",
         data={"user_id": user_id, "product_id": "prod_4", "quantity": 1}
     )
     
-    order_resp = await page.post(
-        f"{BASE_URL}/api/orders",
+    order_resp = page.post(
+        "/api/orders",
         data={"user_id": user_id}
     )
     order = order_resp.json()
@@ -75,13 +75,13 @@ async def run_idempotency(page: BasePage):
     
     idempotency_key = "same_idempotency_key_123"
     
-    payment1 = await page.post(
-        f"{BASE_URL}/api/payments",
+    payment1 = page.post(
+        "/api/payments",
         data={"order_id": order_id, "method": "credit_card", "idempotency_key": idempotency_key}
     )
     
-    payment2 = await page.post(
-        f"{BASE_URL}/api/payments",
+    payment2 = page.post(
+        "/api/payments",
         data={"order_id": order_id, "method": "debit_card", "idempotency_key": idempotency_key}
     )
     
@@ -91,19 +91,15 @@ async def run_idempotency(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
     
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            
-            await run(base_page)
-            
-            await browser.close()
+            run(base_page)
+            browser.close()
     
-    asyncio.run(main())
+    main()

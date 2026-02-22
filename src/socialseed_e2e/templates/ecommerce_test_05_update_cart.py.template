@@ -16,18 +16,18 @@ from socialseed_e2e import BasePage
 BASE_URL = "http://localhost:5004"
 
 
-async def run(page: BasePage):
+def run(page: BasePage):
     """Execute the test - update cart item quantity."""
     user_id = "test_user_1"
     product_id = "prod_1"
     
-    await page.post(
-        f"{BASE_URL}/api/cart/items",
+    page.post(
+        "/api/cart/items",
         data={"user_id": user_id, "product_id": product_id, "quantity": 1}
     )
     
-    response = await page.put(
-        f"{BASE_URL}/api/cart/items/{product_id}",
+    response = page.put(
+        "/api/cart/items/{product_id}",
         data={"quantity": 5},
         params={"user_id": user_id}
     )
@@ -41,19 +41,15 @@ async def run(page: BasePage):
 
 
 if __name__ == "__main__":
-    import asyncio
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
     
-    async def main():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            
+    def main():
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
             base_page = BasePage(base_url=BASE_URL)
             base_page.set_page(page)
-            
-            await run(base_page)
-            
-            await browser.close()
+            run(base_page)
+            browser.close()
     
-    asyncio.run(main())
+    main()
