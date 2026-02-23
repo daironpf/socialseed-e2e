@@ -23,6 +23,8 @@ pytest>=7.0.0
 pytest-cov>=4.0.0
 pytest-asyncio>=0.21.0
 pytest-xdist>=3.5.0
+types-requests>=2.31.0
+types-pymysql>=1.1.0
 black>=23.0.0
 isort>=5.12.0
 flake8>=6.0.0
@@ -44,6 +46,8 @@ boto3>=1.26.0
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 python-socketio[asyncio]>=5.10.0
+pillow>=10.0.0
+scipy>=1.11.0
 
 [grpc]
 grpcio>=1.59.0
@@ -63,3 +67,8 @@ boto3>=1.26.0
 
 [tui]
 textual>=0.41.0
+
+[visual]
+pillow>=10.0.0
+numpy>=1.24.0
+scipy>=1.11.0

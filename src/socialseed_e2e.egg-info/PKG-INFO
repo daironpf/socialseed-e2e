@@ -53,6 +53,10 @@ Requires-Dist: numpy>=1.24.0; extra == "rag"
 Provides-Extra: secrets
 Requires-Dist: hvac>=1.0.0; extra == "secrets"
 Requires-Dist: boto3>=1.26.0; extra == "secrets"
+Provides-Extra: visual
+Requires-Dist: pillow>=10.0.0; extra == "visual"
+Requires-Dist: numpy>=1.24.0; extra == "visual"
+Requires-Dist: scipy>=1.11.0; extra == "visual"
 Provides-Extra: dashboard
 Requires-Dist: fastapi>=0.104.0; extra == "dashboard"
 Requires-Dist: uvicorn[standard]>=0.24.0; extra == "dashboard"
@@ -62,6 +66,8 @@ Requires-Dist: pytest>=7.0.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
 Requires-Dist: pytest-xdist>=3.5.0; extra == "dev"
+Requires-Dist: types-requests>=2.31.0; extra == "dev"
+Requires-Dist: types-pymysql>=1.1.0; extra == "dev"
 Requires-Dist: black>=23.0.0; extra == "dev"
 Requires-Dist: isort>=5.12.0; extra == "dev"
 Requires-Dist: flake8>=6.0.0; extra == "dev"
@@ -82,6 +88,8 @@ Requires-Dist: boto3>=1.26.0; extra == "full"
 Requires-Dist: fastapi>=0.104.0; extra == "full"
 Requires-Dist: uvicorn[standard]>=0.24.0; extra == "full"
 Requires-Dist: python-socketio[asyncio]>=5.10.0; extra == "full"
+Requires-Dist: pillow>=10.0.0; extra == "full"
+Requires-Dist: scipy>=1.11.0; extra == "full"
 Dynamic: license-file
 
 # 🌱 SocialSeed E2E

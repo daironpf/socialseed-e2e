@@ -6247,6 +6247,16 @@ def list_templates(category: str, framework: str, limit: int):
         console.print(f"\n[red]Error:[/red] {e}")
 
 
+@community.command("templates")
+def templates():
+    """List available community templates (alias for list-templates)."""
+    import sys
+    from click import Context, Command
+
+    ctx = Context(Command("list-templates"))
+    ctx.invoke(list_templates, category=None, framework=None, limit=20)
+
+
 @community.command("install-template")
 @click.argument("template_id")
 @click.option("--service", "-s", required=True, help="Target service name")
@@ -6383,6 +6393,16 @@ def list_plugins(tag: str, limit: int):
 
     except Exception as e:
         console.print(f"\n[red]Error:[/red] {e}")
+
+
+@community.command("plugins")
+def plugins():
+    """List available plugins (alias for list-plugins)."""
+    import sys
+    from click import Context, Command
+
+    ctx = Context(Command("list-plugins"))
+    ctx.invoke(list_plugins, tag=None, limit=20)
 
 
 @community.command("install-plugin")
