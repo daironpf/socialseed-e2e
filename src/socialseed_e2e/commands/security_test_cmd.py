@@ -6,7 +6,7 @@ AI-driven security fuzzing tests.
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import click
 from rich.console import Console

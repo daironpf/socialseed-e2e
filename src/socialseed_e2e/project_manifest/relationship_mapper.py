@@ -10,7 +10,7 @@ This module provides advanced mapping of API relationships including:
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from socialseed_e2e.project_manifest.models import EndpointInfo, HttpMethod, ServiceInfo
 
@@ -170,7 +170,7 @@ class APIRelationshipMapper:
                     category=RelationshipCategory.SEQUENTIAL,
                     strength=DependencyStrength.STRONG,
                     confidence=0.9,
-                    description=f"Creating an entity typically precedes reading it",
+                    description="Creating an entity typically precedes reading it",
                     data_fields=["id", f"{self._extract_entity(path1)}_id"],
                 )
 
@@ -183,7 +183,7 @@ class APIRelationshipMapper:
                     category=RelationshipCategory.SEQUENTIAL,
                     strength=DependencyStrength.MODERATE,
                     confidence=0.8,
-                    description=f"Reading an entity often precedes updating it",
+                    description="Reading an entity often precedes updating it",
                     data_fields=["id"],
                 )
 
@@ -489,7 +489,7 @@ class APIRelationshipMapper:
             "total_data_flows": len(self.data_flows),
             "total_clusters": len(self.clusters),
             "dependency_categories": list(
-                set(d.category.value for d in self.dependencies)
+                {d.category.value for d in self.dependencies}
             ),
             "strong_dependencies": len(
                 [

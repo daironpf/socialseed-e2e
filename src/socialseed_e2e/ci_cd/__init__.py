@@ -17,9 +17,9 @@ Usage:
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class Platform(str, Enum):
@@ -112,7 +112,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     timeout-minutes: {self.config.timeout_minutes}
-    
+
     strategy:
       matrix:
         python-version: ['{self.config.python_version}']
@@ -203,18 +203,18 @@ e2e-tests:
   parallel:
     matrix:
       - PYTHON_VERSION: [{self.config.python_version}]
-  
+
   before_script:
     - python -m venv venv
     - source venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - pip install -e .
-  
+
   script:
     - {self.config.test_command}
 {artifacts_section}
-  
+
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
@@ -265,16 +265,16 @@ class JenkinsTemplate(BaseCITemplate):
             args '-u root'
         }}
     }}
-    
+
     options {{
         timeout(time: {self.config.timeout_minutes}, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }}
-    
+
     environment {{
 {env_vars}
     }}
-    
+
     stages {{
         stage('Install Dependencies') {{
             steps {{
@@ -285,14 +285,14 @@ class JenkinsTemplate(BaseCITemplate):
                 '''
             }}
         }}
-        
+
         stage('Run E2E Tests') {{
             steps {{
                 sh '{self.config.test_command}'
             }}
         }}
     }}
-    
+
     post {{
 {artifacts_section}
         failure {{
@@ -393,22 +393,22 @@ jobs:
       - image: cimg/python:{self.config.python_version}
     parallelism: {self.config.parallel_workers}
     resource_class: medium
-    
+
     steps:
       - checkout
-      
+
       - python/install-packages:
           pkg-manager: pip
           pip-dependency-file: requirements.txt
-      
+
       - run:
           name: Run E2E tests
           command: {self.config.test_command}
           no_output_timeout: {self.config.timeout_minutes}m
-      
+
       - store_test_results:
           path: test-results
-      
+
       - store_artifacts:
           path: test-results
           destination: test-results

@@ -417,7 +417,7 @@ class ImpactAnalyzer:
             related_tests = self._find_related_tests(change)
             affected_tests.update(related_tests)
 
-        return sorted(list(affected_tests))
+        return sorted(affected_tests)
 
     def _find_related_tests(self, change: CodeChange) -> List[str]:
         """Find tests related to a code change.

@@ -5,7 +5,6 @@ during autonomous programming.
 """
 
 import uuid
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from socialseed_e2e.telemetry.models import LLMCall, TokenBudget, TokenUsage

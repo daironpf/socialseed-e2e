@@ -17,7 +17,7 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from playwright.async_api import Page as AsyncPage
 from playwright.sync_api import Page as SyncPage
@@ -32,13 +32,10 @@ from socialseed_e2e.visual_testing.baseline_manager import (
     BaselineReviewer,
 )
 from socialseed_e2e.visual_testing.models import (
-    AIDiffAnalysis,
     BaselineInfo,
     ComparisonConfig,
     ComparisonResult,
-    ContentType,
     DiffSeverity,
-    ScreenshotCapture,
     ScreenshotConfig,
     ViewportSize,
     VisualComparison,

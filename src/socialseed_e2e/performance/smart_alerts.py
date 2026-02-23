@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from socialseed_e2e.performance.performance_models import (
-    AlertSeverity,
     PerformanceAlert,
     PerformanceRegression,
     PerformanceReport,
@@ -139,11 +138,11 @@ class SmartAlertGenerator:
         lines = [
             f"Endpoint: {endpoint}",
             f"Metric: {regression.regression_type.value.replace('_', ' ').title()}",
-            f"",
+            "",
             f"Previous Value: {self._format_value(regression.previous_value, regression.regression_type.value)}",
             f"Current Value: {self._format_value(regression.current_value, regression.regression_type.value)}",
             f"Change: {regression.percentage_change:+.1f}%",
-            f"",
+            "",
         ]
 
         # Add severity-specific message
@@ -163,11 +162,11 @@ class SmartAlertGenerator:
         # Add context about potential impact
         if regression.percentage_change > 100:
             lines.append(
-                f"\nThe latency has more than doubled, which will significantly impact user experience."
+                "\nThe latency has more than doubled, which will significantly impact user experience."
             )
         elif regression.percentage_change > 50:
             lines.append(
-                f"\nThe performance degradation is substantial and should be investigated."
+                "\nThe performance degradation is substantial and should be investigated."
             )
 
         return "\n".join(lines)

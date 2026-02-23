@@ -5,7 +5,7 @@ with the existing BasePage and TestRunner components.
 """
 
 import functools
-from typing import Any, Callable, Dict, Optional
+from typing import Callable, Optional
 
 from playwright.sync_api import APIResponse
 

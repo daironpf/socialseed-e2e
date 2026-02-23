@@ -5,9 +5,8 @@ Provides tools for distributed load testing and custom load patterns.
 
 import asyncio
 import time
-import random
-from typing import Callable, List, Dict, Any, Optional
 from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List
 
 
 @dataclass
@@ -46,7 +45,7 @@ class LoadGenerator:
                     await self.target_func()
                 else:
                     self.target_func()
-                
+
                 latency = (time.perf_counter() - start) * 1000
                 self.results.latencies.append(latency)
                 self.results.successful_requests += 1
@@ -62,13 +61,13 @@ class LoadGenerator:
         print(f"Starting load test: {users} users for {duration_seconds}s")
         self.results = LoadTestResult()
         self.results.start_time = time.perf_counter()
-        
+
         stop_event = asyncio.Event()
         tasks = [asyncio.create_task(self._worker(stop_event)) for _ in range(users)]
-        
+
         await asyncio.sleep(duration_seconds)
         stop_event.set()
-        
+
         await asyncio.gather(*tasks)
         self.results.end_time = time.perf_counter()
         return self.results
@@ -78,10 +77,10 @@ class LoadGenerator:
         print(f"Ramping up: {start_users} -> {end_users} users over {ramp_duration}s")
         self.results = LoadTestResult()
         self.results.start_time = time.perf_counter()
-        
+
         stop_event = asyncio.Event()
         workers = []
-        
+
         # Initial workers
         for _ in range(start_users):
             workers.append(asyncio.create_task(self._worker(stop_event)))
@@ -92,10 +91,10 @@ class LoadGenerator:
             for _ in range(end_users - start_users):
                 await asyncio.sleep(spawn_interval)
                 workers.append(asyncio.create_task(self._worker(stop_event)))
-        
+
         await asyncio.sleep(steady_duration)
         stop_event.set()
         await asyncio.gather(*workers)
-        
+
         self.results.end_time = time.perf_counter()
         return self.results

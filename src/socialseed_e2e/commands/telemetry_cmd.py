@@ -4,11 +4,9 @@ This module provides the telemetry command group using POO and SOLID principles.
 """
 
 import time
-from pathlib import Path
 
 import click
 from rich.console import Console
-
 
 console = Console()
 

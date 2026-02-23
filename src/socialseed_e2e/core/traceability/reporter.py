@@ -5,7 +5,6 @@ and logic flow visualizations from test execution traces.
 """
 
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -14,7 +13,6 @@ from socialseed_e2e.core.traceability.collector import TraceCollector
 from socialseed_e2e.core.traceability.logic_mapper import LogicMapper
 from socialseed_e2e.core.traceability.models import (
     LogicFlow,
-    SequenceDiagram,
     TestTrace,
     TraceReport,
 )
@@ -590,7 +588,7 @@ class TraceReporter:
             Markdown string
         """
         lines = [
-            f"# Test Traceability Report",
+            "# Test Traceability Report",
             "",
             f"**Generated:** {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}",
             f"**Report ID:** {report.report_id}",
@@ -603,8 +601,8 @@ class TraceReporter:
         summary = report.summary
         lines.extend(
             [
-                f"| Metric | Value |",
-                f"|--------|-------|",
+                "| Metric | Value |",
+                "|--------|-------|",
                 f"| Total Tests | {summary.get('total_tests', 0)} |",
                 f"| Passed | {summary.get('passed', 0)} |",
                 f"| Failed | {summary.get('failed', 0)} |",

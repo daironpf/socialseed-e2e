@@ -5,10 +5,8 @@ including step-by-step descriptions and expected results.
 """
 
 import ast
-import inspect
 from pathlib import Path
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Optional
 
 from .models import TestCaseDoc, TestStepDoc
 

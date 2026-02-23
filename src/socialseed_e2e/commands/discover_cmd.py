@@ -50,7 +50,7 @@ class DiscoverAgent:
 
     def display_success(self, report_path: Path) -> None:
         """Display success message."""
-        console.print(f"\n✅ [bold green]Discovery Report generated![/bold green]")
+        console.print("\n✅ [bold green]Discovery Report generated![/bold green]")
         console.print(f"   📄 Location: {report_path}\n")
 
         console.print("[bold]What's in the report:[/bold]")

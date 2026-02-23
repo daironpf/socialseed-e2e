@@ -23,8 +23,8 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any, Callable, Dict, List, Optional, Set
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from faker import Faker
 
@@ -310,7 +310,7 @@ class RelationshipGenerator:
         self, counts: Optional[Dict[str, int]] = None
     ) -> Dict[str, List[Dict[str, Any]]]:
         """Generate data with relationships."""
-        counts = counts or {name: 5 for name in self.schemas}
+        counts = counts or dict.fromkeys(self.schemas, 5)
 
         for schema_name, count in counts.items():
             schema = self.schemas[schema_name]

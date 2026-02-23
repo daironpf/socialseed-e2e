@@ -36,9 +36,9 @@ Usage:
 
 import re
 from enum import Enum
-from typing import Any, Dict, Optional, TypeVar, Union, get_args, get_origin
+from typing import Any, Dict, Optional, TypeVar
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -376,14 +376,22 @@ def snake_field(name: str, **kwargs) -> Any:
 
 
 # Pre-defined fields for common patterns
-refresh_token_field = lambda **kwargs: camel_field("refreshToken", **kwargs)
-access_token_field = lambda **kwargs: camel_field("accessToken", **kwargs)
-user_name_field = lambda **kwargs: camel_field("userName", **kwargs)
-user_id_field = lambda **kwargs: camel_field("userId", **kwargs)
-created_at_field = lambda **kwargs: camel_field("createdAt", **kwargs)
-updated_at_field = lambda **kwargs: camel_field("updatedAt", **kwargs)
-new_password_field = lambda **kwargs: camel_field("newPassword", **kwargs)
-current_password_field = lambda **kwargs: camel_field("currentPassword", **kwargs)
+def refresh_token_field(**kwargs):
+    return camel_field("refreshToken", **kwargs)
+def access_token_field(**kwargs):
+    return camel_field("accessToken", **kwargs)
+def user_name_field(**kwargs):
+    return camel_field("userName", **kwargs)
+def user_id_field(**kwargs):
+    return camel_field("userId", **kwargs)
+def created_at_field(**kwargs):
+    return camel_field("createdAt", **kwargs)
+def updated_at_field(**kwargs):
+    return camel_field("updatedAt", **kwargs)
+def new_password_field(**kwargs):
+    return camel_field("newPassword", **kwargs)
+def current_password_field(**kwargs):
+    return camel_field("currentPassword", **kwargs)
 
 
 # Backwards compatibility aliases

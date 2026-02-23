@@ -1,7 +1,6 @@
+import argparse
 from pathlib import Path
 from typing import Optional
-import argparse
-import asyncio
 
 from rich.console import Console
 from rich.table import Table
@@ -64,7 +63,7 @@ def cmd_sniffer_start(args: argparse.Namespace) -> int:
 
 
 def cmd_sniffer_docker(args: argparse.Namespace) -> int:
-    console.print(f"[green]Starting Docker sidecar sniffer[/green]")
+    console.print("[green]Starting Docker sidecar sniffer[/green]")
     console.print(f"[dim]Network: {args.network}[/dim]")
     console.print(f"[dim]Target Port: {args.port}[/dim]")
 

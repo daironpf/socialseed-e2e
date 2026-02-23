@@ -262,8 +262,8 @@ class PluginManager:
                     and hasattr(attr, "version")
                 ):
                     return PluginMetadata(
-                        name=getattr(attr, "name"),
-                        version=getattr(attr, "version"),
+                        name=attr.name,
+                        version=attr.version,
                         description=getattr(attr, "description", ""),
                         entry_point=f"{module_file.parent.name}.plugin:{attr_name}",
                     )

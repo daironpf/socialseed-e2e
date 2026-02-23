@@ -7,7 +7,6 @@ This module provides intelligent test execution with features like:
 - Real-time monitoring and reporting
 """
 
-import asyncio
 import hashlib
 import json
 import logging
@@ -16,7 +15,7 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 from socialseed_e2e.ai_orchestrator.models import (
     FailurePattern,
@@ -28,7 +27,6 @@ from socialseed_e2e.ai_orchestrator.models import (
     TestStatus,
 )
 from socialseed_e2e.ai_orchestrator.self_healer import SelfHealer
-from socialseed_e2e.core.base_page import BasePage, RetryConfig
 
 logger = logging.getLogger(__name__)
 

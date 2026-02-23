@@ -19,8 +19,8 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 
@@ -219,7 +219,7 @@ class MockServer:
 
         if not mock:
             # Try pattern matching
-            for mock_key, mock_obj in self.mocks.items():
+            for _mock_key, mock_obj in self.mocks.items():
                 if self._match_path(path, mock_obj.rule.path):
                     mock = mock_obj
                     break

@@ -7,12 +7,11 @@ This module provides semantic analysis of the codebase to understand:
 - Entity relationships and hierarchies
 """
 
-import ast
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 
 class SemanticPatternType(str, Enum):
@@ -343,11 +342,11 @@ class SemanticCodebaseAnalyzer:
         line_clean = line.strip()
 
         if "raise" in line_clean:
-            return f"Validation rule: throws exception when condition met"
+            return "Validation rule: throws exception when condition met"
         elif "assert" in line_clean:
-            return f"Assertion: condition must be true"
+            return "Assertion: condition must be true"
         elif "required" in line_clean.lower():
-            return f"Field is mandatory"
+            return "Field is mandatory"
         else:
             return f"Business rule detected: {line_clean[:50]}"
 

@@ -5,9 +5,10 @@ Validates system recovery after chaos experiments.
 """
 
 import time
-import requests
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+import requests
 
 from ..models import (
     ChaosResult,

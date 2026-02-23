@@ -9,10 +9,8 @@ Provides resource-level chaos injection:
 """
 
 import time
-import uuid
-import random
-from typing import Any, Dict, List, Optional
-from multiprocessing import Process, cpu_count
+from multiprocessing import Process
+from typing import Dict, List
 
 from ..models import (
     ChaosExperiment,
@@ -241,8 +239,8 @@ class ResourceChaosInjector:
         )
 
         try:
-            import tempfile
             import os
+            import tempfile
 
             start_time = time.time()
             result.started_at = __import__("datetime").datetime.utcnow()

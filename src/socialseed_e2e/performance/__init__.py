@@ -60,6 +60,19 @@ Example:
 """
 
 # Original performance testing components
+# Advanced load testing
+from socialseed_e2e.performance.advanced_load_testing import (
+    AdvancedLoadTester,
+    LoadTestConfig,
+    LoadTestType,
+    RequestMetrics,
+)
+from socialseed_e2e.performance.advanced_load_testing import (
+    LoadTestResult as AdvancedLoadTestResult,
+)
+from socialseed_e2e.performance.dashboard import PerformanceDashboard
+from socialseed_e2e.performance.load_generator import LoadGenerator, LoadTestResult
+from socialseed_e2e.performance.metrics_collector import MetricsCollector, SLAPolicy
 from socialseed_e2e.performance.performance_models import (
     AlertSeverity,
     EndpointPerformanceMetrics,
@@ -70,31 +83,17 @@ from socialseed_e2e.performance.performance_models import (
     RegressionType,
 )
 from socialseed_e2e.performance.performance_profiler import PerformanceProfiler
-from socialseed_e2e.performance.threshold_analyzer import ThresholdAnalyzer
-from socialseed_e2e.performance.smart_alerts import SmartAlertGenerator
-from socialseed_e2e.performance.load_generator import LoadGenerator, LoadTestResult
-from socialseed_e2e.performance.metrics_collector import MetricsCollector, SLAPolicy
-from socialseed_e2e.performance.dashboard import PerformanceDashboard
 
-# Advanced load testing
-from socialseed_e2e.performance.advanced_load_testing import (
-    AdvancedLoadTester,
-    LoadTestConfig,
-    LoadTestResult as AdvancedLoadTestResult,
-    LoadTestType,
-    RequestMetrics,
-)
-
-# Scenario-based testing
-from socialseed_e2e.performance.scenario_testing import (
-    ScenarioBuilder,
-    ScenarioResult,
-    ScenarioStep,
-    ScenarioTransition,
-    StepType,
-    UserJourney,
-    UserJourneyMetrics,
-    WorkflowSimulator,
+# Performance regression
+from socialseed_e2e.performance.performance_regression import (
+    BaselineManager,
+    MetricBaseline,
+    PerformanceBaseline,
+    RegressionAlert,
+    RegressionDetector,
+    TrendAnalysis,
+    TrendAnalyzer,
+    TrendDataPoint,
 )
 
 # Resource monitoring
@@ -113,17 +112,19 @@ from socialseed_e2e.performance.resource_monitoring import (
     ResourceSnapshot,
 )
 
-# Performance regression
-from socialseed_e2e.performance.performance_regression import (
-    BaselineManager,
-    MetricBaseline,
-    PerformanceBaseline,
-    RegressionAlert,
-    RegressionDetector,
-    TrendAnalysis,
-    TrendAnalyzer,
-    TrendDataPoint,
+# Scenario-based testing
+from socialseed_e2e.performance.scenario_testing import (
+    ScenarioBuilder,
+    ScenarioResult,
+    ScenarioStep,
+    ScenarioTransition,
+    StepType,
+    UserJourney,
+    UserJourneyMetrics,
+    WorkflowSimulator,
 )
+from socialseed_e2e.performance.smart_alerts import SmartAlertGenerator
+from socialseed_e2e.performance.threshold_analyzer import ThresholdAnalyzer
 
 __all__ = [
     # Performance Models

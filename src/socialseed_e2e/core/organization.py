@@ -127,7 +127,7 @@ class TestOrganizationManager:
 
         # 2. Build adjacency list for topological sort
         adj = {name: [] for name in metadata_map}
-        in_degree = {name: 0 for name in metadata_map}
+        in_degree = dict.fromkeys(metadata_map, 0)
 
         for name, (path, meta) in metadata_map.items():
             for dep in meta.get("depends_on", set()):

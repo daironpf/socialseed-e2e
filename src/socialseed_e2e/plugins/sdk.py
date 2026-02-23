@@ -5,12 +5,11 @@ lifecycle management, configuration handling, and utilities.
 """
 
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Callable
-from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
-from .interfaces import IPlugin, PluginMetadata, PluginContext
+from .interfaces import IPlugin, PluginContext, PluginMetadata
 
 
 class PluginLifecycle(str, Enum):
@@ -210,11 +209,11 @@ class PluginValidator:
             errors.append("Plugin must have a version")
 
         if not hasattr(plugin, "initialize") or not callable(
-            getattr(plugin, "initialize")
+            plugin.initialize
         ):
             errors.append("Plugin must have an initialize method")
 
-        if not hasattr(plugin, "shutdown") or not callable(getattr(plugin, "shutdown")):
+        if not hasattr(plugin, "shutdown") or not callable(plugin.shutdown):
             errors.append("Plugin must have a shutdown method")
 
         return errors

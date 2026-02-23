@@ -5,8 +5,7 @@ test descriptions.
 """
 
 import re
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from socialseed_e2e.nlp.models import (
     ActionType,
@@ -273,32 +272,32 @@ class TestCodeGenerator:
             lines.append('page.headers["Authorization"] = f"Bearer {token}"')
 
         elif action.action_type in [ActionType.CREATE, ActionType.SEND]:
-            lines.append(f"# Create/Send request")
+            lines.append("# Create/Send request")
             payload = action.parameters.get("suggested_payload", {"key": "value"})
             payload_str = str(payload).replace("'", '"')
             lines.append(f'response = page.post("{path}", json={payload_str})')
             lines.append("page.assert_ok(response)")
 
         elif action.action_type == ActionType.READ:
-            lines.append(f"# Read/Retrieve data")
+            lines.append("# Read/Retrieve data")
             lines.append(f'response = page.get("{path}")')
             lines.append("page.assert_ok(response)")
             lines.append("data = response.json()")
 
         elif action.action_type == ActionType.UPDATE:
-            lines.append(f"# Update data")
+            lines.append("# Update data")
             payload = action.parameters.get("suggested_payload", {"key": "value"})
             payload_str = str(payload).replace("'", '"')
             lines.append(f'response = page.put("{path}", json={payload_str})')
             lines.append("page.assert_ok(response)")
 
         elif action.action_type == ActionType.DELETE:
-            lines.append(f"# Delete resource")
+            lines.append("# Delete resource")
             lines.append(f'response = page.delete("{path}")')
             lines.append("page.assert_ok(response)")
 
         elif action.action_type == ActionType.SEARCH:
-            lines.append(f"# Search")
+            lines.append("# Search")
             search_term = action.target or "search_term"
             lines.append(f'response = page.get("{path}?q={search_term}")')
             lines.append("page.assert_ok(response)")
@@ -330,12 +329,12 @@ class TestCodeGenerator:
 
         if assertion.assertion_type == AssertionType.STATUS_CODE:
             expected = assertion.expected_value or 200
-            lines.append(f"# Assert status code")
+            lines.append("# Assert status code")
             lines.append(f"page.assert_status(response, {expected})")
 
         elif assertion.assertion_type == AssertionType.FIELD_EXISTS:
             field = assertion.field or "field_name"
-            lines.append(f"# Assert field exists")
+            lines.append("# Assert field exists")
             lines.append(f'assert "{field}" in data')
 
         elif assertion.assertion_type == AssertionType.FIELD_VALUE:
@@ -343,7 +342,7 @@ class TestCodeGenerator:
             expected = assertion.expected_value or "expected_value"
             if isinstance(expected, str):
                 expected = f'"{expected}"'
-            lines.append(f"# Assert field value")
+            lines.append("# Assert field value")
             lines.append(f'assert data["{field}"] == {expected}')
 
         elif assertion.assertion_type == AssertionType.CONTAINS:
@@ -351,7 +350,7 @@ class TestCodeGenerator:
             expected = assertion.expected_value or "expected"
             if isinstance(expected, str):
                 expected = f'"{expected}"'
-            lines.append(f"# Assert contains")
+            lines.append("# Assert contains")
             lines.append(f"assert {expected} in {field}")
 
         elif assertion.assertion_type == AssertionType.EQUALS:
@@ -359,22 +358,22 @@ class TestCodeGenerator:
             expected = assertion.expected_value or "expected"
             if isinstance(expected, str):
                 expected = f'"{expected}"'
-            lines.append(f"# Assert equals")
+            lines.append("# Assert equals")
             lines.append(f"assert {field} == {expected}")
 
         elif assertion.assertion_type == AssertionType.RESPONSE_TIME:
             max_time = assertion.expected_value or 1000
-            lines.append(f"# Assert response time")
-            lines.append(f"# TODO: Implement response time assertion")
+            lines.append("# Assert response time")
+            lines.append("# TODO: Implement response time assertion")
 
         elif assertion.assertion_type == AssertionType.IS_NOT_EMPTY:
             field = assertion.field or "data"
-            lines.append(f"# Assert not empty")
+            lines.append("# Assert not empty")
             lines.append(f"assert len({field}) > 0")
 
         elif assertion.assertion_type == AssertionType.IS_EMPTY:
             field = assertion.field or "data"
-            lines.append(f"# Assert is empty")
+            lines.append("# Assert is empty")
             lines.append(f"assert len({field}) == 0")
 
         else:

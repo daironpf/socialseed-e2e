@@ -4,12 +4,12 @@ This module provides a platform for the community to share tests,
 plugins, templates, and best practices.
 """
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import json
 
 
 class ResourceType(str, Enum):

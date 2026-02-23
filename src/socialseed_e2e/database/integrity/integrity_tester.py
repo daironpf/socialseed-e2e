@@ -5,13 +5,12 @@ Validates data integrity including constraints, triggers, and stored procedures.
 """
 
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from ..models import (
-    IntegrityCheck,
-    ConstraintViolation,
     ConstraintType,
-    DatabaseType,
+    ConstraintViolation,
+    IntegrityCheck,
 )
 
 
@@ -123,9 +122,9 @@ class IntegrityTester:
 
             # Get primary key column of parent
             cursor.execute(f"""
-                SELECT column_name 
-                FROM information_schema.key_column_usage 
-                WHERE table_name = '{parent_table}' 
+                SELECT column_name
+                FROM information_schema.key_column_usage
+                WHERE table_name = '{parent_table}'
                 AND constraint_name LIKE '%pkey%'
                 LIMIT 1
             """)
@@ -313,9 +312,9 @@ class IntegrityTester:
             cursor.execute(f"""
                 SELECT COUNT(*) FROM (
                     SELECT {table_name}.*, COUNT(*) OVER (PARTITION BY (
-                        SELECT column_name 
-                        FROM information_schema.key_column_usage 
-                        WHERE table_name = '{table_name}' 
+                        SELECT column_name
+                        FROM information_schema.key_column_usage
+                        WHERE table_name = '{table_name}'
                         AND constraint_name LIKE '%pkey%'
                         LIMIT 1
                     )) as cnt

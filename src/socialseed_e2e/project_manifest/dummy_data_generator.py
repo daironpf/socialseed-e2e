@@ -23,7 +23,6 @@ import string
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -31,7 +30,6 @@ from socialseed_e2e.project_manifest.db_model_parsers import (
     ColumnInfo,
     DatabaseSchema,
     EntityInfo,
-    EntityRelationship,
 )
 from socialseed_e2e.project_manifest.models import DtoField, DtoSchema, ValidationRule
 
@@ -392,7 +390,7 @@ class DummyDataGenerator:
         elif strategy == DataGenerationStrategy.CHAOS:
             value = self._generate_chaos_value(field)
             expected = "varies"
-            description = f"Random chaos value"
+            description = "Random chaos value"
         elif strategy == DataGenerationStrategy.NULL:
             value = None
             expected = "failure" if field.required else "success"
@@ -902,7 +900,7 @@ class DummyDataGenerator:
 
         # First generate parent entity records
         parent_records = []
-        for i in range(num_records):
+        for _i in range(num_records):
             data = self.generate_for_entity(entity, DataGenerationStrategy.VALID)
             parent_record = {k: v.value for k, v in data.items()}
             parent_records.append(parent_record)
@@ -1089,7 +1087,7 @@ class DummyDataGenerator:
         Returns:
             Generated data satisfying all constraints
         """
-        for attempt in range(max_attempts):
+        for _attempt in range(max_attempts):
             data = self.generate_for_entity(entity, DataGenerationStrategy.VALID)
             record = {k: v.value for k, v in data.items()}
 
@@ -1271,7 +1269,7 @@ class DummyDataGenerator:
                                 name=f"{field.name} - Below Min Length ({min_len - 1})",
                                 field_name=field.name,
                                 value="x" * (min_len - 1) if min_len > 0 else "",
-                                description=f"One below minimum length",
+                                description="One below minimum length",
                                 expected_result="failure",
                                 category="boundary",
                             ),
@@ -1293,7 +1291,7 @@ class DummyDataGenerator:
                                 name=f"{field.name} - Above Max Length ({max_len + 1})",
                                 field_name=field.name,
                                 value="x" * (max_len + 1),
-                                description=f"One above maximum length",
+                                description="One above maximum length",
                                 expected_result="failure",
                                 category="boundary",
                             ),

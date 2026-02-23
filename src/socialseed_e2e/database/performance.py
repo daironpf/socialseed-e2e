@@ -1,8 +1,9 @@
 """Database query performance testing for socialseed-e2e."""
 
 import time
-from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
 
 @dataclass
 class QueryStats:
@@ -19,16 +20,16 @@ class QueryPerformance:
     def measure_sql_query(self, query: str, params: Optional[tuple] = None) -> QueryStats:
         """Measure the execution time of a SQL query."""
         cursor = self.connection.cursor()
-        
+
         start_time = time.perf_counter()
         if params:
             cursor.execute(query, params)
         else:
             cursor.execute(query)
-            
+
         rows = cursor.fetchall()
         end_time = time.perf_counter()
-        
+
         duration_ms = (end_time - start_time) * 1000
         return QueryStats(
             duration_ms=duration_ms,
@@ -43,15 +44,15 @@ class QueryPerformance:
             raise AssertionError(
                 f"Query exceeded time limit of {max_ms}ms (took {stats.duration_ms:.2f}ms): {query}"
             )
-            
+
     def measure_mongo_query(self, db_name: str, collection_name: str, filter: Dict[str, Any]) -> QueryStats:
         """Measure the execution time of a MongoDB query."""
         collection = self.connection[db_name][collection_name]
-        
+
         start_time = time.perf_counter()
         results = list(collection.find(filter))
         end_time = time.perf_counter()
-        
+
         duration_ms = (end_time - start_time) * 1000
         return QueryStats(
             duration_ms=duration_ms,

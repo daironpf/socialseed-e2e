@@ -1,10 +1,8 @@
 """Contract registry and versioning system for socialseed-e2e."""
 
-import os
 import json
-import shutil
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import List, Optional
 
 
 class LocalContractRegistry:
@@ -18,11 +16,11 @@ class LocalContractRegistry:
         """Publish a contract to the registry."""
         provider_dir = self.root_dir / provider / consumer
         provider_dir.mkdir(parents=True, exist_ok=True)
-        
+
         target_file = provider_dir / f"{version}.json"
         with open(target_file, "w") as f:
             f.write(contract_content)
-            
+
         print(f"Contract {consumer}->{provider} ({version}) published to registry.")
 
     def get_contract(self, consumer: str, provider: str, version: str = "latest") -> Optional[str]:
@@ -40,18 +38,18 @@ class LocalContractRegistry:
 
         old = json.loads(old_json)
         new = json.loads(new_contract_content)
-        
+
         changes = []
-        
+
         # Simple comparison: check if any existing interaction was removed or changed
         old_interactions = {i["description"]: i for i in old["interactions"]}
         new_interactions = {i["description"]: i for i in new["interactions"]}
-        
+
         for desc, old_int in old_interactions.items():
             if desc not in new_interactions:
                 changes.append(f"Breaking change: Interaction '{desc}' was removed.")
                 continue
-                
+
             new_int = new_interactions[desc]
             # Check if expected status changed
             if old_int["response"]["status"] != new_int["response"]["status"]:

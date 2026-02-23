@@ -3,7 +3,6 @@
 This module parses Gherkin feature files and converts them to test code.
 """
 
-import re
 from typing import List, Optional, Tuple
 
 from socialseed_e2e.nlp.models import (

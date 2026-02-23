@@ -2,20 +2,21 @@
 CLI commands for chaos engineering.
 """
 
-import click
 import time
 
+import click
+
 from ...chaos import (
-    NetworkChaosInjector,
-    ServiceChaosInjector,
-    ResourceChaosInjector,
-    GameDayOrchestrator,
-    RecoveryValidator,
-    NetworkChaosConfig,
-    ServiceChaosConfig,
-    ResourceChaosConfig,
     ChaosExperiment,
     ChaosType,
+    GameDayOrchestrator,
+    NetworkChaosConfig,
+    NetworkChaosInjector,
+    RecoveryValidator,
+    ResourceChaosConfig,
+    ResourceChaosInjector,
+    ServiceChaosConfig,
+    ServiceChaosInjector,
 )
 
 
@@ -93,7 +94,7 @@ def service(service, downtime, error_rate, duration):
 @click.option("--duration", "-d", default=300, help="Duration in seconds")
 def resource(cpu_cores, cpu_load, memory, duration):
     """Run resource chaos experiments."""
-    click.echo(f"💾 Running resource chaos...")
+    click.echo("💾 Running resource chaos...")
     click.echo(f"   CPU: {cpu_cores} cores at {cpu_load}%")
     click.echo(f"   Memory: {memory} MB")
     click.echo(f"   Duration: {duration}s")
@@ -158,7 +159,7 @@ def gameday(name, service, parallel):
 
     result = orchestrator.run_gameday(scenario)
 
-    click.echo(f"\n📊 GameDay Results:")
+    click.echo("\n📊 GameDay Results:")
     click.echo(f"   Overall Success: {'✅' if result.overall_success else '❌'}")
     click.echo(f"   Experiments Run: {len(result.experiment_results)}")
     click.echo(
@@ -198,18 +199,18 @@ def validate(endpoint, interval, timeout, threshold):
     result = validator.validate_recovery(config, timeout_seconds=timeout)
 
     if result["recovered"]:
-        click.echo(f"\n✅ System recovered successfully!")
+        click.echo("\n✅ System recovered successfully!")
         click.echo(f"   Recovery Time: {result['recovery_time_seconds']:.1f}s")
         click.echo(f"   Success Rate: {result['success_rate']:.1f}%")
     else:
-        click.echo(f"\n❌ System did not recover within timeout")
+        click.echo("\n❌ System did not recover within timeout")
         click.echo(f"   Success Rate: {result['success_rate']:.1f}%")
         click.echo(f"   Total Checks: {result['total_checks']}")
 
 
 def _display_result(result):
     """Display chaos experiment result."""
-    click.echo(f"\n📊 Experiment Results:")
+    click.echo("\n📊 Experiment Results:")
     click.echo(f"   Status: {result.status.value}")
     click.echo(f"   Success: {'✅' if result.success else '❌'}")
     click.echo(f"   Total Requests: {result.requests_total}")

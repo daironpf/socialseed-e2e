@@ -10,10 +10,10 @@ This module provides statistical and ML-based anomaly detection for:
 import hashlib
 import re
 import statistics
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class AnomalyType(str, Enum):
@@ -731,7 +731,7 @@ class AnomalyDetector:
             return []
 
         anomalies = []
-        for i, value in enumerate(values):
+        for _i, value in enumerate(values):
             z_score = abs((value - mean) / std_dev)
             if z_score > self.config.z_score_threshold:
                 severity = (
@@ -773,7 +773,7 @@ class AnomalyDetector:
         upper_bound = q3 + self.config.iqr_multiplier * iqr
 
         anomalies = []
-        for i, value in enumerate(values):
+        for _i, value in enumerate(values):
             if value < lower_bound or value > upper_bound:
                 anomalies.append(
                     AnomalyResult(

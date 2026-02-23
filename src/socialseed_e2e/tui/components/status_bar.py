@@ -1,6 +1,5 @@
 """Status bar component for TUI."""
 
-from rich.text import Text
 from textual.reactive import reactive
 from textual.widgets import Static
 

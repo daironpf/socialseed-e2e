@@ -94,7 +94,7 @@ class DeepScanPresenter:
         frameworks = scan_result.get("frameworks", [])
         recommendations = scan_result.get("recommendations", {})
 
-        console.print(f"\n📊 [bold cyan]Scan Results[/bold cyan]\n")
+        console.print("\n📊 [bold cyan]Scan Results[/bold cyan]\n")
 
         if services:
             console.print(f"  [bold]Services detected:[/bold] {len(services)}")
@@ -102,7 +102,7 @@ class DeepScanPresenter:
                 console.print(f"    - {service.get('name', 'unknown')}")
 
         if frameworks:
-            console.print(f"\n  [bold]Frameworks:[/bold]")
+            console.print("\n  [bold]Frameworks:[/bold]")
             for fw in frameworks:
                 console.print(
                     f"    - {fw.get('framework', 'unknown')} "
@@ -110,7 +110,7 @@ class DeepScanPresenter:
                 )
 
         if recommendations:
-            console.print(f"\n  [bold]Recommendations:[/bold]")
+            console.print("\n  [bold]Recommendations:[/bold]")
             if recommendations.get("base_url"):
                 console.print(f"    - Base URL: {recommendations['base_url']}")
             if recommendations.get("health_endpoint"):

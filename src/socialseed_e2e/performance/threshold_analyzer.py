@@ -7,7 +7,7 @@ data to detect regressions and performance degradation.
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from socialseed_e2e.performance.performance_models import (
     EndpointPerformanceMetrics,

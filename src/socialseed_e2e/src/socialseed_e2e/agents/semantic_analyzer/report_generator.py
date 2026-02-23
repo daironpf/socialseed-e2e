@@ -4,9 +4,8 @@ Generates comprehensive SEMANTIC_DRIFT_REPORT.md files documenting
 detected logic drift and semantic regressions.
 """
 
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from models import DriftSeverity, LogicDrift, SemanticDriftReport
 

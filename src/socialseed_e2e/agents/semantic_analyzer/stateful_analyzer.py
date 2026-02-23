@@ -4,12 +4,11 @@ Captures snapshots of API responses and database states before and after
 code changes to enable semantic comparison.
 """
 
-import hashlib
 import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from socialseed_e2e.agents.semantic_analyzer.models import (
     APISnapshot,

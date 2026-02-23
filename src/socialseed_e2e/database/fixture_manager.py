@@ -1,9 +1,11 @@
 """Database fixture manager for socialseed-e2e."""
 
 import json
-import yaml
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Union
+
+import yaml
+
 
 class FixtureManager:
     """Manages loading and applying database fixtures."""
@@ -30,7 +32,7 @@ class FixtureManager:
         """Seed a SQL table with data."""
         import sqlite3
         cursor = self.connection.cursor()
-        
+
         if truncate:
             # Check for PostgreSQL/MySQL vs SQLite
             if isinstance(self.connection, sqlite3.Connection):
@@ -45,7 +47,7 @@ class FixtureManager:
         columns = data[0].keys()
         placeholders = ", ".join(["?" if isinstance(self.connection, sqlite3.Connection) else "%s"] * len(columns))
         query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
-        
+
         values = [tuple(row[col] for col in columns) for row in data]
         cursor.executemany(query, values)
         self.connection.commit()
@@ -61,7 +63,7 @@ class FixtureManager:
         """Start a SQL transaction (if supported)."""
         if hasattr(self.connection, "autocommit"):
             self.connection.autocommit = False
-            
+
     def rollback(self):
         """Rollback current SQL transaction."""
         if hasattr(self.connection, "rollback"):

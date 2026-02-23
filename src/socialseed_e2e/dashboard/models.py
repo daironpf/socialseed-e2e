@@ -3,7 +3,7 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path.cwd()
 DB_PATH = PROJECT_ROOT / ".e2e" / "dashboard.db"
@@ -291,7 +291,7 @@ class RequestHistory:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO request_history 
+            INSERT INTO request_history
             (timestamp, method, url, headers, body, response_status, response_body, response_headers, duration_ms, environment_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
@@ -505,8 +505,8 @@ class SavedRequest:
         if self.id:
             cursor.execute(
                 """
-                UPDATE saved_requests 
-                SET collection_id = ?, name = ?, method = ?, url = ?, headers = ?, 
+                UPDATE saved_requests
+                SET collection_id = ?, name = ?, method = ?, url = ?, headers = ?,
                     body = ?, params = ?, tests = ?, order_index = ?, updated_at = ?
                 WHERE id = ?
             """,
@@ -527,7 +527,7 @@ class SavedRequest:
         else:
             cursor.execute(
                 """
-                INSERT INTO saved_requests 
+                INSERT INTO saved_requests
                 (collection_id, name, method, url, headers, body, params, tests, order_index, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,

@@ -5,10 +5,9 @@ and provides utilities for version-aware testing.
 """
 
 import re
-from typing import List, Optional, Dict, Any
-from urllib.parse import urlparse
+from typing import Any, Dict, List, Optional
 
-from .models import VersionStrategy, APIVersion
+from .models import APIVersion, VersionStrategy
 
 
 class VersionDetector:

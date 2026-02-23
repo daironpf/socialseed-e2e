@@ -5,14 +5,13 @@ validates backward compatibility.
 """
 
 import time
-from typing import List, Dict, Any, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 from .models import (
-    VersionStrategy,
-    APIVersion,
-    MigrationTestResult,
-    VersionTestResult,
     BreakingChange,
+    MigrationTestResult,
+    VersionStrategy,
+    VersionTestResult,
 )
 from .version_detector import VersionDetector
 

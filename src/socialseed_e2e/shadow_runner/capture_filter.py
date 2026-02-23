@@ -5,7 +5,7 @@ This module provides intelligent filtering to remove noise from captured traffic
 
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Pattern, Set
+from typing import Dict, List, Pattern, Set
 
 from socialseed_e2e.shadow_runner.traffic_interceptor import CapturedInteraction
 

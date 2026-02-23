@@ -11,7 +11,6 @@ import click
 import yaml
 from rich.console import Console
 
-
 console = Console()
 
 
@@ -134,9 +133,9 @@ class URLValidator:
         """Validate URL format."""
         if not url.startswith(("http://", "https://")):
             console.print(
-                f"[red]❌ Error:[/red] URL must start with http:// or https://"
+                "[red]❌ Error:[/red] URL must start with http:// or https://"
             )
-            console.print(f"[yellow]Example:[/yellow] https://api.example.com:443")
+            console.print("[yellow]Example:[/yellow] https://api.example.com:443")
             return False
         return True
 

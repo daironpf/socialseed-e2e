@@ -6,7 +6,7 @@ AI agents communicating with the framework.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class CapabilityLevel(str, Enum):

@@ -7,7 +7,6 @@ provides easy access to all service configurations.
 """
 
 # Try to import yaml, fallback to JSON if not available
-import json
 import os
 import re
 from dataclasses import dataclass, field
@@ -565,7 +564,7 @@ class ApiConfigLoader:
             import warnings as warnings_module
 
             for warning in warnings:
-                warnings_module.warn(f"Config warning: {warning}")
+                warnings_module.warn(f"Config warning: {warning}", stacklevel=2)
 
     @classmethod
     def _parse_config(cls, data: Dict[str, Any]) -> AppConfig:

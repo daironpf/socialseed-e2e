@@ -18,13 +18,11 @@ Usage:
 """
 
 import json
-import os
 import sqlite3
-import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import streamlit as st
 
@@ -308,7 +306,7 @@ def run_all_tests(tests: Dict):
     status_text = st.empty()
 
     current = 0
-    for service_name, service in tests["services"].items():
+    for _service_name, service in tests["services"].items():
         for test in service["tests"]:
             current += 1
             progress = current / total
@@ -343,7 +341,7 @@ def save_test_run(test_path: str, result: Dict):
 
     cursor.execute(
         """
-        INSERT INTO test_runs 
+        INSERT INTO test_runs
         (timestamp, test_name, test_path, status, duration_ms, output, error_message)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """,
@@ -610,7 +608,7 @@ def main():
                 conn = sqlite3.connect(str(state.db_path))
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT 
+                    SELECT
                         COUNT(*) as total,
                         SUM(CASE WHEN status = 'passed' THEN 1 ELSE 0 END) as passed
                     FROM test_runs

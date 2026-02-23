@@ -1,12 +1,13 @@
 """Azure integration for socialseed-e2e."""
 
 from typing import Any, Dict, List, Optional
-from socialseed_e2e.cloud import CloudProvider, CloudFunction, CloudService
+
+from socialseed_e2e.cloud import CloudFunction, CloudProvider, CloudService
 
 try:
     from azure.identity import DefaultAzureCredential
-    from azure.mgmt.resource import ResourceManagementClient
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
+    from azure.mgmt.resource import ResourceManagementClient
     AZURE_AVAILABLE = True
 except ImportError:
     AZURE_AVAILABLE = False
@@ -18,7 +19,7 @@ class AzureProvider(CloudProvider):
     def __init__(self, subscription_id: str):
         if not AZURE_AVAILABLE:
             raise ImportError("Azure libraries are required. Install them with 'pip install azure-identity azure-mgmt-resource azure-mgmt-containerinstance'")
-        
+
         self.subscription_id = subscription_id
         self.credentials = DefaultAzureCredential()
 

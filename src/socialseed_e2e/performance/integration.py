@@ -181,7 +181,7 @@ def profile_endpoint(func: F) -> F:
                 break
 
         if page is None:
-            for key, value in kwargs.items():
+            for _key, value in kwargs.items():
                 if hasattr(value, "enable_profiling"):
                     page = value
                     break

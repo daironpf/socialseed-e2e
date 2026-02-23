@@ -5,12 +5,10 @@ tracks contract evolution across versions.
 """
 
 import json
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 from datetime import datetime
 from enum import Enum
-
-from .models import VersionStrategy, APIVersion
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class ContractType(str, Enum):

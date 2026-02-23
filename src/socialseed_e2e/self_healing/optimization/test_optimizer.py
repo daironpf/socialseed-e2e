@@ -7,12 +7,11 @@ and optimizing execution order.
 
 import ast
 import uuid
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
-from collections import defaultdict
-from difflib import SequenceMatcher
 
-from ..models import TestOptimization, HealingSuggestion, HealingType, ChangeType
+from ..models import ChangeType, HealingSuggestion, HealingType, TestOptimization
 
 
 class TestOptimizer:

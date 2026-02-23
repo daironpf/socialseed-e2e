@@ -6,8 +6,7 @@ to automatically create tests from REST controller analysis.
 
 import re
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -236,10 +235,10 @@ class PythonCodeGenerator:
                         # Use camelCase alias
                         camel_name = PythonCodeGenerator._to_camel_case(field.name)
                         lines.append(f"    {field.name}: {field.type_hint} = Field(")
-                        lines.append(f"        ...,")
+                        lines.append("        ...,")
                         lines.append(f'        alias="{camel_name}",')
                         lines.append(f'        serialization_alias="{camel_name}"')
-                        lines.append(f"    )")
+                        lines.append("    )")
                     else:
                         lines.append(f"    {field.name}: {field.type_hint}")
 
@@ -372,9 +371,9 @@ class PythonCodeGenerator:
                 lines.append(f"        response = self.{endpoint.method.lower()}(")
                 lines.append(f'            ENDPOINTS["{key}"],')
                 lines.append(
-                    f"            data=request.model_dump(by_alias=True)  # ✅ SIEMPRE by_alias=True"
+                    "            data=request.model_dump(by_alias=True)  # ✅ SIEMPRE by_alias=True"
                 )
-                lines.append(f"        )")
+                lines.append("        )")
 
             lines.append("        return response")
             lines.append("")

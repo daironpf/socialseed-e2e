@@ -6,24 +6,22 @@ replacing the old Streamlit interface with a modern reactive frontend.
 
 import asyncio
 import json
-import os
 import re
-import sys
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import socketio
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
 
 from socialseed_e2e.dashboard.models import (
+    Collection,
     Environment,
     RequestHistory,
-    Collection,
     SavedRequest,
 )
 
@@ -141,9 +139,9 @@ FALLBACK_DASHBOARD_HTML = r"""
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); height: 100vh; overflow: hidden; }
-        
+
         .app { display: flex; height: 100vh; }
-        
+
         /* Sidebar */
         .sidebar { width: 260px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
         .sidebar-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
@@ -151,7 +149,7 @@ FALLBACK_DASHBOARD_HTML = r"""
         .version { background: var(--bg-tertiary); padding: 0.15rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; color: var(--text-secondary); }
         .env-select { flex: 1; padding: 0.3rem 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-primary); font-size: 0.75rem; cursor: pointer; }
         .env-select:focus { outline: none; border-color: var(--accent); }
-        
+
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
@@ -161,7 +159,7 @@ FALLBACK_DASHBOARD_HTML = r"""
         .modal-body { padding: 1rem; }
         .modal-footer { padding: 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; justify-content: flex-end; }
         .close-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
-        
+
         .env-list { display: flex; flex-direction: column; gap: 0.5rem; }
         .env-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.25rem; }
         .env-item-name { flex: 1; font-weight: 500; }
@@ -174,65 +172,65 @@ FALLBACK_DASHBOARD_HTML = r"""
         .btn-icon { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; }
         .btn-icon:hover { color: var(--text-primary); }
         .add-var-btn { font-size: 0.75rem; padding: 0.3rem 0.5rem; }
-        
+
         .sidebar-actions { padding: 0.75rem; display: flex; gap: 0.5rem; }
         .btn-sm { padding: 0.4rem 0.75rem; background: var(--accent); color: white; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
         .btn-sm:hover { background: var(--accent-hover); }
         .btn-sm.secondary { background: var(--bg-tertiary); }
         .btn-sm.secondary:hover { background: var(--bg-hover); }
-        
+
         .search-box { padding: 0.5rem 0.75rem; }
         .search-box input { width: 100%; padding: 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-primary); font-size: 0.85rem; }
         .search-box input::placeholder { color: var(--text-secondary); }
         .search-box input:focus { outline: none; border-color: var(--accent); }
-        
+
         .services-list { flex: 1; overflow-y: auto; }
         .service-item { border-bottom: 1px solid var(--border); }
         .service-header { padding: 0.6rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.85rem; }
         .service-header:hover { background: var(--bg-hover); }
         .service-icon { color: var(--accent); font-size: 0.9rem; }
         .service-count { margin-left: auto; background: var(--bg-tertiary); padding: 0.1rem 0.4rem; border-radius: 0.75rem; font-size: 0.7rem; color: var(--text-secondary); }
-        
+
         .test-list { background: var(--bg-primary); }
         .test-item { padding: 0.5rem 1rem 0.5rem 2rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8rem; }
         .test-item:hover { background: var(--bg-hover); }
         .test-item.active { background: var(--bg-tertiary); border-left: 2px solid var(--accent); }
         .test-icon { color: var(--text-secondary); }
         .sandbox-badge { background: #7c3aed; color: white; padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-size: 0.6rem; margin-left: auto; }
-        
+
         /* Main Panel */
         .main { flex: 1; display: flex; flex-direction: column; }
-        
+
         .main-header { padding: 0.75rem 1rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .test-title { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
         .test-path { color: var(--text-secondary); font-size: 0.75rem; font-weight: normal; }
-        
+
         .test-actions { display: flex; gap: 0.5rem; }
         .btn-run { background: var(--success); }
         .btn-run:hover { background: #16a34a; }
         .btn-duplicate { background: #7c3aed; }
         .btn-duplicate:hover { background: #6d28d9; }
-        
+
         /* Request Panel */
         .request-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .request-bar { padding: 0.75rem 1rem; background: var(--bg-tertiary); display: flex; gap: 0.5rem; align-items: center; }
         .method-select { padding: 0.4rem 0.6rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--success); font-weight: 600; font-size: 0.8rem; }
         .url-input { flex: 1; padding: 0.4rem 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-primary); font-size: 0.85rem; font-family: monospace; }
         .url-input:focus { outline: none; border-color: var(--accent); }
-        
+
         /* Tabs */
         .tabs { display: flex; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
         .tab { padding: 0.6rem 1rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 2px solid transparent; }
         .tab:hover { color: var(--text-primary); }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-        
+
         /* Content Area */
         .tab-content { flex: 1; overflow: auto; padding: 1rem; }
         .tab-panel { display: none; height: 100%; }
         .tab-panel.active { display: block; }
-        
+
         textarea.code-editor { width: 100%; height: 200px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-primary); font-family: 'Consolas', monospace; font-size: 0.85rem; padding: 0.75rem; resize: vertical; }
-        
+
         /* Response */
         .response-panel { height: 200px; border-top: 1px solid var(--border); }
         .response-header { padding: 0.5rem 1rem; background: var(--bg-tertiary); display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; }
@@ -240,22 +238,22 @@ FALLBACK_DASHBOARD_HTML = r"""
         .status-badge.success { background: rgba(34, 197, 94, 0.2); color: var(--success); }
         .status-badge.error { background: rgba(239, 68, 68, 0.2); color: var(--error); }
         .response-body { padding: 0.75rem 1rem; background: var(--bg-primary); height: calc(100% - 2.5rem); overflow: auto; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; }
-        
+
         /* History Panel */
         .history-list { display: flex; flex-direction: column; gap: 0.5rem; }
         .history-item { padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.25rem; display: flex; align-items: center; gap: 0.75rem; }
         .history-time { font-size: 0.75rem; color: var(--text-secondary); min-width: 80px; }
         .history-method { font-size: 0.7rem; font-weight: 600; color: var(--success); min-width: 50px; }
         .history-name { flex: 1; font-size: 0.85rem; }
-        
+
         /* Status Bar */
         .status-bar { padding: 0.4rem 1rem; background: var(--bg-secondary); border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-between; }
         .sync-status { display: flex; align-items: center; gap: 0.5rem; }
         .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
-        
+
         /* Sandbox Indicator */
         .sandbox-indicator { background: #7c3aed; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; display: flex; align-items: center; gap: 0.25rem; }
-        
+
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); }
         .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
     </style>
@@ -274,23 +272,23 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <button class="btn-sm secondary" onclick="openEnvModal()" title="Manage Environments">⚙️</button>
                 <button class="btn-sm secondary" onclick="toggleTheme()" title="Toggle Theme" id="themeToggle">🌙</button>
             </div>
-            
+
             <div class="sidebar-actions">
                 <button class="btn-sm btn-run" onclick="runSelectedTest()">▶ Run</button>
                 <button class="btn-sm btn-duplicate" onclick="duplicateTest()">📋 Copy</button>
                 <button class="btn-sm secondary" onclick="refreshTests()">🔄</button>
                 <button class="btn-sm secondary" onclick="openImportModal()">📥 Import</button>
             </div>
-            
+
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search tests..." onkeyup="filterTests()">
             </div>
-            
+
             <div class="services-list" id="servicesList">
                 Loading services...
             </div>
         </div>
-        
+
         <!-- Main Panel -->
         <div class="main">
             <div class="main-header">
@@ -303,7 +301,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <button class="btn-sm btn-duplicate" onclick="duplicateTest()">📋 Duplicate</button>
                 </div>
             </div>
-            
+
                 <div class="request-panel">
                 <div class="request-bar">
                     <select class="method-select" id="methodSelect" onchange="handleMethodChange()">
@@ -317,7 +315,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <input type="text" class="url-input" id="urlInput" placeholder="Enter URL or select a test" value="">
                     <button class="btn-sm btn-run" id="wsConnectBtn" onclick="toggleWebSocket()" style="display:none;">Connect</button>
                 </div>
-                
+
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab('params')">Params</div>
                     <div class="tab" onclick="switchTab('headers')">Headers</div>
@@ -326,7 +324,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <div class="tab" onclick="switchTab('history')">History</div>
                     <div class="tab" id="wsTab" onclick="switchTab('ws')" style="display:none;">WebSocket</div>
                 </div>
-                
+
                 <div class="tab-content">
                     <div class="tab-panel active" id="panel-params">
                         <textarea class="code-editor" id="paramsEditor" placeholder='{"key": "value"}'></textarea>
@@ -342,7 +340,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     </div>
                     <div class="tab-panel" id="panel-history">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                            <input type="text" id="historySearch" placeholder="Search history..." 
+                            <input type="text" id="historySearch" placeholder="Search history..."
                                    style="flex:1;padding:0.5rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.25rem);color:var(--text-primary);"
                                    onkeyup="filterHistory()">
                             <button class="btn-sm secondary" onclick="clearHistory()" style="margin-left:0.5rem;">Clear</button>
@@ -355,7 +353,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     <div class="tab-panel" id="panel-ws">
                         <div style="margin-bottom:1rem;">
                             <button class="btn-sm btn-run" id="wsSendBtn" onclick="sendWsMessage()" disabled>Send</button>
-                            <input type="text" id="wsMessageInput" placeholder="Enter message..." 
+                            <input type="text" id="wsMessageInput" placeholder="Enter message..."
                                    style="flex:1;padding:0.5rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:0.25rem;color:var(--text-primary);margin-left:0.5rem;">
                         </div>
                         <div class="ws-messages" id="wsMessages" style="height:200px;overflow-y:auto;background:var(--bg-tertiary);border-radius:0.25rem;padding:0.5rem;font-family:monospace;font-size:0.85rem;">
@@ -363,7 +361,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="response-panel">
                     <div class="response-header">
                         <span class="status-badge" id="statusBadge">--</span>
@@ -383,7 +381,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     </div>
                 </div>
             </div>
-            
+
             <div class="status-bar">
                 <div class="sync-status">
                     <span class="sync-dot"></span>
@@ -400,14 +398,14 @@ FALLBACK_DASHBOARD_HTML = r"""
         let selectedTest = null;
         let sandboxTests = {};
         let lastModified = {};
-        
+
         async function loadData() {
             try {
                 const res = await fetch('/api/tests');
                 const data = await res.json();
                 services = data.services || [];
                 tests = data.tests || [];
-                
+
                 // Group tests by service
                 const servicesMap = {};
                 services.forEach(s => {
@@ -419,18 +417,18 @@ FALLBACK_DASHBOARD_HTML = r"""
                 console.error('Error loading:', e);
             }
         }
-        
+
         function renderServices() {
             const container = document.getElementById('servicesList');
             const search = document.getElementById('searchInput').value.toLowerCase();
-            
+
             let html = '';
-            
+
             // Regular tests
             for (const [serviceName, serviceTests] of Object.entries(servicesMap)) {
                 const filteredTests = serviceTests.filter(t => t.name.toLowerCase().includes(search));
                 if (filteredTests.length === 0 && search) continue;
-                
+
                 html += \`
                     <div class="service-item">
                         <div class="service-header" onclick="toggleService('\${serviceName}')">
@@ -440,7 +438,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                         </div>
                         <div class="test-list" id="service-\${serviceName}">
                             \${filteredTests.map(t => \`
-                                <div class="test-item \${selectedTest?.path === t.path ? 'active' : ''}" 
+                                <div class="test-item \${selectedTest?.path === t.path ? 'active' : ''}"
                                      onclick="selectTest('\${t.path}', '\${t.name}', '\${serviceName}', false)">
                                     <span class="test-icon">🧪</span>
                                     <span>\${t.name}</span>
@@ -450,7 +448,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     </div>
                 \`;
             }
-            
+
             // Sandbox tests
             const sandboxNames = Object.keys(sandboxTests);
             if (sandboxNames.length > 0) {
@@ -474,11 +472,11 @@ FALLBACK_DASHBOARD_HTML = r"""
                     </div>
                 \`;
             }
-            
+
             if (!html) html = '<div style="padding:1rem;color:var(--text-secondary)">No tests found</div>';
             container.innerHTML = html;
         }
-        
+
         function selectTest(path, name, service, isSandbox) {
             selectedTest = { path, name, service, sandbox: isSandbox ? name : null };
             document.getElementById('testTitle').innerHTML = \`
@@ -486,14 +484,14 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <span class="test-path">\${service} / \${path}</span>
                 \${isSandbox ? '<span class="sandbox-indicator">🧪 Sandbox</span>' : ''}
             \`;
-            
+
             document.getElementById('urlInput').value = \`http://localhost:5000\${path.replace('modules/', '/').replace('.py', '')}\`;
-            
+
             // Load test content
             loadTestContent(path, isSandbox ? null : path);
             renderServices();
         }
-        
+
         function selectSandboxTest(name) {
             const sandbox = sandboxTests[name];
             if (sandbox) {
@@ -510,17 +508,17 @@ FALLBACK_DASHBOARD_HTML = r"""
                 document.getElementById('testsEditor').value = sandbox.tests || '';
             }
         }
-        
+
         async function loadTestContent(path, originalPath) {
             try {
                 const res = await fetch('/api/test-content?path=' + encodeURIComponent(path));
                 const data = await res.json();
-                
+
                 if (data.content) {
                     // Extract URL and params from test content
                     const urlMatch = data.content.match(/["'](https?:\/\/[^"']+)["']/);
                     const bodyMatch = data.content.match(/json\s*=\s*(\{[^}]+\})/s);
-                    
+
                     if (urlMatch) document.getElementById('urlInput').value = urlMatch[1];
                     if (bodyMatch) document.getElementById('bodyEditor').value = bodyMatch[1];
                 }
@@ -528,13 +526,13 @@ FALLBACK_DASHBOARD_HTML = r"""
                 console.error('Error loading test:', e);
             }
         }
-        
+
         function duplicateTest() {
             if (!selectedTest) {
                 alert('Select a test first');
                 return;
             }
-            
+
             const copyName = selectedTest.sandbox || selectedTest.name + ' (Copy)';
             sandboxTests[copyName] = {
                 url: document.getElementById('urlInput').value,
@@ -544,31 +542,31 @@ FALLBACK_DASHBOARD_HTML = r"""
                 tests: document.getElementById('testsEditor').value,
                 original: selectedTest.path
             };
-            
+
             selectedTest = { name: copyName, service: 'sandbox', sandbox: copyName };
             renderServices();
             alert('Test duplicated to Sandbox! You can modify it without affecting the original.');
         }
-        
+
         function runSelectedTest() {
             if (!selectedTest) {
                 alert('Select a test first');
                 return;
             }
-            
+
             // Substitute variables
             const rawUrl = document.getElementById('urlInput').value;
             const url = substituteVars(rawUrl);
             const method = document.getElementById('methodSelect').value;
             const rawBody = document.getElementById('bodyEditor').value;
             const body = substituteVars(rawBody);
-            
+
             const statusBadge = document.getElementById('statusBadge');
             statusBadge.textContent = 'Running...';
             statusBadge.className = 'status-badge';
-            
+
             const startTime = Date.now();
-            
+
             fetch('/api/test-run', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -586,7 +584,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 const duration = Date.now() - startTime;
                 document.getElementById('responseTime').textContent = duration + ' ms';
                 document.getElementById('responseSize').textContent = JSON.stringify(data).length + ' bytes';
-                
+
                 if (data.status >= 200 && data.status < 300) {
                     statusBadge.textContent = data.status + ' OK';
                     statusBadge.className = 'status-badge success';
@@ -594,7 +592,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                     statusBadge.textContent = data.status + ' Error';
                     statusBadge.className = 'status-badge error';
                 }
-                
+
                 const responseBody = document.getElementById('responseBody');
                 const bodyText = typeof data.body === 'object' ? JSON.stringify(data.body) : data.body;
                 currentResponseData = bodyText;
@@ -608,34 +606,34 @@ FALLBACK_DASHBOARD_HTML = r"""
                 document.getElementById('responseBody').textContent = 'Error: ' + err.message;
             });
         }
-        
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            
+
             event.target.classList.add('active');
             document.getElementById('panel-' + tabName).classList.add('active');
         }
-        
+
         function filterTests() {
             renderServices();
         }
-        
+
         function toggleService(name) {
             const el = document.getElementById('service-' + name);
             el.style.display = el.style.display === 'none' ? 'block' : 'none';
         }
-        
+
         function refreshTests() {
             loadData();
         }
-        
+
         function updateSyncStatus() {
             document.getElementById('lastSync').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
         }
-        
+
         let requestHistory = [];
-        
+
         async function loadHistory() {
             try {
                 const res = await fetch('/api/history');
@@ -646,21 +644,21 @@ FALLBACK_DASHBOARD_HTML = r"""
                 console.error('Error loading history:', e);
             }
         }
-        
+
         function renderHistory() {
             const search = document.getElementById('historySearch')?.value?.toLowerCase() || '';
             const container = document.getElementById('historyListContent');
-            
-            const filtered = requestHistory.filter(h => 
+
+            const filtered = requestHistory.filter(h =>
                 h.url.toLowerCase().includes(search) ||
                 h.method.toLowerCase().includes(search)
             );
-            
+
             if (filtered.length === 0) {
                 container.innerHTML = '<p style="color:var(--text-secondary)">No history found</p>';
                 return;
             }
-            
+
             container.innerHTML = filtered.map(h => `
                 <div class="history-item" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border-bottom:1px solid var(--border);cursor:pointer;">
                     <input type="checkbox" class="history-checkbox" value="${h.id}" onchange="updateCompareButton()" onclick="event.stopPropagation()">
@@ -671,33 +669,33 @@ FALLBACK_DASHBOARD_HTML = r"""
                 </div>
             `).join('');
         }
-        
+
         let selectedForCompare = [];
-        
+
         function updateCompareButton() {
             const checkboxes = document.querySelectorAll('.history-checkbox:checked');
             selectedForCompare = Array.from(checkboxes).map(c => parseInt(c.value));
             const btn = document.getElementById('compareBtn');
             btn.disabled = selectedForCompare.length !== 2;
         }
-        
+
         function compareSelected() {
             if (selectedForCompare.length !== 2) return;
-            
+
             const item1 = requestHistory.find(h => h.id === selectedForCompare[0]);
             const item2 = requestHistory.find(h => h.id === selectedForCompare[1]);
-            
+
             if (!item1 || !item2) return;
-            
+
             document.getElementById('compare1').innerHTML = formatHistoryItem(item1);
             document.getElementById('compare2').innerHTML = formatHistoryItem(item2);
-            
+
             const diff = computeDiff(item1, item2);
             document.getElementById('compareDiff').innerHTML = diff;
-            
+
             document.getElementById('compareModal').classList.add('active');
         }
-        
+
         function formatHistoryItem(item) {
             return `
                 <div><strong>${item.method}</strong> ${item.url}</div>
@@ -705,10 +703,10 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <div style="margin-top:0.5rem;"><pre style="margin:0;white-space:pre-wrap;">${item.response_body?.substring(0, 500) || ''}</pre></div>
             `;
         }
-        
+
         function computeDiff(item1, item2) {
             let diff = [];
-            
+
             if (item1.method !== item2.method) {
                 diff.push(`<div style="color:var(--error)">Method: ${item1.method} → ${item2.method}</div>`);
             }
@@ -718,28 +716,28 @@ FALLBACK_DASHBOARD_HTML = r"""
             if (item1.response_status !== item2.response_status) {
                 diff.push(`<div style="color:var(--error)">Status: ${item1.response_status} → ${item2.response_status}</div>`);
             }
-            
+
             const body1 = item1.response_body || '';
             const body2 = item2.response_body || '';
             if (body1 !== body2) {
                 diff.push(`<div style="color:var(--accent)">Response body differs</div>`);
             }
-            
+
             if (diff.length === 0) {
                 return '<div style="color:var(--success)">No differences found</div>';
             }
-            
+
             return diff.join('');
         }
-        
+
         function closeCompareModal() {
             document.getElementById('compareModal').classList.remove('active');
         }
-        
+
         function filterHistory() {
             renderHistory();
         }
-            
+
             container.innerHTML = filtered.map(h => \`
                 <div class="history-item" onclick="restoreFromHistory(\${h.id})" style="cursor:pointer;">
                     <span class="history-time">\${new Date(h.timestamp).toLocaleTimeString()}</span>
@@ -749,11 +747,11 @@ FALLBACK_DASHBOARD_HTML = r"""
                 </div>
             \`).join('');
         }
-        
+
         function filterHistory() {
             renderHistory();
         }
-        
+
         function restoreFromHistory(id) {
             const item = requestHistory.find(h => h.id === id);
             if (item) {
@@ -764,7 +762,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 alert('Request restored from history');
             }
         }
-        
+
         async function clearHistory() {
             if (!confirm('Clear all history?')) return;
             try {
@@ -775,7 +773,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 console.error('Error clearing history:', e);
             }
         }
-        
+
         // Load history when switching to history tab
         const originalSwitchTab = switchTab;
         switchTab = function(tabName) {
@@ -784,19 +782,19 @@ FALLBACK_DASHBOARD_HTML = r"""
             }
             originalSwitchTab(tabName);
         };
-        
+
         // Auto-refresh every 5 seconds
         setInterval(loadData, 5000);
-        
+
         // Initial load
         loadData();
         loadEnvironments();
         loadTheme();
-        
+
         // Environment functions
         let currentEnvironments = [];
         let activeEnvVars = {};
-        
+
         async function loadEnvironments() {
             try {
                 const res = await fetch('/api/environments');
@@ -818,7 +816,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 console.error('Error loading environments:', e);
             }
         }
-        
+
         function switchEnvironment() {
             const select = document.getElementById('envSelect');
             const envId = select.value;
@@ -831,21 +829,21 @@ FALLBACK_DASHBOARD_HTML = r"""
                 activeEnvVars = env.variables || {};
             }
         }
-        
+
         function openEnvModal() {
             document.getElementById('envModal').classList.add('active');
             renderEnvList();
         }
-        
+
         function closeEnvModal() {
             document.getElementById('envModal').classList.remove('active');
         }
-        
+
         function toggleTheme() {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme');
             const toggle = document.getElementById('themeToggle');
-            
+
             if (current === 'light') {
                 html.removeAttribute('data-theme');
                 localStorage.setItem('theme', 'dark');
@@ -856,7 +854,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 toggle.textContent = '☀️';
             }
         }
-        
+
         function loadTheme() {
             const saved = localStorage.getItem('theme');
             const toggle = document.getElementById('themeToggle');
@@ -865,7 +863,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 toggle.textContent = '☀️';
             }
         }
-        
+
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             // Ctrl/Cmd + Enter - Send request
@@ -893,7 +891,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
             }
         });
-        
+
         function newRequest() {
             document.getElementById('requestName').value = 'New Request';
             document.getElementById('requestMethod').value = 'GET';
@@ -901,18 +899,18 @@ FALLBACK_DASHBOARD_HTML = r"""
             document.getElementById('requestBody').value = '';
             currentRequestId = null;
         }
-        
+
         function saveCurrentRequest() {
             const name = document.getElementById('requestName').value;
             const method = document.getElementById('requestMethod').value;
             const url = document.getElementById('requestUrl').value;
             const body = document.getElementById('requestBody').value;
-            
+
             if (!name || !url) {
                 alert('Please enter a name and URL');
                 return;
             }
-            
+
             if (currentRequestId) {
                 fetch(`/api/requests/${currentRequestId}`, {
                     method: 'PUT',
@@ -933,16 +931,16 @@ FALLBACK_DASHBOARD_HTML = r"""
                 });
             }
         }
-        
+
         // WebSocket support
         let ws = null;
         let wsConnected = false;
-        
+
         function handleMethodChange() {
             const method = document.getElementById('methodSelect').value;
             const wsBtn = document.getElementById('wsConnectBtn');
             const wsTab = document.getElementById('wsTab');
-            
+
             if (method === 'WS') {
                 wsBtn.style.display = 'inline-block';
                 wsTab.style.display = 'block';
@@ -954,12 +952,12 @@ FALLBACK_DASHBOARD_HTML = r"""
                 }
             }
         }
-        
+
         function toggleWebSocket() {
             const url = document.getElementById('urlInput').value;
             const btn = document.getElementById('wsConnectBtn');
             const sendBtn = document.getElementById('wsSendBtn');
-            
+
             if (!wsConnected) {
                 if (!url) {
                     alert('Please enter a WebSocket URL');
@@ -967,7 +965,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 }
                 try {
                     ws = new WebSocket(url);
-                    
+
                     ws.onopen = function() {
                         wsConnected = true;
                         btn.textContent = 'Disconnect';
@@ -976,11 +974,11 @@ FALLBACK_DASHBOARD_HTML = r"""
                         sendBtn.disabled = false;
                         addWsMessage('system', 'Connected to ' + url);
                     };
-                    
+
                     ws.onmessage = function(event) {
                         addWsMessage('received', event.data);
                     };
-                    
+
                     ws.onclose = function() {
                         wsConnected = false;
                         btn.textContent = 'Connect';
@@ -989,7 +987,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                         sendBtn.disabled = true;
                         addWsMessage('system', 'Disconnected');
                     };
-                    
+
                     ws.onerror = function(error) {
                         addWsMessage('error', 'Error: ' + error);
                     };
@@ -1000,23 +998,23 @@ FALLBACK_DASHBOARD_HTML = r"""
                 ws.close();
             }
         }
-        
+
         function sendWsMessage() {
             const input = document.getElementById('wsMessageInput');
             const message = input.value;
-            
+
             if (ws && wsConnected && message) {
                 ws.send(message);
                 addWsMessage('sent', message);
                 input.value = '';
             }
         }
-        
+
         function addWsMessage(type, message) {
             const container = document.getElementById('wsMessages');
             const msgDiv = document.createElement('div');
             msgDiv.style.marginBottom = '0.5rem';
-            
+
             if (type === 'sent') {
                 msgDiv.innerHTML = '<span style="color:#22c55e;">➤</span> <span style="color:var(--text-primary);">' + escapeHtml(message) + '</span>';
             } else if (type === 'received') {
@@ -1026,20 +1024,20 @@ FALLBACK_DASHBOARD_HTML = r"""
             } else {
                 msgDiv.innerHTML = '<span style="color:var(--text-secondary);">' + escapeHtml(message) + '</span>';
             }
-            
+
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
         }
-        
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
+
         let currentResponseView = 'raw';
         let currentResponseData = '';
-        
+
         function setResponseView(view) {
             currentResponseView = view;
             const rawBody = document.getElementById('responseBody');
@@ -1047,14 +1045,14 @@ FALLBACK_DASHBOARD_HTML = r"""
             const btnRaw = document.getElementById('viewRaw');
             const btnPretty = document.getElementById('viewPretty');
             const btnPreview = document.getElementById('viewPreview');
-            
+
             btnRaw.classList.remove('btn-run');
             btnPretty.classList.remove('btn-run');
             btnPreview.classList.remove('btn-run');
             btnRaw.classList.add('secondary');
             btnPretty.classList.add('secondary');
             btnPreview.classList.add('secondary');
-            
+
             if (view === 'raw') {
                 rawBody.style.display = 'block';
                 previewBody.style.display = 'none';
@@ -1091,7 +1089,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 }
             }
         }
-        
+
         function renderEnvList() {
             const container = document.getElementById('envListContent');
             if (currentEnvironments.length === 0) {
@@ -1107,7 +1105,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 </div>
             \`).join('');
         }
-        
+
         async function createEnv() {
             const name = prompt('Environment name:');
             if (!name) return;
@@ -1119,27 +1117,27 @@ FALLBACK_DASHBOARD_HTML = r"""
             await loadEnvironments();
             renderEnvList();
         }
-        
+
         async function activateEnv(id) {
             await fetch('/api/environments/' + id + '/activate', {method: 'POST'});
             await loadEnvironments();
             renderEnvList();
         }
-        
+
         async function deleteEnv(id) {
             if (!confirm('Delete this environment?')) return;
             await fetch('/api/environments/' + id, {method: 'DELETE'});
             await loadEnvironments();
             renderEnvList();
         }
-        
+
         async function editEnv(id) {
             const env = currentEnvironments.find(e => e.id === id);
             if (!env) return;
-            
+
             const name = prompt('Environment name:', env.name);
             if (!name) return;
-            
+
             let vars = prompt('Variables (JSON format):', JSON.stringify(env.variables || {}, null, 2));
             try {
                 vars = vars ? JSON.parse(vars) : {};
@@ -1147,7 +1145,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 alert('Invalid JSON');
                 return;
             }
-            
+
             await fetch('/api/environments/' + id, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
@@ -1156,7 +1154,7 @@ FALLBACK_DASHBOARD_HTML = r"""
             await loadEnvironments();
             renderEnvList();
         }
-        
+
         function substituteVars(text) {
             if (!text || !activeEnvVars) return text;
             return text.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
@@ -1164,7 +1162,7 @@ FALLBACK_DASHBOARD_HTML = r"""
             });
         }
     </script>
-    
+
     <!-- Environment Modal -->
     <div class="modal-overlay" id="envModal">
         <div class="modal">
@@ -1181,7 +1179,7 @@ FALLBACK_DASHBOARD_HTML = r"""
             </div>
         </div>
     </div>
-    
+
     <!-- Import Modal -->
     <div class="modal-overlay" id="importModal">
         <div class="modal" style="max-width:600px;">
@@ -1210,7 +1208,7 @@ FALLBACK_DASHBOARD_HTML = r"""
             </div>
         </div>
     </div>
-    
+
     <!-- Compare Modal -->
     <div class="modal-overlay" id="compareModal">
         <div class="modal" style="max-width:900px;">
@@ -1239,39 +1237,39 @@ FALLBACK_DASHBOARD_HTML = r"""
             </div>
         </div>
     </div>
-    
+
     <script>
         function openImportModal() {
             document.getElementById('importModal').classList.add('active');
             document.getElementById('importData').value = '';
             document.getElementById('importPreview').innerHTML = '';
         }
-        
+
         function closeImportModal() {
             document.getElementById('importModal').classList.remove('active');
         }
-        
+
         function toggleImportType() {
             document.getElementById('importPreview').innerHTML = '';
         }
-        
+
         async function previewImport() {
             const importType = document.getElementById('importType').value;
             const data = document.getElementById('importData').value;
             const preview = document.getElementById('importPreview');
-            
+
             if (!data.trim()) {
                 preview.innerHTML = '<span style="color:var(--error)">Please paste the JSON content</span>';
                 return;
             }
-            
+
             try {
                 const json = JSON.parse(data);
-                const endpoints = importType === 'openapi' ? 
+                const endpoints = importType === 'openapi' ?
                     await parseOpenAPIEndpoints(json) :
                     parsePostmanEndpoints(json);
-                
-                preview.innerHTML = endpoints.map(e => 
+
+                preview.innerHTML = endpoints.map(e =>
                     '<div style="padding:0.25rem;border-bottom:1px solid var(--border);">' +
                     '<span style="color:var(--success);font-weight:bold;">' + e.method + '</span> ' +
                     '<span>' + e.path + '</span> - ' +
@@ -1282,7 +1280,7 @@ FALLBACK_DASHBOARD_HTML = r"""
                 preview.innerHTML = '<span style="color:var(--error)">Invalid JSON: ' + e.message + '</span>';
             }
         }
-        
+
         async function parseOpenAPIEndpoints(spec) {
             const endpoints = [];
             const paths = spec.paths || {};
@@ -1300,7 +1298,7 @@ FALLBACK_DASHBOARD_HTML = r"""
             }
             return endpoints;
         }
-        
+
         function parsePostmanEndpoints(collection) {
             const endpoints = [];
             const processItems = (items, folder = '') => {
@@ -1321,21 +1319,21 @@ FALLBACK_DASHBOARD_HTML = r"""
             processItems(collection.item || []);
             return endpoints;
         }
-        
+
         async function doImport() {
             const importType = document.getElementById('importType').value;
             const data = document.getElementById('importData').value;
-            
+
             try {
                 const json = JSON.parse(data);
                 const endpoint = importType === 'openapi' ? '/api/import/openapi' : '/api/import/postman';
-                
+
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(importType === 'openapi' ? {spec: json} : {collection: json})
                 });
-                
+
                 const result = await res.json();
                 alert(result.message || result.error);
                 closeImportModal();
@@ -1540,8 +1538,8 @@ async def get_history(limit: int = 20) -> List[Dict[str, Any]]:
 
     cursor.execute(
         """
-        SELECT * FROM test_runs 
-        ORDER BY timestamp DESC 
+        SELECT * FROM test_runs
+        ORDER BY timestamp DESC
         LIMIT ?
     """,
         (limit,),
@@ -1648,7 +1646,6 @@ async def activate_environment(env_id: int) -> Dict[str, Any]:
 @app.get("/api/history")
 async def get_request_history(limit: int = 100) -> Dict[str, Any]:
     """Get request history."""
-    from socialseed_e2e.dashboard.models import RequestHistory
 
     history = RequestHistory.get_all(limit)
     return {
@@ -1674,7 +1671,6 @@ async def get_request_history(limit: int = 100) -> Dict[str, Any]:
 @app.get("/api/history/{history_id}")
 async def get_request_history_item(history_id: int) -> Dict[str, Any]:
     """Get a single history entry."""
-    from socialseed_e2e.dashboard.models import RequestHistory
 
     h = RequestHistory.get_by_id(history_id)
     if not h:
@@ -1698,7 +1694,6 @@ async def get_request_history_item(history_id: int) -> Dict[str, Any]:
 @app.delete("/api/history")
 async def clear_request_history() -> Dict[str, Any]:
     """Clear all request history."""
-    from socialseed_e2e.dashboard.models import RequestHistory
 
     RequestHistory.delete_all()
     return {"message": "History cleared"}
@@ -1707,7 +1702,6 @@ async def clear_request_history() -> Dict[str, Any]:
 @app.delete("/api/history/{history_id}")
 async def delete_request_history_item(history_id: int) -> Dict[str, Any]:
     """Delete a single history entry."""
-    from socialseed_e2e.dashboard.models import RequestHistory
 
     h = RequestHistory.get_by_id(history_id)
     if not h:
@@ -2066,7 +2060,7 @@ async def run_test_request(data: Dict[str, Any]) -> Dict[str, Any]:
         # Save to request_history (new table for detailed history)
         cursor.execute(
             """
-            INSERT INTO request_history 
+            INSERT INTO request_history
             (timestamp, method, url, headers, body, response_status, response_body, duration_ms)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
@@ -2245,7 +2239,7 @@ async def import_openapi(data: Dict[str, Any]) -> Dict[str, Any]:
         for ep in endpoints:
             cursor.execute(
                 """
-                INSERT INTO saved_requests 
+                INSERT INTO saved_requests
                 (name, method, url, headers, body, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
@@ -2288,7 +2282,7 @@ async def import_postman(data: Dict[str, Any]) -> Dict[str, Any]:
         for ep in endpoints:
             cursor.execute(
                 """
-                INSERT INTO saved_requests 
+                INSERT INTO saved_requests
                 (name, method, url, headers, body, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """,

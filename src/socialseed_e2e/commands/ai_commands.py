@@ -34,10 +34,7 @@ class TestGenerator:
 
     def generate(self):
         """Generate test suite."""
-        from socialseed_e2e.project_manifest import DatabaseSchema, db_parser_registry
-        from socialseed_e2e.project_manifest.flow_test_generator import (
-            FlowBasedTestSuiteGenerator,
-        )
+        from socialseed_e2e.project_manifest import db_parser_registry
 
         console.print("\n🧪 [bold cyan]Autonomous Test Suite Generation[/bold cyan]")
         console.print(f"   Project: {self.directory}")
@@ -114,7 +111,6 @@ class AutonomousRunnerAgent:
         """Run autonomous tests."""
         from socialseed_e2e.ai_orchestrator import (
             AutonomousTestOrchestrator,
-            StrategyPlanner,
         )
 
         console.print("\n🚀 [bold cyan]Autonomous Test Runner[/bold cyan]\n")

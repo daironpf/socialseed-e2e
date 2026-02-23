@@ -9,25 +9,22 @@ by the BusinessLogicInferenceEngine. It creates:
 """
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from jinja2 import Template
 
 from socialseed_e2e.project_manifest.business_logic_inference import (
     BusinessFlow,
     BusinessLogicInferenceEngine,
-    FlowStep,
-    FlowType,
 )
 from socialseed_e2e.project_manifest.db_model_parsers import DatabaseSchema
 from socialseed_e2e.project_manifest.dummy_data_generator import (
-    DataGenerationStrategy,
     DummyDataGenerator,
 )
-from socialseed_e2e.project_manifest.models import DtoSchema, EndpointInfo, ServiceInfo
+from socialseed_e2e.project_manifest.models import EndpointInfo, ServiceInfo
 
 # Template for generating data_schema.py
 DATA_SCHEMA_TEMPLATE = '''"""Data schema for {{ service_name }} API.
@@ -615,18 +612,18 @@ class FlowBasedTestSuiteGenerator:
 
             for scenario in scenarios:
                 test_name = scenario["name"].replace(" ", "_").replace("-", "_").lower()
-                lines.append(f"")
+                lines.append("")
                 lines.append(
                     f"def test_{test_name}(page: {self._to_pascal_case(self.service_info.name)}Page):"
                 )
                 lines.append(f'    """{scenario["description"]}"""')
                 lines.append(f"    # Test data: {scenario['type']}")
                 lines.append(f"    data = {scenario['data']}")
-                lines.append(f"    ")
-                lines.append(f"    # TODO: Implement test logic")
+                lines.append("    ")
+                lines.append("    # TODO: Implement test logic")
                 lines.append(f"    # Expected result: {scenario['expected']}")
-                lines.append(f"    pass")
-                lines.append(f"")
+                lines.append("    pass")
+                lines.append("")
 
         return "\n".join(lines)
 

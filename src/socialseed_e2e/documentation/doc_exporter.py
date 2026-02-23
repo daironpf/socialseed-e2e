@@ -5,17 +5,16 @@ including Markdown, HTML, PDF, and OpenAPI.
 """
 
 import json
-from typing import List, Optional
-from pathlib import Path
 from datetime import datetime
-from enum import Enum
+from pathlib import Path
+from typing import List
 
 from .models import (
-    DocumentationProject,
-    TestCaseDoc,
     APIDocumentation,
     CoverageReport,
     DocFormat,
+    DocumentationProject,
+    TestCaseDoc,
 )
 
 
@@ -165,7 +164,7 @@ class DocumentationExporter:
             f"**Service:** {tc.service}",
             f"**Severity:** {tc.severity}",
             "",
-            f"### Description",
+            "### Description",
             "",
             tc.description,
             "",

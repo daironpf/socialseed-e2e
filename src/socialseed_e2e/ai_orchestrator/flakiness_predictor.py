@@ -12,7 +12,6 @@ Features:
 """
 
 import ast
-import hashlib
 import re
 from datetime import datetime
 from enum import Enum

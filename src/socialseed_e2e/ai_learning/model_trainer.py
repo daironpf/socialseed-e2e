@@ -56,7 +56,7 @@ class ModelTrainer:
         start_time = datetime.now()
 
         # Learn correction patterns
-        for i, (input_text, output_text) in enumerate(
+        for _i, (input_text, output_text) in enumerate(
             zip(training_data.inputs, training_data.outputs)
         ):
             self._corrections[input_text] = output_text

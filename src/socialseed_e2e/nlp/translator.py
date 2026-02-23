@@ -13,7 +13,6 @@ from socialseed_e2e.nlp.models import (
     EntityType,
     IntentType,
     Language,
-    LanguagePattern,
     NaturalLanguageTest,
     ParsedAction,
     ParsedAssertion,

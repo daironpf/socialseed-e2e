@@ -4,13 +4,11 @@ This module provides regression and ai-learning commands using POO and SOLID pri
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict, List, Optional
 
 import click
 from rich.console import Console
 from rich.table import Table
-
 
 console = Console()
 

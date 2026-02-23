@@ -5,8 +5,8 @@ features, charts, and filtering capabilities.
 """
 
 from .html_report_generator import HTMLReportGenerator
-from .test_result_collector import TestResult, TestResultCollector
 from .report_models import ReportSummary, TestStatus, TestSuiteReport
+from .test_result_collector import TestResult, TestResultCollector
 
 __all__ = [
     "HTMLReportGenerator",

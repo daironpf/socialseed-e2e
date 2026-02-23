@@ -5,7 +5,8 @@ Template Manager for CI/CD pipeline generation.
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
-from jinja2 import Environment, FileSystemLoader, Template
+
+from jinja2 import Environment, FileSystemLoader
 
 from .models import PipelineConfig, Platform, TemplateType
 

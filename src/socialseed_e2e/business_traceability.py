@@ -182,9 +182,9 @@ sequenceDiagram
     participant API as {scenario.domain}
 """
 
-        for i, endpoint in enumerate(scenario.endpoints_used):
+        for _i, endpoint in enumerate(scenario.endpoints_used):
             diagram += f"    Client->>API: {endpoint}\n"
-            diagram += f"    API-->>Client: Response\n"
+            diagram += "    API-->>Client: Response\n"
 
         diagram += "```"
         return diagram
@@ -201,12 +201,12 @@ actor Client
 boundary API as "API Service"
 """
 
-        for i, endpoint in enumerate(scenario.endpoints_used):
+        for _i, endpoint in enumerate(scenario.endpoints_used):
             endpoint_name = endpoint.replace("/", "_").strip("_")
             diagram += f"Client -> API: {endpoint}\n"
-            diagram += f"activate API\n"
-            diagram += f"API -->> Client: Response\n"
-            diagram += f"deactivate API\n"
+            diagram += "activate API\n"
+            diagram += "API -->> Client: Response\n"
+            diagram += "deactivate API\n"
 
         diagram += "@enduml"
         return diagram

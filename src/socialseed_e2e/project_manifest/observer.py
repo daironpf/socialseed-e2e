@@ -7,17 +7,14 @@ Issue #186: Implement "The Observer" to auto-detect running services and ports
 """
 
 import asyncio
-import socket
 import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
-from urllib.parse import urljoin, urlparse
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
 
 import requests
-
-from socialseed_e2e.project_manifest.models import PortConfig, ServiceInfo
 
 
 @dataclass
@@ -806,7 +803,7 @@ class ServiceObserver:
             }
 
         # Execute the build
-        print(f"🚀 Auto-setting up environment...")
+        print("🚀 Auto-setting up environment...")
         print(f"   Command: {suggestion.suggested_command}\n")
 
         try:

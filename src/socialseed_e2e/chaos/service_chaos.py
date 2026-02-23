@@ -1,6 +1,5 @@
 """Service failure simulation for Chaos Engineering."""
 
-from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ class ServiceChaos:
         """Stop a specific container/service."""
         if not self.client:
             raise RuntimeError("Docker is not available to stop services")
-        
+
         container = self.client.containers.get(container_name)
         container.stop()
         logger.info(f"Chaos: Stopped service {container_name}")
@@ -38,7 +37,7 @@ class ServiceChaos:
         """Start a specific container/service."""
         if not self.client:
             raise RuntimeError("Docker is not available to start services")
-        
+
         container = self.client.containers.get(container_name)
         container.start()
         logger.info(f"Chaos: Started service {container_name}")
@@ -47,7 +46,7 @@ class ServiceChaos:
         """Restart a specific container/service."""
         if not self.client:
             raise RuntimeError("Docker is not available to restart services")
-        
+
         container = self.client.containers.get(container_name)
         container.restart()
         logger.info(f"Chaos: Restarted service {container_name}")
@@ -56,7 +55,7 @@ class ServiceChaos:
         """Kill a service immediately."""
         if not self.client:
             raise RuntimeError("Docker is not available to kill services")
-        
+
         container = self.client.containers.get(container_name)
         container.kill(signal=signal)
         logger.info(f"Chaos: Killed service {container_name} with {signal}")

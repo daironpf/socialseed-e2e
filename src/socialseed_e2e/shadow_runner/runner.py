@@ -23,7 +23,6 @@ from socialseed_e2e.shadow_runner.models import (
     FuzzingConfig,
     FuzzingResult,
     FuzzingStrategy,
-    HttpMethod,
     ReplayConfig,
     TestGenerationConfig,
     TestGenerationResult,
@@ -90,7 +89,7 @@ class ShadowRunner:
 
         analysis = TrafficAnalysis(
             total_requests=len(traffic.requests),
-            unique_endpoints=len(set(r.path for r in traffic.requests)),
+            unique_endpoints=len({r.path for r in traffic.requests}),
             methods={},
             status_codes={},
         )
@@ -256,7 +255,7 @@ class ShadowRunner:
         coverage_report = {
             "total_endpoints": len(endpoints_covered),
             "endpoints": list(endpoints_covered),
-            "http_methods": list(set(r.method.value for r in traffic.requests)),
+            "http_methods": list({r.method.value for r in traffic.requests}),
         }
 
         return TestGenerationResult(

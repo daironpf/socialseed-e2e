@@ -15,13 +15,11 @@ import json
 import random
 import re
 import uuid
-from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 
 from socialseed_e2e.shadow_runner.models import (
     CapturedRequest,
     FuzzingConfig,
-    FuzzingStrategy,
     MutatedRequest,
     MutationType,
     SemanticMutation,
@@ -154,7 +152,7 @@ class SemanticFuzzer:
         """Classify field type based on name and value."""
         field_lower = field_name.lower()
 
-        for classifier_name, classifier in self.field_classifiers.items():
+        for classifier_name, _classifier in self.field_classifiers.items():
             if classifier_name in field_lower:
                 return classifier_name
 
@@ -277,7 +275,7 @@ class SemanticFuzzer:
             "....//....//....//etc/passwd",
             "..%2F..%2F..%2Fetc%2Fpasswd",
             "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
-            "....\/....\/....\/etc\/passwd",
+            r"....\/....\/....\/etc\/passwd",
             "/etc/passwd",
             "C:\\Windows\\System32\\config\\SAM",
         ]

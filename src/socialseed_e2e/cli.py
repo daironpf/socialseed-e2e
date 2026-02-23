@@ -109,7 +109,7 @@ def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool
         console.print(
             f"\n[yellow]📦 Missing dependency:[/yellow] {extra_info['description']}"
         )
-        console.print(f"[cyan]Install with:[/cyan]")
+        console.print("[cyan]Install with:[/cyan]")
         console.print(f"   pip install socialseed-e2e[{pip_extra}]")
         console.print(f"\n[dim]Or run:[/dim] e2e install-extras {extra_name}")
         console.print()
@@ -341,7 +341,7 @@ pytest-playwright>=0.4.0
     timeout: 5000
     auto_start: false
     required: true
-  
+
   # Example service (commented out - requires mock server)
   # To use: python -m socialseed_e2e.mock_server
   # example:
@@ -777,7 +777,7 @@ def install_extras(extra, list_extras: bool, install_all: bool):
     if invalid_extras:
         console.print(f"[red]❌ Unknown extras: {', '.join(invalid_extras)}[/red]")
         console.print(
-            f"[yellow]Run 'e2e install-extras --list' to see available extras[/yellow]"
+            "[yellow]Run 'e2e install-extras --list' to see available extras[/yellow]"
         )
         sys.exit(1)
 
@@ -1225,8 +1225,8 @@ def run(
 
     # Import test runner
     from .core.test_runner import (
-        generate_junit_report,
         generate_json_report,
+        generate_junit_report,
         print_summary,
         run_all_tests,
     )
@@ -1337,7 +1337,7 @@ def run(
             parallel_mode=parallel_mode,
         )
 
-        console.print(f"⚡ [cyan]Parallel execution enabled[/cyan]")
+        console.print("⚡ [cyan]Parallel execution enabled[/cyan]")
         console.print(f"   Workers: {parallel_config.max_workers}")
         console.print(f"   Mode: {parallel_config.parallel_mode}")
         console.print()
@@ -1445,8 +1445,8 @@ def run(
         if report:
             try:
                 from .core.test_runner import (
-                    generate_junit_report,
                     generate_json_report,
+                    generate_junit_report,
                 )
 
                 console.print(
@@ -1670,7 +1670,6 @@ def recorder():
 )
 def recorder_record(name: str, port: int, output: Optional[str]):
     """Record a new API session via proxy."""
-    import os
 
     from socialseed_e2e.recorder import RecordingProxy
 
@@ -1791,8 +1790,8 @@ def set_url(
 
     # Validate URL format
     if not url.startswith(("http://", "https://")):
-        console.print(f"[red]❌ Error:[/red] URL must start with http:// or https://")
-        console.print(f"[yellow]Example:[/yellow] https://api.example.com:443")
+        console.print("[red]❌ Error:[/red] URL must start with http:// or https://")
+        console.print("[yellow]Example:[/yellow] https://api.example.com:443")
         sys.exit(1)
 
     # Read and parse YAML
@@ -1829,7 +1828,7 @@ def set_url(
             allow_unicode=True,
         )
 
-    console.print(f"\n[bold cyan]Configuration updated:[/bold cyan]")
+    console.print("\n[bold cyan]Configuration updated:[/bold cyan]")
     console.print(f"  Service: [yellow]{service_name}[/yellow]")
     console.print(f"  URL: [green]{url}[/green]")
     if health_endpoint:
@@ -1886,7 +1885,7 @@ def show_config(service_name: Optional[str], config: Optional[str]):
             )
         else:
             # Show all services
-            console.print(f"\n[bold cyan]Configured Services[/bold cyan]\n")
+            console.print("\n[bold cyan]Configured Services[/bold cyan]\n")
 
             from rich.table import Table
 
@@ -2139,7 +2138,7 @@ def _check_service_health(
         url = f"{base_url}{health_endpoint}"
         response = requests.get(url, timeout=timeout)
         if response.status_code == 200:
-            return True, f"✅ Healthy (200)"
+            return True, "✅ Healthy (200)"
         else:
             return False, f"⚠️  Status {response.status_code}"
     except requests.exceptions.ConnectionError:
@@ -2723,7 +2722,7 @@ def deep_scan(directory: str, auto_config: bool):
         sys.exit(1)
 
     try:
-        from socialseed_e2e.project_manifest import DeepScanner, ManifestGenerator
+        from socialseed_e2e.project_manifest import DeepScanner
 
         # Run deep scan
         scanner = DeepScanner(str(target_path))
@@ -2818,7 +2817,7 @@ def generate_tests(
     console.print()
 
     try:
-        from socialseed_e2e.project_manifest import DatabaseSchema, db_parser_registry
+        from socialseed_e2e.project_manifest import db_parser_registry
         from socialseed_e2e.project_manifest.flow_test_generator import (
             FlowBasedTestSuiteGenerator,
         )
@@ -2930,7 +2929,7 @@ def generate_tests(
                 console.print(f"   {svc.name}: {len(validations)} validation rules")
 
                 # Show example validation rules
-                for i, (key, criteria) in enumerate(list(validations.items())[:2]):
+                for _i, (key, criteria) in enumerate(list(validations.items())[:2]):
                     console.print(f"     - {key}: {len(criteria.rules)} rules")
 
         if total_validations == 0:
@@ -2940,7 +2939,7 @@ def generate_tests(
         console.print(f"\n{'=' * 60}")
         console.print("[bold green]✅ Test generation complete![/bold green]")
         console.print(f"{'=' * 60}")
-        console.print(f"\n📊 Summary:")
+        console.print("\n📊 Summary:")
         console.print(f"   Services processed: {len(generated_suites)}")
         console.print(f"   Total files generated: {total_files}")
         console.print(f"   Validation rules: {total_validations}")
@@ -3167,7 +3166,7 @@ def observe(
 
         # Docker setup suggestions
         if results["dockerfile_found"]:
-            console.print(f"\n[bold]🐳 Docker Setup:[/bold]")
+            console.print("\n[bold]🐳 Docker Setup:[/bold]")
             console.print(f"   Dockerfile: {results['dockerfile_found']}")
 
             for suggestion in results["suggestions"]:
@@ -3202,7 +3201,7 @@ def observe(
         console.print(f"   Cross-references: {len(results['cross_references'])}")
 
         if results["dockerfile_found"]:
-            console.print(f"   Dockerfile: ✓ Found")
+            console.print("   Dockerfile: ✓ Found")
 
         console.print()
 
@@ -3281,7 +3280,7 @@ def discover(directory: str, output: Optional[str], open: bool):
                 project_root=target_path, manifest=manifest, output_dir=output_dir
             )
 
-        console.print(f"\n✅ [bold green]Discovery Report generated![/bold green]")
+        console.print("\n✅ [bold green]Discovery Report generated![/bold green]")
         console.print(f"   📄 Location: {report_path}\n")
 
         console.print("[bold]What's in the report:[/bold]")
@@ -3398,7 +3397,7 @@ def security_test(
             console.print(f"\n🎯 Testing service: [cyan]{svc.name}[/cyan]")
 
             # Create service page
-            page = BasePage(base_url=f"http://localhost:8080")  # Default URL
+            page = BasePage(base_url="http://localhost:8080")  # Default URL
 
             # Run fuzzing
             session = run_security_fuzzing(
@@ -3440,7 +3439,7 @@ def security_test(
             console.print(f"{'=' * 60}")
             console.print("[bold]🔒 Security Testing Complete[/bold]")
             console.print(f"{'=' * 60}")
-            console.print(f"\n📊 Summary:")
+            console.print("\n📊 Summary:")
             console.print(f"   Services tested: {len(all_sessions)}")
             console.print(f"   Total tests: {sum(s.total_tests for s in all_sessions)}")
             console.print(f"   Vulnerabilities found: {total_vulns}")
@@ -3452,7 +3451,7 @@ def security_test(
                 )
                 console.print(f"   📄 See report: {output_path}")
             else:
-                console.print(f"\n   [green]✅ No vulnerabilities found![/green]")
+                console.print("\n   [green]✅ No vulnerabilities found![/green]")
 
             console.print()
 
@@ -3523,7 +3522,6 @@ def regression(
     try:
         from socialseed_e2e.project_manifest import (
             RegressionAgent,
-            run_regression_analysis,
         )
 
         # Run regression analysis
@@ -3609,7 +3607,7 @@ def regression(
         console.print(f"{'=' * 60}")
 
         if impact.risk_level in ["critical", "high"]:
-            console.print(f"\n   [red]⚠ High risk changes detected![/red]")
+            console.print("\n   [red]⚠ High risk changes detected![/red]")
             console.print(f"   📄 Review full report: {output_path}")
         else:
             console.print(
@@ -3618,7 +3616,7 @@ def regression(
 
         if not run_tests and impact.affected_services:
             console.print(
-                f"\n   [dim]Tip: Use --run-tests to execute affected tests automatically[/dim]"
+                "\n   [dim]Tip: Use --run-tests to execute affected tests automatically[/dim]"
             )
 
         console.print()
@@ -3818,7 +3816,7 @@ def mock_generate(
 
     output_path = Path(output_dir)
 
-    console.print(f"\n🏗️  [bold cyan]Mock Server Generation[/bold cyan]")
+    console.print("\n🏗️  [bold cyan]Mock Server Generation[/bold cyan]")
     console.print(f"   Output: {output_path.resolve()}\n")
 
     try:
@@ -3838,7 +3836,7 @@ def mock_generate(
 
             servers = generator.generate_all_mock_servers(services, base_port=port)
 
-            for i, server in enumerate(servers):
+            for _i, server in enumerate(servers):
                 file_path = generator.save_mock_server(
                     server, f"mock_{server.service_name}.py"
                 )
@@ -3855,7 +3853,7 @@ def mock_generate(
                 compose = generator.generate_docker_compose(servers)
                 compose_path = output_path / "docker-compose.yml"
                 compose_path.write_text(compose)
-                console.print(f"\n  [green]✓[/green] docker-compose.yml")
+                console.print("\n  [green]✓[/green] docker-compose.yml")
 
             console.print(
                 f"\n[bold green]✅ Generated {len(servers)} mock servers![/bold green]\n"
@@ -3869,7 +3867,7 @@ def mock_generate(
                 server = generator.generate_mock_server(service, port=port)
             except ValueError as e:
                 console.print(f"[red]❌ Error:[/red] {e}")
-                console.print(f"\nAvailable services:")
+                console.print("\nAvailable services:")
                 registry = ExternalServiceRegistry()
                 for svc in registry.list_services():
                     console.print(f"   • {svc}")
@@ -3943,7 +3941,6 @@ def mock_run(services: str, config: str, detach: bool, port: int):
 
     try:
         from socialseed_e2e.ai_mocking import (
-            ExternalServiceRegistry,
             MockServerGenerator,
         )
 
@@ -4376,7 +4373,7 @@ def lint(project: str, service: str, fix: bool):
                     console.print(f"      Line {issue['line']}: {issue['message']}")
                     console.print(f"      → {issue['suggestion']}")
         else:
-            console.print(f"  [green]✓[/green] No issues found")
+            console.print("  [green]✓[/green] No issues found")
 
     console.print()
     if total_issues > 0:
@@ -5329,7 +5326,7 @@ def shadow_capture(
         e2e shadow capture myapp -u http://localhost:8000 --duration 300
         e2e shadow capture myapp -u http://localhost:8000 --sanitize --filter-health
     """
-    console.print(f"\n🔍 [bold cyan]Shadow Runner - Traffic Capture[/bold cyan]")
+    console.print("\n🔍 [bold cyan]Shadow Runner - Traffic Capture[/bold cyan]")
     console.print(f"   Name: {name}")
     console.print(f"   Target: {target_url}\n")
 
@@ -5351,7 +5348,7 @@ def shadow_capture(
         # Extract output_dir from the CaptureConfig for ShadowRunner
         runner = ShadowRunner(output_dir=str(Path(config.output_path).parent))
 
-        console.print(f"[yellow]Starting capture...[/yellow]")
+        console.print("[yellow]Starting capture...[/yellow]")
         console.print(f"   Filter health checks: {'Yes' if filter_health else 'No'}")
         console.print(f"   Filter static assets: {'Yes' if filter_static else 'No'}")
         console.print(f"   Sanitize PII: {'Yes' if sanitize else 'No'}")
@@ -5383,7 +5380,7 @@ def shadow_capture(
         # Save captured session
         session.save(str(output_path))
 
-        console.print(f"\n[bold green]✓ Capture complete![/bold green]")
+        console.print("\n[bold green]✓ Capture complete![/bold green]")
         console.print(f"   Requests captured: {len(session.interactions)}")
         console.print(f"   Saved to: {output_path}\n")
 
@@ -5451,7 +5448,7 @@ def shadow_generate(
         console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
         sys.exit(1)
 
-    console.print(f"\n🤖 [bold cyan]Shadow Runner - Test Generation[/bold cyan]")
+    console.print("\n🤖 [bold cyan]Shadow Runner - Test Generation[/bold cyan]")
     console.print(f"   Capture: {capture_path}")
     console.print(f"   Service: {service}")
     console.print(f"   Output: {output_dir}\n")
@@ -5558,7 +5555,7 @@ def shadow_replay(
         console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
         sys.exit(1)
 
-    console.print(f"\n🔄 [bold cyan]Shadow Runner - Session Replay[/bold cyan]")
+    console.print("\n🔄 [bold cyan]Shadow Runner - Session Replay[/bold cyan]")
     console.print(f"   Capture: {capture_path}\n")
 
     try:
@@ -5641,7 +5638,7 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
         console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
         sys.exit(1)
 
-    console.print(f"\n📊 [bold cyan]Shadow Runner - Traffic Analysis[/bold cyan]\n")
+    console.print("\n📊 [bold cyan]Shadow Runner - Traffic Analysis[/bold cyan]\n")
 
     try:
         from socialseed_e2e.shadow_runner import ShadowRunner
@@ -5732,7 +5729,7 @@ def shadow_export_middleware(framework: str, output: Optional[str]):
         e2e shadow export-middleware flask
         e2e shadow export-middleware fastapi -o shadow_middleware.py
     """
-    console.print(f"\n📦 [bold cyan]Shadow Runner - Middleware Export[/bold cyan]")
+    console.print("\n📦 [bold cyan]Shadow Runner - Middleware Export[/bold cyan]")
     console.print(f"   Framework: {framework}\n")
 
     try:
@@ -5793,7 +5790,7 @@ def shadow_fuzz(
     output: Optional[str],
 ):
     """Run semantic fuzzing on captured traffic."""
-    console.print(f"\n🎯 [bold cyan]Shadow Runner - Semantic Fuzzing[/bold cyan]")
+    console.print("\n🎯 [bold cyan]Shadow Runner - Semantic Fuzzing[/bold cyan]")
     console.print(f"   Capture: {capture_file}")
     console.print(f"   Target: {target_url}")
     console.print(f"   Strategy: {strategy}")
@@ -6128,7 +6125,7 @@ def ai_optimize(service: str):
     collector = FeedbackCollector()
     trainer = ModelTrainer()
 
-    console.print(f"\n⚡ [bold cyan]AI Learning - Test Optimization[/bold cyan]")
+    console.print("\n⚡ [bold cyan]AI Learning - Test Optimization[/bold cyan]")
     console.print(f"   Service: {service}\n")
 
     # Get all feedback for this service
@@ -6250,8 +6247,7 @@ def list_templates(category: str, framework: str, limit: int):
 @community.command("templates")
 def templates():
     """List available community templates (alias for list-templates)."""
-    import sys
-    from click import Context, Command
+    from click import Command, Context
 
     ctx = Context(Command("list-templates"))
     ctx.invoke(list_templates, category=None, framework=None, limit=20)
@@ -6266,7 +6262,7 @@ def install_template(template_id: str, service: str, name: str):
     from socialseed_e2e.community import CommunityHub
     from socialseed_e2e.community.template_marketplace import TestTemplateMarketplace
 
-    console.print(f"\n📥 [bold cyan]Installing Template[/bold cyan]\n")
+    console.print("\n📥 [bold cyan]Installing Template[/bold cyan]\n")
 
     try:
         hub = CommunityHub()
@@ -6276,7 +6272,7 @@ def install_template(template_id: str, service: str, name: str):
         result = marketplace.install_template(template_id, service, name)
 
         if result:
-            console.print(f"[green]✓[/green] Template installed successfully!")
+            console.print("[green]✓[/green] Template installed successfully!")
             console.print(f"   Location: {result}")
         else:
             console.print("[red]✗[/red] Failed to install template")
@@ -6336,7 +6332,7 @@ def publish_template(
             console.print("[green]✓[/green] Template published successfully!")
             console.print(f"   ID: {template.id}")
             console.print(f"   Name: {template.name}")
-            console.print(f"   Status: Pending review")
+            console.print("   Status: Pending review")
         else:
             console.print("[red]✗[/red] Failed to publish template")
 
@@ -6398,8 +6394,7 @@ def list_plugins(tag: str, limit: int):
 @community.command("plugins")
 def plugins():
     """List available plugins (alias for list-plugins)."""
-    import sys
-    from click import Context, Command
+    from click import Command, Context
 
     ctx = Context(Command("list-plugins"))
     ctx.invoke(list_plugins, tag=None, limit=20)
@@ -6412,7 +6407,7 @@ def install_plugin(plugin_id: str):
     from socialseed_e2e.community import CommunityHub
     from socialseed_e2e.community.plugin_repository import PluginRepository
 
-    console.print(f"\n🔧 [bold cyan]Installing Plugin[/bold cyan]\n")
+    console.print("\n🔧 [bold cyan]Installing Plugin[/bold cyan]\n")
 
     try:
         hub = CommunityHub()
@@ -6476,7 +6471,7 @@ def uninstall_plugin(plugin_name: str):
     """Uninstall a plugin."""
     from socialseed_e2e.community.plugin_repository import PluginRepository
 
-    console.print(f"\n🗑️ [bold cyan]Uninstalling Plugin[/bold cyan]\n")
+    console.print("\n🗑️ [bold cyan]Uninstalling Plugin[/bold cyan]\n")
 
     try:
         repo = PluginRepository()
@@ -6573,7 +6568,7 @@ def dashboard(port: int, host: str, no_browser: bool):
         launch_dashboard(port=port, open_browser=not no_browser)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Streamlit not found. Installing...[/red]")
+        console.print("\n[red]❌ Streamlit not found. Installing...[/red]")
 
         # Try to install streamlit automatically
         import subprocess
@@ -6638,7 +6633,7 @@ def import_postman(file_path: str, output: str, service_name: str):
     try:
         from socialseed_e2e.importers import PostmanImporter
 
-        console.print(f"\n📥 [bold green]Importing Postman Collection[/bold green]")
+        console.print("\n📥 [bold green]Importing Postman Collection[/bold green]")
         console.print(f"   File: {file_path}")
         console.print(f"   Output: {output}")
         console.print(f"   Service: {service_name}\n")
@@ -6652,7 +6647,7 @@ def import_postman(file_path: str, output: str, service_name: str):
             console.print(f"   Generated {len(result.tests)} test files")
 
             if result.warnings:
-                console.print(f"\n[yellow]⚠ Warnings:[/yellow]")
+                console.print("\n[yellow]⚠ Warnings:[/yellow]")
                 for warning in result.warnings:
                     console.print(f"   - {warning}")
         else:
@@ -6690,12 +6685,12 @@ def import_openapi(
     try:
         from socialseed_e2e.importers import OpenAPIImporter
 
-        console.print(f"\n📥 [bold green]Importing OpenAPI Specification[/bold green]")
+        console.print("\n📥 [bold green]Importing OpenAPI Specification[/bold green]")
         console.print(f"   File: {file_path}")
         console.print(f"   Output: {output}")
         console.print(f"   Service: {service_name}")
         if generate_scenarios:
-            console.print(f"   Generate scenarios: Yes")
+            console.print("   Generate scenarios: Yes")
         console.print()
 
         importer = OpenAPIImporter(output_dir=Path(output), service_name=service_name)
@@ -6708,7 +6703,7 @@ def import_openapi(
             console.print(f"   Config file: {output}/openapi_config.yaml")
 
             if result.warnings:
-                console.print(f"\n[yellow]⚠ Warnings:[/yellow]")
+                console.print("\n[yellow]⚠ Warnings:[/yellow]")
                 for warning in result.warnings:
                     console.print(f"   - {warning}")
         else:
@@ -6739,7 +6734,7 @@ def import_curl(command: str, output: str, name: str):
     try:
         from socialseed_e2e.importers import CurlImporter
 
-        console.print(f"\n📥 [bold green]Importing Curl Command[/bold green]")
+        console.print("\n📥 [bold green]Importing Curl Command[/bold green]")
         console.print(f"   Output: {output}")
         console.print(f"   Name: {name}\n")
 
@@ -6779,7 +6774,7 @@ def import_environment(file_path: str, output: str, service_name: str):
     try:
         from socialseed_e2e.importers import PostmanEnvironmentImporter
 
-        console.print(f"\n📥 [bold green]Importing Postman Environment[/bold green]")
+        console.print("\n📥 [bold green]Importing Postman Environment[/bold green]")
         console.print(f"   File: {file_path}")
         console.print(f"   Output: {output}")
         console.print(f"   Service: {service_name}\n")
@@ -7372,7 +7367,7 @@ def semantic_analyze_server(port: int, host: str):
         e2e semantic-analyze server              # Start on default port 50051
         e2e semantic-analyze server -p 50052     # Use custom port
     """
-    console.print(f"\n🚀 [bold cyan]Starting Semantic Analyzer gRPC Server[/bold cyan]")
+    console.print("\n🚀 [bold cyan]Starting Semantic Analyzer gRPC Server[/bold cyan]")
     console.print(f"   Host: {host}")
     console.print(f"   Port: {port}")
     console.print("\n   Press Ctrl+C to stop\n")
@@ -7457,7 +7452,7 @@ def red_team_assess(
         e2e red-team assess -a prompt_injection -a jailbreak  # Specific attacks
         e2e red-team assess --quick            # Quick scan
     """
-    from socialseed_e2e.agents.red_team_adversary import RedTeamAgent, AttackType
+    from socialseed_e2e.agents.red_team_adversary import AttackType, RedTeamAgent
 
     target_path = Path(directory).resolve()
 
@@ -7542,8 +7537,9 @@ def red_team_guardrails(directory: str, json_output: bool):
         e2e red-team guardrails              # Show all guardrails
         e2e red-team guardrails --json-output
     """
-    from socialseed_e2e.agents.red_team_adversary import GuardrailDiscovery
     import json
+
+    from socialseed_e2e.agents.red_team_adversary import GuardrailDiscovery
 
     target_path = Path(directory).resolve()
 
@@ -7602,7 +7598,7 @@ def red_team_guardrails(directory: str, json_output: bool):
 
             # Summary
             summary = discovery.generate_summary()
-            console.print(f"\n[bold]Summary:[/bold]")
+            console.print("\n[bold]Summary:[/bold]")
             console.print(f"   Total: {summary['total_guardrails']}")
             console.print(f"   Vulnerable: {summary['vulnerable_count']}")
             console.print(f"   Average Strength: {summary['average_strength']:.1f}/100")
@@ -7639,8 +7635,9 @@ def red_team_payloads(attack_type: str):
         e2e red-team payloads                    # Show all payloads
         e2e red-team payloads -a prompt_injection  # Filter by type
     """
-    from socialseed_e2e.agents.red_team_adversary import AdversarialPayloads, AttackType
     from rich.table import Table
+
+    from socialseed_e2e.agents.red_team_adversary import AdversarialPayloads, AttackType
 
     console.print("\n⚔️  [bold red]Available Attack Payloads[/bold red]\n")
 
@@ -7702,8 +7699,9 @@ def red_team_logs(session: str, attack_type: str, winning: bool):
         e2e red-team logs --winning    # Show successful exploits only
         e2e red-team logs -s <session_id>
     """
-    from socialseed_e2e.agents.red_team_adversary import SecurityLogger
     from rich.table import Table
+
+    from socialseed_e2e.agents.red_team_adversary import SecurityLogger
 
     console.print("\n📋 [bold cyan]Red Team Logs[/bold cyan]\n")
 
@@ -7749,7 +7747,7 @@ def red_team_logs(session: str, attack_type: str, winning: bool):
 
         # Summary
         summary = logger.generate_summary()
-        console.print(f"\n[bold]Summary:[/bold]")
+        console.print("\n[bold]Summary:[/bold]")
         console.print(f"   Total Entries: {summary['total_entries']}")
         console.print(f"   Successful Exploits: {summary['successful_exploits']}")
         console.print(f"   Sessions: {summary['sessions']}")

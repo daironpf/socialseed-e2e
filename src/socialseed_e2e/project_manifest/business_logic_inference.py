@@ -7,7 +7,7 @@ such as register → login flows, CRUD operations, and entity lifecycle patterns
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from socialseed_e2e.project_manifest.models import DtoSchema, EndpointInfo, HttpMethod
 
@@ -630,8 +630,8 @@ class BusinessLogicInferenceEngine:
                 pattern = validation.value
                 success_criteria.append(f"Value matching pattern: {pattern}")
                 failure_scenarios.append(f"Value not matching pattern: {pattern}")
-                chaos_test_ideas.append(f"Edge case: empty string against pattern")
-                chaos_test_ideas.append(f"Edge case: special characters in pattern")
+                chaos_test_ideas.append("Edge case: empty string against pattern")
+                chaos_test_ideas.append("Edge case: special characters in pattern")
 
             elif validation.rule_type in ["gt", "ge"]:
                 success_criteria.append(f"Value > {validation.value}")
@@ -667,7 +667,7 @@ class BusinessLogicInferenceEngine:
             "total_flows": len(self.flows),
             "flow_types": {flow.flow_type.value for flow in self.flows},
             "entities_involved": list(
-                set(entity for flow in self.flows for entity in flow.entities_involved)
+                {entity for flow in self.flows for entity in flow.entities_involved}
             ),
             "validation_fields_analyzed": len(self.validation_criteria),
         }

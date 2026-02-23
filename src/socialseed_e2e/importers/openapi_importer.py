@@ -309,7 +309,7 @@ class OpenAPIImporter(BaseImporter):
             f"class {self.service_name.title()}Page(BasePage):",
             f'    """Page Object for {self.service_name} API."""',
             "",
-            f"    def __init__(self, *args, **kwargs):",
+            "    def __init__(self, *args, **kwargs):",
             "        super().__init__(*args, **kwargs)",
             f'        self.base_url = "{self.base_url}"',
             "",

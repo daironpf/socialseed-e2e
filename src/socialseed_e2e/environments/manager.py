@@ -3,16 +3,15 @@ Environment Manager for socialseed-e2e.
 Handles loading, validation, merging, and secrets injection for environment configurations.
 """
 import copy
-import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Union
 
 import yaml
 
-from .secrets import SecretProvider, get_secrets_provider
-from .validator import EnvironmentConfig, compare_environments, validate_config
+from .secrets import get_secrets_provider
+from .validator import compare_environments, validate_config
 
 logger = logging.getLogger(__name__)
 

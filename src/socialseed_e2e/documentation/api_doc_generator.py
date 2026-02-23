@@ -4,10 +4,8 @@ This module generates comprehensive API documentation by analyzing
 test cases and extracting endpoint information.
 """
 
-from typing import List, Dict, Any, Optional
-from pathlib import Path
-from datetime import datetime
 import re
+from typing import Any, Dict, List, Optional
 
 from .models import APIDocumentation, EndpointDoc, ErrorCodeDoc, TestCaseDoc
 

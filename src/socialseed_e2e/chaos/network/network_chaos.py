@@ -9,11 +9,10 @@ Provides network-level chaos injection:
 - Bandwidth throttling
 """
 
-import time
 import random
-import uuid
-from typing import Any, Callable, Dict, List, Optional
+import time
 from functools import wraps
+from typing import Any, Callable, Dict, List, Optional
 
 from ..models import (
     ChaosExperiment,
@@ -101,7 +100,6 @@ class NetworkChaosInjector:
         )
 
         try:
-            import asyncio
             import time as time_module
 
             start_time = time_module.time()
@@ -263,7 +261,7 @@ class NetworkChaosInjector:
             def wrapper(*args, **kwargs):
                 if random.random() < (failure_rate / 100.0):
                     raise ConnectionError(
-                        f"Chaos Engineering: Simulated DNS resolution failure"
+                        "Chaos Engineering: Simulated DNS resolution failure"
                     )
                 return func(*args, **kwargs)
 

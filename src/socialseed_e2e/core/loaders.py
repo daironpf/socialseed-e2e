@@ -40,7 +40,7 @@ class ModuleLoader:
             return runnables
 
         # Sort by filename to ensure predictable order
-        paths = sorted(list(root_path.glob(pattern)), key=lambda p: p.name)
+        paths = sorted(root_path.glob(pattern), key=lambda p: p.name)
 
         for file_path in paths:
             if file_path.name == "__init__.py":

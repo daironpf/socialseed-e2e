@@ -5,7 +5,6 @@ This module provides the regression command using POO and SOLID principles.
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console

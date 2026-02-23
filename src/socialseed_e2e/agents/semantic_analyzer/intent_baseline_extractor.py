@@ -199,7 +199,7 @@ class IntentBaselineExtractor:
 
         for pattern in docstring_patterns:
             matches = re.finditer(pattern, content, re.DOTALL)
-            for i, match in enumerate(matches):
+            for _i, match in enumerate(matches):
                 docstring = match.group(1).strip()
 
                 # Look for behavior descriptions in docstrings

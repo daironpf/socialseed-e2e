@@ -4,8 +4,7 @@ This module provides functionality to map and visualize the logical
 decisions and branches taken during test execution.
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from socialseed_e2e.core.traceability.models import (
     LogicBranch,
@@ -283,7 +282,7 @@ class LogicMapper:
         Returns:
             HTML flow description
         """
-        html = [f'<div class="logic-flow">']
+        html = ['<div class="logic-flow">']
         html.append(f"<h3>Logic Flow: {trace.test_name}</h3>")
         html.append('<div class="branches">')
 

@@ -143,9 +143,9 @@ from socialseed_e2e.project_manifest.relationship_mapper import (
     APIRelationshipMapper,
     DataFlow,
     DependencyStrength,
+    RelationshipCategory,
 )
 from socialseed_e2e.project_manifest.relationship_mapper import ImpactAnalysis as APIImpactAnalysis
-from socialseed_e2e.project_manifest.relationship_mapper import RelationshipCategory
 from socialseed_e2e.project_manifest.retrieval import (
     ContextChunk,
     RAGRetrievalEngine,

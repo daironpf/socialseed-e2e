@@ -1,8 +1,7 @@
 """Metrics collection and SLA validation for socialseed-e2e performance tests."""
 
-import statistics
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -31,7 +30,7 @@ class MetricsCollector:
         """Get comprehensive metrics summary."""
         if not self.latencies:
             return {"status": "no_data"}
-            
+
         return {
             "total_requests": self.total,
             "failed_requests": self.failed,
@@ -52,13 +51,13 @@ class MetricsCollector:
 
         if summary["avg_latency"] > sla.max_avg_latency_ms:
             violations.append(f"Avg latency {summary['avg_latency']:.2f}ms exceeds SLA {sla.max_avg_latency_ms}ms")
-            
+
         p95 = summary["p95"]
         if p95 > sla.p95_latency_ms:
             violations.append(f"P95 latency {p95:.2f}ms exceeds SLA {sla.p95_latency_ms}ms")
-            
+
         error_rate = summary["error_rate"]
         if error_rate > sla.max_error_rate:
             violations.append(f"Error rate {error_rate*100:.2f}% exceeds SLA {sla.max_error_rate*100:.2f}%")
-            
+
         return violations

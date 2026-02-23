@@ -4,12 +4,10 @@ This module provides the community command group using POO and SOLID principles.
 """
 
 import sys
-from pathlib import Path
 
 import click
 from rich.console import Console
 from rich.table import Table
-
 
 console = Console()
 

@@ -1,10 +1,11 @@
 """DataDog integration for socialseed-e2e."""
 
 from typing import Any, Dict, Optional
+
 from socialseed_e2e.observability import ObservabilityProvider
 
 try:
-    from datadog import initialize, statsd, api
+    from datadog import api, initialize, statsd
     DATADOG_AVAILABLE = True
 except ImportError:
     DATADOG_AVAILABLE = False
@@ -16,7 +17,7 @@ class DataDogProvider(ObservabilityProvider):
     def __init__(self, api_key: str, app_key: Optional[str] = None, host_name: Optional[str] = None):
         if not DATADOG_AVAILABLE:
             raise ImportError("datadog library is required. Install it with 'pip install datadog'")
-        
+
         options = {
             'api_key': api_key,
             'app_key': app_key,
@@ -29,10 +30,10 @@ class DataDogProvider(ObservabilityProvider):
         """Send test result to DataDog as a service check or event."""
         # Record duration as a metric
         statsd.timing('e2e.test.duration', duration_ms, tags=[f'test:{test_name}', f'status:{status}'])
-        
+
         # Increment counter
         statsd.increment('e2e.test.count', tags=[f'test:{test_name}', f'status:{status}'])
-        
+
         # Send an event for failures
         if status.lower() != 'passed' and status.lower() != 'ok':
             api.Event.create(
@@ -47,5 +48,5 @@ class DataDogProvider(ObservabilityProvider):
         formatted_tags = []
         if tags:
             formatted_tags = [f"{k}:{v}" for k, v in tags.items()]
-        
+
         statsd.gauge(f"e2e.custom.{name}", value, tags=formatted_tags)

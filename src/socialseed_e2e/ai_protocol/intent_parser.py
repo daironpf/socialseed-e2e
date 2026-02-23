@@ -6,7 +6,7 @@ for understanding AI agent requests.
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from socialseed_e2e.ai_protocol.message_formats import Intent, IntentType
 

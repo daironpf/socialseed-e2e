@@ -1,9 +1,9 @@
 """Consumer-side contract definition for socialseed-e2e."""
 
 import json
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -76,7 +76,7 @@ class ConsumerContract:
         import os
         if not os.path.exists(directory):
             os.makedirs(directory)
-        
+
         filename = f"{self.contract.consumer}-{self.contract.provider}.json"
         path = os.path.join(directory, filename)
         with open(path, "w") as f:

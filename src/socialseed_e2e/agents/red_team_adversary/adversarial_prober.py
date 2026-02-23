@@ -301,7 +301,7 @@ class AdversarialProber:
         random.shuffle(payloads)
 
         # Execute attacks
-        for i, payload in enumerate(payloads[:max_attempts]):
+        for _i, payload in enumerate(payloads[:max_attempts]):
             attempt = self.probe_with_payload(payload)
             attempts.append(attempt)
 

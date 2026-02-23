@@ -19,16 +19,15 @@ Usage:
 import json
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Union
 from xml.etree import ElementTree as ET
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from .base import E2EAssertionError
-
 
 # =============================================================================
 # SCHEMA VALIDATION

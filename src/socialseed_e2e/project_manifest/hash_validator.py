@@ -5,7 +5,6 @@ is outdated without requiring a full re-scan.
 """
 
 import hashlib
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -240,7 +239,7 @@ class ManifestVersionManager:
             if hasattr(manifest, "file_metadata") and manifest.file_metadata:
                 manifest.source_hashes = {}
                 project_root = Path(manifest.project_root)
-                for file_key, metadata in manifest.file_metadata.items():
+                for file_key, _metadata in manifest.file_metadata.items():
                     # Convert MD5 to SHA-256 by recomputing
                     file_path = project_root / file_key
                     if file_path.exists():

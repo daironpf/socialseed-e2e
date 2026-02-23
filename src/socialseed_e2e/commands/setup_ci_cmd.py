@@ -12,7 +12,6 @@ from rich.console import Console
 
 from socialseed_e2e.utils import TemplateEngine
 
-
 console = Console()
 
 

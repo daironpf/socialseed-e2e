@@ -6,7 +6,7 @@ without reaching a conclusion, wasting budget.
 
 import re
 from datetime import datetime
-from typing import Dict, List, Optional, Set
+from typing import Dict, List
 
 from socialseed_e2e.telemetry.models import LLMCall, ReasoningLoop
 
@@ -281,9 +281,9 @@ class ReasoningLoopDetector:
             "total_wasted_tokens": self.get_total_wasted_tokens(),
             "total_wasted_cost_usd": self.get_total_wasted_cost(),
             "agents_affected": len(
-                set(loop.agent_name for loop in self.detected_loops if loop.agent_name)
+                {loop.agent_name for loop in self.detected_loops if loop.agent_name}
             ),
             "tasks_affected": len(
-                set(loop.task_id for loop in self.detected_loops if loop.task_id)
+                {loop.task_id for loop in self.detected_loops if loop.task_id}
             ),
         }

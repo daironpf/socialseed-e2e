@@ -218,7 +218,7 @@ def record_test(func: Callable) -> Callable:
                 break
 
         if collector is None:
-            for key, value in kwargs.items():
+            for _key, value in kwargs.items():
                 if isinstance(value, TestResultCollector):
                     collector = value
                     break

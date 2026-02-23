@@ -4,7 +4,7 @@ Supports tracking created resources for automated cleanup.
 """
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from .factories import DataFactory
 

@@ -4,16 +4,15 @@ This module provides screenshot capture capabilities for HTML responses,
 PDFs, and images for visual regression testing.
 """
 
-import base64
-import hashlib
 import io
 import logging
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from playwright.sync_api import Page, TimeoutError as PlaywrightTimeout
+from playwright.sync_api import Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from socialseed_e2e.visual_testing.models import (
     ContentType,

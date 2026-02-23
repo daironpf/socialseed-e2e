@@ -6,11 +6,9 @@ This module provides the dashboard command using POO and SOLID principles.
 import subprocess
 import sys
 from pathlib import Path
-import webbrowser
 
 import click
 from rich.console import Console
-
 
 console = Console()
 

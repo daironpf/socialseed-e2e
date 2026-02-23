@@ -9,15 +9,14 @@ This module provides intelligent fuzzing capabilities with:
 Issue #189: Implement AI-Driven Intelligent Fuzzing and Security Testing
 """
 
-import json
 import random
 import string
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set
 
-from socialseed_e2e.project_manifest.models import DtoField, DtoSchema, EndpointInfo
+from socialseed_e2e.project_manifest.models import DtoField
 
 
 class AttackType(str, Enum):
@@ -229,7 +228,7 @@ class MaliciousPayloadGenerator:
                 SecurityPayload(
                     value=nosql_payload,
                     attack_type=AttackType.NOSQL_INJECTION,
-                    description=f"NoSQL Injection attempt",
+                    description="NoSQL Injection attempt",
                     expected_behavior="blocked",
                     severity=SeverityLevel.CRITICAL,
                 )
@@ -456,7 +455,7 @@ class MaliciousPayloadGenerator:
                 SecurityPayload(
                     value=xss_payload,
                     attack_type=AttackType.XSS,
-                    description=f"XSS attempt",
+                    description="XSS attempt",
                     expected_behavior="blocked",
                     severity=SeverityLevel.HIGH,
                 )
@@ -477,7 +476,7 @@ class MaliciousPayloadGenerator:
                 SecurityPayload(
                     value=cmd_payload,
                     attack_type=AttackType.COMMAND_INJECTION,
-                    description=f"Command injection attempt",
+                    description="Command injection attempt",
                     expected_behavior="blocked",
                     severity=SeverityLevel.CRITICAL,
                 )
@@ -498,7 +497,7 @@ class MaliciousPayloadGenerator:
                 SecurityPayload(
                     value=path_payload,
                     attack_type=AttackType.PATH_TRAVERSAL,
-                    description=f"Path traversal attempt",
+                    description="Path traversal attempt",
                     expected_behavior="blocked",
                     severity=SeverityLevel.HIGH,
                 )

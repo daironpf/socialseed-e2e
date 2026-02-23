@@ -5,7 +5,6 @@ by adjusting assertions, timing, and selectors.
 """
 
 import ast
-import hashlib
 import json
 import logging
 import re

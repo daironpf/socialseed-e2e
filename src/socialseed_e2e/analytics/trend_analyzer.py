@@ -7,7 +7,6 @@ This module provides trend analysis capabilities for:
 - Trend direction and magnitude
 """
 
-import math
 import statistics
 from collections import defaultdict
 from datetime import datetime, timedelta

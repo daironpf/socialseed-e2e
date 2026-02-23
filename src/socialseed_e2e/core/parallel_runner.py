@@ -4,14 +4,13 @@ This module provides multiprocessing capabilities for running tests in parallel,
 with proper state isolation and result aggregation.
 """
 
-import multiprocessing as mp
 import os
 import sys
 import time
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Dict, List, Optional
 
 from playwright.sync_api import sync_playwright
 
@@ -21,6 +20,7 @@ from socialseed_e2e.core.config_loader import (
     ServiceConfig,
     normalize_service_name,
 )
+from socialseed_e2e.core.organization import TestOrganizationManager
 from socialseed_e2e.core.test_runner import (
     TestResult,
     TestSuiteResult,
@@ -29,7 +29,6 @@ from socialseed_e2e.core.test_runner import (
     discover_test_modules,
     load_test_module,
 )
-from socialseed_e2e.core.organization import TestOrganizationManager
 
 
 @dataclass
@@ -126,7 +125,7 @@ def execute_service_tests_worker(task: WorkerTask) -> WorkerResult:
         base_url = (
             task.service_config.base_url
             if task.service_config
-            else f"http://localhost:8080"
+            else "http://localhost:8080"
         )
 
         # Create page class
@@ -190,7 +189,6 @@ def execute_single_test_in_worker(
     Returns:
         TestResult with execution details
     """
-    import json
 
     start_time = time.time()
     test_name = module_path.stem

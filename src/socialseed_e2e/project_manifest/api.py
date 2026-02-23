@@ -46,8 +46,6 @@ class ManifestAPI:
             project_root: Root directory of the project
             manifest_path: Optional custom path to manifest file
         """
-        import socialseed_e2e
-        import inspect
 
         self.project_root = Path(project_root).resolve()
 

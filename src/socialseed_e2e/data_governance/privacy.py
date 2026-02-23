@@ -5,15 +5,14 @@ for test data.
 """
 
 import re
-from typing import List, Dict, Any, Optional, Set
-from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from .models import (
-    PIIType,
-    SensitivityLevel,
     DataClassification,
     DataMaskingRule,
     GDPRCompliance,
+    PIIType,
+    SensitivityLevel,
 )
 
 

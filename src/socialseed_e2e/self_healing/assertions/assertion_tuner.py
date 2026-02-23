@@ -6,15 +6,15 @@ Adjusts assertion thresholds and handles timing issues automatically.
 
 import re
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
-from statistics import mean, stdev
+from statistics import mean
+from typing import Dict, List, Optional
 
 from ..models import (
     AssertionAdjustment,
-    TestFailure,
+    ChangeType,
     HealingSuggestion,
     HealingType,
-    ChangeType,
+    TestFailure,
 )
 
 

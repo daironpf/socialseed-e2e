@@ -305,8 +305,8 @@ class RunReportGenerator:
         """Generate machine-readable reports (JUnit, JSON)."""
         try:
             from socialseed_e2e.core.test_runner import (
-                generate_junit_report,
                 generate_json_report,
+                generate_junit_report,
             )
 
             console.print(
@@ -487,8 +487,8 @@ class RunCommand:
         mock_isolation_manager = None
         if isolate:
             from socialseed_e2e.ai_mocking import (
-                SmartMockOrchestrator,
                 MockIsolationManager,
+                SmartMockOrchestrator,
             )
 
             console.print("🔒 [cyan]Starting smart mock isolation mode...[/cyan]")
@@ -501,7 +501,7 @@ class RunCommand:
         # Setup PII detection if enabled
         pii_service = None
         if pii_check:
-            from socialseed_e2e.pii_masking import PIIMaskingService, PIIMaskingConfig
+            from socialseed_e2e.pii_masking import PIIMaskingConfig, PIIMaskingService
 
             def on_pii_detected(masked_values):
                 console.print(
@@ -553,7 +553,7 @@ class RunCommand:
             xai_report_dir = Path(report_output) / "xai"
             xai_report_dir.mkdir(parents=True, exist_ok=True)
 
-            for service_name, service_results in results.items():
+            for service_name, _service_results in results.items():
                 report = xai_reporter.generate_report(
                     test_name=service_name, test_file=str(services_path / service_name)
                 )

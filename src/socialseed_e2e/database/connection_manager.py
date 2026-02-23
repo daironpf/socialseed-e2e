@@ -1,7 +1,7 @@
 """Database connection manager for socialseed-e2e."""
 
-from typing import Any, Dict, Optional, Union
 import logging
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class ConnectionManager:
                 raise ImportError("pymysql is required for MySQL. Install it with 'pip install pymysql'")
         else:
             raise ValueError(f"Unsupported SQL database type: {db_type}")
-        
+
         self._connections[name] = conn
         return conn
 

@@ -3,7 +3,6 @@
 Handles the local web server setup and Streamlit process management.
 """
 
-import os
 import subprocess
 import sys
 import webbrowser
@@ -52,9 +51,9 @@ class DashboardServer:
             "false",
         ]
 
-        click.echo(f"🚀 Starting SocialSeed E2E Dashboard...")
+        click.echo("🚀 Starting SocialSeed E2E Dashboard...")
         click.echo(f"   URL: http://{self.host}:{self.port}")
-        click.echo(f"   Press Ctrl+C to stop")
+        click.echo("   Press Ctrl+C to stop")
         click.echo()
 
         # Open browser if requested

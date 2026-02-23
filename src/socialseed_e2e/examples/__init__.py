@@ -4,9 +4,9 @@ This module provides pre-built example projects for different
 industries and architectures.
 """
 
-from typing import Dict, Any, List, Optional
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class ExampleType(str, Enum):
@@ -186,7 +186,7 @@ class BestPracticesGuide:
 ```
 tests/
 ├── unit/           # Unit tests
-├── integration/    # Integration tests  
+├── integration/    # Integration tests
 ├── e2e/           # End-to-end tests
 └── fixtures/      # Test fixtures
 ```

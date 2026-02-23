@@ -20,12 +20,12 @@ import json
 import re
 import time
 import uuid
-import websocket
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 
+import websocket
 from pydantic import BaseModel
 
 

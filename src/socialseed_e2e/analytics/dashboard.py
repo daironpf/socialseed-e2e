@@ -18,10 +18,9 @@ Usage:
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
-from socialseed_e2e.analytics.trend_analyzer import TrendAnalyzer, TrendReport
-from socialseed_e2e.analytics.anomaly_detector import AnomalyDetector, AnomalyReport
+from socialseed_e2e.analytics.trend_analyzer import TrendAnalyzer
 
 
 @dataclass

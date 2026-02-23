@@ -293,7 +293,7 @@ class PrivacySanitizer:
             Sanitized text
         """
         # Apply PII patterns
-        for pii_type, pattern in PII_PATTERNS.items():
+        for _pii_type, pattern in PII_PATTERNS.items():
             text = pattern.sub("[REDACTED]", text)
 
         # Apply custom rules
@@ -422,7 +422,7 @@ class PrivacySanitizer:
             "fields_sanitized": 0,
             "headers_sanitized": 0,
             "bodies_sanitized": 0,
-            "pii_detected": {key: 0 for key in PII_PATTERNS.keys()},
+            "pii_detected": dict.fromkeys(PII_PATTERNS.keys(), 0),
         }
 
         for interaction in interactions:

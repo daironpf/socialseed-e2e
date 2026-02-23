@@ -80,7 +80,7 @@ def lint_cmd(project: str, service: str, fix: bool):
                     console.print(f"      Line {issue['line']}: {issue['message']}")
                     console.print(f"      → {issue['suggestion']}")
         else:
-            console.print(f"  [green]✓[/green] No issues found")
+            console.print("  [green]✓[/green] No issues found")
 
     console.print()
     if total_issues > 0:

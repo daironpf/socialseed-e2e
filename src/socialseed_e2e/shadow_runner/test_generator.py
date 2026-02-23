@@ -6,9 +6,9 @@ Generates test cases from captured traffic.
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
-from socialseed_e2e.shadow_runner.traffic_interceptor import CapturedInteraction, RequestMethod
+from socialseed_e2e.shadow_runner.traffic_interceptor import CapturedInteraction
 
 
 @dataclass
@@ -230,14 +230,14 @@ class TestGenerator:
 
         # Add assertions
         if response:
-            code_lines.append(f"    # Assertions")
+            code_lines.append("    # Assertions")
             code_lines.append(f"    assert response.status == {response.status_code}")
 
             # Add body assertion if response has body
             if response.body:
                 code_lines.append("")
-                code_lines.append(f"    # Verify response body")
-                code_lines.append(f"    data = await response.json()")
+                code_lines.append("    # Verify response body")
+                code_lines.append("    data = await response.json()")
                 # Try to extract key fields for assertion
                 key_fields = self._extract_key_fields(response.body)
                 for field in key_fields[:3]:  # Limit to first 3 fields
@@ -473,7 +473,7 @@ class TestExporter:
             f'    """Captured tests for {service_name}."""',
             "",
             "    def __init__(self):",
-            f'        super().__init__(base_url="http://localhost:8000")',
+            '        super().__init__(base_url="http://localhost:8000")',
             "",
         ]
 
@@ -509,7 +509,7 @@ class TestExporter:
             init_file.write_text("")
 
         # Create test file
-        test_file = service_dir / f"test_shadow_captured.py"
+        test_file = service_dir / "test_shadow_captured.py"
 
         self.export_to_python_file(tests, test_file, service_name)
 

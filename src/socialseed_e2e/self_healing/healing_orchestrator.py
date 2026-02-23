@@ -7,19 +7,19 @@ Coordinates all healing components and manages the healing workflow.
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 from ..models import (
+    HealingHistory,
     HealingResult,
     HealingSuggestion,
-    TestFailure,
     SelfHealingConfig,
-    HealingHistory,
+    TestFailure,
 )
-from .schema.schema_adapter import SchemaAdapter
-from .locator.locator_repair import LocatorRepairEngine
 from .assertions.assertion_tuner import AssertionTuner
+from .locator.locator_repair import LocatorRepairEngine
 from .optimization.test_optimizer import TestOptimizer
+from .schema.schema_adapter import SchemaAdapter
 
 
 class HealingOrchestrator:

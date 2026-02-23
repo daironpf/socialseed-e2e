@@ -1,13 +1,11 @@
-from pathlib import Path
-from typing import Any, Callable, Optional
-import asyncio
-import json
 from datetime import datetime
+from pathlib import Path
+from typing import Callable, Optional
 
-from pydantic import BaseModel
+import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-import uvicorn
+from pydantic import BaseModel
 
 
 class EndpointNode(BaseModel):
@@ -166,10 +164,10 @@ class DashboardServer:
 </head>
 <body class="bg-gray-900 text-white">
     <div id="root"></div>
-    
+
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        
+
         function App() {
             const [activeTab, setActiveTab] = useState('endpoints');
             const [endpoints, setEndpoints] = useState({});
@@ -177,10 +175,10 @@ class DashboardServer:
             const [chatMessages, setChatMessages] = useState([]);
             const [chatInput, setChatInput] = useState('');
             const wsRef = useRef(null);
-            
+
             useEffect(() => {
                 wsRef.current = new WebSocket(`ws://${window.location.host}/ws`);
-                
+
                 wsRef.current.onmessage = (event) => {
                     const msg = JSON.parse(event.data);
                     if (msg.type === 'traffic') {
@@ -191,37 +189,37 @@ class DashboardServer:
                         setChatMessages(prev => [...prev, { role: 'assistant', content: msg.data }]);
                     }
                 };
-                
+
                 return () => wsRef.current?.close();
             }, []);
-            
+
             const sendChat = () => {
                 if (!chatInput.trim()) return;
                 setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]);
                 wsRef.current?.send(chatInput);
                 setChatInput('');
             };
-            
+
             return (
                 <div className="flex h-screen">
                     <div className="w-64 bg-gray-800 p-4">
                         <h1 className="text-xl font-bold mb-4">SocialSeed E2E</h1>
                         <nav className="space-y-2">
-                            <button onClick={() => setActiveTab('endpoints')} 
+                            <button onClick={() => setActiveTab('endpoints')}
                                 className={`w-full text-left p-2 rounded ${activeTab === 'endpoints' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}>
                                 Endpoints
                             </button>
-                            <button onClick={() => setActiveTab('traffic')} 
+                            <button onClick={() => setActiveTab('traffic')}
                                 className={`w-full text-left p-2 rounded ${activeTab === 'traffic' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}>
                                 Live Traffic
                             </button>
-                            <button onClick={() => setActiveTab('chat')} 
+                            <button onClick={() => setActiveTab('chat')}
                                 className={`w-full text-left p-2 rounded ${activeTab === 'chat' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}>
                                 AI Chat
                             </button>
                         </nav>
                     </div>
-                    
+
                     <div className="flex-1 p-4 overflow-auto">
                         {activeTab === 'endpoints' && (
                             <div className="bg-gray-800 rounded p-4">
@@ -229,7 +227,7 @@ class DashboardServer:
                                 <EndpointTree data={endpoints} />
                             </div>
                         )}
-                        
+
                         {activeTab === 'traffic' && (
                             <div className="bg-gray-800 rounded p-4">
                                 <h2 className="text-lg font-bold mb-4">Live Traffic</h2>
@@ -249,7 +247,7 @@ class DashboardServer:
                                 </div>
                             </div>
                         )}
-                        
+
                         {activeTab === 'chat' && (
                             <div className="bg-gray-800 rounded p-4 h-full flex flex-col">
                                 <h2 className="text-lg font-bold mb-4">AI Assistant</h2>
@@ -261,7 +259,7 @@ class DashboardServer:
                                     ))}
                                 </div>
                                 <div className="flex gap-2">
-                                    <input 
+                                    <input
                                         value={chatInput}
                                         onChange={(e) => setChatInput(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && sendChat()}
@@ -278,10 +276,10 @@ class DashboardServer:
                 </div>
             );
         }
-        
+
         function EndpointTree({ data, depth = 0 }) {
             if (!data || !data.children) return null;
-            
+
             return (
                 <div className="ml-4">
                     {Object.entries(data.children).map(([key, node]) => (
@@ -300,7 +298,7 @@ class DashboardServer:
                 </div>
             );
         }
-        
+
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>

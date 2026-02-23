@@ -43,10 +43,10 @@ from socialseed_e2e.contract_testing.migration import (
 # Multi-Protocol Support
 from socialseed_e2e.contract_testing.multi_protocol import (
     FieldDefinition,
-    GRPCMethod,
     GraphQLContractBuilder,
     GraphQLOperation,
     GRPCContractBuilder,
+    GRPCMethod,
     MultiProtocolContractBuilder,
     ProtocolType,
     RESTContractBuilder,

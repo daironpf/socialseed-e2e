@@ -4,12 +4,10 @@ Main orchestrator for token-centric performance testing and
 cost optimization.
 """
 
-import json
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from socialseed_e2e.telemetry.budget_manager import BudgetManager, BudgetBreach
+from socialseed_e2e.telemetry.budget_manager import BudgetBreach, BudgetManager
 from socialseed_e2e.telemetry.cost_regression import CostRegressionDetector
 from socialseed_e2e.telemetry.loop_detector import ReasoningLoopDetector
 from socialseed_e2e.telemetry.models import (

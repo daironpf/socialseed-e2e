@@ -1,8 +1,8 @@
-from pathlib import Path
-from typing import Any, Callable, Optional
 import json
 import shutil
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Callable, Optional
 
 from pydantic import BaseModel
 
@@ -184,14 +184,14 @@ MOCK_ROUTES = {json.dumps(mock_routes, indent=4)}
 
 async def handle_request(request):
     key = f"{{request.method}}:{{request.path}}"
-    
+
     if key in MOCK_ROUTES:
         mock = MOCK_ROUTES[key]
         return web.json_response(
             json.loads(mock["body"]),
             status=mock["status"]
         )
-    
+
     return web.json_response({{"error": "Not mocked"}}, status=404)
 
 app = web.Application()
@@ -222,11 +222,11 @@ INCIDENT_DATE = "{incident.created_at.isoformat()}"
 
 class TestIncidentReplay:
     """Test class that reproduces the incident conditions"""
-    
+
     def setup_method(self):
         """Setup test environment"""
         self.requests_session = requests.Session()
-    
+
     def test_reproduce_incident(self):
         """Replay the exact sequence that caused the incident"""
 '''

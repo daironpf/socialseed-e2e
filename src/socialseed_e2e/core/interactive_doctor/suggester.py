@@ -3,7 +3,7 @@
 This module generates fix suggestions based on error diagnosis.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from socialseed_e2e.core.interactive_doctor.models import (
     DiagnosisResult,
@@ -263,7 +263,7 @@ class FixSuggester:
                     f"current value"
                 ),
                 automatic=False,
-                preview=f"# Update validation constraint in DTO/Model",
+                preview="# Update validation constraint in DTO/Model",
                 code_changes=[
                     {
                         "file_type": "dto",

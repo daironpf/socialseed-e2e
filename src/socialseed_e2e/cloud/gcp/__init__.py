@@ -1,11 +1,11 @@
 """GCP integration for socialseed-e2e."""
 
 from typing import Any, Dict, List, Optional
-from socialseed_e2e.cloud import CloudProvider, CloudFunction, CloudService
+
+from socialseed_e2e.cloud import CloudFunction, CloudProvider, CloudService
 
 try:
-    from google.cloud import functions_v1
-    from google.cloud import run_v2
+    from google.cloud import functions_v1, run_v2
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -17,7 +17,7 @@ class GCPProvider(CloudProvider):
     def __init__(self, project_id: str, location: str = "us-central1"):
         if not GCP_AVAILABLE:
             raise ImportError("Google Cloud libraries are required. Install them with 'pip install google-cloud-functions google-cloud-run'")
-        
+
         self.project_id = project_id
         self.location = location
 

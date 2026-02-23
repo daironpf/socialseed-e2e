@@ -5,7 +5,7 @@ Adapts test generation and execution based on learned patterns and codebase chan
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -145,7 +145,7 @@ class AdaptationEngine:
         Returns:
             Prioritized list of tests
         """
-        priority_scores: Dict[str, float] = {test: 0.0 for test in all_tests}
+        priority_scores: Dict[str, float] = dict.fromkeys(all_tests, 0.0)
 
         # High priority for recent failures
         for test in recent_failures:

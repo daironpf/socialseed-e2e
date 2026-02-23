@@ -8,9 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from socialseed_e2e.shadow_runner.capture_filter import CaptureFilter, SmartFilter
 from socialseed_e2e.shadow_runner.fuzzer import IntelligentFuzzer, SemanticFuzzer
 from socialseed_e2e.shadow_runner.models import (
     CaptureConfig as CaptureConfigModel,
+)
+from socialseed_e2e.shadow_runner.models import (
     CapturedRequest,
     CapturedTraffic,
     FuzzingCampaign,
@@ -18,15 +21,18 @@ from socialseed_e2e.shadow_runner.models import (
     FuzzingResult,
     FuzzingStrategy,
     HttpMethod,
-    MutationType,
     MutatedRequest,
-    ReplayConfig as ReplayConfigModel,
+    MutationType,
     SemanticMutation,
-    TestGenerationConfig as TestGenerationConfigModel,
     TestGenerationResult,
     TrafficAnalysis,
 )
-from socialseed_e2e.shadow_runner.capture_filter import CaptureFilter, SmartFilter
+from socialseed_e2e.shadow_runner.models import (
+    ReplayConfig as ReplayConfigModel,
+)
+from socialseed_e2e.shadow_runner.models import (
+    TestGenerationConfig as TestGenerationConfigModel,
+)
 from socialseed_e2e.shadow_runner.privacy_sanitizer import PrivacySanitizer
 from socialseed_e2e.shadow_runner.session_recorder import SessionRecorder, UserSession
 from socialseed_e2e.shadow_runner.test_generator import (
@@ -138,7 +144,7 @@ class ShadowRunner:
         # Register callback to process interactions
         self.interceptor.register_callback(self._process_interaction)
 
-        print(f"🎬 Shadow Runner: Started capturing traffic")
+        print("🎬 Shadow Runner: Started capturing traffic")
         print(f"   Output directory: {self.output_dir.absolute()}")
         if self.current_session_id:
             print(f"   Session ID: {self.current_session_id}")
@@ -163,7 +169,7 @@ class ShadowRunner:
         # Get statistics
         stats = self.get_statistics()
 
-        print(f"\n⏹️  Shadow Runner: Stopped capturing")
+        print("\n⏹️  Shadow Runner: Stopped capturing")
         print(f"   Total requests: {stats['total_requests']}")
         print(f"   Filtered requests: {stats['filtered_requests']}")
         print(f"   Final captured: {stats['final_captured']}")
@@ -303,7 +309,6 @@ class ShadowRunner:
         Returns:
             Dictionary with analysis results
         """
-        import json
         from pathlib import Path
 
         path = Path(capture_path)
@@ -317,7 +322,7 @@ class ShadowRunner:
 
         analysis = {
             "total_requests": len(interactions),
-            "unique_endpoints": len(set(i.get("path", "") for i in interactions)),
+            "unique_endpoints": len({i.get("path", "") for i in interactions}),
             "methods": {},
             "status_codes": {},
         }
@@ -420,7 +425,6 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=middleware.dispatch)
 
 # Semantic Fuzzing Runner (new)
 from socialseed_e2e.shadow_runner.runner import ShadowRunner as SemanticShadowRunner
-
 
 # Convenience functions
 

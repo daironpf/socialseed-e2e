@@ -9,7 +9,6 @@ Example:
     >>> broker.publish_contract(contract_json, "consumer-app", "provider-api", "1.0.0")
 """
 
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime

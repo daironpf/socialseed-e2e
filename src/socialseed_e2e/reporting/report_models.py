@@ -159,7 +159,7 @@ class TestSuiteReport:
     def __post_init__(self):
         """Initialize services list from tests."""
         if not self.services and self.tests:
-            self.services = sorted(set(test.service for test in self.tests))
+            self.services = sorted({test.service for test in self.tests})
 
     def add_test(self, test: TestResult) -> None:
         """Add a test result and update summary."""

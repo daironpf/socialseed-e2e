@@ -6,12 +6,11 @@ This module provides the import command group using POO and SOLID principles.
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import click
 import yaml
 from rich.console import Console
-
 
 console = Console()
 
@@ -109,7 +108,7 @@ class CurlImporter:
             else:
                 i += 1
 
-        console.print(f"[green]✓[/green] Imported curl command")
+        console.print("[green]✓[/green] Imported curl command")
         console.print(f"   Method: {result['method']}")
         console.print(f"   URL: {result['url']}")
 

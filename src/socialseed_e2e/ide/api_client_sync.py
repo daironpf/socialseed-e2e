@@ -5,10 +5,10 @@ Postman, Insomnia, and HTTP clients.
 """
 
 import json
-import yaml
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class PostmanImporter:
@@ -268,7 +268,7 @@ class OpenAPIImporter:
             "by_tag": {},
         }
 
-        for path, methods in paths.items():
+        for _path, methods in paths.items():
             for method in methods.keys():
                 if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
                     summary["total_endpoints"] += 1

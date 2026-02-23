@@ -218,7 +218,7 @@ class ExternalAPIAnalyzer:
         """Find HTTP client calls to external APIs."""
         patterns = self.HTTP_CLIENT_PATTERNS.get(language, {})
 
-        for client_name, pattern in patterns.items():
+        for _client_name, pattern in patterns.items():
             for match in re.finditer(pattern, content, re.IGNORECASE):
                 groups = match.groups()
                 if len(groups) >= 2:

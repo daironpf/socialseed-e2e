@@ -11,11 +11,10 @@ Example:
 """
 
 import json
-import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class ChangeSeverity(Enum):
@@ -556,7 +555,7 @@ class ContractMigrationAnalyzer:
 # Old code
 response = requests.get("{change.old_value}")
 
-# New code  
+# New code
 response = requests.get("<replacement_endpoint>")
 """
 

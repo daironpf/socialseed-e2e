@@ -10,7 +10,7 @@ import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from socialseed_e2e.utils.state_management import DynamicStateMixin
 

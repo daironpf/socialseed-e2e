@@ -57,7 +57,7 @@ class ShadowCaptureAgent:
 
         runner = ShadowRunner(output_dir=str(Path(config.output_path).parent))
 
-        console.print(f"[yellow]Starting capture...[/yellow]")
+        console.print("[yellow]Starting capture...[/yellow]")
         console.print(
             f"   Filter health checks: {'Yes' if self.filter_health else 'No'}"
         )
@@ -85,7 +85,6 @@ class ShadowGenerateAgent:
 
     def generate(self):
         """Generate tests from captured traffic."""
-        from socialseed_e2e.shadow_runner import ShadowRunner, TestGenerationConfig
 
 
 class ShadowReplayAgent:
@@ -105,7 +104,6 @@ class ShadowReplayAgent:
 
     def replay(self):
         """Replay captured traffic."""
-        from socialseed_e2e.shadow_runner import ReplayConfig, ShadowRunner
 
 
 class ShadowAnalyzeAgent:
@@ -185,7 +183,7 @@ class ShadowFuzzAgent:
             mutations_per_request=self.mutations,
         )
 
-        console.print(f"[yellow]Starting semantic fuzzing...[/yellow]")
+        console.print("[yellow]Starting semantic fuzzing...[/yellow]")
         console.print(f"   Capture: {self.capture_file}")
         console.print(f"   Target: {self.target_url}")
         console.print(f"   Strategy: {self.strategy}")

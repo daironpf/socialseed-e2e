@@ -1,0 +1,6 @@
+src/socialseed_e2e/database/connection_manager.py:27: error: Library stubs not installed for "pymysql"  [import-untyped]
+src/socialseed_e2e/database/connection_manager.py:27: note: Hint: "python3 -m pip install types-PyMySQL"
+src/socialseed_e2e/database/connection_manager.py:27: note: (or run "mypy --install-types" to install all missing stub packages)
+src/socialseed_e2e/database/connection_manager.py:27: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+.venv/lib/python3.12/site-packages/_pytest/terminal.py:1729: error: Pattern matching is only supported in Python 3.10 and greater  [syntax]
+Found 2 errors in 2 files (errors prevented further checking)

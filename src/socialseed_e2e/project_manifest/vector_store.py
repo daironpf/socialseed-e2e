@@ -8,7 +8,7 @@ import json
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from socialseed_e2e.project_manifest.models import (
     DtoSchema,
@@ -255,7 +255,7 @@ class ManifestVectorStore:
         index_info = {
             "embedding_model": self.embedding_model_name,
             "num_items": len(self._metadata),
-            "item_types": list(set(m["type"] for m in self._metadata)),
+            "item_types": list({m["type"] for m in self._metadata}),
         }
         with open(self.index_path, "wb") as f:
             pickle.dump(index_info, f)

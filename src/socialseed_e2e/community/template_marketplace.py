@@ -6,11 +6,10 @@ This module provides functionality for managing and sharing test templates.
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from socialseed_e2e.community import (
     CommunityHub,
-    CommunityResource,
     ResourceType,
     TestTemplate,
 )

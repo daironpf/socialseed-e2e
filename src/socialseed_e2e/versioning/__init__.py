@@ -25,17 +25,17 @@ Usage:
     breaking = contracts.detect_breaking_changes("v1", "v2")
 """
 
+from .migration_tester import BreakingChange, MigrationTester
 from .models import (
-    VersionStrategy,
     APIVersion,
-    VersionTestResult,
+    DeprecationInfo,
     MigrationTestResult,
     VersionCoverage,
-    DeprecationInfo,
+    VersionStrategy,
+    VersionTestResult,
 )
 from .version_detector import VersionDetector
-from .migration_tester import MigrationTester, BreakingChange
-from .versioned_contract import VersionedContract, ContractType
+from .versioned_contract import ContractType, VersionedContract
 
 __all__ = [
     "VersionStrategy",

@@ -4,7 +4,6 @@ This module analyzes test errors and consults the Project Manifest
 to provide intelligent diagnosis.
 """
 
-import json
 import re
 from typing import Any, Dict, List, Optional
 

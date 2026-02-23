@@ -16,8 +16,6 @@ Usage:
 """
 
 import os
-from pathlib import Path
-from typing import Dict, Optional
 
 from socialseed_e2e.core.config_loader import ApiConfigLoader
 from socialseed_e2e.core.config_loader import get_service_config as _get_service_config

@@ -6,15 +6,15 @@ Repairs broken element locators by finding alternative selectors.
 
 import re
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
 from difflib import SequenceMatcher
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..models import (
-    LocatorRepair,
-    TestFailure,
+    ChangeType,
     HealingSuggestion,
     HealingType,
-    ChangeType,
+    LocatorRepair,
+    TestFailure,
 )
 
 

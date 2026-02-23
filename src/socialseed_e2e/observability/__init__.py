@@ -18,12 +18,11 @@ import json
 import logging
 import time
 import uuid
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
 from enum import Enum
-
-from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, List, Optional
 
 
 class ObservabilityProvider(ABC):

@@ -1,9 +1,9 @@
 """Provider-side contract verification for socialseed-e2e."""
 
 import json
+from typing import Any, Dict
+
 import requests
-from typing import Any, Dict, List, Optional
-from socialseed_e2e.core.base_page import BasePage
 
 
 class ProviderVerifier:
@@ -19,13 +19,13 @@ class ProviderVerifier:
             contract_data = json.load(f)
 
         print(f"\n🔍 Verifying contract: {contract_data['consumer']} -> {contract_data['provider']}")
-        
+
         all_passed = True
         for interaction in contract_data["interactions"]:
             success = self._verify_interaction(interaction)
             if not success:
                 all_passed = False
-        
+
         return all_passed
 
     def _verify_interaction(self, interaction: Dict[str, Any]) -> bool:
@@ -35,10 +35,10 @@ class ProviderVerifier:
         expected_res = interaction["response"]
 
         print(f"  - Interaction: {desc}")
-        
+
         url = f"{self.provider_url}{req['path']}"
         method = req["method"]
-        
+
         try:
             # Replay request
             response = requests.request(
@@ -51,7 +51,7 @@ class ProviderVerifier:
 
             # Verification logic
             errors = []
-            
+
             # Status check
             if response.status_code != expected_res["status"]:
                 errors.append(f"Expected status {expected_res['status']}, got {response.status_code}")

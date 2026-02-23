@@ -8,7 +8,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 
 from socialseed_e2e.ai_orchestrator.models import (
     RiskFactor,
@@ -18,7 +18,7 @@ from socialseed_e2e.ai_orchestrator.models import (
     TestType,
 )
 from socialseed_e2e.project_manifest.api import ManifestAPI
-from socialseed_e2e.project_manifest.models import EndpointInfo, ProjectKnowledge, ServiceInfo
+from socialseed_e2e.project_manifest.models import EndpointInfo, ServiceInfo
 
 logger = logging.getLogger(__name__)
 
@@ -468,7 +468,7 @@ class StrategyPlanner:
         # Tests from different services can run in parallel
         parallel_groups: List[List[str]] = []
 
-        for service, test_ids in service_groups.items():
+        for _service, test_ids in service_groups.items():
             # For now, put all tests from same service in one group
             # More sophisticated dependency analysis could split further
             parallel_groups.append(test_ids)

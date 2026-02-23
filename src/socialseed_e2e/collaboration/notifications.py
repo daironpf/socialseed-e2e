@@ -6,10 +6,11 @@ and other collaboration tools.
 
 import json
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -360,7 +361,7 @@ class TeamAnalytics:
         """
         events = self._load_events()
 
-        unique_users = set(e.get("user") for e in events if e.get("user"))
+        unique_users = {e.get("user") for e in events if e.get("user")}
         total_tests = len([e for e in events if e.get("type") == "test_execution"])
 
         return {
@@ -371,7 +372,6 @@ class TeamAnalytics:
 
     def _append_event(self, event_type: str, event_data: Dict[str, Any]):
         """Append event to storage."""
-        import os
         from pathlib import Path
 
         event_data["type"] = event_type

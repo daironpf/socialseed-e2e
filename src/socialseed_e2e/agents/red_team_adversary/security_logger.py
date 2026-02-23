@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional
 
 from socialseed_e2e.agents.red_team_adversary.models import (
     AttackAttempt,
-    AttackPayload,
     GuardrailInfo,
     VulnerabilityReport,
 )
@@ -262,7 +261,7 @@ class SecurityLogger:
             "guardrails_discovered": guardrails_found,
             "attack_types_breakdown": attack_types,
             "sessions": len(
-                set(l.get("session_id") for l in self.logs if l.get("session_id"))
+                {l.get("session_id") for l in self.logs if l.get("session_id")}
             ),
         }
 

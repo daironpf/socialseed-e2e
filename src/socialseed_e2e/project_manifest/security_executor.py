@@ -9,17 +9,17 @@ Issue #189: Implement AI-Driven Intelligent Fuzzing and Security Testing
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 
 from playwright.sync_api import APIResponse
 
 from socialseed_e2e.project_manifest.models import EndpointInfo, ServiceInfo
 from socialseed_e2e.project_manifest.security_fuzzer import (
     AttackType,
+    FuzzingSession,
     MaliciousPayloadGenerator,
     SecurityPayload,
     SecurityTestResult,
-    FuzzingSession,
     SeverityLevel,
 )
 

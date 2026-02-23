@@ -22,22 +22,22 @@ Usage:
     tests = sync.import_from_openapi("openapi.yaml")
 """
 
-from .models import (
-    IDEType,
-    TestTemplate,
-    DebugConfig,
-    LaunchConfig,
-    CompletionItem,
-    TestWizardStep,
-    TestWizardConfig,
-)
-from .vscode import VSCodeExtension, VSCodeCommands
 from .api_client_sync import (
-    PostmanImporter,
-    PostmanExporter,
-    OpenAPIImporter,
     APIClientSync,
+    OpenAPIImporter,
+    PostmanExporter,
+    PostmanImporter,
 )
+from .models import (
+    CompletionItem,
+    DebugConfig,
+    IDEType,
+    LaunchConfig,
+    TestTemplate,
+    TestWizardConfig,
+    TestWizardStep,
+)
+from .vscode import VSCodeCommands, VSCodeExtension
 
 __all__ = [
     "IDEType",

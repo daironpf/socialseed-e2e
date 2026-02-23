@@ -7,7 +7,7 @@ extract endpoints, and discover environment configuration.
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from socialseed_e2e.project_manifest.models import (
     EnvironmentVariable,

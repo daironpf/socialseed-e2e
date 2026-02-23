@@ -19,7 +19,7 @@ from socialseed_e2e.project_manifest.business_logic_inference import (
 from socialseed_e2e.project_manifest.domain_understanding import (
     DomainModelUnderstanding,
 )
-from socialseed_e2e.project_manifest.models import ProjectKnowledge, ServiceInfo
+from socialseed_e2e.project_manifest.models import ProjectKnowledge
 from socialseed_e2e.project_manifest.relationship_mapper import APIRelationshipMapper
 from socialseed_e2e.project_manifest.semantic_analyzer import SemanticCodebaseAnalyzer
 

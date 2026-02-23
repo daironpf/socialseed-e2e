@@ -7,7 +7,7 @@ Analyzes telemetry logs and suggests optimizations:
 - Batching opportunities
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from socialseed_e2e.telemetry.models import (
     LLMCall,
@@ -156,7 +156,7 @@ class OptimizationRecommender:
                     recommendation_id=f"cache_{group_id}",
                     category="caching",
                     priority="high" if total_calls > 5 else "medium",
-                    title=f"Implement context caching for repeated patterns",
+                    title="Implement context caching for repeated patterns",
                     description=f"Found {total_calls} similar prompts (avg {avg_input:.0f} tokens). Caching common context could save significant costs.",
                     estimated_savings_usd=potential_savings,
                     estimated_savings_percentage=35.0,

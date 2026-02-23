@@ -22,8 +22,8 @@ import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 import websocket
@@ -764,7 +764,7 @@ class RealtimeSuite:
         result["events_received"] = len(events)
 
         # Analyze events
-        event_types = set(e.get("type") for e in events if e.get("type"))
+        event_types = {e.get("type") for e in events if e.get("type")}
         result["event_types"] = list(event_types)
 
         # Disconnect

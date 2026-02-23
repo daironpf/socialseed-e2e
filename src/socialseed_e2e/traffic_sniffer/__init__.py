@@ -1,7 +1,7 @@
-from pathlib import Path
-from typing import Callable, Optional
 import threading
 from datetime import datetime
+from pathlib import Path
+from typing import Callable, Optional
 
 from pydantic import BaseModel
 
@@ -137,7 +137,7 @@ class TrafficSniffer:
             self._run_simple_http_proxy()
 
     def _run_simple_http_proxy(self) -> None:
-        from http.server import HTTPServer, BaseHTTPRequestHandler
+        from http.server import BaseHTTPRequestHandler, HTTPServer
 
         class ProxyHandler(BaseHTTPRequestHandler):
             sniffer: "TrafficSniffer" = None
@@ -158,7 +158,7 @@ class TrafficSniffer:
                     timestamp=datetime.now(),
                 )
 
-                from urllib.request import urlopen, Request
+                from urllib.request import Request, urlopen
 
                 target_url = f"http://{self.sniffer.config.target_host}:{self.sniffer.config.target_port}{self.path}"
                 req = Request(
@@ -233,7 +233,7 @@ class TrafficSniffer:
 
     def _run_pcap_capture(self) -> None:
         try:
-            from scapy.all import sniff, TCP, Raw
+            from scapy.all import TCP, Raw, sniff
         except ImportError:
             raise ImportError(
                 "scapy is required for docker sidecar mode. Install with: pip install scapy"

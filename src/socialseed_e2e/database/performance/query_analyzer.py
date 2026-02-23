@@ -4,9 +4,9 @@ Query performance analyzer for database testing.
 Analyzes query performance, execution plans, and provides optimization recommendations.
 """
 
+import re
 import time
 import uuid
-import re
 from typing import Any, Dict, List, Optional
 
 from ..models import QueryPerformance, QueryPlan
@@ -180,7 +180,7 @@ class QueryAnalyzer:
             # Get index statistics (PostgreSQL-specific)
             cursor.execute(
                 """
-                SELECT 
+                SELECT
                     schemaname,
                     tablename,
                     indexrelname,
@@ -232,7 +232,7 @@ class QueryAnalyzer:
 
             # Find frequently filtered columns without indexes
             cursor.execute("""
-                SELECT 
+                SELECT
                     schemaname,
                     tablename,
                     attname as column_name,

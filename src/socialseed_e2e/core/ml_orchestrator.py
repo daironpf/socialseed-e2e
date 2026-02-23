@@ -16,7 +16,7 @@ Features:
 
 import json
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path

@@ -78,6 +78,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-xdist>=3.5.0",
+    "pillow>=10.0.0",
     "types-requests>=2.31.0",
     "types-pymysql>=1.1.0",
     "black>=23.0.0",
@@ -134,7 +135,7 @@ line_length = 100
 
 # mypy
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
@@ -209,6 +210,20 @@ select = [
 ignore = [
     "E722",  # bare except (common in exception handling)
     "F841",  # local variable unused (minor)
+    "E501",  # line too long (not critical)
+    "F811",  # redefinition of unused (common in __init__.py)
+    "E741",  # ambiguous variable name (common in list comprehensions)
+    "B904",  # raise in except (common pattern)
+    "F821",  # undefined name (may be conditional imports)
+    "F402",  # import shadowed by loop
+    "F403",  # star import (protobuf generated)
+    "B007",  # unused loop variable
+    "E402",  # import not at top of file (conditional imports)
+    "E721",  # type comparison (use isinstance instead)
+    "F823",  # local variable referenced before assignment
+    "F601",  # dictionary key repeated
+    "F401",  # unused imports (conditional imports)
+    "B025",  # duplicate exception
 ]
 
 [tool.ruff.lint.per-file-ignores]

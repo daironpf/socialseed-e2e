@@ -15,16 +15,15 @@ Usage:
     )
 """
 
-import time
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import grpc
 from grpc import insecure_channel, secure_channel, ssl_channel_credentials
-
 from pydantic import BaseModel
 
 

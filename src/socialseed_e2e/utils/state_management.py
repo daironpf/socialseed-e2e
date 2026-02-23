@@ -30,7 +30,7 @@ Usage:
     auth_token = page.get_state("auth_token")  # Returns "abc"
 """
 
-from typing import Any, Dict, Generic, Optional, TypeVar
+from typing import Any, Dict, Optional, TypeVar
 
 T = TypeVar("T")
 

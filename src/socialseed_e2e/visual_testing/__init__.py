@@ -9,6 +9,10 @@ Example:
     >>> comparator = AIComparator()
 """
 
+from socialseed_e2e.visual_testing.baseline_manager import (
+    BaselineManager,
+    BaselineReviewer,
+)
 from socialseed_e2e.visual_testing.models import (
     AIDiffAnalysis,
     BaselineInfo,
@@ -32,10 +36,6 @@ from socialseed_e2e.visual_testing.models import (
 from socialseed_e2e.visual_testing.screenshotter import (
     ResponsiveScreenshotter,
     Screenshotter,
-)
-from socialseed_e2e.visual_testing.baseline_manager import (
-    BaselineManager,
-    BaselineReviewer,
 )
 
 # Conditionally import AI components that require numpy/scipy

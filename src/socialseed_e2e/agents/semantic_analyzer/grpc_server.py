@@ -6,13 +6,10 @@ allowing other agents to query the semantic analyzer via gRPC.
 
 import time
 from concurrent import futures
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import grpc
-
-from socialseed_e2e.agents.semantic_analyzer.models import DriftSeverity, DriftType, IntentBaseline
 
 # Import generated protobuf modules
 from socialseed_e2e.agents.semantic_analyzer.proto import (

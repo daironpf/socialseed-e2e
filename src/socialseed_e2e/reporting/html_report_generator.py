@@ -6,13 +6,11 @@ filtering, and export capabilities.
 
 import csv
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from socialseed_e2e.reporting.report_models import (
-    TestResult,
     TestStatus,
     TestSuiteReport,
 )

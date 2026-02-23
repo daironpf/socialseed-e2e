@@ -8,9 +8,9 @@ import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
-from ..models import TransactionTest, DeadlockInfo, IsolationLevel
+from ..models import DeadlockInfo, IsolationLevel, TransactionTest
 
 
 class TransactionTester:

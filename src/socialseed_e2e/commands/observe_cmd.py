@@ -5,12 +5,11 @@ This module provides the observe command using POO and SOLID principles.
 
 import socket
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import click
 from rich.console import Console
 from rich.table import Table
-
 
 console = Console()
 
@@ -42,7 +41,6 @@ class PortScanner:
         5001: "HTTPS",
         50051: "gRPC",
         50052: "WebSocket",
-        8000: "FastAPI",
         9000: "PHP-FPM",
     }
 
@@ -114,9 +112,7 @@ class ServiceDiscoverer:
 
 @click.command()
 @click.option("--host", default="localhost", help="Host to scan")
-@click.option(
-    "--ports", default="8000-9000", help="Port range to scan (e.g., 8000-9000)"
-)
+@click.option("--ports", default="8000-9000", help="Port range to scan (e.g., 8000-9000)")
 @click.option("--docker", is_flag=True, help="Scan common Docker ports")
 def observe_cmd(host: str, ports: str, docker: bool):
     """Auto-detect services and ports in the network.

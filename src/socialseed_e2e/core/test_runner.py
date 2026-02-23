@@ -12,25 +12,19 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from playwright.sync_api import sync_playwright
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
 
-from socialseed_e2e.ai_learning import FeedbackCollector, FeedbackType
+from socialseed_e2e.ai_learning import FeedbackCollector
 from socialseed_e2e.core.base_page import BasePage
 from socialseed_e2e.core.config_loader import (
     ApiConfigLoader,
-    ServiceConfig,
-    get_service_config,
     normalize_service_name,
 )
-from socialseed_e2e.core.organization import Priority, TestOrganizationManager
+from socialseed_e2e.core.organization import TestOrganizationManager
 
 # Global feedback collector instance
 _feedback_collector: Optional[FeedbackCollector] = None
@@ -579,8 +573,6 @@ def execute_single_test(
     Returns:
         TestResult with execution details
     """
-    import time
-    from pathlib import Path
 
     start_time = time.time()
     test_name = module_path.stem
@@ -853,7 +845,7 @@ def run_service_tests(
         return suite_result
 
     # Get base URL
-    base_url = service_config.base_url if service_config else f"http://localhost:8080"
+    base_url = service_config.base_url if service_config else "http://localhost:8080"
 
     # Create page class (validation already passed, so this will not fail)
     PageClass = create_page_class(service_name, service_path)
@@ -917,7 +909,6 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
     Args:
         debug_info: Dictionary containing debug information about the failed request
     """
-    from rich.panel import Panel
     from rich.syntax import Syntax
 
     console.print("\n")
@@ -932,7 +923,7 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
     # Request Payload
     request_payload = debug_info.get("request_payload")
     if request_payload:
-        console.print(f"\n[bold cyan]Request Payload:[/bold cyan]")
+        console.print("\n[bold cyan]Request Payload:[/bold cyan]")
         try:
             # Try to format as JSON
             payload_json = (
@@ -957,7 +948,7 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
     # Response Body
     response_body = debug_info.get("response_body")
     if response_body:
-        console.print(f"\n[bold cyan]Response Body:[/bold cyan]")
+        console.print("\n[bold cyan]Response Body:[/bold cyan]")
         try:
             # Try to format as JSON
             body_json = (
@@ -975,7 +966,7 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
     # Expected vs Actual (for assertion failures)
     expected = debug_info.get("expected")
     if expected:
-        console.print(f"\n[bold cyan]Assertion Details:[/bold cyan]")
+        console.print("\n[bold cyan]Assertion Details:[/bold cyan]")
         console.print(f"[dim]{expected}[/dim]")
 
     console.print("\n" + "─" * 60)
@@ -1137,7 +1128,7 @@ def run_all_tests(
 
             # Print summary
             summary = report.summary
-            console.print(f"\n[dim]Trace Summary:[/dim]")
+            console.print("\n[dim]Trace Summary:[/dim]")
             console.print(f"  Total Tests: {summary.get('total_tests', 0)}")
             console.print(
                 f"  Total Interactions: {summary.get('total_interactions', 0)}"

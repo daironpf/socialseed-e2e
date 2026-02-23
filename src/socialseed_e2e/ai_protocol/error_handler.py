@@ -5,14 +5,13 @@ This module provides standardized error handling for the protocol.
 
 import traceback
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from socialseed_e2e.ai_protocol.message_formats import (
     ErrorPayload,
     MessageHeader,
     MessageType,
     ProtocolMessage,
-    create_error_response,
 )
 
 

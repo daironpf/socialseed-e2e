@@ -3,13 +3,13 @@
 Creates a new demo API using the demo factory.
 """
 
-import click
 from pathlib import Path
+
+import click
 from rich.console import Console
 from rich.table import Table
 
-from socialseed_e2e.demo_factory import create_demo_factory, DemoConfig
-
+from socialseed_e2e.demo_factory import DemoConfig, create_demo_factory
 
 console = Console()
 

@@ -270,7 +270,7 @@ class ImpactCalculator:
         if consider_dependencies:
             self._build_dependency_graph()
 
-        for endpoint_key, metadata in self.endpoint_map.items():
+        for _endpoint_key, metadata in self.endpoint_map.items():
             impact_score = 0
             affected_files = []
             impact_factors = {}
@@ -336,7 +336,7 @@ class ImpactCalculator:
         """Build a graph of file dependencies."""
         self.dependency_graph = {}
 
-        for endpoint_key, metadata in self.endpoint_map.items():
+        for _endpoint_key, metadata in self.endpoint_map.items():
             file_path = metadata["file"]
             self.dependency_graph[file_path] = set(metadata.get("dependencies", []))
 

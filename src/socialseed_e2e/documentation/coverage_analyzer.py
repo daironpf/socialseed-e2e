@@ -4,11 +4,9 @@ This module analyzes test coverage including endpoint coverage,
 scenario coverage, and gap analysis.
 """
 
-from typing import List, Dict, Any, Set, Optional
-from pathlib import Path
-from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
 
-from .models import CoverageReport, TestCaseDoc, EndpointDoc
+from .models import CoverageReport, EndpointDoc, TestCaseDoc
 
 
 class CoverageAnalyzer:
@@ -26,6 +24,7 @@ class CoverageAnalyzer:
             paths: List of file paths to OpenAPI/ Swagger specs
         """
         import json
+
         import yaml
 
         for path in paths:
@@ -334,7 +333,7 @@ class CoverageAnalyzer:
 <body>
     <h1>Test Coverage Report</h1>
     <p>Generated: {coverage.generated_at.strftime("%Y-%m-%d %H:%M:%S")}</p>
-    
+
     <div class="summary">
         <h2>Summary</h2>
         <div class="metric">

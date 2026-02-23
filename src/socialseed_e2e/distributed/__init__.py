@@ -16,13 +16,13 @@ Usage:
 
 import multiprocessing
 import queue
+import random
 import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
 from enum import Enum
-import random
+from typing import Any, Callable, Dict, List, Optional, Set
 
 
 class TestPriority(str, Enum):
@@ -152,7 +152,7 @@ class ImpactAnalyzer:
         """
         tests_to_run = []
 
-        for test_id in impacted_tests:
+        for _test_id in impacted_tests:
             # Would look up test from registry
             pass
 

@@ -1,7 +1,7 @@
 """Database-specific assertions for socialseed-e2e."""
 
-from typing import Any, Dict, List, Optional
-import unittest
+from typing import Any, Dict, Optional
+
 
 class DatabaseAssertions:
     """Helper for database state assertions."""
@@ -13,13 +13,13 @@ class DatabaseAssertions:
         """Assert that at least one row matching the criteria exists in a SQL table."""
         import sqlite3
         cursor = self.connection.cursor()
-        
+
         where_clause = " AND ".join([f"{k} = ?" if isinstance(self.connection, sqlite3.Connection) else f"{k} = %s" for k in criteria.keys()])
         query = f"SELECT COUNT(*) FROM {table} WHERE {where_clause}"
-        
+
         cursor.execute(query, tuple(criteria.values()))
         count = cursor.fetchone()[0]
-        
+
         if count == 0:
             error_msg = msg or f"No row found in {table} matching criteria: {criteria}"
             raise AssertionError(error_msg)
@@ -29,7 +29,7 @@ class DatabaseAssertions:
         cursor = self.connection.cursor()
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         count = cursor.fetchone()[0]
-        
+
         if count != expected_count:
             error_msg = msg or f"Expected {expected_count} rows in {table}, but found {count}"
             raise AssertionError(error_msg)
@@ -39,11 +39,11 @@ class DatabaseAssertions:
         db = self.connection[db_name]
         collection = db[collection_name]
         count = collection.count_documents(filter)
-        
+
         if count == 0:
             error_msg = msg or f"No document found in {db_name}.{collection_name} matching filter: {filter}"
             raise AssertionError(error_msg)
-            
+
     def assert_redis_key_exists(self, key: str, msg: Optional[str] = None):
         """Assert that a key exists in Redis."""
         if not self.connection.exists(key):

@@ -46,10 +46,10 @@ from socialseed_e2e.ai_orchestrator.debugger import (
 )
 from socialseed_e2e.ai_orchestrator.flakiness_predictor import (
     FlakinessAnalyzer,
-    FlakinessPredictor,
-    FlakinessPrediction,
-    FlakinessRiskLevel,
     FlakinessFactor,
+    FlakinessPrediction,
+    FlakinessPredictor,
+    FlakinessRiskLevel,
 )
 from socialseed_e2e.ai_orchestrator.models import (
     DebugAnalysis,

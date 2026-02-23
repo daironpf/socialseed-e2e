@@ -3,7 +3,7 @@ Data Factory implementation for generating test data based on Pydantic models.
 Inspired by factory_boy but designed for Pydantic and API E2E testing.
 """
 import logging
-from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 

@@ -64,8 +64,9 @@ class ManifestQueryAgent:
 
     def query(self, query_type: Optional[str] = None):
         """Query the manifest."""
-        from socialseed_e2e.project_manifest import ManifestAPI
         from pathlib import Path as P
+
+        from socialseed_e2e.project_manifest import ManifestAPI
 
         manifest_path = (
             P.cwd()
@@ -106,8 +107,9 @@ class VectorIndexBuilder:
 
     def build(self):
         """Build vector index."""
-        from socialseed_e2e.project_manifest import ManifestVectorStore
         from pathlib import Path as P
+
+        from socialseed_e2e.project_manifest import ManifestVectorStore
 
         if self.service_name:
             manifest_path = (
@@ -135,8 +137,9 @@ class SemanticSearchAgent:
 
     def search(self):
         """Perform semantic search."""
-        from socialseed_e2e.project_manifest import ManifestVectorStore
         from pathlib import Path as P
+
+        from socialseed_e2e.project_manifest import ManifestVectorStore
 
         if self.service_name:
             manifest_path = (
@@ -165,8 +168,9 @@ class RetrievalAgent:
 
     def retrieve(self):
         """Retrieve context for task."""
-        from socialseed_e2e.project_manifest import RAGRetrievalEngine
         from pathlib import Path as P
+
+        from socialseed_e2e.project_manifest import RAGRetrievalEngine
 
         if self.service_name:
             manifest_path = (

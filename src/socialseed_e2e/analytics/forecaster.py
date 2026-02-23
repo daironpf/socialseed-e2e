@@ -280,7 +280,7 @@ class PerformanceForecaster:
         if result:
             # Add warning if forecast exceeds common thresholds
             threshold_warnings = []
-            for i, (value, (lower, upper)) in enumerate(
+            for i, (_value, (lower, _upper)) in enumerate(
                 zip(result.forecast_values, result.confidence_intervals)
             ):
                 if lower > 1000:  # > 1 second
@@ -540,7 +540,7 @@ class PerformanceForecaster:
         # Calculate seasonal components
         seasonal_components = []
         for i in range(period):
-            indices = [j for j in range(i, len(values), period)]
+            indices = list(range(i, len(values), period))
             seasonal_components.append(_mean([values[j] for j in indices]))
 
         # Detrend

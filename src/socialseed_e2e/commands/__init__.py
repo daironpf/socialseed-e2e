@@ -173,7 +173,7 @@ def _lazy_import_command(name: str) -> Optional[Callable]:
         # Handle telemetry group special case
         if name == "telemetry":
             if hasattr(module, "get_telemetry_group"):
-                command = getattr(module, "get_telemetry_group")()
+                command = module.get_telemetry_group()
                 _LOADED_COMMANDS[name] = command
                 return command
 

@@ -77,7 +77,7 @@ class InteractiveDoctor:
             AppliedFix if a fix was applied, None otherwise
         """
         # Analyze error
-        console.print(f"\n[bold cyan]Analyzing test failure...[/bold cyan]")
+        console.print("\n[bold cyan]Analyzing test failure...[/bold cyan]")
         diagnosis = self.analyzer.analyze(context)
         session.errors.append(diagnosis)
 
@@ -113,7 +113,7 @@ class InteractiveDoctor:
         # Check if suggestion can be applied automatically
         if not suggestion.automatic:
             console.print(
-                f"\n[yellow]⚠️  This fix requires manual implementation:[/yellow]"
+                "\n[yellow]⚠️  This fix requires manual implementation:[/yellow]"
             )
             console.print(
                 Panel(
@@ -140,7 +140,7 @@ class InteractiveDoctor:
         # Confirm fix application
         if self.interactive:
             if suggestion.preview:
-                console.print(f"\n[dim]Preview of changes:[/dim]")
+                console.print("\n[dim]Preview of changes:[/dim]")
                 console.print(
                     Panel(suggestion.preview, title="Code Preview", border_style="dim")
                 )
@@ -157,11 +157,11 @@ class InteractiveDoctor:
                 return None
 
         # Apply fix
-        console.print(f"\n[bold green]Applying fix...[/bold green]")
+        console.print("\n[bold green]Applying fix...[/bold green]")
         result = self.fixer.apply_fix(diagnosis, suggestion)
 
         if result.success:
-            console.print(f"[bold green]✓ Fix applied successfully![/bold green]")
+            console.print("[bold green]✓ Fix applied successfully![/bold green]")
             if result.files_modified:
                 console.print("\n[dim]Modified files:[/dim]")
                 for file in result.files_modified:
@@ -178,7 +178,7 @@ class InteractiveDoctor:
 
             return result
         else:
-            console.print(f"[bold red]✗ Failed to apply fix:[/bold red]")
+            console.print("[bold red]✗ Failed to apply fix:[/bold red]")
             console.print(f"[red]{result.error_message}[/red]")
 
             session.skipped_fixes.append(
@@ -218,7 +218,7 @@ class InteractiveDoctor:
             )
 
         if diagnosis.affected_files:
-            content += f"\n\n[bold]Affected Files:[/bold]"
+            content += "\n\n[bold]Affected Files:[/bold]"
             for file in diagnosis.affected_files:
                 content += f"\n  • {file}"
 

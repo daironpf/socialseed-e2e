@@ -5,7 +5,6 @@ comparing intended vs actual system behavior.
 """
 
 import json
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -135,8 +134,8 @@ class SemanticDriftReportGenerator:
             [
                 "### Key Metrics",
                 "",
-                f"| Metric | Value |",
-                f"|--------|-------|",
+                "| Metric | Value |",
+                "|--------|-------|",
                 f"| Total Intents Analyzed | {summary['total_intents_analyzed']} |",
                 f"| Total Drifts Detected | {summary['total_drifts']} |",
                 f"| Critical Issues | {summary['severity_distribution'].get('critical', 0)} |",

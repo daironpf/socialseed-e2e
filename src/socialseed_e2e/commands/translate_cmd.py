@@ -9,7 +9,6 @@ from typing import Optional
 import click
 from rich.console import Console
 
-
 console = Console()
 
 

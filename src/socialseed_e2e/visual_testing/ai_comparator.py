@@ -4,18 +4,13 @@ This module provides intelligent visual comparison that can detect meaningful
 differences while ignoring dynamic content like timestamps, ads, etc.
 """
 
-import hashlib
-import io
 import logging
-import uuid
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 from socialseed_e2e.visual_testing.models import (
-    AIDiffAnalysis,
     ComparisonConfig,
     ComparisonResult,
     DiffSeverity,
@@ -489,7 +484,7 @@ class AIComparator:
             current_text = pytesseract.image_to_string(current_region).lower()
 
             # Check for known dynamic patterns
-            for pattern_name, patterns in self.DYNAMIC_PATTERNS.items():
+            for _pattern_name, patterns in self.DYNAMIC_PATTERNS.items():
                 for pattern in patterns:
                     import re
 

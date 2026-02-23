@@ -2,16 +2,17 @@
 CLI commands for security testing.
 """
 
-import click
 from pathlib import Path
 
+import click
+
 from ...security import (
+    ComplianceStandard,
+    ComplianceValidator,
     OWASPScanner,
     PenetrationTester,
-    ComplianceValidator,
     SecretDetector,
     SecurityReporter,
-    ComplianceStandard,
 )
 
 
@@ -32,7 +33,7 @@ def owasp(target, method, output):
     scanner = OWASPScanner()
     result = scanner.scan_endpoint(target, method=method)
 
-    click.echo(f"\n📊 Scan Results:")
+    click.echo("\n📊 Scan Results:")
     click.echo(f"   Status: {result.status}")
     click.echo(f"   Total Findings: {result.total_findings}")
     click.echo(f"   Critical: {result.critical_count}")
@@ -66,7 +67,7 @@ def pentest(target, output):
     # Test authentication bypass
     result = tester.test_authentication_bypass(target, target)
 
-    click.echo(f"\n📊 Penetration Test Results:")
+    click.echo("\n📊 Penetration Test Results:")
     click.echo(f"   Total Findings: {result.total_findings}")
 
     if output:
@@ -108,7 +109,7 @@ def compliance(target, standard, output):
             violations = validator.validate_hipaa(target, handles_phi=True)
         all_violations.extend(violations)
 
-    click.echo(f"\n📊 Compliance Results:")
+    click.echo("\n📊 Compliance Results:")
     click.echo(f"   Total Violations: {len(all_violations)}")
 
     if all_violations:
@@ -141,7 +142,7 @@ def secrets(path, output, include_pii):
     else:
         findings = detector.scan_directory(str(path_obj), include_pii=include_pii)
 
-    click.echo(f"\n📊 Secret Scan Results:")
+    click.echo("\n📊 Secret Scan Results:")
     click.echo(f"   Total Findings: {len(findings)}")
 
     if findings:
@@ -189,7 +190,7 @@ def full_scan(target, output):
     click.echo("\n📊 Generating Report...")
     report = reporter.generate_report()
 
-    click.echo(f"\n🎯 Summary:")
+    click.echo("\n🎯 Summary:")
     click.echo(
         f"   Risk Score: {report.risk_score:.1f}/100 ({report.risk_level.upper()})"
     )

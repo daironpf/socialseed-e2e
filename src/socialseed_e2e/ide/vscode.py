@@ -8,16 +8,13 @@ This module provides VS Code extension support including:
 """
 
 import json
-import subprocess
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
 
 from .models import (
-    IDEType,
-    TestTemplate,
-    LaunchConfig,
-    DebugConfig,
     CompletionItem,
+    DebugConfig,
+    LaunchConfig,
 )
 
 
@@ -232,7 +229,7 @@ class VSCodeExtension:
             for snippet in snippet_list:
                 lines.append(f"'{scope}.{snippet['prefix']}':")
                 lines.append(f"    prefix: {snippet['prefix']}")
-                lines.append(f"    body: |")
+                lines.append("    body: |")
                 for line in snippet["body"]:
                     lines.append(f"        {line}")
                 lines.append(f"    description: {snippet['description']}")

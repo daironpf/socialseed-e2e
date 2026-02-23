@@ -1,9 +1,8 @@
 """Performance dashboard generator for socialseed-e2e."""
 
-import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict
 
 
 class PerformanceDashboard:
@@ -17,7 +16,7 @@ class PerformanceDashboard:
         """Generate a self-contained HTML report with charts."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-        
+
         html_content = f"""
 <!DOCTYPE html>
 <html lang="en">

@@ -121,7 +121,7 @@ class MockValidator:
                             f"     [yellow]Warning:[/yellow] {warning.field} - {warning.message}"
                         )
 
-        console.print(f"\n[bold]Summary:[/bold]")
+        console.print("\n[bold]Summary:[/bold]")
         console.print(f"  Valid: [green]{total_valid}[/green]")
         console.print(f"  Invalid: [red]{total_invalid}[/red]\n")
 

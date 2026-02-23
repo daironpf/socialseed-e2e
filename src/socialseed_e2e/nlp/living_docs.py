@@ -9,7 +9,6 @@ This module provides:
 """
 
 import hashlib
-import json
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -327,7 +326,7 @@ class LivingDocumentationGenerator:
         report = "# Living Documentation Status Report\n\n"
         report += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
 
-        report += f"## Semantic Drift Alerts\n\n"
+        report += "## Semantic Drift Alerts\n\n"
         if alerts:
             for alert in alerts:
                 report += f"### {alert.rule_id}\n"

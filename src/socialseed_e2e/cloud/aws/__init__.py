@@ -2,7 +2,8 @@
 
 import json
 from typing import Any, Dict, List, Optional
-from socialseed_e2e.cloud import CloudProvider, CloudFunction, CloudService, CloudDatabase
+
+from socialseed_e2e.cloud import CloudDatabase, CloudFunction, CloudProvider, CloudService
 
 try:
     import boto3
@@ -18,7 +19,7 @@ class AWSProvider(CloudProvider):
     def __init__(self, region_name: str = "us-east-1", profile_name: Optional[str] = None):
         if not BOTO3_AVAILABLE:
             raise ImportError("boto3 is required for AWS integration. Install it with 'pip install boto3'")
-        
+
         self.session = boto3.Session(region_name=region_name, profile_name=profile_name)
         self.region = region_name
 
@@ -66,7 +67,7 @@ class LambdaFunction(CloudFunction):
             )
             if not streams['logStreams']:
                 return []
-            
+
             stream_name = streams['logStreams'][0]['logStreamName']
             events = cw.get_log_events(
                 logGroupName=log_group_name,

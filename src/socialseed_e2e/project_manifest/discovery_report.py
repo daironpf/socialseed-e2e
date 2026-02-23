@@ -7,12 +7,12 @@ Issue #187: Generate an AI "Discovery Report" after the first scan
 """
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from socialseed_e2e.project_manifest.models import ProjectKnowledge, ServiceInfo
+from socialseed_e2e.project_manifest.models import ProjectKnowledge
 
 
 @dataclass
@@ -228,8 +228,8 @@ class DiscoveryReportGenerator:
             [
                 "### 📊 Project Statistics",
                 "",
-                f"| Metric | Count |",
-                f"|--------|-------|",
+                "| Metric | Count |",
+                "|--------|-------|",
                 f"| Services | {summary.services_count} |",
                 f"| REST Endpoints | {summary.endpoints_count} |",
                 f"| DTOs/Models | {summary.dtos_count} |",

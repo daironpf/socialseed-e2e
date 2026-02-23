@@ -101,7 +101,7 @@ class SequenceDiagramGenerator:
                     if current_service:
                         lines.append("    end")
                     current_service = interaction.to_component
-                    lines.append(f"    rect rgb(230, 245, 255)")
+                    lines.append("    rect rgb(230, 245, 255)")
                     lines.append(
                         f"    Note over {interaction.from_component},{interaction.to_component}: {current_service}"
                     )

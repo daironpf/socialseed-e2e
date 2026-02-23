@@ -4,17 +4,16 @@ Schema adapter for self-healing tests.
 Adapts tests to schema changes automatically.
 """
 
-import re
 import uuid
-from typing import Any, Dict, List, Optional
 from difflib import SequenceMatcher
+from typing import Any, Dict, List, Optional
 
 from ..models import (
-    SchemaChange,
-    TestFailure,
+    ChangeType,
     HealingSuggestion,
     HealingType,
-    ChangeType,
+    SchemaChange,
+    TestFailure,
 )
 
 

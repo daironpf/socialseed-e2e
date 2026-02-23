@@ -9,11 +9,10 @@ Provides service-level chaos injection:
 - CPU and memory pressure
 """
 
-import time
 import random
-import uuid
-from typing import Any, Callable, Dict, List, Optional
+import time
 from functools import wraps
+from typing import Callable, Dict, List, Optional
 
 from ..models import (
     ChaosExperiment,

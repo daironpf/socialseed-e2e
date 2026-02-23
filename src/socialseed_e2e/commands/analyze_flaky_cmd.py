@@ -5,7 +5,6 @@ Analyze test files for flakiness patterns.
 """
 
 import sys
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import click

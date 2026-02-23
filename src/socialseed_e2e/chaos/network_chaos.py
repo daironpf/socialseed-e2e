@@ -1,9 +1,9 @@
 """Network disruption tools for Chaos Engineering."""
 
-import time
 import random
-from typing import Optional, Callable, Any
+import time
 from functools import wraps
+from typing import Callable
 
 
 class NetworkChaos:
@@ -16,7 +16,7 @@ class NetworkChaos:
 
     def configure(self, latency: int = 0, jitter: int = 0, failure_rate: float = 0.0):
         """Configure chaos parameters.
-        
+
         Args:
             latency: Fixed latency in milliseconds.
             jitter: Random variance in latency in milliseconds.
@@ -38,7 +38,7 @@ class NetworkChaos:
             total_latency = self.latency_ms
             if self.jitter_ms > 0:
                 total_latency += random.randint(-self.jitter_ms, self.jitter_ms)
-            
+
             if total_latency > 0:
                 time.sleep(max(0, total_latency) / 1000.0)
 

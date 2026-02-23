@@ -15,7 +15,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class ProtocolType(Enum):
@@ -325,7 +325,7 @@ class RESTContractBuilder(ProtocolContractBuilder):
             return [self._schema_to_example(items)]
 
         elif schema_type == "string":
-            return f"<string>"
+            return "<string>"
 
         elif schema_type == "integer":
             return 0

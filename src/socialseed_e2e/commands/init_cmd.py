@@ -3,11 +3,10 @@
 This module provides the init command functionality.
 """
 
-import click
 from pathlib import Path
 
+import click
 from rich.console import Console
-
 
 console = Console()
 
@@ -146,7 +145,7 @@ Edit `e2e.conf` to configure services and endpoints.
         config_path = self.target_path / "e2e.conf"
 
         if config_path.exists() and not self.force:
-            console.print(f"  [yellow]⚠[/yellow] Already exists: e2e.conf")
+            console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf")
             return
 
         config_content = """# SocialSeed E2E Configuration
@@ -162,29 +161,29 @@ general:
 services: {}
 """
         config_path.write_text(config_content)
-        console.print(f"  [green]✓[/green] Created: e2e.conf")
+        console.print("  [green]✓[/green] Created: e2e.conf")
 
     def _create_gitignore(self) -> None:
         """Create .gitignore file."""
         gitignore_path = self.target_path / ".gitignore"
 
         if gitignore_path.exists() and not self.force:
-            console.print(f"  [yellow]⚠[/yellow] Already exists: .gitignore")
+            console.print("  [yellow]⚠[/yellow] Already exists: .gitignore")
             return
 
         gitignore_path.write_text(self.DEFAULT_IGNORE)
-        console.print(f"  [green]✓[/green] Created: .gitignore")
+        console.print("  [green]✓[/green] Created: .gitignore")
 
     def _create_requirements(self) -> None:
         """Create requirements.txt file."""
         req_path = self.target_path / "requirements.txt"
 
         if req_path.exists() and not self.force:
-            console.print(f"  [yellow]⚠[/yellow] Already exists: requirements.txt")
+            console.print("  [yellow]⚠[/yellow] Already exists: requirements.txt")
             return
 
         req_path.write_text(self.DEFAULT_REQUIREMENTS)
-        console.print(f"  [green]✓[/green] Created: requirements.txt")
+        console.print("  [green]✓[/green] Created: requirements.txt")
 
     def _create_agent_docs(self) -> None:
         """Create .agent directory with AI documentation."""
@@ -192,12 +191,12 @@ services: {}
 
         if not agent_dir.exists():
             agent_dir.mkdir(parents=True, exist_ok=True)
-            console.print(f"  [green]✓[/green] Created: .agent/")
+            console.print("  [green]✓[/green] Created: .agent/")
 
         readme_path = agent_dir / "README.md"
         if not readme_path.exists() or self.force:
             readme_path.write_text(self.AGENT_DOCS)
-            console.print(f"  [green]✓[/green] Created: .agent/README.md")
+            console.print("  [green]✓[/green] Created: .agent/README.md")
 
 
 @click.command(name="init")

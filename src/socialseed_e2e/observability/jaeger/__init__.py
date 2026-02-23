@@ -1,11 +1,12 @@
 """Jaeger distributed tracing for socialseed-e2e."""
 
 from typing import Any, Dict, Optional
+
 from socialseed_e2e.observability import TracingProvider
 
 try:
-    from jaeger_client import Config
     import opentracing
+    from jaeger_client import Config
     JAEGER_AVAILABLE = True
 except ImportError:
     JAEGER_AVAILABLE = False
@@ -17,7 +18,7 @@ class JaegerProvider(TracingProvider):
     def __init__(self, service_name: str = "socialseed-e2e", agent_host: str = "localhost"):
         if not JAEGER_AVAILABLE:
             raise ImportError("jaeger-client library is required. Install it with 'pip install jaeger-client'")
-        
+
         config = Config(
             config={
                 'sampler': {'type': 'const', 'param': 1},
@@ -27,7 +28,7 @@ class JaegerProvider(TracingProvider):
             service_name=service_name,
             validate=True,
         )
-        
+
         # this initializes the global tracer
         self.tracer = config.initialize_tracer()
 

@@ -6,7 +6,7 @@ the system's prompts, documentation, and code.
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List
 
 from socialseed_e2e.agents.red_team_adversary.models import (
     GuardrailInfo,
