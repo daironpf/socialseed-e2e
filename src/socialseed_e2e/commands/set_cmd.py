@@ -89,6 +89,42 @@ class ConfigManager:
         self.save_config(config_data)
         console.print(f"[green]✓[/green] Configuration saved to {self.config_path}")
 
+    def list_services(self, service_name: Optional[str] = None) -> None:
+        """List services and their URLs."""
+        from rich.table import Table
+
+        config_data = self.load_config()
+        services = config_data.get("services", {}) or {}
+
+        if not services:
+            console.print("[yellow]No services configured.[/yellow]")
+            return
+
+        if service_name:
+            if service_name not in services:
+                console.print(f"[red]Service not found:[/red] {service_name}")
+                return
+
+            svc = services[service_name]
+            console.print(f"\n[bold]Service:[/bold] {service_name}")
+            console.print(f"  Base URL: {svc.get('base_url', 'N/A')}")
+            console.print(f"  Health Endpoint: {svc.get('health_endpoint', '/health')}")
+            console.print(f"  Timeout: {svc.get('timeout', 'N/A')}")
+        else:
+            table = Table(title="Configured Services")
+            table.add_column("Service", style="cyan")
+            table.add_column("Base URL", style="green")
+            table.add_column("Health Endpoint", style="yellow")
+
+            for name, svc in services.items():
+                table.add_row(
+                    name,
+                    svc.get("base_url", "N/A"),
+                    svc.get("health_endpoint", "/health"),
+                )
+
+            console.print(table)
+
 
 class URLValidator:
     """Validates URLs (Single Responsibility)."""
@@ -143,6 +179,21 @@ def set_url_cmd(
         sys.exit(1)
 
     manager.set_service_url(service_name, url, health_endpoint)
+
+
+@set_group.command("show")
+@click.argument("service_name", required=False)
+@click.option("--config", "-c", help="Path to configuration file (e2e.conf)")
+def set_show_cmd(service_name: Optional[str], config: Optional[str]):
+    """Show current service URLs from e2e.conf.
+
+    Examples:
+        e2e set show              # Show all services
+        e2e set show auth_service  # Show specific service
+    """
+    config_path = Path(config) if config else None
+    manager = ConfigManager(config_path)
+    manager.list_services(service_name)
 
 
 def get_set_group():
