@@ -1,2 +1,0 @@
-manifests
-socialseed_e2e

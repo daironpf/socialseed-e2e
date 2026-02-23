@@ -5,6 +5,10 @@ __pycache__/
 *.cpython-*.pyc
 *.pyc
 
+# Egg info
+*.egg-info/
+src/socialseed_e2e.egg-info/
+
 # C extensions
 *.so
 
