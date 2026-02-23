@@ -59,8 +59,6 @@ class ManifestGenerator:
             "**/ide-extensions/**",
             "**/.agent/**",
             "**/.github/**",
-            "**/test*/**",
-            "**/tests/**",
             "**/*_test.py",
             "**/*_spec.*",
         ]
