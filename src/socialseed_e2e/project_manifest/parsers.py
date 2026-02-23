@@ -113,11 +113,11 @@ class PythonParser(BaseParser):
     ]
 
     FLASK_PATTERNS = [
-        (
-            r'@(?:app|bp|blueprint)\.route\s*\(\s*["\']([^"\']+)["\']'
-            r"[^)]*methods\s*=\s*\[([^\]]+)\]",
-            None,
-        ),
+        (r'@(?:app|bp|blueprint)\.route\s*\(\s*["\']([^"\']+)["\']', None),
+    ]
+
+    FLASK_METHODS_FROM_ROUTE = [
+        r"methods\s*=\s*\[([^\]]+)\]",
     ]
 
     # Pydantic validation patterns
@@ -206,6 +206,60 @@ class PythonParser(BaseParser):
                         EndpointInfo(
                             name=func_name,
                             method=method,
+                            path=path,
+                            full_path=path,
+                            file_path=file_path,
+                            line_number=line_num,
+                        )
+                    )
+
+        # Try Flask patterns
+        flask_matches = re.finditer(
+            r'@(?:app|bp|blueprint)\.route\s*\(\s*["\']([^"\']+)["\']',
+            content,
+        )
+        for match in flask_matches:
+            path = match.group(1)
+            # Find function name
+            func_start = match.end()
+            func_match = re.search(
+                r"\s*def\s+(\w+)",
+                content[func_start : func_start + 200],
+            )
+            if func_match:
+                func_name = func_match.group(1)
+                line_num = content[: match.start()].count("\n") + 1
+
+                # Check for methods parameter
+                methods_match = re.search(
+                    r"methods\s*=\s*\[([^\]]+)\]",
+                    content[match.start() : match.start() + 300],
+                )
+                if methods_match:
+                    methods_str = methods_match.group(1)
+                    # Parse methods like "['GET', 'POST']" or '"GET", "POST"'
+                    method_list = re.findall(r'["\'](\w+)["\']', methods_str)
+                    for m in method_list:
+                        try:
+                            http_method = HttpMethod(m.upper())
+                            endpoints.append(
+                                EndpointInfo(
+                                    name=func_name,
+                                    method=http_method,
+                                    path=path,
+                                    full_path=path,
+                                    file_path=file_path,
+                                    line_number=line_num,
+                                )
+                            )
+                        except ValueError:
+                            pass
+                else:
+                    # Default to GET for Flask routes without methods
+                    endpoints.append(
+                        EndpointInfo(
+                            name=func_name,
+                            method=HttpMethod.GET,
                             path=path,
                             full_path=path,
                             file_path=file_path,
