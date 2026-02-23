@@ -404,6 +404,7 @@ class PythonParser(BaseParser):
     ) -> Tuple[List[PortConfig], List[EnvironmentVariable]]:
         """Parse configuration (ports and environment variables)."""
         ports = []
+        ports_seen = set()
         env_vars = []
 
         # Look for port configurations
@@ -420,7 +421,8 @@ class PythonParser(BaseParser):
             for match in matches:
                 try:
                     port = int(match.group(1))
-                    if 1 <= port <= 65535:
+                    if 1 <= port <= 65535 and port not in ports_seen:
+                        ports_seen.add(port)
                         ports.append(
                             PortConfig(
                                 port=port,
