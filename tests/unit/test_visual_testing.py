@@ -10,7 +10,14 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from PIL import Image
+
+# Check if PIL is available
+try:
+    from PIL import Image
+
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
 
 # Check if numpy is available
 try:
@@ -27,6 +34,8 @@ try:
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not PIL_AVAILABLE, reason="Pillow not installed")
 
 from socialseed_e2e.visual_testing import (
     BaselineInfo,

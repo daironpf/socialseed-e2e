@@ -4,19 +4,28 @@ This module tests the advanced gRPC testing features.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
-from socialseed_e2e.grpc import (
-    ErrorHandler,
-    GrpcResponse,
-    GrpcStatusCode,
-    GrpcTestingSuite,
-    LoadTester,
-    StreamCollector,
-    StreamingConfig,
-    StreamingTester,
-    StreamType,
-)
+grpc_available = True
+try:
+    import grpc
+    from unittest.mock import Mock, patch, MagicMock
+
+    from socialseed_e2e.grpc import (
+        ErrorHandler,
+        GrpcResponse,
+        GrpcStatusCode,
+        GrpcTestingSuite,
+        LoadTester,
+        StreamCollector,
+        StreamingConfig,
+        StreamingTester,
+        StreamType,
+    )
+except ImportError:
+    grpc_available = False
+
+
+pytestmark = pytest.mark.skipif(not grpc_available, reason="grpcio not installed")
 
 
 class TestStreamCollector:

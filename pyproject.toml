@@ -63,6 +63,11 @@ secrets = [
     "hvac>=1.0.0",
     "boto3>=1.26.0",
 ]
+visual = [
+    "pillow>=10.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+]
 dashboard = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
@@ -94,6 +99,8 @@ full = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "python-socketio[asyncio]>=5.10.0",
+    "pillow>=10.0.0",
+    "scipy>=1.11.0",
 ]
 
 [project.scripts]
@@ -146,6 +153,7 @@ markers = [
     "e2e: End-to-end tests",
     "mock_api: Tests using the mock Flask API",
     "grpc: Tests for gRPC protocol support",
+    "asyncio: Tests that use asyncio",
 ]
 filterwarnings = [
     "ignore::pytest.PytestCollectionWarning",
