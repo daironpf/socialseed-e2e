@@ -34,7 +34,7 @@ class RegressionAnalyzer:
 
     def analyze(self, baseline: Optional[str]) -> List[RegressionResult]:
         """Analyze regressions against baseline."""
-        console.print("\n🔄 [bold cyan]Regression Analysis[/bold blue]\n")
+        console.print("\n🔄 [bold cyan]Regression Analysis[/bold cyan]\n")
 
         # Mock results
         self.results = [
@@ -114,7 +114,7 @@ class AIFeedbackCollector:
 
     def optimize(self) -> None:
         """Apply optimization based on feedback."""
-        console.print("\n🤖 [bold cyan]AI Learning Optimization[/bold blue]\n")
+        console.print("\n🤖 [bold cyan]AI Learning Optimization[/bold cyan]\n")
         console.print("Analyzing feedback patterns...")
         console.print("Generating optimization suggestions...")
         console.print("[green]✓[/green] Optimization complete!")
@@ -161,7 +161,7 @@ def ai_learning_feedback_cmd(test: Optional[str]):
 @click.option("--data", "-d", help="Training data directory")
 def ai_learning_train_cmd(data: Optional[str]):
     """Train AI models with collected feedback."""
-    console.print("\n🤖 [bold cyan]Training AI Model[/bold blue]\n")
+    console.print("\n🤖 [bold cyan]Training AI Model[/bold cyan]\n")
 
     console.print("Collecting feedback data...")
     console.print("Training model...")
@@ -181,7 +181,7 @@ def ai_learning_optimize_cmd():
 @click.option("--strategy", "-s", default="auto", help="Adaptation strategy")
 def ai_learning_adapt_cmd(strategy: str):
     """Apply adaptation strategies to tests."""
-    console.print(f"\n🔧 [bold cyan]Applying Adaptation:[/bold blue] {strategy}\n")
+    console.print(f"\n🔧 [bold cyan]Applying Adaptation:[/bold cyan] {strategy}\n")
 
     strategies = {
         "auto": "Automatic adaptation based on feedback",

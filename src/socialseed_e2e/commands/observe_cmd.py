@@ -129,7 +129,7 @@ def observe_cmd(host: str, ports: str, docker: bool):
         e2e observe --ports 3000-4000      # Custom port range
         e2e observe --docker                 # Scan Docker ports
     """
-    console.print("\n🔍 [bold cyan]Service Discovery[/bold blue]\n")
+    console.print("\n🔍 [bold cyan]Service Discovery[/bold cyan]\n")
 
     # Parse port range
     if docker:

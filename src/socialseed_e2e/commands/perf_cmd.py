@@ -39,7 +39,7 @@ class PerformanceProfiler:
         self, service: Optional[str], baseline: Optional[str]
     ) -> List[PerformanceMetrics]:
         """Run performance profiling."""
-        console.print("\n⚡ [bold cyan]Performance Profiling[/bold blue]\n")
+        console.print("\n⚡ [bold cyan]Performance Profiling[/bold cyan]\n")
 
         # Mock data for demonstration
         metrics = [
@@ -141,7 +141,7 @@ def perf_report_cmd(output: str):
         e2e perf-report                    # Generate HTML report
         e2e perf-report --output json     # Generate JSON report
     """
-    console.print("\n📊 [bold cyan]Generating Performance Report[/bold blue]\n")
+    console.print("\n📊 [bold cyan]Generating Performance Report[/bold cyan]\n")
 
     reporter = PerformanceReporter()
     report_path = reporter.generate_report(output)
