@@ -233,7 +233,61 @@ class EnvironmentDetector:
         app_result = self._parse_app_config(project_root)
         config["config_files"].extend(app_result.get("config_files", []))
 
+        # Detect ports from source code
+        source_ports = self._detect_ports_from_source(project_root)
+        config["ports"].extend(source_ports)
+
         return config
+
+    def _detect_ports_from_source(self, project_root: Path) -> List[PortConfig]:
+        """Detect ports from source code using the Python parser."""
+        from socialseed_e2e.project_manifest.parsers import parser_registry
+
+        ports = []
+        ports_seen = set()
+
+        for py_file in project_root.rglob("*.py"):
+            # Only exclude test files, not directories containing 'test'
+            file_name = py_file.name.lower()
+            dir_parts = [p.lower() for p in py_file.parts]
+
+            # Skip __pycache__ and venv directories
+            if (
+                "__pycache__" in dir_parts
+                or "venv" in dir_parts
+                or ".venv" in dir_parts
+            ):
+                continue
+
+            # Skip test files (files named *test*.py or *tests*.py)
+            if "test" in file_name and (
+                file_name.startswith("test_")
+                or file_name.endswith("_test.py")
+                or "_test." in file_name
+            ):
+                continue
+            if file_name.startswith("tests_") or "_tests." in file_name:
+                continue
+
+            try:
+                content = py_file.read_text(encoding="utf-8")
+                parser = parser_registry.get_parser(py_file, project_root)
+                if parser:
+                    result = parser.parse_file(py_file, content)
+                    for port_config in result.ports:
+                        if port_config.port not in ports_seen:
+                            ports_seen.add(port_config.port)
+                            ports.append(
+                                PortConfig(
+                                    port=port_config.port,
+                                    protocol=port_config.protocol,
+                                    description=f"Detected from {py_file.name}",
+                                )
+                            )
+            except Exception:
+                pass
+
+        return ports
 
     def _parse_docker_compose(self, project_root: Path) -> Dict[str, Any]:
         """Parse docker-compose files for ports and env vars."""
