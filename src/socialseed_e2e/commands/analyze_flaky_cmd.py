@@ -72,7 +72,7 @@ class FlakyAnalyzerPresenter:
     @staticmethod
     def display_header() -> None:
         """Display analysis header."""
-        console.print("\n🔍 [bold blue]Analyzing Test for Flakiness[/bold blue]\n")
+        console.print("\n🔍 [bold cyan]Analyzing Test for Flakiness[/bold cyan]\n")
 
     @staticmethod
     def display_results(report: Dict[str, Any]) -> None:

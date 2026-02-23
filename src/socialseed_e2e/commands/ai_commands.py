@@ -75,7 +75,7 @@ class StrategyPlannerAgent:
         from socialseed_e2e.ai_orchestrator import StrategyPlanner
 
         console.print(
-            f"\n🤖 [bold blue]Planning Test Strategy:[/bold blue] {self.name}\n"
+            f"\n🤖 [bold cyan]Planning Test Strategy:[/bold cyan] {self.name}\n"
         )
 
         planner = StrategyPlanner(self.project)

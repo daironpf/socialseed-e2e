@@ -54,7 +54,7 @@ def config_cmd():
 
     Shows the configuration loaded from e2e.conf and validates its syntax.
     """
-    console.print("\n⚙️  [bold blue]E2E Configuration[/bold blue]\n")
+    console.print("\n⚙️  [bold cyan]E2E Configuration[/bold cyan]\n")
 
     try:
         loader = ApiConfigLoader()

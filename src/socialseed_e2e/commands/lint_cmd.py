@@ -45,7 +45,7 @@ def lint_cmd(project: str, service: str, fix: bool):
     """
     from socialseed_e2e.core.test_runner import validate_service_tests
 
-    console.print("\n🔍 [bold blue]Validating Test Files[/bold blue]\n")
+    console.print("\n🔍 [bold cyan]Validating Test Files[/bold cyan]\n")
 
     project_path = Path(project).resolve()
     services_path = project_path / "services"

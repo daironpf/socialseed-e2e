@@ -478,7 +478,7 @@ services: {}
 
             config.services["demo-api"] = ServiceConfig(
                 name="demo-api",
-                base_url="http://localhost:8765",
+                base_url="http://localhost:5000",
                 health_endpoint="/health",
             )
 
@@ -736,8 +736,9 @@ def install_demo_cmd(force: bool):
         "\n[bold green]✅ Demo services installed successfully![/bold green]\n"
     )
     console.print("[bold]Next steps:[/bold]")
-    console.print("  1. Run demo API: [cyan]python demos/rest/api-rest-demo.py[/cyan]")
-    console.print("  2. Run tests: [cyan]e2e run --service demo-api[/cyan]")
+    console.print("  1. Install Flask: [cyan]pip install flask[/cyan]")
+    console.print("  2. Run demo API: [cyan]python demos/rest/api-rest-demo.py[/cyan]")
+    console.print("  3. Run tests: [cyan]e2e run --service demo-api[/cyan]")
 
 
 def get_install_demo_command():

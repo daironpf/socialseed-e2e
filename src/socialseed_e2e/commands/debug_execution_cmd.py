@@ -68,7 +68,7 @@ class DebugExecutionPresenter:
     @staticmethod
     def display_header() -> None:
         """Display debug header."""
-        console.print("\n🐛 [bold blue]AI-Powered Debug Analysis[/bold blue]\n")
+        console.print("\n🐛 [bold cyan]AI-Powered Debug Analysis[/bold cyan]\n")
 
     @staticmethod
     def display_report(report: Dict[str, Any], execution_id: str) -> None:

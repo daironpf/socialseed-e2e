@@ -115,7 +115,7 @@ class CITemplateGenerator:
     def _generate_platform_templates(self, platform: str) -> None:
         """Generate templates for a specific platform."""
         config = self.CI_CONFIGS[platform]
-        console.print(f"📦 [bold blue]{config.platform.upper()}[/bold blue]")
+        console.print(f"📦 [bold cyan]{config.platform.upper()}[/bold cyan]")
 
         for template_path, output_path in config.templates:
             self._generate_template(template_path, output_path)

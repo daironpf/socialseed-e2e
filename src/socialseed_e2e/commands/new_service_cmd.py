@@ -170,7 +170,7 @@ def new_service_cmd(name: str, base_url: str, health_endpoint: str, force: bool)
         e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
         e2e new-service auth-service --force                         # Overwrite without prompting
     """
-    console.print(f"\n🔧 [bold blue]Creating service:[/bold blue] {name}\n")
+    console.print(f"\n🔧 [bold cyan]Creating service:[/bold cyan] {name}\n")
 
     if not ServiceCreatorValidator.validate_project():
         sys.exit(1)

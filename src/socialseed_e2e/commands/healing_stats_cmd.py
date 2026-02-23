@@ -65,7 +65,7 @@ class HealingStatsPresenter:
     @staticmethod
     def display_header() -> None:
         """Display statistics header."""
-        console.print("\n📊 [bold blue]Self-Healing Statistics[/bold blue]\n")
+        console.print("\n📊 [bold cyan]Self-Healing Statistics[/bold cyan]\n")
 
     @staticmethod
     def display_statistics(stats: Dict[str, Any]) -> None:
