@@ -189,3 +189,25 @@ exclude_lines = [
 [tool.coverage.html]
 directory = "htmlcov"
 title = "socialseed-e2e Coverage Report"
+
+# Ruff linter configuration
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+ignore = [
+    "E722",  # bare except (common in exception handling)
+    "F841",  # local variable unused (minor)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
