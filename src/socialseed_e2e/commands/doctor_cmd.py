@@ -64,6 +64,15 @@ def doctor_command(verbose: bool, fix: bool) -> None:
     except ImportError:
         table.add_row("Pydantic", "Not found", "❌")
 
+    # Check Optional Extras
+    from socialseed_e2e.cli import test_modules
+    for extra, module in test_modules.items():
+        try:
+            __import__(module)
+            table.add_row(f"Extra: {extra}", "Installed", "✓")
+        except ImportError:
+            table.add_row(f"Extra: {extra}", "Not installed", "⚠")
+
     # Check Configuration
     config_path = Path.cwd() / "e2e.conf"
     if config_path.exists():

@@ -41,11 +41,42 @@ EXTRA_DEPENDENCIES = {
         "pip_extra": "grpc",
         "description": "gRPC protocol support",
     },
+    "mock": {
+        "packages": ["flask>=2.0.0"],
+        "pip_extra": "mock",
+        "description": "Mock Server",
+    },
+    "visual": {
+        "packages": ["pillow>=10.0.0", "numpy>=1.24.0", "scipy>=1.11.0"],
+        "pip_extra": "visual",
+        "description": "Visual testing",
+    },
+    "dashboard": {
+        "packages": ["fastapi>=0.104.0", "uvicorn[standard]>=0.24.0", "python-socketio[asyncio]>=5.10.0"],
+        "pip_extra": "dashboard",
+        "description": "Local Web Dashboard",
+    },
+    "secrets": {
+        "packages": ["hvac>=1.0.0", "boto3>=1.26.0"],
+        "pip_extra": "secrets",
+        "description": "Secrets integration",
+    },
     "full": {
         "packages": [],  # Special case - installs all extras
-        "pip_extra": "tui,rag,grpc,test-data",
+        "pip_extra": "full",
         "description": "All optional features",
     },
+}
+
+# Modules to import to check if an extra is installed
+test_modules = {
+    "tui": "textual",
+    "rag": "sentence_transformers",
+    "grpc": "grpc",
+    "mock": "flask",
+    "visual": "PIL",
+    "dashboard": "fastapi",
+    "secrets": "hvac",
 }
 
 
@@ -65,13 +96,6 @@ def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool
 
     extra_info = EXTRA_DEPENDENCIES[extra_name]
 
-    # Try to import a module specific to this extra to check if it's installed
-    test_modules = {
-        "tui": "textual",
-        "rag": "sentence_transformers",
-        "grpc": "grpc",
-    }
-
     if extra_name in test_modules:
         try:
             __import__(test_modules[extra_name])
@@ -81,7 +105,7 @@ def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool
     elif extra_name == "full":
         # For full, check if all main extras are installed
         all_installed = all(
-            check_and_install_extra(name) for name in ["tui", "rag", "grpc"]
+            check_and_install_extra(name) for name in ["tui", "rag", "grpc", "mock", "visual", "dashboard", "secrets"]
         )
         return all_installed
 

@@ -9,14 +9,24 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-import grpc
-from grpc import (
-    Channel,
-    ChannelCredentials,
-    insecure_channel,
-    secure_channel,
-    ssl_channel_credentials,
-)
+try:
+    import grpc
+    from grpc import (
+        Channel,
+        ChannelCredentials,
+        insecure_channel,
+        secure_channel,
+        ssl_channel_credentials,
+    )
+    HAS_GRPC = True
+except ImportError:
+    HAS_GRPC = False
+    # Define placeholder types for type hinting to avoid errors
+    Channel = Any
+    ChannelCredentials = Any
+    insecure_channel = Any
+    secure_channel = Any
+    ssl_channel_credentials = Any
 
 from socialseed_e2e.utils.state_management import DynamicStateMixin
 
@@ -126,6 +136,12 @@ class BaseGrpcPage(DynamicStateMixin):
 
         # Initialize state management
         self.init_dynamic_state()
+
+        # Check and lazily suggest/install gRPC if missing
+        if not HAS_GRPC:
+            from socialseed_e2e.cli import check_and_install_extra
+            if not check_and_install_extra("grpc", auto_install=True):
+                raise ImportError("gRPC is not installed. Run 'e2e install-extras grpc' to install it.")
 
     def setup(self) -> "BaseGrpcPage":
         """Set up the gRPC channel.

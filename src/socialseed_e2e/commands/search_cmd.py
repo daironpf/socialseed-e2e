@@ -172,6 +172,10 @@ class SearchCommand:
             self.presenter.display_service_required()
             return 1
 
+        from socialseed_e2e.cli import check_and_install_extra
+        if not check_and_install_extra("rag", auto_install=True):
+            return 1
+
         try:
             # Initialize and validate
             self.service = SearchService(service)
@@ -187,12 +191,6 @@ class SearchCommand:
 
         except RuntimeError as e:
             self.presenter.display_error(str(e))
-            return 1
-
-        except ImportError:
-            from socialseed_e2e.cli import check_and_install_extra
-
-            check_and_install_extra("rag", auto_install=False)
             return 1
 
         except Exception as e:

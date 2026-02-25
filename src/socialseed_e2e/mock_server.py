@@ -9,6 +9,12 @@ Usage:
 The server runs on port 8765 by default.
 """
 
+import sys
+
+from socialseed_e2e.cli import check_and_install_extra
+if not check_and_install_extra("mock", auto_install=True):
+    sys.exit(1)
+
 from socialseed_e2e.mock_api import MockAPIServer
 
 
