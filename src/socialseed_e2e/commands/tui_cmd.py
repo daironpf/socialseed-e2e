@@ -8,6 +8,8 @@ import sys
 import click
 from rich.console import Console
 
+from socialseed_e2e.commands.dependency_manager import get_dependency_manager
+
 console = Console()
 
 
@@ -16,18 +18,14 @@ class TULauncher:
 
     def launch(self, config: str, service: str, auto_install: bool) -> None:
         """Launch the TUI."""
-        try:
-            import textual
+        manager = get_dependency_manager()
 
-            self._run_tui(config, service)
-        except ImportError:
-            if auto_install:
-                self._install_and_launch(config, service)
-            else:
-                console.print("\n[red]❌ TUI requires textual package.[/red]")
-                console.print("Install with: pip install textual")
-                console.print("Or run: e2e install-extras tui")
-                sys.exit(1)
+        if not manager.check_and_prompt("tui"):
+            console.print("\n[yellow]⚠ TUI cannot start without required dependencies.[/yellow]")
+            console.print("[dim]Run 'e2e install-extras tui' to install them manually.[/dim]")
+            return
+
+        self._run_tui(config, service)
 
     def _run_tui(self, config: str, service: str) -> None:
         """Run the TUI application."""
@@ -36,29 +34,11 @@ class TULauncher:
         console.print("\n🚀 [bold green]Launching TUI...[/bold green]\n")
         launch_tui(config_path=config, service_filter=service)
 
-    def _install_and_launch(self, config: str, service: str) -> None:
-        """Install textual and launch TUI."""
-        import subprocess
-
-        console.print("\n[yellow]Installing textual...[/yellow]")
-
-        try:
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", "textual", "-q"]
-            )
-            console.print("[green]✓ Textual installed!\n")
-            self._run_tui(config, service)
-        except Exception as e:
-            console.print(f"[red]Failed to install:[/red] {e}")
-            sys.exit(1)
-
 
 @click.command()
 @click.option("--config", "-c", default="e2e.conf", help="Path to configuration file")
 @click.option("--service", "-s", default=None, help="Service to filter")
-@click.option(
-    "--yes", "-y", is_flag=True, help="Auto-install dependencies without prompting"
-)
+@click.option("--yes", "-y", is_flag=True, help="Auto-install dependencies without prompting")
 def tui_cmd(config: str, service: str, yes: bool):
     """Launch the Rich Terminal Interface (TUI).
 

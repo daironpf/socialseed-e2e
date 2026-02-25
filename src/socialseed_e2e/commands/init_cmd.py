@@ -323,9 +323,9 @@ def init_command(directory: str, force: bool, demo: bool) -> None:
 
     console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
     console.print("[bold]Next steps:[/bold]")
-    console.print("  1. Install dependencies: [cyan]pip install -r requirements.txt[/cyan]")
-    console.print("  2. Install demo: [cyan]e2e install-demo[/cyan]")
-    console.print("  3. Run tests: [cyan]e2e run[/cyan]\n")
+    console.print("  1. Install demo: [cyan]e2e install-demo[/cyan]")
+    console.print("  2. Run tests: [cyan]e2e run[/cyan]\n")
+    console.print("[dim]Note: Dependencies will be installed automatically when needed.[/dim]\n")
 
 
 # Registration function
