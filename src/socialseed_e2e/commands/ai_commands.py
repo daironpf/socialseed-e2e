@@ -46,7 +46,7 @@ class TestGenerator:
         with console.status(
             "[bold yellow]Parsing database models...",
             spinner="dots",
-        ) as status:
+        ):
             db_schema = db_parser_registry.parse_project(self.directory)
 
 
@@ -163,7 +163,7 @@ class GherkinTranslator:
         converter = GherkinToTestConverter()
 
 
-@click.command()
+@click.command(name="generate-tests")
 @click.argument("directory", default=".", required=False)
 @click.option(
     "--output", "-o", default="services", help="Output directory for generated tests"
@@ -181,7 +181,7 @@ class GherkinTranslator:
     help="Show what would be generated without creating files",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def get_generate_tests_command(
+def generate_tests_command(
     directory: str = ".",
     output: str = "services",
     service: Optional[str] = None,
@@ -207,13 +207,13 @@ def get_generate_tests_command(
         sys.exit(1)
 
 
-@click.command()
+@click.command(name="plan-strategy")
 @click.option("--project", "-p", default=".", help="Project directory")
 @click.option("--name", "-n", required=True, help="Strategy name")
 @click.option("--description", "-d", help="Strategy description")
 @click.option("--services", help="Comma-separated list of services")
 @click.option("--output", "-o", help="Output path for strategy file")
-def get_plan_strategy_command(
+def plan_strategy_command(
     project: str = ".",
     name: str = "",
     description: Optional[str] = None,
@@ -231,11 +231,11 @@ def get_plan_strategy_command(
         sys.exit(1)
 
 
-@click.command()
+@click.command(name="autonomous-run")
 @click.option("--services", "-s", help="Comma-separated list of services to test")
 @click.option("--parallel", is_flag=True, help="Run tests in parallel")
 @click.option("--strategy-file", "-f", help="Path to strategy file")
-def get_autonomous_run_command(
+def autonomous_run_command(
     services: Optional[str] = None,
     parallel: bool = False,
     strategy_file: Optional[str] = None,
@@ -249,7 +249,7 @@ def get_autonomous_run_command(
         sys.exit(1)
 
 
-@click.command()
+@click.command(name="translate")
 @click.option("--project", "-p", default=".", help="Project directory")
 @click.option(
     "--description", "-d", required=True, help="Test description in natural language"
@@ -257,7 +257,7 @@ def get_autonomous_run_command(
 @click.option("--service", "-s", help="Target service name")
 @click.option("--language", "-l", default="python", help="Output language")
 @click.option("--output", "-o", help="Output file path")
-def get_translate_command(
+def translate_command(
     project: str = ".",
     description: str = "",
     service: Optional[str] = None,
@@ -275,13 +275,13 @@ def get_translate_command(
         sys.exit(1)
 
 
-@click.command()
+@click.command(name="gherkin-translate")
 @click.option("--project", "-p", default=".", help="Project directory")
 @click.option("--feature-file", "-f", required=True, help="Gherkin feature file path")
 @click.option(
     "--output-dir", "-o", default="tests", help="Output directory for generated tests"
 )
-def get_gherkin_translate_command(
+def gherkin_translate_command(
     project: str = ".",
     feature_file: str = "",
     output_dir: str = "tests",
@@ -293,3 +293,19 @@ def get_gherkin_translate_command(
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
         sys.exit(1)
+
+
+def get_generate_tests_command():
+    return generate_tests_command
+
+def get_plan_strategy_command():
+    return plan_strategy_command
+
+def get_autonomous_run_command():
+    return autonomous_run_command
+
+def get_translate_command():
+    return translate_command
+
+def get_gherkin_translate_command():
+    return gherkin_translate_command

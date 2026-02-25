@@ -99,98 +99,10 @@ class ManifestQueryAgent:
         console.print(table)
 
 
-class VectorIndexBuilder:
-    """Handles vector index building (Single Responsibility)."""
-
-    def __init__(self, service_name: Optional[str] = None):
-        self.service_name = service_name
-
-    def build(self):
-        """Build vector index."""
-        from pathlib import Path as P
-
-        from socialseed_e2e.project_manifest import ManifestVectorStore
-
-        if self.service_name:
-            manifest_path = (
-                P.cwd()
-                / ".e2e"
-                / "manifests"
-                / self.service_name
-                / "project_knowledge.json"
-            )
-            store = ManifestVectorStore(manifest_path)
-        else:
-            store = ManifestVectorStore(P.cwd())
-
-        store.build_index()
-        return store
-
-
-class SemanticSearchAgent:
-    """Handles semantic search (Single Responsibility)."""
-
-    def __init__(self, query: str, service_name: Optional[str] = None, top_k: int = 5):
-        self.query = query
-        self.service_name = service_name
-        self.top_k = top_k
-
-    def search(self):
-        """Perform semantic search."""
-        from pathlib import Path as P
-
-        from socialseed_e2e.project_manifest import ManifestVectorStore
-
-        if self.service_name:
-            manifest_path = (
-                P.cwd()
-                / ".e2e"
-                / "manifests"
-                / self.service_name
-                / "project_knowledge.json"
-            )
-            store = ManifestVectorStore(manifest_path)
-        else:
-            store = ManifestVectorStore(P.cwd())
-
-        return store.search(self.query, top_k=self.top_k)
-
-
-class RetrievalAgent:
-    """Handles retrieval for RAG (Single Responsibility)."""
-
-    def __init__(
-        self, task: str, service_name: Optional[str] = None, max_chunks: int = 5
-    ):
-        self.task = task
-        self.service_name = service_name
-        self.max_chunks = max_chunks
-
-    def retrieve(self):
-        """Retrieve context for task."""
-        from pathlib import Path as P
-
-        from socialseed_e2e.project_manifest import RAGRetrievalEngine
-
-        if self.service_name:
-            manifest_path = (
-                P.cwd()
-                / ".e2e"
-                / "manifests"
-                / self.service_name
-                / "project_knowledge.json"
-            )
-            engine = RAGRetrievalEngine(manifest_path)
-        else:
-            engine = RAGRetrievalEngine(P.cwd())
-
-        return engine.retrieve_for_task(self.task, max_chunks=self.max_chunks)
-
-
-@click.command()
+@click.command(name="manifest")
 @click.argument("directory", default=".", required=False)
 @click.option("--force", is_flag=True, help="Force full scan instead of smart sync")
-def get_manifest_command(directory: str = ".", force: bool = False):
+def manifest_command(directory: str = ".", force: bool = False):
     """Generate AI Project Manifest for token optimization.
 
     Analyzes the microservice and generates project_knowledge.json in the
@@ -232,7 +144,7 @@ def get_manifest_command(directory: str = ".", force: bool = False):
         sys.exit(1)
 
 
-@click.command()
+@click.command(name="manifest-query")
 @click.argument("service_name")
 @click.option(
     "--format",
@@ -241,7 +153,7 @@ def get_manifest_command(directory: str = ".", force: bool = False):
     default="table",
     help="Output format",
 )
-def get_manifest_query_command(service_name: str, format: str = "table"):
+def manifest_query_command(service_name: str, format: str = "table"):
     """Query the project manifest for AI context.
 
     Examples:
@@ -259,93 +171,9 @@ def get_manifest_query_command(service_name: str, format: str = "table"):
         sys.exit(1)
 
 
-@click.command()
-@click.option(
-    "--service",
-    "-s",
-    help="Service name to build index for",
-)
-def get_build_index_command(service: Optional[str] = None):
-    """Build vector index for semantic search.
-
-    Examples:
-        e2e build-index
-        e2e build-index -s auth-service
-    """
-    console.print("\n📦 [bold cyan]Building vector index...[/bold cyan]\n")
-
-    try:
-        builder = VectorIndexBuilder(service_name=service)
-        builder.build()
-        console.print("[green]✅ Vector index built successfully![/green]\n")
-    except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
-        sys.exit(1)
+def get_manifest_command():
+    return manifest_command
 
 
-@click.command()
-@click.argument("query")
-@click.option(
-    "--service",
-    "-s",
-    help="Service name to search in",
-)
-@click.option(
-    "--top-k",
-    "-k",
-    default=5,
-    help="Number of results to return",
-)
-def get_search_command(query: str, service: Optional[str] = None, top_k: int = 5):
-    """Semantic search over project manifest.
-
-    Examples:
-        e2e search "authentication endpoints"
-        e2e search "user DTO" -s auth-service
-    """
-    console.print(f'\n🔎 [bold cyan]Searching: "{query}"[/bold cyan]\n')
-
-    try:
-        agent = SemanticSearchAgent(query, service, top_k)
-        results = agent.search()
-
-        for result in results:
-            console.print(f"  {result.item_id} (score: {result.score:.3f})")
-        console.print()
-    except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
-        sys.exit(1)
-
-
-@click.command()
-@click.argument("task")
-@click.option(
-    "--service",
-    "-s",
-    help="Service name to retrieve from",
-)
-@click.option(
-    "--max-chunks",
-    "-m",
-    default=5,
-    help="Maximum chunks to retrieve",
-)
-def get_retrieve_command(task: str, service: Optional[str] = None, max_chunks: int = 5):
-    """Retrieve context for RAG.
-
-    Examples:
-        e2e retrieve "create auth tests" -s auth-service
-        e2e retrieve "test payment flow" -m 3
-    """
-    console.print(f'\n📄 [bold cyan]Retrieving context for: "{task}"[/bold cyan]\n')
-
-    try:
-        agent = RetrievalAgent(task, service, max_chunks)
-        chunks = agent.retrieve()
-
-        for i, chunk in enumerate(chunks, 1):
-            console.print(f"[bold]Chunk {i}:[/bold] {chunk.content[:200]}...")
-        console.print()
-    except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
-        sys.exit(1)
+def get_manifest_query_command():
+    return manifest_query_command

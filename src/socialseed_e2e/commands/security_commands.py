@@ -17,12 +17,12 @@ from ...security import (
 
 
 @click.group(name="security-test")
-def security_cli():
+def security_group():
     """Security testing commands."""
     pass
 
 
-@security_cli.command()
+@security_group.command(name="owasp")
 @click.option("--target", "-t", required=True, help="Target URL to scan")
 @click.option("--method", "-m", default="GET", help="HTTP method")
 @click.option("--output", "-o", help="Output file for report")
@@ -55,7 +55,7 @@ def owasp(target, method, output):
         click.echo(f"\n📄 Report saved to {output}")
 
 
-@security_cli.command()
+@security_group.command(name="pentest")
 @click.option("--target", "-t", required=True, help="Target URL")
 @click.option("--output", "-o", help="Output file for report")
 def pentest(target, output):
@@ -76,7 +76,7 @@ def pentest(target, output):
         reporter.export_json(output)
 
 
-@security_cli.command()
+@security_group.command(name="compliance")
 @click.option("--target", "-t", required=True, help="Target URL")
 @click.option(
     "--standard",
@@ -126,7 +126,7 @@ def compliance(target, standard, output):
         click.echo(f"\n📄 Report saved to {output}")
 
 
-@security_cli.command()
+@security_group.command(name="secrets")
 @click.option("--path", "-p", required=True, help="File or directory to scan")
 @click.option("--output", "-o", help="Output file for report")
 @click.option("--include-pii/--no-pii", default=True, help="Include PII detection")
@@ -159,10 +159,10 @@ def secrets(path, output, include_pii):
         click.echo(f"\n📄 Report saved to {output}")
 
 
-@security_cli.command()
+@security_group.command(name="full-scan")
 @click.option("--target", "-t", required=True, help="Target URL")
 @click.option("--output", "-o", default="security-report.json", help="Output file")
-def full_scan(target, output):
+def full_scan_command(target, output):
     """Run comprehensive security scan."""
     click.echo(f"🔒 Running comprehensive security scan on {target}...")
 
@@ -174,10 +174,6 @@ def full_scan(target, output):
     owasp_result = owasp_scanner.scan_endpoint(target)
     reporter.add_scan_result(owasp_result)
     click.echo(f"   Found {owasp_result.total_findings} vulnerabilities")
-
-    # Secret Detection
-    click.echo("\n2️⃣ Scanning for secrets...")
-    # Note: This would scan API responses in real implementation
 
     # Compliance Check
     click.echo("\n3️⃣ Checking compliance...")
@@ -208,6 +204,11 @@ def full_scan(target, output):
     click.echo(f"\n📄 Full report saved to {output}")
 
 
+def get_security_group():
+    """Return security command group."""
+    return security_group
+
+
 def register_security_commands(cli):
-    """Register security commands with CLI."""
-    cli.add_command(security_cli)
+    """Legacy registration function."""
+    cli.add_command(security_group)

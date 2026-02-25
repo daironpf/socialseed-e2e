@@ -172,6 +172,7 @@ class SearchCommand:
             self.presenter.display_service_required()
             return 1
 
+
         from socialseed_e2e.cli import check_and_install_extra
         if not check_and_install_extra("rag", auto_install=True):
             return 1

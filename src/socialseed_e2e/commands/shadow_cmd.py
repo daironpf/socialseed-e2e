@@ -85,6 +85,7 @@ class ShadowGenerateAgent:
 
     def generate(self):
         """Generate tests from captured traffic."""
+        pass
 
 
 class ShadowReplayAgent:
@@ -104,6 +105,7 @@ class ShadowReplayAgent:
 
     def replay(self):
         """Replay captured traffic."""
+        pass
 
 
 class ShadowAnalyzeAgent:
@@ -205,12 +207,12 @@ class ShadowFuzzAgent:
 
 
 @click.group(name="shadow")
-def get_shadow_group():
+def shadow_group():
     """Shadow Runner - Capture traffic and auto-generate tests (Issue #130)."""
     pass
 
 
-@click.command(name="capture")
+@shadow_group.command(name="capture")
 @click.argument("name")
 @click.option(
     "--target-url", "-u", required=True, help="Target API URL to capture traffic from"
@@ -221,7 +223,7 @@ def get_shadow_group():
 @click.option("--sanitize", is_flag=True, help="Sanitize PII from captured traffic")
 @click.option("--duration", "-d", type=int, help="Capture duration in seconds")
 @click.option("--max-requests", "-m", type=int, help="Maximum requests to capture")
-def get_shadow_capture_command(
+def shadow_capture_command(
     name: str,
     target_url: str,
     output: Optional[str],
@@ -249,14 +251,14 @@ def get_shadow_capture_command(
         sys.exit(1)
 
 
-@click.command(name="generate")
+@shadow_group.command(name="generate")
 @click.argument("capture_file")
 @click.option("--service", "-s", help="Service name for generated tests")
 @click.option(
     "--group-by", type=click.Choice(["service", "flow", "endpoint"]), default="service"
 )
 @click.option("--include-auth", is_flag=True, help="Include authentication in tests")
-def get_shadow_generate_command(
+def shadow_generate_command(
     capture_file: str, service: Optional[str], group_by: str, include_auth: bool
 ):
     """Generate tests from captured traffic."""
@@ -268,14 +270,14 @@ def get_shadow_generate_command(
         sys.exit(1)
 
 
-@click.command(name="replay")
+@shadow_group.command(name="replay")
 @click.argument("capture_file")
 @click.option("--target-url", "-u", help="Override target URL")
 @click.option(
     "--speed", type=click.Choice(["realtime", "fast", "slow"]), default="realtime"
 )
 @click.option("--stop-on-error", is_flag=True, help="Stop on first error")
-def get_shadow_replay_command(
+def shadow_replay_command(
     capture_file: str, target_url: Optional[str], speed: str, stop_on_error: bool
 ):
     """Replay captured traffic."""
@@ -287,11 +289,11 @@ def get_shadow_replay_command(
         sys.exit(1)
 
 
-@click.command(name="analyze")
+@shadow_group.command(name="analyze")
 @click.argument("capture_file")
 @click.option("--format", "-f", type=click.Choice(["table", "json"]), default="table")
 @click.option("--show-pii", is_flag=True, help="Show PII in output")
-def get_shadow_analyze_command(capture_file: str, format: str, show_pii: bool):
+def shadow_analyze_command(capture_file: str, format: str, show_pii: bool):
     """Analyze captured traffic."""
     try:
         agent = ShadowAnalyzeAgent(capture_file, format, show_pii)
@@ -301,7 +303,7 @@ def get_shadow_analyze_command(capture_file: str, format: str, show_pii: bool):
         sys.exit(1)
 
 
-@click.command(name="fuzz")
+@shadow_group.command(name="fuzz")
 @click.argument("capture_file")
 @click.argument("target_url")
 @click.option(
@@ -315,7 +317,7 @@ def get_shadow_analyze_command(capture_file: str, format: str, show_pii: bool):
     "--mutations", "-m", type=int, default=5, help="Number of mutations per request"
 )
 @click.option("--output", "-o", help="Output file for fuzzing report")
-def get_shadow_fuzz_command(
+def shadow_fuzz_command(
     capture_file: str,
     target_url: str,
     strategy: str,
@@ -331,4 +333,6 @@ def get_shadow_fuzz_command(
         sys.exit(1)
 
 
-shadow_group = get_shadow_group()
+def get_shadow_group():
+    """Return shadow command group."""
+    return shadow_group

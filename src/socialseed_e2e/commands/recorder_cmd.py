@@ -104,18 +104,18 @@ class ConverterAgent:
 
 
 @click.group(name="recorder")
-def get_recorder_group():
+def recorder_group():
     """Commands for recording and replaying API sessions."""
     pass
 
 
-@click.command(name="record")
+@recorder_group.command(name="record")
 @click.argument("name")
 @click.option("--port", "-p", default=8090, help="Proxy port")
 @click.option(
     "--output", "-o", help="Output file path (default: recordings/<name>.json)"
 )
-def get_record_command(name: str, port: int = 8090, output: Optional[str] = None):
+def record_command(name: str, port: int = 8090, output: Optional[str] = None):
     """Record a new API session via proxy."""
     try:
         agent = RecorderAgent(name, port, output)
@@ -125,9 +125,9 @@ def get_record_command(name: str, port: int = 8090, output: Optional[str] = None
         sys.exit(1)
 
 
-@click.command(name="replay")
+@recorder_group.command(name="replay")
 @click.argument("file")
-def get_replay_command(file: str):
+def replay_command(file: str):
     """Replay a recorded session."""
     try:
         agent = ReplayAgent(file)
@@ -137,10 +137,10 @@ def get_replay_command(file: str):
         sys.exit(1)
 
 
-@click.command(name="convert")
+@recorder_group.command(name="convert")
 @click.argument("file")
 @click.option("--output", "-o", help="Output test file path")
-def get_convert_command(file: str, output: Optional[str] = None):
+def convert_command(file: str, output: Optional[str] = None):
     """Convert a recorded session to Python test code."""
     try:
         agent = ConverterAgent(file, output)
@@ -150,4 +150,6 @@ def get_convert_command(file: str, output: Optional[str] = None):
         sys.exit(1)
 
 
-recorder_group = get_recorder_group()
+def get_recorder_group():
+    """Return recorder command group."""
+    return recorder_group
