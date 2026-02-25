@@ -294,8 +294,12 @@ services: {}
         req_path.write_text(self.DEFAULT_REQUIREMENTS)
         console.print("  [green]✓[/green] Created: requirements.txt")
 
-    def _create_agent_docs(self) -> None:
-        """Create .agent directory with AI documentation."""
+    def _create_agent_docs(self, source_path: str = None) -> None:
+        """Create .agent directory with AI documentation.
+
+        Args:
+            source_path: Optional path to source code for auto-scanning
+        """
         agent_dir = self.target_path / ".agent"
 
         if not agent_dir.exists():
@@ -307,13 +311,90 @@ services: {}
             readme_path.write_text(self.AGENT_DOCS)
             console.print("  [green]✓[/green] Created: .agent/README.md")
 
+        # Auto-scan source code if provided
+        if source_path is not None and Path(source_path).exists():
+            self._generate_agent_docs_from_scan(agent_dir, source_path)
+
+    def _generate_agent_docs_from_scan(self, agent_dir: Path, source_path: str) -> None:
+        """Generate documentation files by scanning source code."""
+        console.print("\n[cyan]🔍 Scanning source code for documentation...[/cyan]\n")
+
+        try:
+            from socialseed_e2e.scanner.endpoint_scanner import (
+                generate_endpoints_doc,
+                EndpointScanner,
+            )
+            from socialseed_e2e.scanner.schema_scanner import (
+                generate_schemas_doc,
+                SchemaScanner,
+            )
+            from socialseed_e2e.scanner.auth_flow_generator import generate_auth_flows
+            from socialseed_e2e.scanner.test_pattern_generator import generate_test_patterns
+            from socialseed_e2e.scanner.error_code_scanner import generate_error_codes_doc
+
+            # Scan first to get endpoints and schemas
+            ep_scanner = EndpointScanner(source_path)
+            endpoints = ep_scanner.scan()
+            schema_scanner = SchemaScanner(source_path)
+            schemas = schema_scanner.scan()
+
+            # Generate ENDPOINTS.md
+            endpoints_md = generate_endpoints_doc(source_path)
+            endpoints_path = agent_dir / "ENDPOINTS.md"
+            endpoints_path.write_text(endpoints_md)
+            console.print(f"  [green]✓[/green] Created: .agent/ENDPOINTS.md")
+
+            # Generate DATA_SCHEMAS.md
+            schemas_md = generate_schemas_doc(source_path)
+            schemas_path = agent_dir / "DATA_SCHEMAS.md"
+            schemas_path.write_text(schemas_md)
+            console.print(f"  [green]✓[/green] Created: .agent/DATA_SCHEMAS.md")
+
+            # Generate ERROR_CODES.md
+            error_md = generate_error_codes_doc(source_path)
+            error_path = agent_dir / "ERROR_CODES.md"
+            error_path.write_text(error_md)
+            console.print(f"  [green]✓[/green] Created: .agent/ERROR_CODES.md")
+
+            # Generate AUTH_FLOWS.md
+            auth_md = generate_auth_flows(endpoints, schemas)
+            auth_path = agent_dir / "AUTH_FLOWS.md"
+            auth_path.write_text(auth_md)
+            console.print(f"  [green]✓[/green] Created: .agent/AUTH_FLOWS.md")
+
+            # Generate TEST_PATTERNS.md
+            patterns_md = generate_test_patterns(endpoints, schemas)
+            patterns_path = agent_dir / "TEST_PATTERNS.md"
+            patterns_path.write_text(patterns_md)
+            console.print(f"  [green]✓[/green] Created: .agent/TEST_PATTERNS.md")
+
+            console.print("\n[green]✅ Source code documentation generated![/green]\n")
+
+        except ImportError as e:
+            console.print(f"  [yellow]⚠[/yellow] Scanner modules not available: {e}")
+            console.print("  [dim]Run: pip install socialseed-e2e[full] to enable[/dim]\n")
+        except Exception as e:
+            console.print(f"  [yellow]⚠[/yellow] Error scanning: {str(e)[:80]}")
+
 
 @click.command(name="init")
 @click.argument("directory", default=".", required=False)
 @click.option("--force", is_flag=True, help="Overwrite existing files")
 @click.option("--demo", is_flag=True, help="Include demo API and example services")
-def init_command(directory: str, force: bool, demo: bool) -> None:
-    """Initialize a new E2E project."""
+@click.option(
+    "--scan",
+    "scan_path",
+    default=None,
+    help="Scan source code and generate .agent documentation (e.g., --scan ../services/my-api)",
+)
+def init_command(directory: str, force: bool, demo: bool, scan_path: str) -> None:
+    """Initialize a new E2E project.
+
+    Examples:
+        e2e init my-project
+        e2e init . --scan ../services/auth-service
+        e2e init --demo
+    """
     target_path = Path(directory).resolve()
 
     console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
@@ -321,8 +402,19 @@ def init_command(directory: str, force: bool, demo: bool) -> None:
     manager = InitManager(target_path, force, demo)
     manager.initialize()
 
+    # Optionally scan source code
+    if scan_path:
+        manager._create_agent_docs(scan_path)
+    else:
+        manager._create_agent_docs()
+
     console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
     console.print("[bold]Next steps:[/bold]")
+
+    if not scan_path:
+        console.print(
+            "  1. To auto-generate docs: [cyan]e2e init . --scan ../services/your-api[/cyan]"
+        )
     console.print("  1. Install demo: [cyan]e2e install-demo[/cyan]")
     console.print("  2. Run tests: [cyan]e2e run[/cyan]\n")
     console.print("[dim]Note: Dependencies will be installed automatically when needed.[/dim]\n")
