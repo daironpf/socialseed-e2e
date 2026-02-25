@@ -182,6 +182,109 @@ Test Execution Summary
 demo-api: 1/1 passed (100.0%)
 
 ✅ All tests passed!
+
+---
+
+## 🤖 AI Agent Integration
+
+This section explains how AI agents can work with your project to generate tests automatically.
+
+### Quick Start for AI Agents
+
+```bash
+# 1. Initialize project with your API source code
+e2e init my-tests --scan ../path/to/your-api/src
+
+# This creates .agent/ directory with:
+# - ENDPOINTS.md      - All API endpoints
+# - DATA_SCHEMAS.md   - DTOs and models
+# - AUTH_FLOWS.md     - Authentication flows
+# - TEST_PATTERNS.md  - Test templates
+# - ERROR_CODES.md    - Error codes
+
+# 2. AI agent reads .agent/ to understand the API
+
+# 3. Create service tests
+e2e new-service auth-api --base-url http://localhost:8085
+
+# 4. Run tests
+e2e run --service auth-api
+```
+
+### For Projects with Multiple Services
+
+If your application has multiple services (microservices architecture):
+
+```bash
+# Scan each service independently
+e2e init tests/auth-service --scan ../services/auth-service/src
+e2e init tests/user-service --scan ../services/user-service/src
+e2e init tests/payment-service --scan ../services/payment-service/src
+```
+
+Each service gets its own `.agent/` documentation.
+
+### What AI Agents Need to Know
+
+When an AI agent starts working on your project, it should:
+
+1. **Read `.agent/` directory first** - Contains all API documentation
+2. **Check `e2e.conf`** - Contains service URLs and configuration
+3. **Read existing tests in `services/`** - Understand testing patterns
+4. **Use `e2e run --service <name>`** - Run tests for specific services
+
+### Configuration Example (e2e.conf)
+
+```yaml
+services:
+  auth-service:
+    base_url: http://localhost:8085
+    health_endpoint: /actuator/health
+    timeout: 30000
+  
+  user-service:
+    base_url: http://localhost:8086
+    health_endpoint: /actuator/health
+  
+  payment-service:
+    base_url: http://localhost:8087
+    health_endpoint: /health
+```
+
+### Commands for AI Agents
+
+| Command | Description |
+|---------|-------------|
+| `e2e init . --scan <path>` | Generate .agent docs from source |
+| `e2e new-service <name>` | Create new service structure |
+| `e2e new-test <name> --service <svc>` | Create test module |
+| `e2e run --service <name>` | Run tests for service |
+| `e2e lint` | Validate test files |
+| `e2e doctor` | Check setup |
+
+### Example: AI Agent Workflow
+
+```
+1. AI reads: .agent/ENDPOINTS.md → knows all API endpoints
+2. AI reads: .agent/DATA_SCHEMAS.md → knows request/response formats
+3. AI reads: .agent/AUTH_FLOWS.md → knows authentication
+4. AI creates: services/auth-service/modules/01_login.py
+5. AI runs: e2e run --service auth-service
+6. AI sees: Test results and can fix failures
+```
+
+### Troubleshooting
+
+**Problem**: AI generates incorrect endpoints
+**Solution**: Ensure `.agent/ENDPOINTS.md` is up to date with `e2e init . --scan <path>`
+
+**Problem**: Tests fail with connection errors
+**Solution**: Verify services are running and URLs are correct in `e2e.conf`
+
+**Problem**: AI doesn't understand the API
+**Solution**: Run `e2e deep-scan <path>` to detect tech stack and auto-configure
+
+---
 ```
 
 **Note:** If tests fail with "Connection refused", ensure your API server is running before executing `e2e run`.

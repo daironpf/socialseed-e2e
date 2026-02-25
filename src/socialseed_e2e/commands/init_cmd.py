@@ -409,14 +409,22 @@ def init_command(directory: str, force: bool, demo: bool, scan_path: str) -> Non
         manager._create_agent_docs()
 
     console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
+
+    # AI Agent information
+    console.print("[bold cyan]🤖 AI Agent Information:[/bold cyan]\n")
+    console.print("  To enable AI agents to understand your API, run:")
+    console.print("  [cyan]  e2e init . --scan ../path/to/your-api/src[/cyan]\n")
+    console.print("  This generates .agent/ directory with:")
+    console.print("  • ENDPOINTS.md      - All API endpoints")
+    console.print("  • DATA_SCHEMAS.md   - DTOs and models")
+    console.print("  • AUTH_FLOWS.md     - Authentication flows")
+    console.print("  • TEST_PATTERNS.md  - Test templates")
+    console.print("  • ERROR_CODES.md    - Error codes\n")
+
     console.print("[bold]Next steps:[/bold]")
 
-    if not scan_path:
-        console.print(
-            "  1. To auto-generate docs: [cyan]e2e init . --scan ../services/your-api[/cyan]"
-        )
-    console.print("  1. Install demo: [cyan]e2e install-demo[/cyan]")
-    console.print("  2. Run tests: [cyan]e2e run[/cyan]\n")
+    console.print("  1. Configure services: [cyan]e2e new-service <name> --base-url <url>[/cyan]")
+    console.print("  2. Run tests: [cyan]e2e run --service <name>[/cyan]\n")
     console.print("[dim]Note: Dependencies will be installed automatically when needed.[/dim]\n")
 
 
