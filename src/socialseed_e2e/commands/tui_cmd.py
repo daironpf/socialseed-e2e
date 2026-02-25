@@ -16,15 +16,18 @@ class TULauncher:
 
     def launch(self, config: str, service: str, auto_install: bool) -> None:
         """Launch the TUI."""
-        from socialseed_e2e.cli import check_and_install_extra
-        
-        # Determine whether to auto install based on the command line flag,
-        # but the request asks to auto install by default.
-        # We enforce auto_install=True here for explicit lazy loading
-        if not check_and_install_extra("tui", auto_install=True):
-            sys.exit(1)
+        try:
+            import textual
 
-        self._run_tui(config, service)
+            self._run_tui(config, service)
+        except ImportError:
+            if auto_install:
+                self._install_and_launch(config, service)
+            else:
+                console.print("\n[red]❌ TUI requires textual package.[/red]")
+                console.print("Install with: pip install textual")
+                console.print("Or run: e2e install-extras tui")
+                sys.exit(1)
 
     def _run_tui(self, config: str, service: str) -> None:
         """Run the TUI application."""
@@ -32,6 +35,22 @@ class TULauncher:
 
         console.print("\n🚀 [bold green]Launching TUI...[/bold green]\n")
         launch_tui(config_path=config, service_filter=service)
+
+    def _install_and_launch(self, config: str, service: str) -> None:
+        """Install textual and launch TUI."""
+        import subprocess
+
+        console.print("\n[yellow]Installing textual...[/yellow]")
+
+        try:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "textual", "-q"]
+            )
+            console.print("[green]✓ Textual installed!\n")
+            self._run_tui(config, service)
+        except Exception as e:
+            console.print(f"[red]Failed to install:[/red] {e}")
+            sys.exit(1)
 
 
 @click.command()

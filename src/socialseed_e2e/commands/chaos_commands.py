@@ -21,12 +21,12 @@ from ...chaos import (
 
 
 @click.group(name="chaos")
-def chaos_group():
+def chaos_cli():
     """Chaos engineering commands."""
     pass
 
 
-@chaos_group.command(name="network")
+@chaos_cli.command()
 @click.option("--target", "-t", required=True, help="Target service name")
 @click.option("--latency", "-l", default=100, help="Latency in milliseconds")
 @click.option("--jitter", "-j", default=10, help="Jitter in milliseconds")
@@ -59,7 +59,7 @@ def network(target, latency, jitter, packet_loss, duration, dns_failure):
     _display_result(result)
 
 
-@chaos_group.command(name="service")
+@chaos_cli.command()
 @click.option("--service", "-s", required=True, help="Target service name")
 @click.option("--downtime", "-d", default=30, help="Downtime duration in seconds")
 @click.option("--error-rate", "-e", default=0.0, help="Error rate percentage")
@@ -87,7 +87,7 @@ def service(service, downtime, error_rate, duration):
     _display_result(result)
 
 
-@chaos_group.command(name="resource")
+@chaos_cli.command()
 @click.option("--cpu-cores", "-c", default=1, help="Number of CPU cores")
 @click.option("--cpu-load", default=80.0, help="CPU load percentage")
 @click.option("--memory", "-m", default=512, help="Memory to consume in MB")
@@ -115,7 +115,7 @@ def resource(cpu_cores, cpu_load, memory, duration):
     _display_result(result)
 
 
-@chaos_group.command(name="gameday")
+@chaos_cli.command()
 @click.option("--name", "-n", required=True, help="GameDay scenario name")
 @click.option("--service", "-s", required=True, help="Target service")
 @click.option(
@@ -177,7 +177,7 @@ def gameday(name, service, parallel):
             click.echo(f"   • {item}")
 
 
-@chaos_group.command(name="validate")
+@chaos_cli.command()
 @click.option("--endpoint", "-e", required=True, help="Health check endpoint")
 @click.option("--interval", "-i", default=5, help="Check interval in seconds")
 @click.option("--timeout", "-t", default=60, help="Timeout in seconds")
@@ -234,11 +234,6 @@ def _display_result(result):
             click.echo(f"   • {error}")
 
 
-def get_chaos_group():
-    """Return chaos command group."""
-    return chaos_group
-
-
 def register_chaos_commands(cli):
-    """Legacy registration function."""
-    cli.add_command(chaos_group)
+    """Register chaos commands with CLI."""
+    cli.add_command(chaos_cli)

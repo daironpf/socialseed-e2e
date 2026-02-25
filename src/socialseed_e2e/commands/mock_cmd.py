@@ -141,7 +141,7 @@ class MockValidator:
     default="table",
     help="Output format",
 )
-def mock_analyze_command(
+def get_mock_analyze_command(
     directory: str = ".", output: str = "external_apis.json", format: str = "table"
 ):
     """Analyze project for external API dependencies (Issue #191).
@@ -172,7 +172,7 @@ def mock_analyze_command(
         sys.exit(1)
 
 
-@click.command(name="mock-validate")
+@click.command(name="mock-analyze")
 @click.argument("contract_file")
 @click.option(
     "--service",
@@ -185,7 +185,7 @@ def mock_analyze_command(
     is_flag=True,
     help="Show detailed validation output",
 )
-def mock_validate_command(
+def get_mock_validate_command(
     contract_file: str, service: Optional[str] = None, verbose: bool = False
 ):
     """Validate API contract against mock schema (Issue #191).
@@ -216,16 +216,11 @@ def mock_validate_command(
         sys.exit(1)
 
 
-def get_mock_analyze_command():
-    """Return mock-analyze command."""
-    return mock_analyze_command
-
-
-def get_mock_validate_command():
-    """Return mock-validate command."""
-    return mock_validate_command
-
-
 def get_mock_command():
-    """Return mock command group (alias for mock-analyze)."""
-    return mock_analyze_command
+    """Return mock command group."""
+    return get_mock_analyze_command()
+
+
+def get_mock_validate():
+    """Return mock-validate command."""
+    return get_mock_validate_command()

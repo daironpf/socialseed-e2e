@@ -93,7 +93,7 @@ class DeepScanAgent:
         console.print("   Run 'e2e run' to execute tests\n")
 
 
-@click.command(name="discover")
+@click.command()
 @click.argument("directory", default=".", required=False)
 @click.option(
     "--output",
@@ -107,7 +107,7 @@ class DeepScanAgent:
     is_flag=True,
     help="Open the report after generation",
 )
-def discover_command(
+def get_discover_command(
     directory: str = ".", output: Optional[str] = None, open_report: bool = False
 ):
     """Generate AI Discovery Report for the project (Issue #187).
@@ -146,10 +146,10 @@ def discover_command(
         sys.exit(1)
 
 
-@click.command(name="deep-scan")
+@click.command()
 @click.argument("directory", default=".", required=False)
 @click.option("--auto-config", is_flag=True, help="Auto-generate e2e.conf from scan")
-def deep_scan_command(directory: str = ".", auto_config: bool = False):
+def get_deep_scan_command(directory: str = ".", auto_config: bool = False):
     """Zero-config deep scan for automatic project mapping.
 
     Analyzes your project to detect tech stack, extract endpoints,
@@ -176,13 +176,3 @@ def deep_scan_command(directory: str = ".", auto_config: bool = False):
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")
         sys.exit(1)
-
-
-def get_discover_command():
-    """Return discover command."""
-    return discover_command
-
-
-def get_deep_scan_command():
-    """Return deep-scan command."""
-    return deep_scan_command

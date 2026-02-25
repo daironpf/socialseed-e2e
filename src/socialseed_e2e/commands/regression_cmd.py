@@ -68,7 +68,7 @@ class RegressionAnalyzer:
                     console.print(f"     - {test}")
 
 
-@click.command(name="regression")
+@click.command()
 @click.argument("directory", default=".", required=False)
 @click.option(
     "--base-ref",
@@ -93,7 +93,7 @@ class RegressionAnalyzer:
     default="REGRESSION_REPORT.md",
     help="Output report filename",
 )
-def regression_command(
+def get_regression_command(
     directory: str = ".",
     base_ref: str = "HEAD~1",
     target_ref: str = "HEAD",
@@ -131,6 +131,4 @@ def regression_command(
         sys.exit(1)
 
 
-def get_regression_command():
-    """Return regression command."""
-    return regression_command
+regression_command = get_regression_command()

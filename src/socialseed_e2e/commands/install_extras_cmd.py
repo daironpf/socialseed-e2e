@@ -11,11 +11,39 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from socialseed_e2e.cli import EXTRA_DEPENDENCIES
-
 console = Console()
 
 
+EXTRA_DEPENDENCIES = {
+    "tui": {
+        "description": "Terminal User Interface",
+        "packages": ["textual>=0.41.0"],
+    },
+    "rag": {
+        "description": "Semantic search and embeddings",
+        "packages": ["sentence-transformers>=2.2.0", "numpy>=1.24.0"],
+    },
+    "grpc": {
+        "description": "gRPC protocol support",
+        "packages": ["grpcio>=1.59.0", "grpcio-tools>=1.59.0", "protobuf>=4.24.0"],
+    },
+    "secrets": {
+        "description": "Secret scanning and management",
+        "packages": ["hvac>=1.0.0", "boto3>=1.26.0"],
+    },
+    "dashboard": {
+        "description": "Web dashboard (Vue.js + FastAPI)",
+        "packages": [
+            "fastapi>=0.104.0",
+            "uvicorn[standard]>=0.24.0",
+            "python-socketio[asyncio]>=5.10.0",
+        ],
+    },
+    "full": {
+        "description": "All extras combined",
+        "packages": [],
+    },
+}
 
 
 class ExtraInstaller:
@@ -58,7 +86,7 @@ class ExtraInstaller:
                 sys.exit(1)
 
             if extra == "full":
-                extras_to_install = [name for name in self.extras if name != "full"]
+                extras_to_install = ["tui", "rag", "grpc", "secrets", "dashboard"]
                 break
 
         console.print(
@@ -108,8 +136,6 @@ def install_extras_cmd(extra, list_extras: bool, install_all: bool):
         tui       - Terminal User Interface (textual)
         rag       - Semantic search and embeddings (sentence-transformers)
         grpc      - gRPC protocol support (grpcio)
-        mock      - Mock API server (flask)
-        visual    - Visual testing (Pillow)
         secrets   - Secret scanning and management
         dashboard - Web dashboard (Vue.js + FastAPI)
         full      - All extras combined
@@ -130,7 +156,7 @@ def install_extras_cmd(extra, list_extras: bool, install_all: bool):
     extras_to_install = []
 
     if install_all:
-        extras_to_install = [name for name in EXTRA_DEPENDENCIES if name != "full"]
+        extras_to_install = ["tui", "rag", "grpc", "secrets", "dashboard"]
     elif extra:
         extras_to_install = list(extra)
     else:

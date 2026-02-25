@@ -22,19 +22,55 @@ class DashboardLauncher:
 
     def launch(self, port: int, host: str, open_browser: bool) -> None:
         """Launch the Vue dashboard."""
-        from socialseed_e2e.cli import check_and_install_extra
-        if not check_and_install_extra("dashboard", auto_install=True):
+        try:
+            from socialseed_e2e.dashboard.vue_api import run_server
+
+            console.print(
+                "\n🚀 [bold green]Launching SocialSeed E2E Dashboard (Vue)...[/bold green]\n"
+            )
+            console.print(f"📊 Dashboard will be available at: http://{host}:{port}")
+            console.print()
+
+            run_server(host=host, port=port, open_browser=open_browser)
+
+        except ImportError as e:
+            self._install_and_launch(port, host, open_browser)
+
+    def _install_and_launch(self, port: int, host: str, open_browser: bool) -> None:
+        """Install dependencies and launch dashboard."""
+        console.print("\n[yellow]⚠️ Installing dashboard dependencies...[/yellow]")
+
+        try:
+            subprocess.check_call(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "fastapi",
+                    "uvicorn",
+                    "python-socketio[asyncio]",
+                    "-q",
+                ]
+            )
+            console.print("[green]✓ Dependencies installed successfully!\n")
+
+            from socialseed_e2e.dashboard.vue_api import run_server
+
+            console.print(
+                "\n🚀 [bold green]Launching SocialSeed E2E Dashboard (Vue)...[/bold green]\n"
+            )
+            console.print(f"📊 Dashboard will be available at: http://{host}:{port}")
+            console.print()
+
+            run_server(host=host, port=port, open_browser=open_browser)
+
+        except Exception as e:
+            console.print(f"\n[red]❌ Failed to launch dashboard:[/red] {e}")
+            console.print(
+                "Install dependencies manually: pip install fastapi uvicorn python-socketio"
+            )
             sys.exit(1)
-
-        from socialseed_e2e.dashboard.vue_api import run_server
-
-        console.print(
-            "\n🚀 [bold green]Launching SocialSeed E2E Dashboard (Vue)...[/bold green]\n"
-        )
-        console.print(f"📊 Dashboard will be available at: http://{host}:{port}")
-        console.print()
-
-        run_server(host=host, port=port, open_browser=open_browser)
 
 
 def launch_dev_mode(port: int, host: str, open_browser: bool) -> None:
