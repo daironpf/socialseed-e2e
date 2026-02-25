@@ -192,23 +192,15 @@ This section explains how AI agents can work with your project to generate tests
 ### Quick Start for AI Agents
 
 ```bash
-# 1. Initialize project with your API source code
-e2e init my-tests --scan ../path/to/your-api/src
+# 1. Initialize project with auto-detection
+e2e init my-tests --api
 
-# This creates .agent/ directory with:
-# - ENDPOINTS.md      - All API endpoints
-# - DATA_SCHEMAS.md   - DTOs and models
-# - AUTH_FLOWS.md     - Authentication flows
-# - TEST_PATTERNS.md  - Test templates
-# - ERROR_CODES.md    - Error codes
+# OR specify the path manually
+e2e init my-tests --scan ../path/to/your-api
 
-# 2. AI agent reads .agent/ to understand the API
-
-# 3. Create service tests
-e2e new-service auth-api --base-url http://localhost:8085
-
-# 4. Run tests
-e2e run --service auth-api
+# 2. That's it! Now run your AI agent
+opencode .
+# Just ask: "Create tests for my auth service"
 ```
 
 ### For Projects with Multiple Services

@@ -294,7 +294,7 @@ services: {}
         req_path.write_text(self.DEFAULT_REQUIREMENTS)
         console.print("  [green]✓[/green] Created: requirements.txt")
 
-    def _create_agent_docs(self, source_path: str = None) -> None:
+    def _create_agent_docs(self, source_path: str | None = None) -> None:
         """Create .agent directory with AI documentation.
 
         Args:
@@ -385,15 +385,22 @@ services: {}
     "--scan",
     "scan_path",
     default=None,
-    help="Scan source code and generate .agent documentation (e.g., --scan ../services/my-api)",
+    help="Scan source code and generate .agent docs. Can be a path like ../services/auth or 'auto' to detect",
 )
-def init_command(directory: str, force: bool, demo: bool, scan_path: str) -> None:
+@click.option(
+    "--api",
+    "api_path",
+    default=None,
+    help="Shortcut: auto-detect and scan API from common paths (src, app, api)",
+)
+def init_command(directory: str, force: bool, demo: bool, scan_path: str, api_path: str) -> None:
     """Initialize a new E2E project.
 
     Examples:
         e2e init my-project
-        e2e init . --scan ../services/auth-service
-        e2e init --demo
+        e2e init . --api           # Auto-detect API in current dir
+        e2e init . --scan ../services/auth
+        e2e init . --scan ../services/auth --api
     """
     target_path = Path(directory).resolve()
 
@@ -402,30 +409,62 @@ def init_command(directory: str, force: bool, demo: bool, scan_path: str) -> Non
     manager = InitManager(target_path, force, demo)
     manager.initialize()
 
-    # Optionally scan source code
-    if scan_path:
-        manager._create_agent_docs(scan_path)
+    # Determine scan path
+    final_scan_path = None
+
+    if scan_path == "auto" or api_path:
+        # Auto-detect source code
+        possible_paths = [
+            target_path / ".." / "services" / target_path.name,
+            target_path / "src",
+            target_path / "app",
+            target_path / "api",
+            target_path / ".." / "src",
+            target_path / ".." / "app",
+        ]
+        for p in possible_paths:
+            if (
+                p.exists()
+                and any(p.rglob("*.java"))
+                or any(p.rglob("*.py"))
+                or any(p.rglob("*.ts"))
+            ):
+                final_scan_path = str(p)
+                console.print(f"[cyan]🔍 Auto-detected API at: {final_scan_path}[/cyan]\n")
+                break
+
+        if not final_scan_path:
+            console.print("[yellow]⚠ Could not auto-detect API source code[/yellow]\n")
+    elif scan_path:
+        final_scan_path = scan_path
+
+    # Generate docs if scan path determined
+    if final_scan_path and Path(final_scan_path).exists():
+        manager._create_agent_docs(final_scan_path)
     else:
         manager._create_agent_docs()
 
     console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
 
     # AI Agent information
-    console.print("[bold cyan]🤖 AI Agent Information:[/bold cyan]\n")
-    console.print("  To enable AI agents to understand your API, run:")
-    console.print("  [cyan]  e2e init . --scan ../path/to/your-api/src[/cyan]\n")
-    console.print("  This generates .agent/ directory with:")
-    console.print("  • ENDPOINTS.md      - All API endpoints")
-    console.print("  • DATA_SCHEMAS.md   - DTOs and models")
-    console.print("  • AUTH_FLOWS.md     - Authentication flows")
-    console.print("  • TEST_PATTERNS.md  - Test templates")
-    console.print("  • ERROR_CODES.md    - Error codes\n")
+    console.print("[bold cyan]🤖 AI Agent Setup:[/bold cyan]\n")
+
+    if final_scan_path:
+        console.print("  ✅ AI documentation generated from source code!")
+        console.print("  🤖 AI agents can now understand your API.\n")
+    else:
+        console.print("  To enable AI agents, run:")
+        console.print("  [cyan]  e2e init . --api[/cyan]  # Auto-detect API")
+        console.print("  [cyan]  e2e init . --scan ../path/to/your-api[/cyan]\n")
+        console.print("  This generates .agent/ with:")
+        console.print("  • ENDPOINTS.md    • DATA_SCHEMAS.md")
+        console.print("  • AUTH_FLOWS.md  • TEST_PATTERNS.md")
+        console.print("  • ERROR_CODES.md\n")
 
     console.print("[bold]Next steps:[/bold]")
-
-    console.print("  1. Configure services: [cyan]e2e new-service <name> --base-url <url>[/cyan]")
-    console.print("  2. Run tests: [cyan]e2e run --service <name>[/cyan]\n")
-    console.print("[dim]Note: Dependencies will be installed automatically when needed.[/dim]\n")
+    console.print("  1. Configure: e2e new-service <name> --base-url <url>")
+    console.print("  2. Run: e2e run --service <name>\n")
+    console.print("[dim]For AI agents: Just run 'opencode .' and ask to create tests![/dim]\n")
 
 
 # Registration function
