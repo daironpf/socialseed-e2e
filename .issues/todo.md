@@ -949,6 +949,32 @@ ISSUE-CL3: Detectar breaking changes
 
 ---
 
+## 🎯 Implementaciones Completadas
+
+### Módulos Implementados (Febrero 2026):
+
+| Módulo | Archivo | Estado |
+|--------|---------|--------|
+| Endpoint Scanner | `scanner/endpoint_scanner.py` | ✅ Implementado |
+| Schema Scanner | `scanner/schema_scanner.py` | ✅ Implementado |
+| Auth Flow Generator | `scanner/auth_flow_generator.py` | ✅ Implementado |
+| Test Pattern Generator | `scanner/test_pattern_generator.py` | ✅ Implementado |
+| Error Code Scanner | `scanner/error_code_scanner.py` | ✅ Implementado |
+
+### Archivos .agent Generables:
+
+| Archivo | Generator | Estado |
+|--------|-----------|--------|
+| ENDPOINTS.md | `generate_endpoints_doc()` | ✅ Implementado |
+| DATA_SCHEMAS.md | `generate_schemas_doc()` | ✅ Implementado |
+| AUTH_FLOWS.md | `generate_auth_flows()` | ✅ Implementado |
+| TEST_PATTERNS.md | `generate_test_patterns()` | ✅ Implementado |
+| CRUD_TEMPLATES.md | Incluido en test_patterns | ✅ Implementado |
+| SECURITY_TESTS.md | Incluido en test_patterns | ✅ Implementado |
+| ERROR_CODES.md | `generate_error_codes_doc()` | ✅ Implementado |
+
+---
+
 ## 🚀 Comandos del Framework
 
 ```bash
