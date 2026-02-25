@@ -85,27 +85,136 @@ sentence-transformers>=2.2.0
 
 This directory contains context for AI agents working on this project.
 
+## Quick Start for AI Agents
+
+1. **Verify service is running**: Check if the API is accessible
+   ```bash
+   curl http://localhost:8085/actuator/health
+   ```
+
+2. **Configure service URL**: Edit `e2e.conf`
+   ```yaml
+   services:
+     auth-service:
+       base_url: http://localhost:8085
+       health_endpoint: /actuator/health
+   ```
+
+3. **Create service page**: `e2e new-service <service-name>`
+   - This creates: services/<name>/<name>_page.py
+   - And: services/<name>/data_schema.py
+   - And: services/<name>/modules/
+
+4. **Add endpoints to data_schema.py**:
+   ```python
+   ENDPOINTS = {
+       "login": "/auth/login",
+       "register": "/auth/register",
+       "get_user": "/auth/getUserById/{id}",
+   }
+   ```
+
+5. **Implement methods in <name>_page.py**:
+   ```python
+   def login(self, email: str, password: str) -> APIResponse:
+       return self.post("/auth/login", data={"email": email, "password": password})
+   ```
+
+6. **Create test**: `e2e new-test <test-name> --service <service-name>`
+
+7. **Run tests**: `e2e run --service <service-name>`
+
 ## Project Structure
 
 ```
 project/
-├── services/       # Service pages and tests
-├── tests/          # Test files
-├── demos/          # Demo APIs
-├── .e2e/          # E2E framework data
-└── e2e.conf       # E2E configuration
+├── services/           # Service pages and tests
+│   └── auth-service/
+│       ├── auth_service_page.py   # Page class (extends BasePage)
+│       ├── data_schema.py         # DTOs, endpoints, constants
+│       ├── config.py              # Service configuration
+│       └── modules/                # Test modules
+│           └── 01_login.py        # Test files (run function)
+├── tests/              # Additional test files
+├── demos/              # Demo APIs (optional)
+├── .e2e/              # E2E framework data
+├── e2e.conf           # E2E configuration
+└── requirements.txt   # Dependencies
 ```
 
 ## Key Commands
 
+- `e2e init` - Initialize a new E2E project
+- `e2e new-service <name>` - Create new service structure
+- `e2e new-test <name> --service <service>` - Create test module
 - `e2e run` - Run all tests
 - `e2e run --service <name>` - Run specific service tests
+- `e2e lint` - Validate test files
+- `e2e doctor` - Check installation
 - `e2e manifest <path>` - Generate project manifest
-- `e2e discover` - Generate discovery report
+- `e2e deep-scan <path>` - Auto-detect tech stack
+- `e2e observe` - Detect services and ports
 
-## Configuration
+## Configuration (e2e.conf)
 
-Edit `e2e.conf` to configure services and endpoints.
+```yaml
+general:
+  environment: dev
+  timeout: 30000
+  verbose: true
+
+services:
+  auth-service:
+    base_url: http://localhost:8085
+    health_endpoint: /actuator/health
+    timeout: 30000
+```
+
+## Common Patterns
+
+### Service Page (services/<name>/<name>_page.py)
+```python
+from socialseed_e2e.core.base_page import BasePage
+from .data_schema import ENDPOINTS
+
+class AuthServicePage(BasePage):
+    def __init__(self, base_url: str, **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
+        self.access_token = None
+
+    def login(self, email: str, password: str) -> APIResponse:
+        return self.post(ENDPOINTS["login"], data={"email": email, "password": password})
+```
+
+### Test Module (services/<name>/modules/01_login.py)
+```python
+from playwright.sync_api import APIResponse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.auth_service.auth_service_page import AuthServicePage
+
+def run(auth_service: 'AuthServicePage') -> APIResponse:
+    response = auth_service.login("test@example.com", "password123")
+    assert response.ok, f"Login failed: {response.text()}"
+    return response
+```
+
+### DTO with camelCase (data_schema.py)
+```python
+from pydantic import BaseModel, Field
+
+class LoginRequestDTO(BaseModel):
+    model_config = {"populate_by_name": True}
+    
+    email: str
+    password: str = Field(..., alias="password")
+
+# Usage: data.model_dump(by_alias=True)
+```
+
+## Framework Version
+See: https://github.com/daironpf/socialseed-e2e
 """
 
     def __init__(self, target_path: Path, force: bool = False, demo: bool = False):
@@ -207,18 +316,14 @@ def init_command(directory: str, force: bool, demo: bool) -> None:
     """Initialize a new E2E project."""
     target_path = Path(directory).resolve()
 
-    console.print(
-        f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n"
-    )
+    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
 
     manager = InitManager(target_path, force, demo)
     manager.initialize()
 
     console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
     console.print("[bold]Next steps:[/bold]")
-    console.print(
-        "  1. Install dependencies: [cyan]pip install -r requirements.txt[/cyan]"
-    )
+    console.print("  1. Install dependencies: [cyan]pip install -r requirements.txt[/cyan]")
     console.print("  2. Install demo: [cyan]e2e install-demo[/cyan]")
     console.print("  3. Run tests: [cyan]e2e run[/cyan]\n")
 
