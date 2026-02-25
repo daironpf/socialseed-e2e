@@ -35,9 +35,7 @@ def doctor_command(verbose: bool, fix: bool) -> None:
     table.add_column("Status", style="white")
 
     # Check Python version
-    python_version = (
-        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    )
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     table.add_row("Python", python_version, "✓")
 
     # Check Playwright
@@ -46,9 +44,7 @@ def doctor_command(verbose: bool, fix: bool) -> None:
 
         with sync_playwright() as p:
             pw_version = (
-                p.chromium.launcher.version
-                if hasattr(p.chromium, "launcher")
-                else "installed"
+                p.chromium.launcher.version if hasattr(p.chromium, "launcher") else "installed"
             )
             table.add_row("Playwright", pw_version, "✓")
     except ImportError:
@@ -85,7 +81,27 @@ def doctor_command(verbose: bool, fix: bool) -> None:
     else:
         table.add_row("tests/ directory", "Not found", "⚠")
 
-    console.print(table)
+    # Check optional extras
+    extras_table = Table(title="Optional Dependencies")
+    extras_table.add_column("Extra", style="cyan")
+    extras_table.add_column("Status", style="white")
+    extras_table.add_column("Install Command", style="dim")
+
+    optional_deps = {
+        "flask": "pip install flask",
+        "sentence-transformers": "pip install socialseed-e2e[rag]",
+        "grpcio": "pip install socialseed-e2e[grpc]",
+        "textual": "pip install socialseed-e2e[tui]",
+    }
+
+    for extra, install_cmd in optional_deps.items():
+        try:
+            __import__(extra.replace("-", "_"))
+            extras_table.add_row(extra, "✓ Installed", "-")
+        except ImportError:
+            extras_table.add_row(extra, "⚠ Not installed", install_cmd)
+
+    console.print(extras_table)
 
     if verbose:
         console.print("\n[bold cyan]Detailed Information:[/bold cyan]")
