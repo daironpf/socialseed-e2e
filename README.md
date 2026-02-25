@@ -2,52 +2,147 @@
 
 [![PyPI](https://img.shields.io/pypi/v/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
 [![Python](https://img.shields.io/pypi/pyversions/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
-[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://daironpf.github.io/socialseed-e2e/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Downloads](https://img.shields.io/pypi/dm/socialseed-e2e)](https://pypi.org/project/socialseed-e2e/)
-
-## The Problem: Your E2E Tests Are Brittle and Slow
-
-If you're a QA engineer or developer, you know the pain:
-
-- **Fragile tests** that break with every minor UI or API change
-- **Complex setup** requiring multiple tools and configurations  
-- **Slow feedback loops** waiting hours for test suites to run
-- **Unreliable CI/CD** with flaky tests causing false positives
-- **Repetitive boilerplate** writing the same test patterns over and over
-
-## The Solution: Reliable E2E Testing That Scales
-
-SocialSeed E2E is a testing platform designed for **production reliability** with optional AI acceleration.
-
-### Who is this for?
-
-- **QA Engineers** who need stable, maintainable API tests without writing boilerplate
-- **Developers** who want fast feedback on API changes without the overhead
-- **Teams** transitioning from experimental AI testing to a production-ready solution
-
-### Why we built this?
-
-Most AI-driven testing frameworks promise the world but deliver unreliable, flaky tests. We wanted something different:
-
-1. **Reliability First** - Tests that pass when they should, fail when they must
-2. **Optional AI Acceleration** - Use AI to generate tests faster when you want it, but never required
-3. **Developer Experience** - CLI that gets out of your way and lets you focus on testing
-4. **Production Ready** - Built for CI/CD pipelines from day one
-
-> **"Write tests that survive your API changing, not tests that break on every update."**
-
-📚 **[Full Documentation](https://daironpf.github.io/socialseed-e2e/)**
 
 ---
 
-## 🚀 Quick Start
+## 🤖 AI Agent First - Start Here!
 
-Get up and running in under 5 minutes with this minimal setup:
+This section is for AI agents. If you're using OpenCode, Claude, or any AI to create tests, **START HERE**:
 
-### 1. Install
+### 1. Install Framework
 
 ```bash
+pip install socialseed-e2e
+```
+
+### 2. Initialize Project with Your API
+
+```bash
+# Create test directory
+mkdir api-tests && cd api-tests
+
+# Auto-detect your API and generate AI documentation
+e2e init . --api
+```
+
+**That's it!** Now run your AI agent:
+
+```bash
+opencode .
+```
+
+### 3. Tell the AI What to Do
+
+Example prompts for AI agents:
+
+```
+"Create tests for the auth service login endpoint"
+"Test the user registration flow"
+"Generate tests for all CRUD operations"
+"Test error handling for invalid inputs"
+```
+
+### What AI Agents Need to Know
+
+When AI agent starts, it will find in `.agent/`:
+
+| File | Description |
+|------|-------------|
+| `ENDPOINTS.md` | All API endpoints with methods, paths |
+| `DATA_SCHEMAS.md` | DTOs, models, request/response formats |
+| `AUTH_FLOWS.md` | Login, register, password reset flows |
+| `TEST_PATTERNS.md` | Test templates ready to use |
+| `ERROR_CODES.md` | Error codes and messages |
+
+### Multi-Service Projects
+
+For projects with multiple microservices:
+
+```bash
+# Each service gets its own documentation
+e2e init tests/auth --scan ../services/auth-service/src
+e2e init tests/user --scan ../services/user-service/src
+e2e init tests/payment --scan ../services/payment-service/src
+```
+
+### Example: Full AI Workflow
+
+```bash
+# 1. Install
+pip install socialseed-e2e
+
+# 2. Setup
+mkdir tests && cd tests
+e2e init . --api
+
+# 3. Run AI
+opencode .
+
+# 4. AI will:
+#    - Read .agent/ to understand your API
+#    - Read e2e.conf for service URLs
+#    - Create tests in services/<name>/modules/
+#    - Run tests with e2e run --service <name>
+```
+
+### Troubleshooting AI Agents
+
+**Problem**: AI generates wrong endpoints
+**Solution**: Update documentation:
+```bash
+e2e init . --scan ../path/to/your-api
+```
+
+**Problem**: AI can't connect to services
+**Solution**: Check `e2e.conf` has correct URLs:
+```yaml
+services:
+  auth-service:
+    base_url: http://localhost:8085
+```
+
+**Problem**: AI doesn't understand the API
+**Solution**: Ensure `.agent/` docs are generated:
+```bash
+e2e init . --api
+```
+
+---
+
+## 📚 For Developers - Manual Setup
+
+If you prefer manual configuration instead of AI:
+
+### Quick Start
+
+```bash
+# Install
+pip install socialseed-e2e
+
+# Initialize
+e2e init my-project
+cd my-project
+
+# Create service
+e2e new-service my-api --base-url http://localhost:8080
+
+# Run tests
+e2e run
+```
+
+### Configuration (e2e.conf)
+
+```yaml
+services:
+  my-api:
+    base_url: http://localhost:8080
+    health_endpoint: /health
+```
+
+---
+
+## The Problem
 pip install socialseed-e2e
 ```
 
@@ -182,104 +277,6 @@ Test Execution Summary
 demo-api: 1/1 passed (100.0%)
 
 ✅ All tests passed!
-
----
-
-## 🤖 AI Agent Integration
-
-This section explains how AI agents can work with your project to generate tests automatically.
-
-### Quick Start for AI Agents
-
-```bash
-# 1. Initialize project with auto-detection
-e2e init my-tests --api
-
-# OR specify the path manually
-e2e init my-tests --scan ../path/to/your-api
-
-# 2. That's it! Now run your AI agent
-opencode .
-# Just ask: "Create tests for my auth service"
-```
-
-### For Projects with Multiple Services
-
-If your application has multiple services (microservices architecture):
-
-```bash
-# Scan each service independently
-e2e init tests/auth-service --scan ../services/auth-service/src
-e2e init tests/user-service --scan ../services/user-service/src
-e2e init tests/payment-service --scan ../services/payment-service/src
-```
-
-Each service gets its own `.agent/` documentation.
-
-### What AI Agents Need to Know
-
-When an AI agent starts working on your project, it should:
-
-1. **Read `.agent/` directory first** - Contains all API documentation
-2. **Check `e2e.conf`** - Contains service URLs and configuration
-3. **Read existing tests in `services/`** - Understand testing patterns
-4. **Use `e2e run --service <name>`** - Run tests for specific services
-
-### Configuration Example (e2e.conf)
-
-```yaml
-services:
-  auth-service:
-    base_url: http://localhost:8085
-    health_endpoint: /actuator/health
-    timeout: 30000
-  
-  user-service:
-    base_url: http://localhost:8086
-    health_endpoint: /actuator/health
-  
-  payment-service:
-    base_url: http://localhost:8087
-    health_endpoint: /health
-```
-
-### Commands for AI Agents
-
-| Command | Description |
-|---------|-------------|
-| `e2e init . --scan <path>` | Generate .agent docs from source |
-| `e2e new-service <name>` | Create new service structure |
-| `e2e new-test <name> --service <svc>` | Create test module |
-| `e2e run --service <name>` | Run tests for service |
-| `e2e lint` | Validate test files |
-| `e2e doctor` | Check setup |
-
-### Example: AI Agent Workflow
-
-```
-1. AI reads: .agent/ENDPOINTS.md → knows all API endpoints
-2. AI reads: .agent/DATA_SCHEMAS.md → knows request/response formats
-3. AI reads: .agent/AUTH_FLOWS.md → knows authentication
-4. AI creates: services/auth-service/modules/01_login.py
-5. AI runs: e2e run --service auth-service
-6. AI sees: Test results and can fix failures
-```
-
-### Troubleshooting
-
-**Problem**: AI generates incorrect endpoints
-**Solution**: Ensure `.agent/ENDPOINTS.md` is up to date with `e2e init . --scan <path>`
-
-**Problem**: Tests fail with connection errors
-**Solution**: Verify services are running and URLs are correct in `e2e.conf`
-
-**Problem**: AI doesn't understand the API
-**Solution**: Run `e2e deep-scan <path>` to detect tech stack and auto-configure
-
----
-```
-
-**Note:** If tests fail with "Connection refused", ensure your API server is running before executing `e2e run`.
 
 ---
 
