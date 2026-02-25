@@ -218,6 +218,11 @@ class EnvironmentDetector:
         config["env_vars"].extend(docker_result.get("env_vars", []))
         config["config_files"].extend(docker_result.get("config_files", []))
 
+        # Check Dockerfile for EXPOSE ports
+        dockerfile_result = self._parse_dockerfile(project_root)
+        config["ports"].extend(dockerfile_result.get("ports", []))
+        config["config_files"].extend(dockerfile_result.get("config_files", []))
+
         # Check .env files
         env_result = self._parse_env_files(project_root)
         config["env_vars"].extend(env_result.get("env_vars", []))
@@ -252,11 +257,7 @@ class EnvironmentDetector:
             dir_parts = [p.lower() for p in py_file.parts]
 
             # Skip __pycache__ and venv directories
-            if (
-                "__pycache__" in dir_parts
-                or "venv" in dir_parts
-                or ".venv" in dir_parts
-            ):
+            if "__pycache__" in dir_parts or "venv" in dir_parts or ".venv" in dir_parts:
                 continue
 
             # Skip test files (files named *test*.py or *tests*.py)
@@ -301,9 +302,7 @@ class EnvironmentDetector:
 
         for docker_file in docker_files:
             if docker_file.exists():
-                result["config_files"].append(
-                    str(docker_file.relative_to(project_root))
-                )
+                result["config_files"].append(str(docker_file.relative_to(project_root)))
 
                 try:
                     import yaml
@@ -340,9 +339,7 @@ class EnvironmentDetector:
                                         result["env_vars"].append(
                                             EnvironmentVariable(
                                                 name=key,
-                                                default_value=str(value)
-                                                if value
-                                                else None,
+                                                default_value=str(value) if value else None,
                                             )
                                         )
                                 elif isinstance(env, list):
@@ -355,6 +352,51 @@ class EnvironmentDetector:
                                                     default_value=value or None,
                                                 )
                                             )
+
+                except Exception:
+                    pass
+
+        return result
+
+    def _parse_dockerfile(self, project_root: Path) -> Dict[str, Any]:
+        """Parse Dockerfile for EXPOSE ports."""
+        result = {"ports": [], "config_files": []}
+
+        dockerfile_names = [
+            "Dockerfile",
+            "Dockerfile.dev",
+            "Dockerfile.prod",
+            "Dockerfile.local",
+        ]
+
+        for dockerfile_name in dockerfile_names:
+            dockerfile_path = project_root / dockerfile_name
+            if dockerfile_path.exists():
+                result["config_files"].append(str(dockerfile_path.relative_to(project_root)))
+
+                try:
+                    content = dockerfile_path.read_text()
+
+                    expose_pattern = r"EXPOSE\s+(\d+)(?:\s+(\d+))?"
+                    for match in re.finditer(expose_pattern, content):
+                        port = int(match.group(1))
+                        result["ports"].append(
+                            PortConfig(
+                                port=port,
+                                protocol="http",
+                                description=f"Dockerfile EXPOSE: {dockerfile_name}",
+                            )
+                        )
+
+                        if match.group(2):
+                            port2 = int(match.group(2))
+                            result["ports"].append(
+                                PortConfig(
+                                    port=port2,
+                                    protocol="http",
+                                    description=f"Dockerfile EXPOSE: {dockerfile_name}",
+                                )
+                            )
 
                 except Exception:
                     pass
@@ -447,9 +489,7 @@ class EnvironmentDetector:
 
         for config_file in config_files:
             if config_file.exists():
-                result["config_files"].append(
-                    str(config_file.relative_to(project_root))
-                )
+                result["config_files"].append(str(config_file.relative_to(project_root)))
 
         return result
 
@@ -511,9 +551,7 @@ class DeepScanner:
 
         return result
 
-    def _identify_services(
-        self, frameworks: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _identify_services(self, frameworks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Identify distinct services in the project."""
         services = []
 
@@ -620,9 +658,7 @@ class DeepScanner:
                     "aspnet_core": 5000,
                 }
                 if framework in default_ports:
-                    recommendations["base_url"] = (
-                        f"http://localhost:{default_ports[framework]}"
-                    )
+                    recommendations["base_url"] = f"http://localhost:{default_ports[framework]}"
 
         # Suggest health endpoint by framework
         if frameworks:

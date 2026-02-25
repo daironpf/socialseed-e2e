@@ -72,6 +72,7 @@ class ServiceConfig:
     auto_start: bool = True
     required: bool = True
     endpoints: Dict[str, str] = field(default_factory=dict)
+    detected_ports: List[int] = field(default_factory=list)
 
 
 @dataclass
@@ -296,9 +297,7 @@ class ApiConfigLoader:
         # Write general section
         if hasattr(config, "environment"):
             content_lines.append("general:")
-            content_lines.append(
-                f"  environment: {getattr(config, 'environment', 'dev')}"
-            )
+            content_lines.append(f"  environment: {getattr(config, 'environment', 'dev')}")
             content_lines.append(f"  timeout: {getattr(config, 'timeout', 30000)}")
             content_lines.append(f"  verbose: {getattr(config, 'verbose', True)}")
             content_lines.append(
@@ -416,9 +415,7 @@ class ApiConfigLoader:
         )
 
     @classmethod
-    def create_default_config(
-        cls, path: Union[str, Path], overwrite: bool = False
-    ) -> str:
+    def create_default_config(cls, path: Union[str, Path], overwrite: bool = False) -> str:
         """Create a default e2e.conf configuration file.
 
         Creates a default configuration file at the specified path using
@@ -534,9 +531,7 @@ class ApiConfigLoader:
                     continue
 
                 if "base_url" not in service_data:
-                    errors.append(
-                        f"Service '{service_name}' missing required field: base_url"
-                    )
+                    errors.append(f"Service '{service_name}' missing required field: base_url")
                 elif not service_data.get("base_url"):
                     warnings.append(f"Service '{service_name}' has empty base_url")
 
@@ -549,15 +544,11 @@ class ApiConfigLoader:
                                 f"Service '{service_name}' port must be between 1 and 65535"
                             )
                     except (ValueError, TypeError):
-                        errors.append(
-                            f"Service '{service_name}' port must be a valid integer"
-                        )
+                        errors.append(f"Service '{service_name}' port must be a valid integer")
 
         # Raise error if there are validation errors
         if errors:
-            raise ConfigError(
-                "Configuration validation failed:\n  - " + "\n  - ".join(errors)
-            )
+            raise ConfigError("Configuration validation failed:\n  - " + "\n  - ".join(errors))
 
         # Print warnings if strict mode
         if strict and warnings:
@@ -604,19 +595,26 @@ class ApiConfigLoader:
         for service_name, service_data in services_data.items():
             # Normalize service name (convert hyphens to underscores)
             normalized_name = normalize_service_name(service_name)
+
+            # Parse detected_ports (list of alternative ports to try)
+            detected_ports_list = []
+            if "detected_ports" in service_data:
+                ports_data = service_data["detected_ports"]
+                if isinstance(ports_data, list):
+                    detected_ports_list = [int(p) for p in ports_data if str(p).isdigit()]
+
             config.services[normalized_name] = ServiceConfig(
                 name=service_data.get("name", service_name),
                 base_url=service_data.get("base_url", ""),
                 health_endpoint=service_data.get("health_endpoint", "/actuator/health"),
                 port=service_data.get("port", 8080),
-                maven_module=service_data.get(
-                    "maven_module", f"services/{service_name}"
-                ),
+                maven_module=service_data.get("maven_module", f"services/{service_name}"),
                 timeout=service_data.get("timeout", config.timeout),
                 headers=service_data.get("headers", {}),
                 auto_start=service_data.get("auto_start", True),
                 required=service_data.get("required", True),
                 endpoints=service_data.get("endpoints", {}),
+                detected_ports=detected_ports_list,
             )
 
         # Databases
@@ -678,9 +676,7 @@ class ApiConfigLoader:
         return config
 
     @classmethod
-    def get_service_url(
-        cls, service_name: str, use_gateway: Optional[bool] = None
-    ) -> str:
+    def get_service_url(cls, service_name: str, use_gateway: Optional[bool] = None) -> str:
         """
         Get the effective URL for a service.
 
@@ -702,9 +698,7 @@ class ApiConfigLoader:
             raise ValueError(f"Service '{service_name}' not found in configuration")
 
         # Determine if we should use gateway
-        should_use_gateway = (
-            use_gateway if use_gateway is not None else config.api_gateway.enabled
-        )
+        should_use_gateway = use_gateway if use_gateway is not None else config.api_gateway.enabled
 
         if should_use_gateway and config.api_gateway.url:
             gateway_url = config.api_gateway.url.rstrip("/")

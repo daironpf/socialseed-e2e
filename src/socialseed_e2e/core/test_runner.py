@@ -7,12 +7,14 @@ import importlib
 import importlib.util
 import json
 import re
+import socket
 import sys
 import time
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type
+from urllib.parse import urlparse
 
 from playwright.sync_api import sync_playwright
 from rich.console import Console
@@ -528,11 +530,7 @@ def create_page_class(service_name: str, service_path: Path) -> Type[BasePage]:
         # Find the Page class (should be the one inheriting from BasePage)
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if (
-                isinstance(attr, type)
-                and issubclass(attr, BasePage)
-                and attr is not BasePage
-            ):
+            if isinstance(attr, type) and issubclass(attr, BasePage) and attr is not BasePage:
                 return attr
 
         # This should not happen if validation passed, but handle it just in case
@@ -761,6 +759,65 @@ def execute_single_test(
         return result
 
 
+def _try_connect_port(host: str, port: int, timeout: float = 1.0) -> bool:
+    """Try to connect to a specific host:port.
+
+    Args:
+        host: Hostname or IP address
+        port: Port number
+        timeout: Connection timeout in seconds
+
+    Returns:
+        True if connection successful, False otherwise
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+    try:
+        sock.connect((host, port))
+        sock.close()
+        return True
+    except (socket.error, socket.timeout, OSError):
+        return False
+
+
+def _find_working_port(base_url: str, detected_ports: List[int], console: Console) -> str:
+    """Find the working port by trying the base_url and detected_ports.
+
+    Args:
+        base_url: The configured base URL
+        detected_ports: List of alternative ports to try
+        console: Rich console for output
+
+    Returns:
+        The working base URL
+    """
+    parsed = urlparse(base_url)
+    host = parsed.hostname or "localhost"
+    primary_port = parsed.port or 80
+
+    # Try primary port first
+    if _try_connect_port(host, primary_port):
+        return base_url
+
+    console.print(f"[dim]Primary port {primary_port} not reachable, trying alternatives...[/dim]")
+
+    # Try detected ports (avoiding duplicates with primary)
+    ports_to_try = [p for p in detected_ports if p != primary_port]
+
+    for port in ports_to_try:
+        console.print(f"[dim]Trying port {port}...[/dim]")
+        if _try_connect_port(host, port):
+            # Rebuild the URL with the working port
+            scheme = parsed.scheme or "http"
+            new_url = f"{scheme}://{host}:{port}"
+            console.print(f"[green]✓ Found working port: {port}[/green]")
+            return new_url
+
+    # If no port works, return original URL
+    console.print(f"[yellow]⚠ No working port found, using configured: {base_url}[/yellow]")
+    return base_url
+
+
 def run_service_tests(
     service_name: str,
     service_config: Optional[Any],
@@ -805,9 +862,7 @@ def run_service_tests(
         test_modules = discover_test_modules(service_path)
 
     if not test_modules:
-        console.print(
-            f"[yellow]No test modules found for service '{service_name}'[/yellow]"
-        )
+        console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
         return suite_result
 
     # Advanced Organization: Filtering and Sorting
@@ -823,29 +878,66 @@ def run_service_tests(
                 self.run = load_test_module(path)
 
         stubs = [ModuleStub(p) for p in test_modules]
-        filtered_stubs = TestOrganizationManager.filter_tests(
-            stubs, include_set, exclude_set
-        )
+        filtered_stubs = TestOrganizationManager.filter_tests(stubs, include_set, exclude_set)
         test_modules = [s.path for s in filtered_stubs]
 
         # Sort by dependencies and priority
-        test_modules = TestOrganizationManager.sort_tests(
-            test_modules, load_test_module
-        )
+        test_modules = TestOrganizationManager.sort_tests(test_modules, load_test_module)
 
     if not test_modules:
         if include_tags or exclude_tags:
-            console.print(
-                f"[yellow]No tests matched tags for service '{service_name}'[/yellow]"
-            )
+            console.print(f"[yellow]No tests matched tags for service '{service_name}'[/yellow]")
         else:
-            console.print(
-                f"[yellow]No test modules found for service '{service_name}'[/yellow]"
-            )
+            console.print(f"[yellow]No test modules found for service '{service_name}'[/yellow]")
         return suite_result
 
     # Get base URL
     base_url = service_config.base_url if service_config else "http://localhost:8080"
+
+    # Try to find working port - either from config or auto-detected
+    detected_ports = []
+
+    # First try to get from service config
+    if (
+        service_config
+        and hasattr(service_config, "detected_ports")
+        and service_config.detected_ports
+    ):
+        detected_ports = list(service_config.detected_ports)
+    # Auto-detect ports if not configured in e2e.conf
+    else:
+        # Try multiple paths to find source code with port configuration
+        paths_to_check = [
+            service_path,
+            service_path.parent / ".." / "services" / service_name,
+            service_path.parent / ".." / service_name,
+            Path("..") / "services" / service_name,
+            Path("..") / service_name,
+        ]
+
+        for scan_path in paths_to_check:
+            if scan_path.exists() and scan_path.is_dir():
+                try:
+                    from socialseed_e2e.project_manifest.deep_scanner import EnvironmentDetector
+
+                    env_detector = EnvironmentDetector()
+                    env_config = env_detector.detect(scan_path)
+                    for port_config in env_config.get("ports", []):
+                        if hasattr(port_config, "port"):
+                            detected_ports.append(port_config.port)
+                    # If we found ports, stop looking
+                    if detected_ports:
+                        break
+                except Exception:
+                    continue
+
+        # Remove duplicates while preserving order
+        if detected_ports:
+            seen = set()
+            detected_ports = [x for x in detected_ports if not (x in seen or seen.add(x))]
+
+    if detected_ports:
+        base_url = _find_working_port(base_url, detected_ports, console)
 
     # Create page class (validation already passed, so this will not fail)
     PageClass = create_page_class(service_name, service_path)
@@ -871,9 +963,7 @@ def run_service_tests(
 
                 if result.status == "passed":
                     suite_result.passed += 1
-                    console.print(
-                        f"  [green]✓[/green] {result.name} ({result.duration_ms:.0f}ms)"
-                    )
+                    console.print(f"  [green]✓[/green] {result.name} ({result.duration_ms:.0f}ms)")
                 elif result.status == "failed":
                     suite_result.failed += 1
                     error_summary = f"{result.name} - {result.error_message[:50]}"
@@ -927,9 +1017,7 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
         try:
             # Try to format as JSON
             payload_json = (
-                json.loads(request_payload)
-                if isinstance(request_payload, str)
-                else request_payload
+                json.loads(request_payload) if isinstance(request_payload, str) else request_payload
             )
             payload_str = json.dumps(payload_json, indent=2)
             console.print(Syntax(payload_str, "json", theme="monokai"))
@@ -938,9 +1026,7 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
 
     # Response Status
     response_status = debug_info.get("response_status")
-    status_color = (
-        "green" if response_status and 200 <= response_status < 300 else "red"
-    )
+    status_color = "green" if response_status and 200 <= response_status < 300 else "red"
     console.print(
         f"\n[bold cyan]Response Status:[/bold cyan] [{status_color}]{response_status}[/{status_color}]"
     )
@@ -952,9 +1038,7 @@ def _print_debug_info(debug_info: Dict[str, Any]) -> None:
         try:
             # Try to format as JSON
             body_json = (
-                json.loads(response_body)
-                if isinstance(response_body, str)
-                else response_body
+                json.loads(response_body) if isinstance(response_body, str) else response_body
             )
             body_str = json.dumps(body_json, indent=2)
             console.print(Syntax(body_str, "json", theme="monokai"))
@@ -1058,9 +1142,7 @@ def run_all_tests(
         )
 
     # Print services summary
-    configured_services = [
-        svc for svc in normalized_services if config and svc in config.services
-    ]
+    configured_services = [svc for svc in normalized_services if config and svc in config.services]
     console.print("\n[bold]Services Summary:[/bold]")
     console.print(f"   Detected:    [{', '.join(services)}]")
     if config:
@@ -1076,9 +1158,7 @@ def run_all_tests(
 
         # Skip unconfigured services
         if config is None or normalized_name not in config.services:
-            console.print(
-                f"[dim]Skipping '{service_name}' - not configured in e2e.conf[/dim]"
-            )
+            console.print(f"[dim]Skipping '{service_name}' - not configured in e2e.conf[/dim]")
             continue
 
         service_config = config.services.get(normalized_name)
@@ -1130,13 +1210,9 @@ def run_all_tests(
             summary = report.summary
             console.print("\n[dim]Trace Summary:[/dim]")
             console.print(f"  Total Tests: {summary.get('total_tests', 0)}")
-            console.print(
-                f"  Total Interactions: {summary.get('total_interactions', 0)}"
-            )
+            console.print(f"  Total Interactions: {summary.get('total_interactions', 0)}")
             console.print(f"  Total Components: {summary.get('total_components', 0)}")
-            console.print(
-                f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}"
-            )
+            console.print(f"  Total Logic Branches: {summary.get('total_logic_branches', 0)}")
 
     except ImportError:
         pass  # Traceability not available
@@ -1170,9 +1246,7 @@ def print_summary(results: Dict[str, TestSuiteResult]) -> bool:
         total_errors += suite_result.errors
         total_duration_ms += suite_result.total_duration_ms
 
-        status_color = (
-            "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
-        )
+        status_color = "green" if suite_result.failed == 0 and suite_result.errors == 0 else "red"
         console.print(
             f"\n[{status_color}]{service_name}[/{status_color}]: "
             f"{suite_result.passed}/{suite_result.total} passed "
