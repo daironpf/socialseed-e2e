@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [0.1.6] - 2026-03-01
+
+### Added
 - Auto-detect ports from Dockerfile, application.yml, docker-compose.yml
 - Try multiple detected ports until one connects successfully
 
@@ -123,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Features |
 |---------|------|--------------|
+| 0.1.6 | 2026-03-01 | Auto-detect ports, Port connection retry |
 | 0.1.5 | 2026-02-17 | Modular CLI, 47 commands, lazy loading |
 | 0.1.4 | 2026-02-10 | 10 new modules, demo API |
 | 0.1.3 | 2026-02-05 | Security, Chaos, Self-Healing |
@@ -133,6 +142,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## Migration Guides
+
+### Upgrading from 0.1.x to 0.1.6
+
+No breaking changes. Run `e2e doctor` to verify installation.
 
 ### Upgrading from 0.1.x to 0.1.5
 
@@ -148,7 +161,8 @@ New features added:
 - Test organization with tags requires updated module structure
 - Run `e2e lint` to validate existing tests
 
-[Unreleased]: https://github.com/daironpf/socialseed-e2e/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/daironpf/socialseed-e2e/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/daironpf/socialseed-e2e/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/daironpf/socialseed-e2e/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/daironpf/socialseed-e2e/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/daironpf/socialseed-e2e/compare/v0.1.2...v0.1.3

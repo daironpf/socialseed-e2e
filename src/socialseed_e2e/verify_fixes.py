@@ -19,10 +19,10 @@ def verify_fixes():
     version_file = base_path / "__version__.py"
     if version_file.exists():
         content = version_file.read_text()
-        if '"0.1.5"' in content or "'0.1.5'" in content:
-            print("✓ Version bumped to 0.1.5")
+        if '"0.1.6"' in content or "'0.1.6'" in content:
+            print("✓ Version bumped to 0.1.6")
         else:
-            errors.append("Version not bumped to 0.1.5")
+            errors.append("Version not bumped to 0.1.6")
     else:
         errors.append("Version file not found")
 

@@ -626,7 +626,7 @@ Show version.
 
 ```bash
 e2e --version
-# Output: socialseed-e2e, version 0.1.5
+# Output: socialseed-e2e, version 0.1.6
 ```
 
 ---
