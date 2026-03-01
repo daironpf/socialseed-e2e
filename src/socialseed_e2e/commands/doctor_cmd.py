@@ -101,6 +101,7 @@ def doctor_command(verbose: bool, fix: bool) -> None:
         except ImportError:
             extras_table.add_row(extra, "⚠ Not installed", install_cmd)
 
+    console.print(table)
     console.print(extras_table)
 
     if verbose:
