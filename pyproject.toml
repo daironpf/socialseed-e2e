@@ -73,6 +73,13 @@ dashboard = [
     "uvicorn[standard]>=0.24.0",
     "python-socketio[asyncio]>=5.10.0",
 ]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-autobuild>=2024.4.16",
+    "sphinx-rtd-theme>=2.0.0",
+    "myst-parser>=3.0.0",
+    "sphinx-autoapi>=3.0.0",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
