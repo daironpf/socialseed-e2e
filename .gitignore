@@ -1,3 +1,7 @@
+# Ignore all dot-folders except .github (CI/CD configs)
+.*
+!.github/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
