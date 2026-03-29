@@ -156,10 +156,15 @@ class WatchCommand:
     - Execute watch workflow
     """
 
-    def __init__(self):
-        """Initialize watch command."""
+    def __init__(self, sync_index: bool = False):
+        """Initialize watch command.
+        
+        Args:
+            sync_index: Whether to also sync vector index
+        """
         self.service: Optional[WatchService] = None
         self.presenter = WatchPresenter()
+        self.sync_index = sync_index
 
     def execute(self, directory: str) -> int:
         """Execute watch command.
@@ -185,8 +190,12 @@ class WatchCommand:
                 service_name, self.service.manifest_path
             )
 
-            # Start watching
-            self.service.start_watching(blocking=True)
+            if self.sync_index:
+                console.print("   [cyan]Vector index sync: enabled[/cyan]\n")
+                self._start_with_index_sync()
+            else:
+                # Start watching
+                self.service.start_watching(blocking=True)
 
             return 0
 
@@ -202,11 +211,51 @@ class WatchCommand:
             self.presenter.display_error(str(e))
             return 1
 
+    def _start_with_index_sync(self) -> None:
+        """Start watcher with vector index synchronization."""
+        from socialseed_e2e.project_manifest import (
+            ManifestGenerator,
+            VectorIndexSyncManager,
+        )
+
+        if not self.service:
+            return
+
+        manifest_path = self.service.manifest_path
+        manifest_dir = manifest_path.parent
+        project_root = manifest_dir
+
+        generator = ManifestGenerator(
+            project_root=project_root,
+            manifest_path=manifest_path,
+        )
+
+        sync_manager = VectorIndexSyncManager(project_root)
+
+        def on_update():
+            console.print("\n[cyan]🔄 Manifest changed, regenerating...[/cyan]")
+            generator.generate()
+            sync_manager.check_and_update()
+            console.print("[green]✅ Updated manifest and vector index[/green]\n")
+
+        sync_manager.add_update_callback(on_update)
+
+        console.print("👁️  Starting watcher with vector index sync...\n")
+        from socialseed_e2e.project_manifest import SmartSyncManager
+
+        manager = SmartSyncManager(generator, debounce_seconds=2.0)
+        manager.start_watching(blocking=True)
+
 
 # CLI command definition
 @click.command(name="watch")
 @click.argument("directory", default=".", required=False)
-def watch_command(directory: str) -> None:
+@click.option(
+    "--sync-index",
+    is_flag=True,
+    help="Also synchronize the vector index for semantic search",
+)
+def watch_command(directory: str, sync_index: bool) -> None:
     """Watch project files and auto-update manifest.
 
     Monitors source files for changes and automatically updates
@@ -215,8 +264,9 @@ def watch_command(directory: str) -> None:
     Examples:
         e2e watch auth-service         # Watch auth service for changes
         e2e watch user-service         # Watch user service for changes
+        e2e watch auth-service --sync-index  # Also sync vector index
     """
-    command = WatchCommand()
+    command = WatchCommand(sync_index=sync_index)
     exit_code = command.execute(directory)
     sys.exit(exit_code)
 
