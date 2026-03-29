@@ -107,6 +107,27 @@ class TechStackDetector:
             ],
             "language": "csharp",
         },
+        # Ruby frameworks
+        "rails": {
+            "patterns": [
+                r"class\s+\w+\s+<\s+ApplicationRecord",
+                r"class\s+\w+\s+<\s+ActionController::Base",
+                r"class\s+\w+\s+<\s+ActionController::API",
+                r"rails\s+new",
+                r"bundle\s+install",
+                r"config\.routes\.draw",
+            ],
+            "language": "ruby",
+        },
+        "sinatra": {
+            "patterns": [
+                r"require\s+['\"]sinatra['\"]",
+                r"class\s+\w+\s+<\s+Sinatra::Base",
+                r"get\s+['\"]\/",
+                r"post\s+['\"]\/",
+            ],
+            "language": "ruby",
+        },
     }
 
     def detect(self, project_root: Path) -> List[Dict[str, Any]]:
@@ -656,6 +677,8 @@ class DeepScanner:
                     "nestjs": 3000,
                     "gin": 8080,
                     "aspnet_core": 5000,
+                    "rails": 3000,
+                    "sinatra": 4567,
                 }
                 if framework in default_ports:
                     recommendations["base_url"] = f"http://localhost:{default_ports[framework]}"
@@ -666,6 +689,8 @@ class DeepScanner:
             health_endpoints = {
                 "spring": "/actuator/health",
                 "spring_boot": "/actuator/health",
+                "rails": "/health",
+                "sinatra": "/health",
             }
             if framework in health_endpoints:
                 recommendations["health_endpoint"] = health_endpoints[framework]
@@ -687,6 +712,8 @@ class DeepScanner:
                 "spring_boot": ["./mvnw spring-boot:run"],
                 "express": ["npm install", "npm run dev"],
                 "nestjs": ["npm install", "npm run start:dev"],
+                "rails": ["bundle install", "rails server"],
+                "sinatra": ["bundle install", "ruby app.rb"],
             }
             if framework in setup_commands:
                 recommendations["setup_commands"] = setup_commands[framework]
