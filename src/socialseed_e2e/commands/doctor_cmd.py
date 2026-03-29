@@ -26,6 +26,8 @@ def doctor_command(verbose: bool, fix: bool) -> None:
         verbose: Show detailed output
         fix: Attempt automatic fixes
     """
+    from socialseed_e2e.core.config_migration import ConfigMigrator, migrate_config_if_needed
+    
     console.print("\n🏥 [bold]socialseed-e2e Doctor[/bold]\n")
 
     # Create status table
@@ -64,6 +66,22 @@ def doctor_command(verbose: bool, fix: bool) -> None:
     config_path = Path.cwd() / "e2e.conf"
     if config_path.exists():
         table.add_row("Configuration", "e2e.conf found", "✓")
+        
+        migrator = ConfigMigrator()
+        migration_info = migrator.get_migration_info(config_path)
+        
+        if migration_info.get("needs_migration"):
+            table.add_row(
+                "Config Version", 
+                f"{migration_info.get('current_version', 'unknown')} → {migration_info.get('target_version', 'unknown')}", 
+                "⚠ Needs migration"
+            )
+            if fix:
+                console.print("\n🔄 [cyan]Migrating configuration...[/cyan]")
+                migrated = migrator.migrate(config_path)
+                console.print(f"  ✅ Migrated to version {migrated.get('_e2e_version', 'unknown')}")
+        else:
+            table.add_row("Config Version", migration_info.get("current_version", "1.0.0"), "✓")
     else:
         table.add_row("Configuration", "Not found", "⚠")
 
