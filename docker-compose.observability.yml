@@ -1,0 +1,24 @@
+services:
+  # SocialSeed-E2E Control Plane
+  e2e-framework:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: e2e-framework
+    ports:
+      - "5173:5173" # Dashboard Vue.js
+      - "8501:8501" # Dashboard Streamlit (Legacy)
+      - "8181:8181" # Observability Engine
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app/src
+      - AUTH_SERVICE_URL=http://auth-service:8085/actuator/health
+      - SOCIALUSER_SERVICE_URL=http://socialuser-service:8090/actuator/health
+    networks:
+      - socialseed_net
+
+networks:
+  socialseed_net:
+    external: true
