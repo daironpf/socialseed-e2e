@@ -82,6 +82,38 @@ class ReplayConfig(BaseModel):
     speed: str = "realtime"
     stop_on_error: bool = False
     iterations: int = 1
+    compare_semantically: bool = True
+    baseline_url: Optional[str] = None
+    tolerance_percent: float = 5.0
+
+
+class SemanticComparisonResult(BaseModel):
+    """Result of semantic comparison between two responses."""
+
+    request_id: str
+    method: str
+    url: str
+    baseline_status: int
+    target_status: int
+    status_match: bool
+    baseline_body_hash: Optional[str] = None
+    target_body_hash: Optional[str] = None
+    body_similar: bool
+    similarity_score: float
+    differences: List[str] = Field(default_factory=list)
+    severity: str = "none"
+
+
+class ReplayComparisonReport(BaseModel):
+    """Report of replay comparison between baseline and target."""
+
+    total_requests: int
+    successful_replays: int
+    failed_replays: int
+    comparisons: List[SemanticComparisonResult] = Field(default_factory=list)
+    critical_issues: int = 0
+    warning_issues: int = 0
+    info_issues: int = 0
 
 
 class FuzzingConfig(BaseModel):

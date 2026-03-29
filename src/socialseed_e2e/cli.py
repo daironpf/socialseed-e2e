@@ -5540,22 +5540,35 @@ def shadow_generate(
 @click.option(
     "--dry-run", is_flag=True, help="Show what would be replayed without executing"
 )
+@click.option(
+    "--compare/--no-compare",
+    default=True,
+    help="Enable semantic comparison between baseline and target",
+)
+@click.option("--baseline-url", "-b", help="Baseline URL for semantic comparison")
+@click.option(
+    "--tolerance", "-t", type=float, default=5.0, help="Tolerance percentage for body similarity"
+)
 def shadow_replay(
     capture_file: str,
     target_url: Optional[str],
     speed: str,
     stop_on_error: bool,
     dry_run: bool,
+    compare: bool,
+    baseline_url: Optional[str],
+    tolerance: float,
 ):
-    """Replay captured traffic session.
+    """Replay captured traffic session with optional semantic comparison.
 
     Replays a captured API session against a target API,
     useful for load testing or regression testing.
+    Use --baseline-url to compare responses semantically.
 
     Examples:
         e2e shadow replay capture.json
         e2e shadow replay capture.json -u http://localhost:8000
-        e2e shadow replay capture.json --speed realtime --stop-on-error
+        e2e shadow replay capture.json --baseline-url http://production/api
     """
     capture_path = Path(capture_file)
 
@@ -5570,13 +5583,21 @@ def shadow_replay(
         from socialseed_e2e.shadow_runner import ReplayConfig, ShadowRunner
 
         config = ReplayConfig(
-            capture_file=str(capture_path),
             target_url=target_url,
             speed=speed,
             stop_on_error=stop_on_error,
+            compare_semantically=compare,
+            baseline_url=baseline_url,
+            tolerance_percent=tolerance,
         )
 
-        runner = ShadowRunner(config)
+        runner = ShadowRunner()
+
+        if compare and baseline_url:
+            console.print("[cyan]Semantic comparison enabled[/cyan]")
+            console.print(f"   Baseline: {baseline_url}")
+            console.print(f"   Target: {target_url or 'from capture'}")
+            console.print(f"   Tolerance: {tolerance}%\n")
 
         # Load session
         session = runner.load_capture(str(capture_path))

@@ -96,14 +96,67 @@ class ShadowReplayAgent:
         target_url: Optional[str] = None,
         speed: str = "realtime",
         stop_on_error: bool = False,
+        compare_semantically: bool = True,
+        baseline_url: Optional[str] = None,
+        tolerance_percent: float = 5.0,
     ):
         self.capture_file = capture_file
         self.target_url = target_url
         self.speed = speed
         self.stop_on_error = stop_on_error
+        self.compare_semantically = compare_semantically
+        self.baseline_url = baseline_url
+        self.tolerance_percent = tolerance_percent
 
     def replay(self):
-        """Replay captured traffic."""
+        """Replay captured traffic with optional semantic comparison."""
+        from socialseed_e2e.shadow_runner import ReplayConfig, ShadowRunner
+
+        path = Path(self.capture_file)
+        if not path.exists():
+            console.print(f"[red]File not found:[/red] {self.capture_file}")
+            return
+
+        config = ReplayConfig(
+            target_url=self.target_url,
+            speed=self.speed,
+            stop_on_error=self.stop_on_error,
+            compare_semantically=self.compare_semantically,
+            baseline_url=self.baseline_url,
+            tolerance_percent=self.tolerance_percent,
+        )
+
+        runner = ShadowRunner()
+
+        console.print("[yellow]Replaying traffic...[/yellow]")
+        console.print(f"   Target URL: {config.target_url or 'from capture'}")
+        
+        if config.compare_semantically and config.baseline_url:
+            console.print(f"   Baseline URL: {config.baseline_url}")
+            console.print(f"   Semantic comparison: enabled")
+            console.print(f"   Tolerance: {config.tolerance_percent}%")
+            
+            report = runner.replay_traffic(self.capture_file, config)
+            
+            console.print(f"\n[bold]Replay Comparison Report[/bold]")
+            console.print(f"Total requests: {report.total_requests}")
+            console.print(f"Successful: {report.successful_replays}")
+            console.print(f"Failed: {report.failed_replays}")
+            console.print(f"Critical issues: {report.critical_issues}")
+            console.print(f"Warning issues: {report.warning_issues}")
+            console.print(f"Info issues: {report.info_issues}")
+            
+            if report.comparisons:
+                console.print("\n[bold]Differences found:[/bold]")
+                for comp in report.comparisons[:10]:
+                    if comp.severity != "none":
+                        console.print(f"  [{comp.severity.upper()}] {comp.method} {comp.url}")
+                        console.print(f"    Status: {comp.baseline_status} -> {comp.target_status} (match: {comp.status_match})")
+                        console.print(f"    Similarity: {comp.similarity_score:.2%}")
+        else:
+            console.print(f"   Semantic comparison: disabled")
+            result = runner.replay_traffic(self.capture_file, config)
+            console.print(f"\n[green]Replayed {result.get('total', 0)} requests[/green]")
 
 
 class ShadowAnalyzeAgent:
@@ -275,12 +328,35 @@ def get_shadow_generate_command(
     "--speed", type=click.Choice(["realtime", "fast", "slow"]), default="realtime"
 )
 @click.option("--stop-on-error", is_flag=True, help="Stop on first error")
+@click.option(
+    "--compare/--no-compare",
+    default=True,
+    help="Enable semantic comparison between baseline and target",
+)
+@click.option("--baseline-url", "-b", help="Baseline URL for semantic comparison")
+@click.option(
+    "--tolerance", "-t", type=float, default=5.0, help="Tolerance percentage for body similarity"
+)
 def get_shadow_replay_command(
-    capture_file: str, target_url: Optional[str], speed: str, stop_on_error: bool
+    capture_file: str,
+    target_url: Optional[str],
+    speed: str,
+    stop_on_error: bool,
+    compare: bool,
+    baseline_url: Optional[str],
+    tolerance: float,
 ):
-    """Replay captured traffic."""
+    """Replay captured traffic with optional semantic comparison."""
     try:
-        agent = ShadowReplayAgent(capture_file, target_url, speed, stop_on_error)
+        agent = ShadowReplayAgent(
+            capture_file,
+            target_url,
+            speed,
+            stop_on_error,
+            compare,
+            baseline_url,
+            tolerance,
+        )
         agent.replay()
     except Exception as e:
         console.print(f"[red]❌ Error:[/red] {e}")

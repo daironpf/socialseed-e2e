@@ -23,7 +23,9 @@ from socialseed_e2e.shadow_runner.models import (
     FuzzingConfig,
     FuzzingResult,
     FuzzingStrategy,
+    ReplayComparisonReport,
     ReplayConfig,
+    SemanticComparisonResult,
     TestGenerationConfig,
     TestGenerationResult,
     TrafficAnalysis,
@@ -337,6 +339,9 @@ class ShadowRunner:
         """Replay captured traffic against target URL."""
         traffic = self.load_capture(capture_path)
 
+        if config.compare_semantically and config.baseline_url:
+            return self._replay_with_comparison(traffic, config)
+        
         results = {
             "total": len(traffic.requests),
             "successful": 0,
@@ -345,6 +350,129 @@ class ShadowRunner:
         }
 
         return results
+
+    def _replay_with_comparison(
+        self,
+        traffic: CapturedTraffic,
+        config: ReplayConfig,
+    ) -> ReplayComparisonReport:
+        """Replay traffic with semantic comparison between baseline and target."""
+        import hashlib
+        import re
+        from difflib import SequenceMatcher
+
+        report = ReplayComparisonReport(
+            total_requests=len(traffic.requests),
+            successful_replays=0,
+            failed_replays=0,
+        )
+
+        for req in traffic.requests:
+            try:
+                baseline_response = self._make_request(
+                    config.baseline_url, req.method.value, req.url, req.headers, req.body
+                )
+                target_response = self._make_request(
+                    config.target_url, req.method.value, req.url, req.headers, req.body
+                )
+
+                baseline_body = baseline_response.text() if baseline_response else ""
+                target_body = target_response.text() if target_response else ""
+
+                baseline_status = baseline_response.status if baseline_response else 0
+                target_status = target_response.status if target_response else 0
+
+                baseline_hash = hashlib.md5(baseline_body.encode()).hexdigest() if baseline_body else ""
+                target_hash = hashlib.md5(target_body.encode()).hexdigest() if target_body else ""
+
+                similarity = SequenceMatcher(None, baseline_body, target_body).ratio()
+                body_similar = similarity >= (1 - config.tolerance_percent / 100)
+
+                differences = self._extract_differences(baseline_body, target_body)
+
+                status_match = baseline_status == target_status
+                severity = "none"
+                if not status_match:
+                    if baseline_status >= 500 or target_status >= 500:
+                        severity = "critical"
+                        report.critical_issues += 1
+                    elif baseline_status >= 400 or target_status >= 400:
+                        severity = "warning"
+                        report.warning_issues += 1
+                    else:
+                        severity = "info"
+                        report.info_issues += 1
+                elif not body_similar:
+                    severity = "info"
+                    report.info_issues += 1
+
+                comparison = SemanticComparisonResult(
+                    request_id=req.id,
+                    method=req.method.value,
+                    url=req.url,
+                    baseline_status=baseline_status,
+                    target_status=target_status,
+                    status_match=status_match,
+                    baseline_body_hash=baseline_hash,
+                    target_body_hash=target_hash,
+                    body_similar=body_similar,
+                    similarity_score=similarity,
+                    differences=differences,
+                    severity=severity,
+                )
+
+                report.comparisons.append(comparison)
+                report.successful_replays += 1
+
+            except Exception as e:
+                report.failed_replays += 1
+
+        return report
+
+    def _make_request(
+        self, base_url: str, method: str, path: str, headers: dict, body: Optional[str]
+    ):
+        """Make a single HTTP request."""
+        try:
+            import requests
+            url = f"{base_url.rstrip('/')}/{path.lstrip('/')}"
+            response = requests.request(
+                method=method,
+                url=url,
+                headers=headers or {},
+                data=body,
+                timeout=10,
+            )
+            return response
+        except Exception:
+            return None
+
+    def _extract_differences(self, baseline: str, target: str) -> List[str]:
+        """Extract meaningful differences between two response bodies."""
+        import re
+
+        differences = []
+
+        try:
+            import json
+            baseline_json = json.loads(baseline) if baseline else {}
+            target_json = json.loads(target) if target else {}
+
+            for key in set(list(baseline_json.keys()) + list(target_json.keys())):
+                b_val = baseline_json.get(key)
+                t_val = target_json.get(key)
+
+                if b_val != t_val:
+                    differences.append(f"Field '{key}': {b_val} -> {t_val}")
+
+        except (json.JSONDecodeError, AttributeError):
+            if baseline != target:
+                differences.append("Response body structure differs")
+
+        if len(differences) > 10:
+            differences = differences[:10] + [f"... and {len(differences) - 10} more"]
+
+        return differences
 
     def export_fuzzing_report(
         self,
