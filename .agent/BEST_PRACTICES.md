@@ -148,9 +148,17 @@ Depends on: 01_health.py (servicio debe estar activo)
 Provides: page.created_user_id para tests siguientes
 """
 
-def run(page):
-    # Guardar estado para tests siguientes
-    page.created_user_id = response.json()["data"]["id"]
+    # Guardar estado para tests siguientes usando ServiceContext
+    page.context.set("created_user_id", response.json()["data"]["id"])
+```
+
+### ✅ Compartir estado global/local
+```python
+# Guardar en contexto del servicio (aislado por base_url)
+page.context.set("token", "abc-123")
+
+# Recuperar en cualquier otro test del mismo servicio
+token = page.context.get("token")
 ```
 
 ### Tests Independientes (Cuando sea posible)
@@ -352,28 +360,31 @@ if errors:
 
 ## 7. Manejo de Errores
 
-### Retry Pattern
-
+### Circuit Breaker & Automatic Detection
 ```python
-# ✅ Retry con backoff exponencial
-import time
+# ✅ El framework integra Circuit Breaker automáticamente
+# Si un servicio falla repetidamente (threshold=5), el circuito se abre
+# y las siguientes peticiones lanzan CircuitOpenError inmediatamente.
 
-def run_with_retry(page, max_retries=3):
-    for attempt in range(max_retries):
-        response = page.do_operation()
-        
-        if response.ok:
-            return response
-        
-        if response.status >= 500:  # Server error, retry
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
-                continue
-        
-        # Client error o max retries reached
-        response.raise_for_status()
-    
-    raise Exception("Max retries exceeded")
+try:
+    response = page.get("/data")
+except CircuitOpenError:
+    print("Servicio inaccesible temporalmente (Circuit OPEN)")
+```
+
+### Retry Pattern (Enhanced)
+```python
+# ✅ Retry con inspección de cuerpo (Nuevo en Fase 1)
+from socialseed_e2e.core.base_page import RetryConfig
+
+page = BasePage(
+    base_url="http://api",
+    retry_config=RetryConfig(
+        max_retries=3,
+        retry_on=[502, 503, 504],
+        retry_on_body_contains=["RATE_LIMIT_EXCEEDED", "TEMPORARY_ERROR"]
+    )
+)
 ```
 
 ### Graceful Degradation

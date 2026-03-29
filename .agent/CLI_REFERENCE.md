@@ -112,7 +112,11 @@ Verifica instalación, dependencias y conectividad.
 
 ```bash
 e2e doctor
+e2e doctor --fix           # Intenta corregir problemas automáticamente
 ```
+
+**Opciones:**
+- `--fix`: Instala dependencias faltantes (pip), descarga navegadores (playwright), crea directorios base y genera `e2e.conf` si no existe.
 
 **Verifica:**
 - Python version
@@ -1153,15 +1157,6 @@ e2e import --format har network.har
 ---
 
 ### `set`
-Gestiona configuración.
-
-```bash
-# Ver configuración
-e2e set --list
-
-# Establecer valor
-e2e set --key timeout --value 60000
-e2e set --key services.users-api.base_url --value http://localhost:8080
 
 # Eliminar valor
 e2e set --key services.legacy --delete

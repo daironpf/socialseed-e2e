@@ -6,6 +6,19 @@ Esta guía te permite generar tests E2E funcionales sin errores de importación,
 
 ---
 
+## 🎯 ¿Necesitas resolver un issue?
+
+Si tienes un **problema específico a resolver** (bug, error, test que falla), usa:
+
+```
+Read ./.agent/CHIEF_ARCHITECT_INTEGRATION.md and solve:
+[TU ISSUE]
+```
+
+Esto aplicará la metodología Chief Architect (SPAR-CoT) para resolver el issue con documentación automática.
+
+---
+
 ## 🚨 PASO 0: DETECCIÓN DE PUERTOS (OBLIGATORIO)
 
 **ANTES DE GENERAR CUALQUIER TEST**, debes detectar dónde está corriendo el servicio.

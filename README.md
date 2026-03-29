@@ -293,18 +293,18 @@ Before installing socialseed-e2e, ensure your environment meets the following re
 
 - ✅ **Linux** - Fully supported (primary development platform)
 - ✅ **macOS** - Fully supported (Intel and Apple Silicon)
-- ⚠️ **Windows** - Supported via WSL2 (Windows Subsystem for Linux)
+- ✅ **Windows** - Supported natively or via WSL2
 
 ### Browser Dependencies
 
 socialseed-e2e uses **Playwright** for HTTP testing. You need to install browser binaries:
 
 ```bash
-# After installing socialseed-e2e
-playwright install chromium
+# After installing socialseed-e2e, run the doctor to fix dependencies
+e2e doctor --fix
 
-# Or install with dependencies (recommended for CI/CD)
-playwright install --with-deps chromium
+# Or manually install playwright browsers
+playwright install chromium
 ```
 
 **Supported Browsers:**
@@ -470,6 +470,8 @@ e2e init
 - **Auto-discovery** - Tests run in order automatically
 - **Stateful chaining** - Share data between tests
 - **Built-in mocking** - Test without external dependencies
+- **Circuit Breaker** - Automatic failure protection for unstable APIs
+- **Service Context** - Stateful chaining and shared state between tests
 - **AI Manifest** - Auto-generate API knowledge from code
 - **Vector search** - Semantic search over your API (RAG-ready)
 
@@ -623,7 +625,8 @@ e2e autonomous-run         # Run tests with AI orchestration
 
 ### Testing & Debugging
 ```bash
-e2e doctor                 # Verify installation
+e2e doctor                 # Verify installation and system health
+e2e doctor --fix           # Automatically fix missing dependencies and config
 e2e deep-scan              # Zero-config project mapping
 e2e observe                # Auto-detect services and ports
 e2e debug-execution        # Debug failed tests with AI

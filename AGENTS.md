@@ -134,6 +134,7 @@ e2e new-test <nombre> --service <s> # Crea módulo de test
 e2e run [options]                  # Ejecuta tests
 e2e lint                           # Valida archivos de test
 e2e doctor                         # Verifica instalación
+e2e doctor --fix                   # Auto-repara dependencias y configuración
 e2e config                         # Muestra configuración
 e2e --version                      # Versión
 ```
@@ -308,15 +309,35 @@ e2e install-demo                  # Install demo APIs
 e2e set url <service> <url>      # Configure service URL
 ```
 
-## Flujo de Trabajo Típico
-
-1. **Detectar puertos**: `e2e observe` o buscar en `application.yml`
-2. **Inicializar**: `e2e init mi-proyecto-tests`
-3. **Configurar**: Editar `e2e.conf` con servicios y endpoints detectados
-4. **Crear servicio**: `e2e new-service users-api`
-5. **Implementar page**: Editar `services/users-api/users_api_page.py`
-6. **Crear tests**: `e2e new-test login --service users-api`
 7. **Ejecutar**: `e2e run`
+
+## 🛡️ Resiliencia y Estabilidad (Fase 1: Foundations)
+
+### Circuit Breaker Automático
+El framework incluye un **Circuit Breaker** integrado en `BasePage`. Si un servicio falla repetidamente (threshold=5), el circuito se abre para proteger la infraestructura y ahorrar tokens.
+- **Excepción**: Lanza `CircuitOpenError`.
+- **Recuperación**: El circuito reintenta automáticamente tras un tiempo de espera.
+
+### Gestión de Estado con ServiceContext
+Para compartir datos entre tests de forma robusta, usa `self.context` en lugar de atributos directamente en `self`.
+```python
+# Test 01: Login
+def run(page):
+    page.context.set("auth_token", "secret_value")
+
+# Test 02: Profile
+def run(page):
+    token = page.context.get("auth_token")
+    assert token == "secret_value"
+```
+*Nota: `set_metadata` y `get_metadata` siguen funcionando como alias por compatibilidad.*
+
+### Auto-Sanación del Entorno
+Si faltan dependencias o navegadores, usa:
+```bash
+e2e doctor --fix
+```
+Esto instalará `playwright`, los navegadores (chromium), creará la estructura de carpetas y generará un `e2e.conf` base.
 
 ## 🔍 Detección Automática de Puertos (IMPORTANTE)
 
