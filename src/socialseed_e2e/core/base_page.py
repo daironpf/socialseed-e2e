@@ -23,23 +23,6 @@ except ImportError:
     # Handle circular dependency if any
     pass
 
-# Granular exception classes
-class BasePageError(Exception):
-    """Enhanced exception with request context."""
-    def __init__(self, message: str, url: Optional[str] = None, method: Optional[str] = None, status: Optional[int] = None, response_text: Optional[str] = None, request_log: Optional[RequestLog] = None):
-        super().__init__(message)
-        self.url = url
-        self.method = method
-        self.status = status
-        self.response_text = response_text
-        self.request_log = request_log
-
-class ClientError(BasePageError): """4xx Errors"""
-class ServerError(BasePageError): """5xx Errors"""
-class NetworkError(BasePageError): """Network-level failures"""
-class RateLimitError(BasePageError): """429 Errors"""
-class CircuitOpenError(BasePageError): """Circuit Breaker is OPEN"""
-
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -169,6 +152,13 @@ class BasePageError(Exception):
                 preview += "..."
             parts.append(f"Response: {preview}")
         return "\n  ".join(parts)
+
+
+class ClientError(BasePageError): """4xx Errors"""
+class ServerError(BasePageError): """5xx Errors"""
+class NetworkError(BasePageError): """Network-level failures"""
+class RateLimitError(BasePageError): """429 Errors"""
+class CircuitOpenError(BasePageError): """Circuit Breaker is OPEN"""
 
 
 class BasePage:
