@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView API Traffic - SocialSeed</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Lightweight Charts (TradingView) -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans h-screen flex flex-col">
+
+<div id="app" class="h-full flex flex-col p-6">
+    <header class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500">
+                SocialSeed E2E 
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">TradingView HTTP Latency Chart (5s Candles)</p>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <!-- Selector de Microservicio -->
+            <div class="flex items-center space-x-2 bg-gray-800 p-1 px-3 rounded-lg border border-gray-700">
+                <span class="text-gray-400 text-sm hidden md:inline">Service:</span>
+                <select v-model="currentService" @change="onServiceChange" class="bg-gray-800 text-blue-400 text-sm font-bold outline-none cursor-pointer">
+                    <option v-for="s in servicesList" :key="s" :value="s">{{ s }}</option>
+                </select>
+            </div>
+
+            <!-- Selector de Escala de Tiempo -->
+            <div class="flex space-x-1 bg-gray-800 p-1 rounded-lg border border-gray-700 mr-2">
+                <button v-for="t in timeframes" :key="t" @click="setTimeframe(t)" 
+                    :class="['px-3 py-1 rounded text-sm font-semibold transition-colors', 
+                      currentTimeframe === t ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white hover:bg-gray-700']">
+                    {{ t }}s
+                </button>
+            </div>
+            
+            <!-- Drop Target Label Here -->
+            <div class="w-3 h-3 rounded-full animate-pulse" :class="isRecording ? 'bg-green-500' : 'bg-red-500'"></div>
+            <span class="text-sm hidden sm:inline">{{ isRecording ? 'Traffic Streaming...' : 'Paused' }}</span>
+            <button @click="toggleRecording" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-bold shadow shadow-blue-500/50 transition whitespace-nowrap">
+                {{ isRecording ? 'Pause Sniffer' : 'Start Sniffer' }}
+            </button>
+        </div>
+    </header>
+
+    <!-- Chart Container -->
+    <div class="flex-grow bg-gray-800 rounded-xl border border-gray-700 p-4 shadow-xl flex flex-col">
+        <div id="tvchart" class="w-full h-full relative"></div>
+    </div>
+    
+    <footer class="mt-4 text-xs text-gray-500 text-center">
+        Powered by FastAPI, HTTPX, Lightweight Charts & Vue.js. Generado por Antigravity IA.
+    </footer>
+</div>
+
+<script>
+    const { createApp, ref, onMounted, onUnmounted } = Vue;
+
+    createApp({
+        setup() {
+            const isRecording = ref(true);
+            const timeframes = [1, 5, 15, 30, 60];
+            const currentTimeframe = ref(5);
+            const servicesList = ref(["Toda la Aplicacion"]);
+            const currentService = ref("Toda la Aplicacion");
+            let chart = null;
+            let candlestickSeries = null;
+            let volumeSeries = null;
+            let pollingInterval = null;
+
+            // Initialize TradingView Chart
+            const initChart = () => {
+                const chartElement = document.getElementById('tvchart');
+                if (!chartElement) throw new Error("Chart container not found!");
+                
+                let w = chartElement.clientWidth || 800;
+                let h = chartElement.clientHeight || 400;
+
+                chart = LightweightCharts.createChart(chartElement, {
+                    width: w,
+                    height: h,
+                    localization: {
+                        timeFormatter: timestamp => {
+                            // Uniformidad: Obligamos a la etiqueta del eje X inferior a usar el reloj local del sistema
+                            return new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        }
+                    },
+                    layout: {
+                        background: { type: 'solid', color: '#1f2937' }, // tailwind gray-800
+                        textColor: '#9ca3af', // tailwind gray-400
+                    },
+                    grid: {
+                        vertLines: { color: '#374151', style: 1 },
+                        horzLines: { color: '#374151', style: 1 },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                    },
+                    timeScale: {
+                        timeVisible: true,
+                        secondsVisible: true,
+                        tickMarkFormatter: (timestamp) => {
+                            // Este es el que pinta la hora pequeña en las rayas inferiores del eje X
+                            return new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        }
+                    },
+                });
+
+                // Añadir Serie de Velas Japonesas
+                candlestickSeries = chart.addCandlestickSeries({
+                    upColor: '#ef4444',      // Rojo Rose (Latencia subió = Malo para el API)
+                    downColor: '#10b981',    // Verde Esmeralda (Latencia bajó = Bueno para el API)
+                    borderVisible: false,
+                    wickUpColor: '#ef4444',
+                    wickDownColor: '#10b981',
+                });
+                
+                // Formater de Precio (Milisegundos)
+                candlestickSeries.applyOptions({
+                    priceFormat: {
+                        type: 'price',
+                        precision: 0,
+                        minMove: 1,
+                    },
+                });
+
+                // Histograma del Volumen debajo de las velas
+                volumeSeries = chart.addHistogramSeries({
+                    color: '#3b82f6',
+                    priceFormat: { type: 'volume' },
+                    priceScaleId: '', // Esto crea una escala superpuesta
+                });
+
+                // Configurar márgenes para separar las velas (arriba) y el volumen (abajo)
+                // Escala superpuesta ('') para el Volumen (ocupará el 20% inferior de la pantalla)
+                chart.priceScale('').applyOptions({
+                    scaleMargins: {
+                        top: 0.75, // top margin 75%
+                        bottom: 0,
+                    },
+                });
+
+                // Escala de la derecha ('right') para las Velas (dejamos 30% de espacio abajo para que no toquen el volumen)
+                chart.priceScale('right').applyOptions({
+                    scaleMargins: {
+                        top: 0.1,
+                        bottom: 0.3, 
+                    },
+                });
+
+                // Auto Resize ResizeObserver
+                if (window.ResizeObserver) {
+                    new ResizeObserver(entries => {
+                        if (entries.length === 0 || entries[0].target !== chartElement) { return; }
+                        const newRect = entries[0].contentRect;
+                        if(newRect.width > 0 && newRect.height > 0) {
+                            chart.applyOptions({ height: newRect.height, width: newRect.width });
+                        }
+                    }).observe(chartElement);
+                }
+
+                // --- TOOLTIP (LEYENDA FLOTANTE) ---
+                const tooltip = document.createElement('div');
+                tooltip.className = 'absolute hidden z-50 bg-gray-900 overflow-hidden border border-gray-700 rounded-lg p-3 shadow-2xl pointer-events-none text-sm transition-opacity duration-75';
+                chartElement.appendChild(tooltip);
+
+                chart.subscribeCrosshairMove(param => {
+                    if (
+                        param.point === undefined ||
+                        !param.time ||
+                        param.point.x < 0 ||
+                        param.point.x > chartElement.clientWidth ||
+                        param.point.y < 0 ||
+                        param.point.y > chartElement.clientHeight
+                    ) {
+                        tooltip.style.display = 'none';
+                        return;
+                    }
+
+                    const candleData = param.seriesData.get(candlestickSeries);
+                    const volData = param.seriesData.get(volumeSeries);
+                    
+                    if (!candleData) {
+                        tooltip.style.display = 'none';
+                        return;
+                    }
+
+                    tooltip.style.display = 'block';
+                    const dateObj = new Date(param.time * 1000);
+                    const dateStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    
+                    let volStr = volData ? volData.value : 0;
+                    let colorClass = candleData.close <= candleData.open ? 'text-emerald-400' : 'text-rose-400';
+                    let statusLabel = candleData.close <= candleData.open ? 'Bajo' : 'Aumento';
+
+                    tooltip.innerHTML = `
+                        <div class="font-bold text-gray-300 border-b border-gray-700 pb-1 mb-2">Vela - ${dateStr}</div>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-1">
+                            <span class="text-gray-500">Apertura:</span>
+                            <span class="text-white text-right font-mono">${candleData.open} ms</span>
+                            <span class="text-gray-500">Máxima:</span>
+                            <span class="text-white text-right font-mono">${candleData.high} ms</span>
+                            <span class="text-gray-500">Mínima:</span>
+                            <span class="text-white text-right font-mono">${candleData.low} ms</span>
+                            <span class="text-gray-500">Cierre:</span>
+                            <span class="${colorClass} font-bold text-right font-mono">${candleData.close} ms</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-700 flex justify-between items-center">
+                            <span class="text-gray-500">Peticiones:</span>
+                            <span class="text-blue-400 font-bold">${volStr} reqs</span>
+                        </div>
+                        <div class="text-xs text-right mt-1 italic ${colorClass}">${statusLabel} de Latencia</div>
+                    `;
+
+                    // Lógica de Posicionamiento Inteligente
+                    const toolTipWidth = 220; // Ancho estimado del tooltip
+                    const toolTipHeight = 160; // Alto estimado
+                    const margin = 15;
+
+                    let left = param.point.x + margin;
+                    // Mover a la izquierda si choca con el borde de la gráfica
+                    if (left + toolTipWidth > chartElement.clientWidth) {
+                        left = param.point.x - margin - toolTipWidth;
+                    }
+
+                    let top = param.point.y + margin;
+                    // Mover arriba si choca con el fondo
+                    if (top + toolTipHeight > chartElement.clientHeight) {
+                        top = param.point.y - toolTipHeight - margin;
+                    }
+
+                    tooltip.style.left = left + 'px';
+                    tooltip.style.top = top + 'px';
+                });
+            };
+
+            // Fetch data from FastAPI
+            const fetchServices = async () => {
+                try {
+                    const res = await fetch('/api/services');
+                    const data = await res.json();
+                    servicesList.value = data;
+                } catch(e) {
+                    // Ignore errors if backend not ready
+                }
+            };
+
+            const fetchData = async () => {
+                if (!isRecording.value) return;
+
+                try {
+                    const res = await fetch(`/api/candlesticks?tf=${currentTimeframe.value}&svc=${currentService.value}`);
+                    const data = await res.json();
+                    
+                    if(data.length > 0) {
+                        // Actualizar Velas
+                        candlestickSeries.setData(data);
+                        
+                        // Actualizar Volumen visual
+                        const volumes = data.map(d => ({
+                            time: d.time,
+                            value: d.volume,
+                            color: d.errors > 0 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(59, 130, 246, 0.5)'
+                        }));
+                        volumeSeries.setData(volumes);
+                    } else {
+                        // Limpiar pantalla si el servicio seleccionado no tiene tráfico
+                        candlestickSeries.setData([]);
+                        volumeSeries.setData([]);
+                    }
+                } catch(e) {
+                    console.error("Error fetching candlesticks:", e);
+                }
+            };
+
+            const toggleRecording = () => {
+                isRecording.value = !isRecording.value;
+            };
+
+            const setTimeframe = (tf) => {
+                currentTimeframe.value = tf;
+                fetchData();
+            };
+
+            const onServiceChange = () => {
+                fetchData();
+            };
+
+            onMounted(() => {
+                try {
+                    initChart();
+                    fetchServices();
+                    pollingInterval = setInterval(() => {
+                        fetchServices(); // Refrescar lista de microservicios por si detecta uno nuevo
+                        fetchData();
+                    }, 1000);
+                } catch(err) {
+                    console.error("Critical error in mounted hook:", err);
+                }
+            });
+
+            onUnmounted(() => {
+                clearInterval(pollingInterval);
+                if (chart) chart.remove();
+            });
+
+            return { isRecording, toggleRecording, timeframes, currentTimeframe, setTimeframe, servicesList, currentService, onServiceChange };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
