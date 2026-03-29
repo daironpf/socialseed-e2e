@@ -536,3 +536,125 @@ class APIRelationshipMapper:
         dfs(source, [source])
 
         return paths
+
+
+@dataclass
+class ServiceDependency:
+    """Dependency between microservices."""
+    source_service: str
+    target_service: str
+    connection_type: str  # http, grpc, database, message_queue
+    endpoint: str
+    environment_vars: List[str]
+    confidence: float
+
+
+class MicroserviceRelationshipMapper:
+    """Maps relationships between microservices by analyzing environment variables and configs."""
+    
+    SERVICE_URL_PATTERNS = [
+        r"(?i)(?:https?://)?(?:[\w-]+\.)?(\w+)-(?:api|service|host)(?::\d+)?",
+        r"(?i)_?(?:URL|HOST|SERVICE)_(?:NAME|HOST|URL|ADDR)",
+    ]
+    
+    def __init__(self, project_root):
+        """Initialize mapper.
+        
+        Args:
+            project_root: Root path of the project
+        """
+        self.project_root = project_root
+    
+    def detect_service_dependencies(self) -> List[ServiceDependency]:
+        """Detect dependencies between microservices by analyzing env vars and configs.
+        
+        Returns:
+            List of detected service dependencies
+        """
+        dependencies = []
+        
+        env_files = list(self.project_root.glob("**/.env*"))
+        env_files.extend(self.project_root.glob("**/docker-compose*.yml"))
+        env_files.extend(self.project_root.glob("**/docker-compose*.yaml"))
+        
+        for env_file in env_files:
+            deps = self._analyze_file(env_file)
+            dependencies.extend(deps)
+        
+        return dependencies
+    
+    def _analyze_file(self, file_path) -> List[ServiceDependency]:
+        """Analyze a file for service dependencies.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            List of detected dependencies
+        """
+        dependencies = []
+        
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="ignore")
+            
+            service_urls = re.findall(
+                r'(?i)(?:(?:https?://)?([a-zA-Z0-9_-]+)(?::\d+)?|([A-Z_]+(?:_URL|_HOST|_ADDR)))',
+                content
+            )
+            
+            current_service = file_path.parent.name
+            
+            for match in service_urls:
+                service_name = match[0] or match[1]
+                if service_name and len(service_name) > 2:
+                    clean_name = self._normalize_service_name(service_name)
+                    if clean_name != current_service:
+                        dep = ServiceDependency(
+                            source_service=current_service,
+                            target_service=clean_name,
+                            connection_type=self._detect_connection_type(content, clean_name),
+                            endpoint=self._extract_endpoint(content, clean_name),
+                            environment_vars=[match[0] or match[1]],
+                            confidence=0.7,
+                        )
+                        dependencies.append(dep)
+                        
+        except Exception:
+            pass
+        
+        return dependencies
+    
+    def _normalize_service_name(self, name: str) -> str:
+        """Normalize service name."""
+        name = name.lower().strip()
+        name = re.sub(r'[^a-z0-9_-]', '', name)
+        return name
+    
+    def _detect_connection_type(self, content: str, service: str) -> str:
+        """Detect the type of connection to the service."""
+        content_lower = content.lower()
+        
+        if 'grpc' in content_lower or ':50051' in content_lower:
+            return "grpc"
+        elif 'amqp' in content_lower or 'rabbitmq' in content_lower:
+            return "message_queue"
+        elif 'postgres' in content_lower or 'mysql' in content_lower or 'mongodb' in content_lower:
+            return "database"
+        elif 'http' in content_lower or 'https' in content_lower:
+            return "http"
+        else:
+            return "unknown"
+    
+    def _extract_endpoint(self, content: str, service: str) -> str:
+        """Extract the endpoint URL for a service."""
+        patterns = [
+            rf'(?i){service}[_-]?(?:url|host|addr)',
+            rf'(?i)(?:https?://)?[^"\'\s]*{service}[^"\'\s]*',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, content)
+            if match:
+                return match.group(0)
+        
+        return ""
