@@ -119,7 +119,7 @@ class TestTemplateEngine:
             )
 
             assert result_path.exists()
-            content = result_path.read_text()
+            content = result_path.read_text(encoding='utf-8')
             assert "environment: dev" in content
 
     def test_render_to_file_overwrite(self):
@@ -128,7 +128,7 @@ class TestTemplateEngine:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "output.conf"
-            output_path.write_text("original content")
+            output_path.write_text("original content", encoding='utf-8')
 
             # Should raise FileExistsError without overwrite=True
             with pytest.raises(FileExistsError):
@@ -158,7 +158,7 @@ class TestTemplateEngine:
                 overwrite=True,
             )
 
-            content = output_path.read_text()
+            content = output_path.read_text(encoding='utf-8')
             assert "environment: prod" in content
 
     def test_get_template_variables(self):
