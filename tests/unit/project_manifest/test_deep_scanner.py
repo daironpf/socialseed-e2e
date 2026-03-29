@@ -242,3 +242,87 @@ app = FastAPI()
         assert result["project_root"] == str(tmp_path)
         assert isinstance(result["frameworks"], list)
         assert isinstance(result["services"], list)
+
+
+class TestRubyFrameworkDetection:
+    """Tests for Ruby framework detection (Phase 2)."""
+
+    @pytest.fixture
+    def detector(self):
+        """Create a TechStackDetector fixture."""
+        return TechStackDetector()
+
+    def test_detect_rails(self, tmp_path, detector):
+        """Test Ruby on Rails detection."""
+        routes_file = tmp_path / "config" / "routes.rb"
+        routes_file.parent.mkdir(exist_ok=True)
+        routes_file.write_text("Rails.application.routes.draw do\nend")
+
+        app_file = tmp_path / "app" / "controllers" / "application_controller.rb"
+        app_file.parent.mkdir(parents=True, exist_ok=True)
+        app_file.write_text(
+            """
+class ApplicationController < ActionController::Base
+  protect_from_forgery with: :exception
+end
+"""
+        )
+
+        frameworks = detector.detect(tmp_path)
+
+        rails_detection = [f for f in frameworks if f["framework"] == "rails"]
+        assert len(rails_detection) > 0
+        assert rails_detection[0]["language"] == "ruby"
+
+    def test_detect_sinatra(self, tmp_path, detector):
+        """Test Sinatra detection."""
+        app_file = tmp_path / "app.rb"
+        app_file.write_text(
+            """
+require 'sinatra'
+
+class MyApp < Sinatra::Base
+  get '/' do
+    'Hello World'
+  end
+  
+  post '/api/users' do
+    'User created'
+  end
+end
+"""
+        )
+
+        frameworks = detector.detect(tmp_path)
+
+        sinatra_detection = [f for f in frameworks if f["framework"] == "sinatra"]
+        assert len(sinatra_detection) > 0
+        assert sinatra_detection[0]["language"] == "ruby"
+
+    def test_rails_recommendations(self, tmp_path):
+        """Test Rails-specific recommendations."""
+        routes_file = tmp_path / "config" / "routes.rb"
+        routes_file.parent.mkdir(exist_ok=True)
+        routes_file.write_text("Rails.application.routes.draw do\nend")
+        
+        rails_file = tmp_path / "app" / "controllers" / "application_controller.rb"
+        rails_file.parent.mkdir(parents=True, exist_ok=True)
+        rails_file.write_text("class ApplicationController < ActionController::Base\nend")
+
+        scanner = DeepScanner(str(tmp_path))
+        result = scanner.scan()
+
+        recommendations = result["recommendations"]
+        assert recommendations["base_url"] == "http://localhost:3000"
+        assert recommendations["health_endpoint"] == "/health"
+
+    def test_sinatra_recommendations(self, tmp_path):
+        """Test Sinatra-specific recommendations."""
+        app_file = tmp_path / "app.rb"
+        app_file.write_text("require 'sinatra'\nclass App < Sinatra::Base\nend")
+
+        scanner = DeepScanner(str(tmp_path))
+        result = scanner.scan()
+
+        recommendations = result["recommendations"]
+        assert recommendations["base_url"] == "http://localhost:4567"
