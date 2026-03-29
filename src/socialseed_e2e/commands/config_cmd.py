@@ -31,21 +31,21 @@ def _check_service_health(
     import requests
 
     if not health_endpoint or health_endpoint == "N/A":
-        return False, "⚫ Not configured"
+        return False, "- Not configured"
 
     url = f"{base_url.rstrip('/')}/{health_endpoint.lstrip('/')}"
     try:
         response = requests.get(url, timeout=timeout)
         if response.status_code == 200:
-            return True, "🟢 Healthy"
+            return True, "OK Healthy"
         else:
-            return False, f"🔴 Error ({response.status_code})"
+            return False, f"ERR Error ({response.status_code})"
     except requests.exceptions.Timeout:
-        return False, "🔴 Timeout"
+        return False, "ERR Timeout"
     except requests.exceptions.ConnectionError:
-        return False, "🔴 Connection failed"
+        return False, "ERR Connection failed"
     except Exception as e:
-        return False, f"🔴 {type(e).__name__}"
+        return False, f"ERR {type(e).__name__}"
 
 
 @click.command()
@@ -54,14 +54,14 @@ def config_cmd():
 
     Shows the configuration loaded from e2e.conf and validates its syntax.
     """
-    console.print("\n⚙️  [bold cyan]E2E Configuration[/bold cyan]\n")
+    console.print("\n*  [bold cyan]E2E Configuration[/bold cyan]\n")
 
     try:
         loader = ApiConfigLoader()
         config = loader.load()
 
-        console.print(f"📋 [cyan]Configuration:[/cyan] {loader._config_path}")
-        console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
+        console.print(f"- [cyan]Configuration:[/cyan] {loader._config_path}")
+        console.print(f"ENV [cyan]Environment:[/cyan] {config.environment}")
         console.print(f"[cyan]Timeout:[/cyan] {config.timeout}ms")
         console.print(f"[cyan]Verbose:[/cyan] {config.verbose}")
         console.print()
@@ -89,7 +89,7 @@ def config_cmd():
 
         if config.services:
             console.print()
-            console.print("[bold cyan]🌐 Checking Service Health...[/bold cyan]")
+            console.print("[bold cyan]NET Checking Service Health...[/bold cyan]")
 
             health_table = Table(title="Live Service Status")
             health_table.add_column("Service", style="cyan")
@@ -110,13 +110,13 @@ def config_cmd():
             )
 
         console.print()
-        console.print("[bold green]✅ Valid configuration[/bold green]")
+        console.print("[bold green][OK] Valid configuration[/bold green]")
 
     except ConfigError as e:
-        console.print(f"[red]❌ Configuration error:[/red] {e}")
+        console.print(f"[red][ERR] Configuration error:[/red] {e}")
         sys.exit(1)
     except Exception as e:
-        console.print(f"[red]❌ Unexpected error:[/red] {e}")
+        console.print(f"[red][ERR] Unexpected error:[/red] {e}")
         sys.exit(1)
 
 

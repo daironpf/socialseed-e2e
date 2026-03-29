@@ -36,13 +36,13 @@ class ServiceCreator:
         try:
             service_path.mkdir(parents=True)
             modules_path.mkdir()
-            console.print(f"  [green]✓[/green] Created: services/{service_path.name}/")
+            console.print(f"  [green]+[/green] Created: services/{service_path.name}/")
             console.print(
-                f"  [green]✓[/green] Created: services/{service_path.name}/modules/"
+                f"  [green]+[/green] Created: services/{service_path.name}/modules/"
             )
         except FileExistsError:
             console.print(
-                f"  [yellow]⚠[/yellow] Service '{service_path.name}' already exists"
+                f"  [yellow]![/yellow] Service '{service_path.name}' already exists"
             )
             if not self.force:
                 console.print("   Use --force to overwrite existing files")
@@ -56,9 +56,9 @@ class ServiceCreator:
         self._write_file(
             modules_path / "__init__.py", f'"""Test modules for {name}."""\n'
         )
-        console.print(f"  [green]✓[/green] Created: services/{name}/__init__.py")
+        console.print(f"  [green]+[/green] Created: services/{name}/__init__.py")
         console.print(
-            f"  [green]✓[/green] Created: services/{name}/modules/__init__.py"
+            f"  [green]+[/green] Created: services/{name}/modules/__init__.py"
         )
 
     def _write_file(self, path: Path, content: str) -> None:
@@ -86,7 +86,7 @@ class ServiceCreator:
             overwrite=False,
         )
         console.print(
-            f"  [green]✓[/green] Created: services/{name}/{snake_name}_page.py"
+            f"  [green]+[/green] Created: services/{name}/{snake_name}_page.py"
         )
 
         # Config
@@ -96,7 +96,7 @@ class ServiceCreator:
             str(service_path / "config.py"),
             overwrite=False,
         )
-        console.print(f"  [green]✓[/green] Created: services/{name}/config.py")
+        console.print(f"  [green]+[/green] Created: services/{name}/config.py")
 
         # Data schema
         engine.render_to_file(
@@ -105,7 +105,7 @@ class ServiceCreator:
             str(service_path / "data_schema.py"),
             overwrite=False,
         )
-        console.print(f"  [green]✓[/green] Created: services/{name}/data_schema.py")
+        console.print(f"  [green]+[/green] Created: services/{name}/data_schema.py")
 
     def _update_config(self, name: str, base_url: str, health_endpoint: str) -> None:
         """Update e2e.conf with new service."""
@@ -128,7 +128,7 @@ class ServiceCreator:
 
             loader.save(config)
         except Exception as e:
-            console.print(f"  [yellow]⚠[/yellow] Could not update e2e.conf: {e}")
+            console.print(f"  [yellow]![/yellow] Could not update e2e.conf: {e}")
 
 
 class ServiceCreatorValidator:
@@ -169,7 +169,7 @@ def new_service_cmd(name: str, base_url: str, health_endpoint: str, force: bool)
         e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
         e2e new-service auth-service --force                         # Overwrite without prompting
     """
-    console.print(f"\n🔧 [bold cyan]Creating service:[/bold cyan] {name}\n")
+    console.print(f"\n>> [bold cyan]Creating service:[/bold cyan] {name}\n")
 
     if not ServiceCreatorValidator.validate_project():
         sys.exit(1)
@@ -178,7 +178,7 @@ def new_service_cmd(name: str, base_url: str, health_endpoint: str, force: bool)
     creator.create(name, base_url, health_endpoint)
 
     console.print(
-        f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n"
+        f"\n[bold green][OK] Service '{name}' created successfully![/bold green]\n"
     )
 
     console.print(

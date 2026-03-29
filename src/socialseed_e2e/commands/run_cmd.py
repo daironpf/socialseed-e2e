@@ -11,7 +11,11 @@ from typing import Any, Dict, List, Optional, Tuple
 import click
 from rich.console import Console
 
-console = Console()
+# Use centralized console configuration for cross-platform support
+try:
+    from socialseed_e2e.console_config import console
+except ImportError:
+    console = Console()
 
 
 class RunConfigValidator:

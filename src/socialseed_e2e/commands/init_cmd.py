@@ -246,7 +246,7 @@ See: https://github.com/daironpf/socialseed-e2e
                 )
             else:
                 console.print(
-                    f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(self.target_path)}"
+                    f"  [yellow]![/yellow] Already exists: {dir_path.relative_to(self.target_path)}"
                 )
 
     def _create_e2e_conf(self) -> None:
@@ -254,7 +254,7 @@ See: https://github.com/daironpf/socialseed-e2e
         config_path = self.target_path / "e2e.conf"
 
         if config_path.exists() and not self.force:
-            console.print("  [yellow]⚠[/yellow] Already exists: e2e.conf")
+            console.print("  [yellow]![/yellow] Already exists: e2e.conf")
             return
 
         config_content = """# SocialSeed E2E Configuration
@@ -277,7 +277,7 @@ services: {}
         gitignore_path = self.target_path / ".gitignore"
 
         if gitignore_path.exists() and not self.force:
-            console.print("  [yellow]⚠[/yellow] Already exists: .gitignore")
+            console.print("  [yellow]![/yellow] Already exists: .gitignore")
             return
 
         gitignore_path.write_text(self.DEFAULT_IGNORE)
@@ -288,7 +288,7 @@ services: {}
         req_path = self.target_path / "requirements.txt"
 
         if req_path.exists() and not self.force:
-            console.print("  [yellow]⚠[/yellow] Already exists: requirements.txt")
+            console.print("  [yellow]![/yellow] Already exists: requirements.txt")
             return
 
         req_path.write_text(self.DEFAULT_REQUIREMENTS)
@@ -368,13 +368,13 @@ services: {}
             patterns_path.write_text(patterns_md)
             console.print(f"  [green]✓[/green] Created: .agent/TEST_PATTERNS.md")
 
-            console.print("\n[green]✅ Source code documentation generated![/green]\n")
+            console.print("\n[green][OK] Source code documentation generated![/green]\n")
 
         except ImportError as e:
-            console.print(f"  [yellow]⚠[/yellow] Scanner modules not available: {e}")
+            console.print(f"  [yellow]![/yellow] Scanner modules not available: {e}")
             console.print("  [dim]Run: pip install socialseed-e2e[full] to enable[/dim]\n")
         except Exception as e:
-            console.print(f"  [yellow]⚠[/yellow] Error scanning: {str(e)[:80]}")
+            console.print(f"  [yellow]![/yellow] Error scanning: {str(e)[:80]}")
 
 
 @click.command(name="init")
@@ -404,7 +404,7 @@ def init_command(directory: str, force: bool, demo: bool, scan_path: str, api_pa
     """
     target_path = Path(directory).resolve()
 
-    console.print(f"\n🌱 [bold green]Initializing E2E project at:[/bold green] {target_path}\n")
+    console.print(f"\n[bold green]Initializing E2E project at:[/bold green] {target_path}\n")
 
     manager = InitManager(target_path, force, demo)
     manager.initialize()
@@ -434,7 +434,7 @@ def init_command(directory: str, force: bool, demo: bool, scan_path: str, api_pa
                 break
 
         if not final_scan_path:
-            console.print("[yellow]⚠ Could not auto-detect API source code[/yellow]\n")
+            console.print("[yellow]! Could not auto-detect API source code[/yellow]\n")
     elif scan_path:
         final_scan_path = scan_path
 
@@ -444,22 +444,22 @@ def init_command(directory: str, force: bool, demo: bool, scan_path: str, api_pa
     else:
         manager._create_agent_docs()
 
-    console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
+    console.print("\n[bold green][OK] Project initialized successfully![/bold green]\n")
 
     # AI Agent information
-    console.print("[bold cyan]🤖 AI Agent Setup:[/bold cyan]\n")
+    console.print("[bold cyan][AI] AI Agent Setup:[/bold cyan]\n")
 
     if final_scan_path:
-        console.print("  ✅ AI documentation generated from source code!")
-        console.print("  🤖 AI agents can now understand your API.\n")
+        console.print("  [OK] AI documentation generated from source code!")
+        console.print("  [AI] AI agents can now understand your API.\n")
     else:
         console.print("  To enable AI agents, run:")
         console.print("  [cyan]  e2e init . --api[/cyan]  # Auto-detect API")
         console.print("  [cyan]  e2e init . --scan ../path/to/your-api[/cyan]\n")
         console.print("  This generates .agent/ with:")
-        console.print("  • ENDPOINTS.md    • DATA_SCHEMAS.md")
-        console.print("  • AUTH_FLOWS.md  • TEST_PATTERNS.md")
-        console.print("  • ERROR_CODES.md\n")
+        console.print("  - ENDPOINTS.md    - DATA_SCHEMAS.md")
+        console.print("  - AUTH_FLOWS.md  - TEST_PATTERNS.md")
+        console.print("  - ERROR_CODES.md\n")
 
     console.print("[bold]Next steps:[/bold]")
     console.print("  1. Configure: e2e new-service <name> --base-url <url>")

@@ -19,10 +19,18 @@ from rich.panel import Panel
 from rich.table import Table
 
 from socialseed_e2e import __version__
+from socialseed_e2e.console_config import console
 from socialseed_e2e.core.config_loader import ApiConfigLoader, ConfigError
 from socialseed_e2e.utils import TemplateEngine, to_class_name, to_snake_case
 
-console = Console()
+# Backwards compatibility - allow importing console directly from this module
+# but prefer using the centralized console_config module
+try:
+    from socialseed_e2e.console_config import console as _console
+    if not hasattr(sys.modules[__name__], 'console'):
+        console = _console
+except ImportError:
+    pass  # Keep the old behavior if import fails
 
 # Map of extra dependencies for better error messages
 EXTRA_DEPENDENCIES = {
@@ -60,7 +68,7 @@ def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool
         True if dependencies are available, False otherwise
     """
     if extra_name not in EXTRA_DEPENDENCIES:
-        console.print(f"[red]❌ Unknown extra: {extra_name}[/red]")
+        console.print(f"[red][ERR] Unknown extra: {extra_name}[/red]")
         return False
 
     extra_info = EXTRA_DEPENDENCIES[extra_name]
@@ -94,14 +102,14 @@ def check_and_install_extra(extra_name: str, auto_install: bool = False) -> bool
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 console.print(
-                    f"[green]✅ {extra_info['description']} installed successfully![/green]"
+                    f"[green][OK] {extra_info['description']} installed successfully![/green]"
                 )
                 return True
             else:
-                console.print(f"[red]❌ Installation failed:[/red] {result.stderr}")
+                console.print(f"[red][ERR] Installation failed:[/red] {result.stderr}")
                 return False
         except Exception as e:
-            console.print(f"[red]❌ Installation error:[/red] {e}")
+            console.print(f"[red][ERR] Installation error:[/red] {e}")
             return False
     else:
         # Just show helpful message
@@ -188,11 +196,11 @@ def init(directory: str, force: bool, demo: bool):
                 else str(dir_path.relative_to(target_path))
             )
             console.print(
-                f"  [green]✓[/green] Created: {dir_path.relative_to(target_path)}"
+                f"  [green]+[/green] Created: {dir_path.relative_to(target_path)}"
             )
         else:
             console.print(
-                f"  [yellow]⚠[/yellow] Already exists: {dir_path.relative_to(target_path)}"
+                f"  [yellow]![/yellow] Already exists: {dir_path.relative_to(target_path)}"
             )
 
     # Initialize template engine
@@ -207,7 +215,7 @@ def init(directory: str, force: bool, demo: bool):
             str(example_test_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: tests/example_test.py")
+        console.print("  [green]+[/green] Created: tests/example_test.py")
 
     # Create __init__.py for tests package
     tests_init_path = target_path / "tests" / "__init__.py"
@@ -246,9 +254,9 @@ test-results/
 htmlcov/
 """
         gitignore_path.write_text(gitignore_content)
-        console.print("  [green]✓[/green] Created: .gitignore")
+        console.print("  [green]+[/green] Created: .gitignore")
     else:
-        console.print("  [yellow]⚠[/yellow] Already exists: .gitignore")
+        console.print("  [yellow]![/yellow] Already exists: .gitignore")
 
     # Create requirements.txt
     requirements_path = target_path / "requirements.txt"
@@ -261,9 +269,9 @@ playwright>=1.40.0
 pytest-playwright>=0.4.0
 """
         requirements_path.write_text(requirements_content)
-        console.print("  [green]✓[/green] Created: requirements.txt")
+        console.print("  [green]+[/green] Created: requirements.txt")
     else:
-        console.print("  [yellow]⚠[/yellow] Already exists: requirements.txt")
+        console.print("  [yellow]![/yellow] Already exists: requirements.txt")
 
     # Create example service with working tests (only if --demo is specified)
     if demo:
@@ -285,7 +293,7 @@ pytest-playwright>=0.4.0
                 str(example_service_path / "data_schema.py"),
                 overwrite=force,
             )
-        console.print("  [green]✓[/green] Created: services/example/data_schema.py")
+        console.print("  [green]+[/green] Created: services/example/data_schema.py")
 
         # Create example_page.py
         engine.render_to_file(
@@ -294,7 +302,7 @@ pytest-playwright>=0.4.0
             str(example_service_path / "example_page.py"),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: services/example/example_page.py")
+        console.print("  [green]+[/green] Created: services/example/example_page.py")
 
         # Create test modules
         engine.render_to_file(
@@ -304,7 +312,7 @@ pytest-playwright>=0.4.0
             overwrite=force,
         )
         console.print(
-            "  [green]✓[/green] Created: services/example/modules/01_health.py"
+            "  [green]+[/green] Created: services/example/modules/01_health.py"
         )
 
         engine.render_to_file(
@@ -314,11 +322,11 @@ pytest-playwright>=0.4.0
             overwrite=force,
         )
         console.print(
-            "  [green]✓[/green] Created: services/example/modules/02_create.py"
+            "  [green]+[/green] Created: services/example/modules/02_create.py"
         )
     else:
         console.print(
-            "  [yellow]⚠[/yellow] Already exists: services/example/ (use --force to overwrite)"
+            "  [yellow]![/yellow] Already exists: services/example/ (use --force to overwrite)"
         )
 
     # Create/update e2e.conf (with demo services if --demo is specified)
@@ -353,7 +361,7 @@ pytest-playwright>=0.4.0
                 overwrite=force,
             )
         console.print(
-            "  [green]✓[/green] Created: e2e.conf (with demo-api service configured)"
+            "  [green]+[/green] Created: e2e.conf (with demo-api service configured)"
         )
     else:
         # Create blank e2e.conf for new projects
@@ -381,7 +389,7 @@ services:
 """
             config_path.write_text(blank_config)
         console.print(
-            "  [green]✓[/green] Created: e2e.conf (blank - use 'e2e new-service' to add services)"
+            "  [green]+[/green] Created: e2e.conf (blank - use 'e2e new-service' to add services)"
         )
 
     # Create socialseed.config.yaml (alternative config format)
@@ -393,7 +401,7 @@ services:
             str(config_yaml_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: socialseed.config.yaml")
+        console.print("  [green]+[/green] Created: socialseed.config.yaml")
 
     # Create pyproject.toml for pytest and project metadata
     pyproject_path = target_path / "pyproject.toml"
@@ -404,7 +412,7 @@ services:
             str(pyproject_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: pyproject.toml")
+        console.print("  [green]+[/green] Created: pyproject.toml")
 
     # Create conftest.py with mock server fixtures
     conftest_path = target_path / "conftest.py"
@@ -416,7 +424,7 @@ services:
             overwrite=force,
         )
         console.print(
-            "  [green]✓[/green] Created: conftest.py (with mock server fixtures)"
+            "  [green]+[/green] Created: conftest.py (with mock server fixtures)"
         )
 
     # Create localized README.md
@@ -428,9 +436,9 @@ services:
             str(readme_path),
             overwrite=force,
         )
-        console.print("  [green]✓[/green] Created: README.md")
+        console.print("  [green]+[/green] Created: README.md")
     else:
-        console.print("  [yellow]⚠[/yellow] Already exists: README.md")
+        console.print("  [yellow]![/yellow] Already exists: README.md")
 
     # Create demo REST API for testing (only if --demo is specified)
     if demo:
@@ -443,10 +451,10 @@ services:
                 overwrite=force,
             )
             console.print(
-                "  [green]✓[/green] Created: api-rest-demo.py (demo API for testing)"
+                "  [green]+[/green] Created: api-rest-demo.py (demo API for testing)"
             )
         else:
-            console.print("  [yellow]⚠[/yellow] Already exists: api-rest-demo.py")
+            console.print("  [yellow]![/yellow] Already exists: api-rest-demo.py")
 
         # Create demo-api service with tests
         demo_service_path = target_path / "services" / "demo-api"
@@ -468,7 +476,7 @@ services:
                 overwrite=force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/demo-api/demo_api_page.py"
+                "  [green]+[/green] Created: services/demo-api/demo_api_page.py"
             )
 
             # Create data_schema.py
@@ -479,7 +487,7 @@ services:
                 overwrite=force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/demo-api/data_schema.py"
+                "  [green]+[/green] Created: services/demo-api/data_schema.py"
             )
 
             # Create config.py
@@ -489,7 +497,7 @@ services:
                 str(demo_service_path / "config.py"),
                 overwrite=force,
             )
-            console.print("  [green]✓[/green] Created: services/demo-api/config.py")
+            console.print("  [green]+[/green] Created: services/demo-api/config.py")
 
             # Create test modules
             engine.render_to_file(
@@ -499,7 +507,7 @@ services:
                 overwrite=force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/demo-api/modules/01_health_check.py"
+                "  [green]+[/green] Created: services/demo-api/modules/01_health_check.py"
             )
 
             engine.render_to_file(
@@ -509,7 +517,7 @@ services:
                 overwrite=force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/demo-api/modules/02_list_users.py"
+                "  [green]+[/green] Created: services/demo-api/modules/02_list_users.py"
             )
 
             engine.render_to_file(
@@ -519,11 +527,11 @@ services:
                 overwrite=force,
             )
             console.print(
-                "  [green]✓[/green] Created: services/demo-api/modules/03_create_user.py"
+                "  [green]+[/green] Created: services/demo-api/modules/03_create_user.py"
             )
         else:
             console.print(
-                "  [yellow]⚠[/yellow] Already exists: services/demo-api/ (use --force to overwrite)"
+                "  [yellow]![/yellow] Already exists: services/demo-api/ (use --force to overwrite)"
             )
 
     # Copy GitHub Actions workflow
@@ -542,13 +550,13 @@ services:
             )
             if source_workflow.exists():
                 shutil.copy(str(source_workflow), str(e2e_yml_path))
-                console.print("  [green]✓[/green] Created: .github/workflows/e2e.yml")
+                console.print("  [green]+[/green] Created: .github/workflows/e2e.yml")
         except Exception:
             # If it fails, it's not critical
             pass
 
     # Show success message
-    console.print("\n[bold green]✅ Project initialized successfully![/bold green]\n")
+    console.print("\n[bold green][OK] Project initialized successfully![/bold green]\n")
 
     # Create .agent folder for AI documentation
     agent_docs_path = target_path / ".agent"
@@ -578,7 +586,7 @@ services:
                 overwrite=force,
             )
 
-        console.print("  [green]✓[/green] Created: .agent/ (AI Documentation)")
+        console.print("  [green]+[/green] Created: .agent/ (AI Documentation)")
 
     # Copy verification script
     verify_script_path = target_path / "verify_installation.py"
@@ -592,7 +600,7 @@ services:
             source_script = templates_dir / "verify_installation.py"
             if source_script.exists():
                 shutil.copy(str(source_script), str(verify_script_path))
-                console.print("  [green]✓[/green] Created: verify_installation.py")
+                console.print("  [green]+[/green] Created: verify_installation.py")
         except Exception:
             # If it fails, it's not critical
             pass
@@ -613,7 +621,7 @@ services:
 
     console.print(
         Panel(
-            "[bold]⚠️  Important for AI Agents:[/bold]\n\n"
+            "[bold]!️  Important for AI Agents:[/bold]\n\n"
             "• Use [cyan]absolute imports[/cyan] (not relative) in tests\n"
             "• Remember to use [cyan]model_dump(by_alias=True)[/cyan] to serialize DTOs\n"
             "• Review [cyan]AGENT_GUIDE.md[/cyan] for correct patterns and conventions",
@@ -633,18 +641,18 @@ services:
             timeout=120,
         )
         if result.returncode == 0:
-            console.print("  [green]✓[/green] Dependencies installed")
+            console.print("  [green]+[/green] Dependencies installed")
         else:
             console.print(
-                "  [yellow]⚠ Warning:[/yellow] Some dependencies could not be installed"
+                "  [yellow]! Warning:[/yellow] Some dependencies could not be installed"
             )
             if result.stderr:
                 console.print(f"  [dim]{result.stderr[:200]}...[/dim]")
     except subprocess.TimeoutExpired:
-        console.print("  [yellow]⚠ Warning:[/yellow] Installation took too long")
+        console.print("  [yellow]! Warning:[/yellow] Installation took too long")
     except Exception as e:
         console.print(
-            f"  [yellow]⚠ Warning:[/yellow] Could not install dependencies: {e}"
+            f"  [yellow]! Warning:[/yellow] Could not install dependencies: {e}"
         )
 
     # 2. Run verification (always)
@@ -680,16 +688,16 @@ services:
                 if result.stdout:
                     console.print(result.stdout)
         else:
-            console.print("  [yellow]⚠[/yellow] Verification script not found")
+            console.print("  [yellow]![/yellow] Verification script not found")
     except Exception as e:
-        console.print(f"  [yellow]⚠[/yellow] Could not run verification: {e}")
+        console.print(f"  [yellow]![/yellow] Could not run verification: {e}")
         all_checks_passed = True  # Consider successful if verification couldn't run
 
     # 3. Final success panel (if all checks pass)
     if all_checks_passed:
         console.print(
             Panel(
-                "[bold green]✅ ALL READY![/bold green] Your project is configured and verified.\n\n"
+                "[bold green][OK] ALL READY![/bold green] Your project is configured and verified.\n\n"
                 "🤖 You can ask your AI Agent to read [cyan].agent/AGENT_GUIDE.md[/cyan]\n"
                 "🚀 And generate E2E tests automatically",
                 title="🎉 Success",
@@ -756,7 +764,7 @@ def install_extras(extra, list_extras: bool, install_all: bool):
 
         for name, info in EXTRA_DEPENDENCIES.items():
             if name != "full":
-                status = "✅" if check_extra_installed(name) else "❌"
+                status = "[OK]" if check_extra_installed(name) else "[ERR]"
                 console.print(
                     f"  {status} [green]{name:<10}[/green] - {info['description']}"
                 )
@@ -775,7 +783,7 @@ def install_extras(extra, list_extras: bool, install_all: bool):
     # Validate extras
     invalid_extras = [e for e in extras_to_install if e not in EXTRA_DEPENDENCIES]
     if invalid_extras:
-        console.print(f"[red]❌ Unknown extras: {', '.join(invalid_extras)}[/red]")
+        console.print(f"[red][ERR] Unknown extras: {', '.join(invalid_extras)}[/red]")
         console.print(
             "[yellow]Run 'e2e install-extras --list' to see available extras[/yellow]"
         )
@@ -792,11 +800,11 @@ def install_extras(extra, list_extras: bool, install_all: bool):
     console.print()
     if success_count == len(extras_to_install):
         console.print(
-            f"[bold green]✅ All {success_count} extra(s) installed successfully![/bold green]"
+            f"[bold green][OK] All {success_count} extra(s) installed successfully![/bold green]"
         )
     else:
         console.print(
-            f"[yellow]⚠️  {success_count}/{len(extras_to_install)} extra(s) installed[/yellow]"
+            f"[yellow]!️  {success_count}/{len(extras_to_install)} extra(s) installed[/yellow]"
         )
         sys.exit(1)
 
@@ -848,7 +856,7 @@ def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
     # Verify we are in an E2E project
     if not _is_e2e_project():
         console.print(
-            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+            "[red][ERR] Error:[/red] e2e.conf not found. Are you in an E2E project?"
         )
         console.print("   Run: [cyan]e2e init[/cyan] first")
         sys.exit(1)
@@ -860,10 +868,10 @@ def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
     try:
         service_path.mkdir(parents=True)
         modules_path.mkdir()
-        console.print(f"  [green]✓[/green] Created: services/{name}/")
-        console.print(f"  [green]✓[/green] Created: services/{name}/modules/")
+        console.print(f"  [green]+[/green] Created: services/{name}/")
+        console.print(f"  [green]+[/green] Created: services/{name}/modules/")
     except FileExistsError:
-        console.print(f"  [yellow]⚠[/yellow] Service '{name}' already exists")
+        console.print(f"  [yellow]![/yellow] Service '{name}' already exists")
         if not force:
             console.print("   Use --force to overwrite existing files")
             return
@@ -871,8 +879,8 @@ def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
     # Create __init__.py
     _create_file(service_path / "__init__.py", f'"""Service {name}."""\n')
     _create_file(modules_path / "__init__.py", f'"""Test modules for {name}."""\n')
-    console.print(f"  [green]✓[/green] Created: services/{name}/__init__.py")
-    console.print(f"  [green]✓[/green] Created: services/{name}/modules/__init__.py")
+    console.print(f"  [green]+[/green] Created: services/{name}/__init__.py")
+    console.print(f"  [green]+[/green] Created: services/{name}/modules/__init__.py")
 
     # Initialize TemplateEngine
     engine = TemplateEngine()
@@ -895,7 +903,7 @@ def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
         overwrite=False,
     )
     console.print(
-        f"  [green]✓[/green] Created: services/{name}/{snake_case_name}_page.py"
+        f"  [green]+[/green] Created: services/{name}/{snake_case_name}_page.py"
     )
 
     # Create configuration file
@@ -905,7 +913,7 @@ def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
         str(service_path / "config.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Created: services/{name}/config.py")
+    console.print(f"  [green]+[/green] Created: services/{name}/config.py")
 
     # Create data_schema.py
     engine.render_to_file(
@@ -914,13 +922,13 @@ def new_service(name: str, base_url: str, health_endpoint: str, force: bool):
         str(service_path / "data_schema.py"),
         overwrite=False,
     )
-    console.print(f"  [green]✓[/green] Created: services/{name}/data_schema.py")
+    console.print(f"  [green]+[/green] Created: services/{name}/data_schema.py")
 
     # Update e2e.conf
     _update_e2e_conf(name, base_url, health_endpoint)
 
     console.print(
-        f"\n[bold green]✅ Service '{name}' created successfully![/bold green]\n"
+        f"\n[bold green][OK] Service '{name}' created successfully![/bold green]\n"
     )
 
     console.print(
@@ -961,7 +969,7 @@ def new_test(name: str, service: str, description: str, force: bool):
     # Verify we are in an E2E project
     if not _is_e2e_project():
         console.print(
-            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+            "[red][ERR] Error:[/red] e2e.conf not found. Are you in an E2E project?"
         )
         sys.exit(1)
 
@@ -970,7 +978,7 @@ def new_test(name: str, service: str, description: str, force: bool):
     modules_path = service_path / "modules"
 
     if not service_path.exists():
-        console.print(f"[red]❌ Error:[/red] Service '{service}' does not exist.")
+        console.print(f"[red][ERR] Error:[/red] Service '{service}' does not exist.")
         console.print(
             f"   Create the service first: [cyan]e2e new-service {service}[/cyan]"
         )
@@ -994,7 +1002,7 @@ def new_test(name: str, service: str, description: str, force: bool):
 
     # Check if it already exists
     if test_path.exists():
-        console.print(f"[yellow]⚠[/yellow] Test '{name}' already exists.")
+        console.print(f"[yellow]![/yellow] Test '{name}' already exists.")
         if not force:
             console.print("   Use --force to overwrite existing files")
             return
@@ -1020,11 +1028,11 @@ def new_test(name: str, service: str, description: str, force: bool):
         "test_module.py.template", template_vars, str(test_path), overwrite=False
     )
     console.print(
-        f"  [green]✓[/green] Created: services/{service}/modules/{test_filename}"
+        f"  [green]+[/green] Created: services/{service}/modules/{test_filename}"
     )
 
     console.print(
-        f"\n[bold green]✅ Test '{name}' created successfully![/bold green]\n"
+        f"\n[bold green][OK] Test '{name}' created successfully![/bold green]\n"
     )
 
     console.print(
@@ -1210,15 +1218,15 @@ def run(
     try:
         loader = ApiConfigLoader()
         app_config = loader.load(config)  # Pass the config path if provided
-        console.print(f"📋 [cyan]Configuration:[/cyan] {loader._config_path}")
-        console.print(f"🌍 [cyan]Environment:[/cyan] {app_config.environment}")
+        console.print(f"- [cyan]Configuration:[/cyan] {loader._config_path}")
+        console.print(f"ENV [cyan]Environment:[/cyan] {app_config.environment}")
         console.print()
     except ConfigError as e:
-        console.print(f"[red]❌ Configuration error:[/red] {e}")
+        console.print(f"[red][ERR] Configuration error:[/red] {e}")
         console.print("   Run: [cyan]e2e init[/cyan] to create a project")
         sys.exit(1)
     except Exception as e:
-        console.print(f"[red]❌ Unexpected error:[/red] {e}")
+        console.print(f"[red][ERR] Unexpected error:[/red] {e}")
         sys.exit(1)
 
     # Verify services directory
@@ -1255,7 +1263,7 @@ def run(
                 console.print(f"   Output: {trace_output}")
             console.print()
         except ImportError as e:
-            console.print(f"[yellow]⚠ Traceability not available: {e}[/yellow]")
+            console.print(f"[yellow]! Traceability not available: {e}[/yellow]")
 
     # Determine services path
     # If a config file was explicitly provided, we prioritize the 'services' folder next to it.
@@ -1308,9 +1316,9 @@ def run(
                         f"   ⏭️  [yellow]Skipping {name} (not healthy)[/yellow]"
                     )
                 else:
-                    console.print(f"   ✅ [green]{name} is healthy[/green]")
+                    console.print(f"   [OK] [green]{name} is healthy[/green]")
         except Exception as e:
-            console.print(f"   ⚠️  [yellow]Could not check health: {e}[/yellow]")
+            console.print(f"   !️  [yellow]Could not check health: {e}[/yellow]")
         console.print()
 
     # If service is specified and it's unhealthy, skip it
@@ -1419,7 +1427,7 @@ def run(
                     output_path=os.path.join(report_dir, "report.html"),
                 )
 
-                console.print(f"[green]✓ HTML report generated:[/green] {report_path}")
+                console.print(f"[green]+ HTML report generated:[/green] {report_path}")
 
                 # Also export CSV and JSON
                 csv_path = generator.export_to_csv(
@@ -1431,11 +1439,11 @@ def run(
                     output_path=os.path.join(report_dir, "report.json"),
                 )
 
-                console.print(f"[green]✓ CSV report:[/green] {csv_path}")
-                console.print(f"[green]✓ JSON report:[/green] {json_path}")
+                console.print(f"[green]+ CSV report:[/green] {csv_path}")
+                console.print(f"[green]+ JSON report:[/green] {json_path}")
 
             except Exception as e:
-                console.print(f"[yellow]⚠ Could not generate HTML report: {e}[/yellow]")
+                console.print(f"[yellow]! Could not generate HTML report: {e}[/yellow]")
                 if verbose:
                     import traceback
 
@@ -1457,17 +1465,17 @@ def run(
                     junit_path = generate_junit_report(
                         results, output_path=str(Path(report_output) / "junit.xml")
                     )
-                    console.print(f"[green]✓ JUnit report:[/green] {junit_path}")
+                    console.print(f"[green]+ JUnit report:[/green] {junit_path}")
 
                 elif report == "json":
                     json_path = generate_json_report(
                         results, output_path=str(Path(report_output) / "report.json")
                     )
-                    console.print(f"[green]✓ JSON report:[/green] {json_path}")
+                    console.print(f"[green]+ JSON report:[/green] {json_path}")
 
             except Exception as e:
                 console.print(
-                    f"[yellow]⚠ Could not generate {report} report: {e}[/yellow]"
+                    f"[yellow]! Could not generate {report} report: {e}[/yellow]"
                 )
                 if verbose:
                     import traceback
@@ -1552,7 +1560,7 @@ def run(
 
             except ImportError:
                 console.print(
-                    "[yellow]⚠ Watch mode requires watchdog package: pip install watchdog[/yellow]"
+                    "[yellow]! Watch mode requires watchdog package: pip install watchdog[/yellow]"
                 )
                 sys.exit(1)
 
@@ -1560,7 +1568,7 @@ def run(
         sys.exit(0 if all_passed else 1)
 
     except Exception as e:
-        console.print(f"[red]❌ Error executing tests:[/red] {e}")
+        console.print(f"[red][ERR] Error executing tests:[/red] {e}")
         if verbose:
             import traceback
 
@@ -1598,7 +1606,7 @@ def setup_ci(platform: str, force: bool):
 
     if not _is_e2e_project():
         console.print(
-            "[red]❌ Error:[/red] e2e.conf not found. Are you in an E2E project?"
+            "[red][ERR] Error:[/red] e2e.conf not found. Are you in an E2E project?"
         )
         sys.exit(1)
 
@@ -1643,16 +1651,16 @@ def setup_ci(platform: str, force: bool):
 
             try:
                 engine.render_to_file(template, {}, str(output_path), overwrite=force)
-                console.print(f"  [green]✓[/green] Generated: {output}")
+                console.print(f"  [green]+[/green] Generated: {output}")
             except FileExistsError:
                 console.print(
-                    f"  [yellow]⚠[/yellow] Already exists: {output} (use --force to overwrite)"
+                    f"  [yellow]![/yellow] Already exists: {output} (use --force to overwrite)"
                 )
             except Exception as e:
-                console.print(f"  [red]❌ Error generating {output}:[/red] {e}")
+                console.print(f"  [red][ERR] Error generating {output}:[/red] {e}")
 
     console.print(
-        "\n[bold green]✅ CI/CD templates generated successfully![/bold green]\n"
+        "\n[bold green][OK] CI/CD templates generated successfully![/bold green]\n"
     )
 
 
@@ -1680,7 +1688,7 @@ def recorder_record(name: str, port: int, output: Optional[str]):
     proxy.start(name)
 
     console.print(
-        "\n[bold red]🔴 Recording Proxy active.[/bold red] [bold green]Press Ctrl+C to stop recording and save the session...[/bold green]\n"
+        "\n[bold red]ERR Recording Proxy active.[/bold red] [bold green]Press Ctrl+C to stop recording and save the session...[/bold green]\n"
     )
 
     try:
@@ -1689,7 +1697,7 @@ def recorder_record(name: str, port: int, output: Optional[str]):
     except KeyboardInterrupt:
         session = proxy.stop()
         session.save(output_path)
-        console.print(f"\n[bold green]✓ Session saved to:[/bold green] {output_path}")
+        console.print(f"\n[bold green]+ Session saved to:[/bold green] {output_path}")
         console.print(f"Recorded {len(session.interactions)} interactions.")
 
 
@@ -1703,7 +1711,7 @@ def recorder_replay(file: str):
     from socialseed_e2e.recorder import RecordedSession, SessionPlayer
 
     if not Path(file).exists():
-        console.print(f"[red]❌ Error:[/red] File '{file}' not found.")
+        console.print(f"[red][ERR] Error:[/red] File '{file}' not found.")
         return
 
     session = RecordedSession.load(file)
@@ -1725,7 +1733,7 @@ def recorder_convert(file: str, output: Optional[str]):
     from socialseed_e2e.recorder import RecordedSession, SessionConverter
 
     if not Path(file).exists():
-        console.print(f"[red]❌ Error:[/red] File '{file}' not found.")
+        console.print(f"[red][ERR] Error:[/red] File '{file}' not found.")
         return
 
     session = RecordedSession.load(file)
@@ -1735,7 +1743,7 @@ def recorder_convert(file: str, output: Optional[str]):
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(code)
 
-    console.print(f"\n[bold green]✓ Test module generated:[/bold green] {output_path}")
+    console.print(f"\n[bold green]+ Test module generated:[/bold green] {output_path}")
 
 
 @cli.group("set")
@@ -1781,7 +1789,7 @@ def set_url(
 
     if not config_path.exists():
         console.print(
-            f"[red]❌ Error:[/red] Configuration file not found: {config_path}"
+            f"[red][ERR] Error:[/red] Configuration file not found: {config_path}"
         )
         console.print(
             "[yellow]Tip:[/yellow] Run 'e2e init' to create a new configuration file."
@@ -1790,7 +1798,7 @@ def set_url(
 
     # Validate URL format
     if not url.startswith(("http://", "https://")):
-        console.print("[red]❌ Error:[/red] URL must start with http:// or https://")
+        console.print("[red][ERR] Error:[/red] URL must start with http:// or https://")
         console.print("[yellow]Example:[/yellow] https://api.example.com:443")
         sys.exit(1)
 
@@ -1799,7 +1807,7 @@ def set_url(
         with open(config_path, "r") as f:
             config_data = yaml.safe_load(f) or {}
     except yaml.YAMLError as e:
-        console.print(f"[red]❌ Error parsing configuration file:[/red] {e}")
+        console.print(f"[red][ERR] Error parsing configuration file:[/red] {e}")
         sys.exit(1)
 
     # Ensure services section exists
@@ -1811,12 +1819,12 @@ def set_url(
         config_data["services"][service_name]["base_url"] = url
         if health_endpoint:
             config_data["services"][service_name]["health_endpoint"] = health_endpoint
-        console.print(f"[green]✓[/green] Updated base_url for '{service_name}'")
+        console.print(f"[green]+[/green] Updated base_url for '{service_name}'")
     else:
         config_data["services"][service_name] = {"base_url": url}
         if health_endpoint:
             config_data["services"][service_name]["health_endpoint"] = health_endpoint
-        console.print(f"[green]✓[/green] Added new service '{service_name}'")
+        console.print(f"[green]+[/green] Added new service '{service_name}'")
 
     # Write back to file
     with open(config_path, "w") as f:
@@ -1855,7 +1863,7 @@ def show_config(service_name: Optional[str], config: Optional[str]):
 
     if not config_path.exists():
         console.print(
-            f"[red]❌ Error:[/red] Configuration file not found: {config_path}"
+            f"[red][ERR] Error:[/red] Configuration file not found: {config_path}"
         )
         sys.exit(1)
 
@@ -1869,7 +1877,7 @@ def show_config(service_name: Optional[str], config: Optional[str]):
             # Show specific service
             if service_name not in app_config.services:
                 console.print(
-                    f"[red]❌ Error:[/red] Service '{service_name}' not found"
+                    f"[red][ERR] Error:[/red] Service '{service_name}' not found"
                 )
                 console.print(
                     f"[dim]Available services: {', '.join(app_config.services.keys())}[/dim]"
@@ -1900,7 +1908,7 @@ def show_config(service_name: Optional[str], config: Optional[str]):
             console.print(table)
 
     except Exception as e:
-        console.print(f"[red]❌ Error loading configuration:[/red] {e}")
+        console.print(f"[red][ERR] Error loading configuration:[/red] {e}")
         sys.exit(1)
 
 
@@ -1978,7 +1986,7 @@ def doctor():
 
     all_ok = True
     for name, value, ok in checks:
-        status = "[green]✓[/green]" if ok else "[red]✗[/red]"
+        status = "[green]+[/green]" if ok else "[red]✗[/red]"
         table.add_row(name, value, status)
         if not ok:
             all_ok = False
@@ -1988,7 +1996,7 @@ def doctor():
     # Check service connectivity if in an E2E project
     if _is_e2e_project():
         console.print()
-        console.print("[bold cyan]🌐 Service Connectivity Check[/bold cyan]")
+        console.print("[bold cyan]NET Service Connectivity Check[/bold cyan]")
 
         try:
             loader = ApiConfigLoader()
@@ -2011,13 +2019,13 @@ def doctor():
                 console.print("[yellow]  ℹ No services configured[/yellow]")
 
         except Exception as e:
-            console.print(f"[yellow]  ⚠ Could not check services: {e}[/yellow]")
+            console.print(f"[yellow]  ! Could not check services: {e}[/yellow]")
 
     console.print()
     if all_ok:
-        console.print("[bold green]✅ Everything is configured correctly![/bold green]")
+        console.print("[bold green][OK] Everything is configured correctly![/bold green]")
     else:
-        console.print("[bold yellow]⚠ Some issues were found[/bold yellow]")
+        console.print("[bold yellow]! Some issues were found[/bold yellow]")
         console.print()
         console.print("[cyan]Suggested solutions:[/cyan]")
 
@@ -2045,14 +2053,14 @@ def config():
 
     Shows the configuration loaded from e2e.conf and validates its syntax.
     """
-    console.print("\n⚙️  [bold blue]E2E Configuration[/bold blue]\n")
+    console.print("\n*  [bold blue]E2E Configuration[/bold blue]\n")
 
     try:
         loader = ApiConfigLoader()
         config = loader.load()
 
-        console.print(f"📋 [cyan]Configuration:[/cyan] {loader._config_path}")
-        console.print(f"🌍 [cyan]Environment:[/cyan] {config.environment}")
+        console.print(f"- [cyan]Configuration:[/cyan] {loader._config_path}")
+        console.print(f"ENV [cyan]Environment:[/cyan] {config.environment}")
         console.print(f"[cyan]Timeout:[/cyan] {config.timeout}ms")
         console.print(f"[cyan]Verbose:[/cyan] {config.verbose}")
         console.print()
@@ -2071,18 +2079,18 @@ def config():
                     display_name,
                     svc.base_url,
                     svc.health_endpoint or "N/A",
-                    "✓" if svc.required else "✗",
+                    "+" if svc.required else "✗",
                 )
 
             console.print(table)
         else:
-            console.print("[yellow]⚠ No services configured[/yellow]")
+            console.print("[yellow]! No services configured[/yellow]")
             console.print("   Use: [cyan]e2e new-service <name>[/cyan]")
 
         # Check service connectivity
         if config.services:
             console.print()
-            console.print("[bold cyan]🌐 Checking Service Health...[/bold cyan]")
+            console.print("[bold cyan]NET Checking Service Health...[/bold cyan]")
 
             health_table = Table(title="Live Service Status")
             health_table.add_column("Service", style="cyan")
@@ -2103,13 +2111,13 @@ def config():
             )
 
         console.print()
-        console.print("[bold green]✅ Valid configuration[/bold green]")
+        console.print("[bold green][OK] Valid configuration[/bold green]")
 
     except ConfigError as e:
-        console.print(f"[red]❌ Configuration error:[/red] {e}")
+        console.print(f"[red][ERR] Configuration error:[/red] {e}")
         sys.exit(1)
     except Exception as e:
-        console.print(f"[red]❌ Unexpected error:[/red] {e}")
+        console.print(f"[red][ERR] Unexpected error:[/red] {e}")
         sys.exit(1)
 
 
@@ -2138,15 +2146,15 @@ def _check_service_health(
         url = f"{base_url}{health_endpoint}"
         response = requests.get(url, timeout=timeout)
         if response.status_code == 200:
-            return True, "✅ Healthy (200)"
+            return True, "[OK] Healthy (200)"
         else:
-            return False, f"⚠️  Status {response.status_code}"
+            return False, f"!️  Status {response.status_code}"
     except requests.exceptions.ConnectionError:
-        return False, "❌ Connection refused"
+        return False, "[ERR] Connection refused"
     except requests.exceptions.Timeout:
         return False, "⏱️  Timeout"
     except Exception as e:
-        return False, f"❌ Error: {str(e)[:30]}"
+        return False, f"[ERR] Error: {str(e)[:30]}"
 
 
 def _is_e2e_project() -> bool:
@@ -2207,7 +2215,7 @@ def _update_e2e_conf(service_name: str, base_url: str, health_endpoint: str) -> 
 
     content += service_config
     config_path.write_text(content)
-    console.print("  [green]✓[/green] Updated: e2e.conf")
+    console.print("  [green]+[/green] Updated: e2e.conf")
 
 
 @cli.command()
@@ -2232,7 +2240,7 @@ def manifest(directory: str, force: bool):
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     service_name = get_service_name_from_path(target_path)
@@ -2288,12 +2296,12 @@ def manifest(directory: str, force: bool):
                 console.print(f"  • {service.name} ({service.language}, {framework})")
             console.print()
 
-        console.print("[bold green]✅ Manifest generated successfully![/bold green]")
+        console.print("[bold green][OK] Manifest generated successfully![/bold green]")
         console.print(f"   📄 Location: {generator.manifest_path}")
         console.print(f"   🔗 Source: {target_path}\n")
 
     except Exception as e:
-        console.print(f"[red]❌ Error generating manifest:[/red] {e}")
+        console.print(f"[red][ERR] Error generating manifest:[/red] {e}")
         import traceback
 
         traceback.print_exc()
@@ -2323,7 +2331,7 @@ def manifest_query(directory: str, format: str):
     service_name = directory if directory and directory != "." else None
 
     if not service_name:
-        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("[red][ERR] Error:[/red] Service name is required")
         console.print("Usage: e2e manifest-query <service_name>")
         console.print("Example: e2e manifest-query auth-service")
         sys.exit(1)
@@ -2339,7 +2347,7 @@ def manifest_query(directory: str, format: str):
     target_path = project_root / ".e2e" / "manifests" / service_name
 
     if not manifest_path.exists():
-        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print(f"[red][ERR] Error:[/red] Manifest not found at {manifest_path}")
         console.print(
             f"Run 'e2e manifest ../services/{service_name}' to generate the manifest."
         )
@@ -2358,7 +2366,7 @@ def manifest_query(directory: str, format: str):
             console.print(output)
 
     except Exception as e:
-        console.print(f"[red]❌ Error querying manifest:[/red] {e}")
+        console.print(f"[red][ERR] Error querying manifest:[/red] {e}")
         sys.exit(1)
 
 
@@ -2379,7 +2387,7 @@ def manifest_check(directory: str):
     service_name = directory if directory and directory != "." else None
 
     if not service_name:
-        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("[red][ERR] Error:[/red] Service name is required")
         console.print("Usage: e2e manifest-check <service_name>")
         console.print("Example: e2e manifest-check auth-service")
         sys.exit(1)
@@ -2393,7 +2401,7 @@ def manifest_check(directory: str):
     manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():
-        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print(f"[red][ERR] Error:[/red] Manifest not found at {manifest_path}")
         console.print(
             f"Run 'e2e manifest ../services/{service_name}' first to generate."
         )
@@ -2413,7 +2421,7 @@ def manifest_check(directory: str):
         manifest = generator.get_manifest()
 
         if not manifest:
-            console.print("[red]❌ Error:[/red] Could not load manifest")
+            console.print("[red][ERR] Error:[/red] Could not load manifest")
             sys.exit(1)
 
         source_path = Path(manifest.project_root)
@@ -2422,13 +2430,13 @@ def manifest_check(directory: str):
 
         # Display results
         if freshness.value == "fresh":
-            console.print("[bold green]✅ Manifest is FRESH[/bold green]")
+            console.print("[bold green][OK] Manifest is FRESH[/bold green]")
             console.print("   All source files match stored hashes.\n")
             console.print(f"   Version: {manifest.version}")
             console.print(f"   Last updated: {manifest.last_updated}")
             console.print(f"   Total files tracked: {len(manifest.source_hashes)}\n")
         elif freshness.value == "stale":
-            console.print("[bold yellow]⚠️  Manifest is STALE[/bold yellow]")
+            console.print("[bold yellow]!️  Manifest is STALE[/bold yellow]")
             console.print("   Source files have changed and need re-scanning.\n")
 
             if changed_files:
@@ -2443,7 +2451,7 @@ def manifest_check(directory: str):
             )
             sys.exit(1)
         else:  # partial
-            console.print("[bold orange]⚠️  Manifest is PARTIALLY FRESH[/bold orange]")
+            console.print("[bold orange]!️  Manifest is PARTIALLY FRESH[/bold orange]")
             console.print("   Some files may be outdated.\n")
             console.print(
                 f"[yellow]Run 'e2e manifest ../services/{service_name} --force' for full re-scan.[/yellow]\n"
@@ -2451,7 +2459,7 @@ def manifest_check(directory: str):
             sys.exit(1)
 
     except Exception as e:
-        console.print(f"[red]❌ Error checking manifest:[/red] {e}")
+        console.print(f"[red][ERR] Error checking manifest:[/red] {e}")
         sys.exit(1)
 
 
@@ -2470,7 +2478,7 @@ def watch(directory: str):
     service_name = directory if directory and directory != "." else None
 
     if not service_name:
-        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("[red][ERR] Error:[/red] Service name is required")
         console.print("Usage: e2e watch <service_name>")
         console.print("Example: e2e watch auth-service")
         sys.exit(1)
@@ -2484,7 +2492,7 @@ def watch(directory: str):
     manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():
-        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print(f"[red][ERR] Error:[/red] Manifest not found at {manifest_path}")
         console.print(
             f"Run 'e2e manifest ../services/{service_name}' first to generate."
         )
@@ -2508,7 +2516,7 @@ def watch(directory: str):
     except KeyboardInterrupt:
         console.print("\n\n[yellow]👋 File watcher stopped by user[/yellow]")
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -2534,7 +2542,7 @@ def search(query: str, service: str, top_k: int, type: str):
         e2e search "payment" -s payment-service --top-k 10
     """
     if not service:
-        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("[red][ERR] Error:[/red] Service name is required")
         console.print("Usage: e2e search <query> -s <service_name>")
         console.print("Example: e2e search authentication -s auth-service")
         sys.exit(1)
@@ -2547,7 +2555,7 @@ def search(query: str, service: str, top_k: int, type: str):
     manifest_dir = project_root / ".e2e" / "manifests" / service
 
     if not manifest_dir.exists():
-        console.print(f"[red]❌ Error:[/red] Manifest not found for service: {service}")
+        console.print(f"[red][ERR] Error:[/red] Manifest not found for service: {service}")
         console.print(f"Run 'e2e manifest ../services/{service}' first.")
         sys.exit(1)
 
@@ -2585,7 +2593,7 @@ def search(query: str, service: str, top_k: int, type: str):
     except ImportError as e:
         check_and_install_extra("rag", auto_install=False)
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
 
 
 @cli.command()
@@ -2603,7 +2611,7 @@ def retrieve(task: str, service: str, max_chunks: int):
         e2e retrieve "test payment flow" -s payment-service --max-chunks 3
     """
     if not service:
-        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("[red][ERR] Error:[/red] Service name is required")
         console.print("Usage: e2e retrieve <task> -s <service_name>")
         console.print("Example: e2e retrieve 'create auth tests' -s auth-service")
         sys.exit(1)
@@ -2616,7 +2624,7 @@ def retrieve(task: str, service: str, max_chunks: int):
     manifest_dir = project_root / ".e2e" / "manifests" / service
 
     if not manifest_dir.exists():
-        console.print(f"[red]❌ Error:[/red] Manifest not found for service: {service}")
+        console.print(f"[red][ERR] Error:[/red] Manifest not found for service: {service}")
         console.print(f"Run 'e2e manifest ../services/{service}' first.")
         sys.exit(1)
 
@@ -2643,7 +2651,7 @@ def retrieve(task: str, service: str, max_chunks: int):
     except ImportError as e:
         check_and_install_extra("rag", auto_install=False)
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
 
 
 @cli.command()
@@ -2661,7 +2669,7 @@ def build_index(directory: str):
     service_name = directory if directory and directory != "." else None
 
     if not service_name:
-        console.print("[red]❌ Error:[/red] Service name is required")
+        console.print("[red][ERR] Error:[/red] Service name is required")
         console.print("Usage: e2e build-index <service_name>")
         console.print("Example: e2e build-index auth-service")
         sys.exit(1)
@@ -2675,7 +2683,7 @@ def build_index(directory: str):
     manifest_path = manifest_dir / "project_knowledge.json"
 
     if not manifest_path.exists():
-        console.print(f"[red]❌ Error:[/red] Manifest not found at {manifest_path}")
+        console.print(f"[red][ERR] Error:[/red] Manifest not found at {manifest_path}")
         console.print(
             f"Run 'e2e manifest ../services/{service_name}' first to generate."
         )
@@ -2690,14 +2698,14 @@ def build_index(directory: str):
         store = ManifestVectorStore(manifest_dir)
         store.build_index()
 
-        console.print("[bold green]✅ Vector index built successfully![/bold green]")
+        console.print("[bold green][OK] Vector index built successfully![/bold green]")
         console.print(f"   📄 Location: {store.index_dir}\n")
 
     except ImportError as e:
         check_and_install_extra("rag", auto_install=False)
         sys.exit(1)
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -2718,7 +2726,7 @@ def deep_scan(directory: str, auto_config: bool):
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     try:
@@ -2729,7 +2737,7 @@ def deep_scan(directory: str, auto_config: bool):
         result = scanner.scan()
 
         if auto_config:
-            console.print("\n⚙️  [bold cyan]Auto-configuring project...[/bold cyan]\n")
+            console.print("\n*  [bold cyan]Auto-configuring project...[/bold cyan]\n")
 
             for service in result["services"]:
                 service_name = service["name"]
@@ -2740,11 +2748,11 @@ def deep_scan(directory: str, auto_config: bool):
                     console.print(f"  Creating service: [green]{service_name}[/green]")
                     console.print(f"  Base URL: {recommendations['base_url']}")
 
-            console.print("\n[bold green]✅ Auto-configuration complete![/bold green]")
+            console.print("\n[bold green][OK] Auto-configuration complete![/bold green]")
             console.print("   Run 'e2e run' to execute tests\n")
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -2806,7 +2814,7 @@ def generate_tests(
     output_path = Path(output).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🧪 [bold cyan]Autonomous Test Suite Generation[/bold cyan]")
@@ -2829,13 +2837,13 @@ def generate_tests(
         ) as status:
             db_schema = db_parser_registry.parse_project(target_path)
         if db_schema.entities:
-            console.print(f"   ✓ Found {len(db_schema.entities)} entities")
+            console.print(f"   + Found {len(db_schema.entities)} entities")
             for entity in db_schema.entities[:3]:
                 console.print(f"     - {entity.name} ({len(entity.columns)} columns)")
             if len(db_schema.entities) > 3:
                 console.print(f"     ... and {len(db_schema.entities) - 3} more")
         else:
-            console.print("   ⚠ No database models found")
+            console.print("   ! No database models found")
 
         # Load project manifest
         console.print()
@@ -2857,9 +2865,9 @@ def generate_tests(
             manifest = api.manifest
 
         if manifest is None:
-            console.print("[red]❌ Error:[/red] Could not load project manifest")
+            console.print("[red][ERR] Error:[/red] Could not load project manifest")
             sys.exit(1)
-        console.print(f"   ✓ Loaded manifest with {len(manifest.services)} services")
+        console.print(f"   + Loaded manifest with {len(manifest.services)} services")
 
         # Generate tests for each service
         console.print("\n🤖 [yellow]Step 3/5:[/yellow] Analyzing business logic...")
@@ -2869,7 +2877,7 @@ def generate_tests(
             services_to_process = [s for s in services_to_process if s.name == service]
             if not services_to_process:
                 console.print(
-                    f"[red]❌ Service '{service}' not found in manifest[/red]"
+                    f"[red][ERR] Service '{service}' not found in manifest[/red]"
                 )
                 sys.exit(1)
 
@@ -2886,7 +2894,7 @@ def generate_tests(
             flow_count = len(suite_generator.flows)
             relationship_count = len(suite_generator.analysis_result["relationships"])
             console.print(
-                f"     ✓ Detected {flow_count} flows, {relationship_count} relationships"
+                f"     + Detected {flow_count} flows, {relationship_count} relationships"
             )
 
             generated_suites.append((svc, suite_generator))
@@ -2933,11 +2941,11 @@ def generate_tests(
                     console.print(f"     - {key}: {len(criteria.rules)} rules")
 
         if total_validations == 0:
-            console.print("   ⚠ No validation rules detected")
+            console.print("   ! No validation rules detected")
 
         # Summary
         console.print(f"\n{'=' * 60}")
-        console.print("[bold green]✅ Test generation complete![/bold green]")
+        console.print("[bold green][OK] Test generation complete![/bold green]")
         console.print(f"{'=' * 60}")
         console.print("\n📊 Summary:")
         console.print(f"   Services processed: {len(generated_suites)}")
@@ -2977,7 +2985,7 @@ def generate_tests(
                 output_dir=output_path,
             )
 
-            console.print(f"   ✓ Report saved: {report_path}")
+            console.print(f"   + Report saved: {report_path}")
 
         if not dry_run:
             console.print(f"\n📁 Output directory: {output_path}")
@@ -2993,7 +3001,7 @@ def generate_tests(
         console.print()
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error generating tests:[/red] {e}")
+        console.print(f"\n[red][ERR] Error generating tests:[/red] {e}")
         import traceback
 
         if verbose:
@@ -3067,7 +3075,7 @@ def observe(
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🔭 [bold cyan]The Observer - Service Detection[/bold cyan]")
@@ -3107,7 +3115,7 @@ def observe(
 
         # Display results
         if results["services_detected"]:
-            console.print("\n[bold green]✅ Services Detected:[/bold green]\n")
+            console.print("\n[bold green][OK] Services Detected:[/bold green]\n")
 
             from rich.table import Table
 
@@ -3129,7 +3137,7 @@ def observe(
 
             console.print(table)
         else:
-            console.print("\n[yellow]⚠ No running services detected[/yellow]")
+            console.print("\n[yellow]! No running services detected[/yellow]")
 
         # Show Docker containers
         if docker and results["docker_containers"]:
@@ -3160,7 +3168,7 @@ def observe(
 
             for ref in results["cross_references"]:
                 console.print(
-                    f"   ✓ [green]{ref['detected_service']}[/green] matches "
+                    f"   + [green]{ref['detected_service']}[/green] matches "
                     f"[cyan]{ref['code_service']}[/cyan] (port {ref['port']})"
                 )
 
@@ -3179,14 +3187,14 @@ def observe(
                         setup_result = asyncio.run(observer.auto_setup(dry_run=dry_run))
 
                         if setup_result["success"]:
-                            console.print("   [green]✅ Setup successful![/green]")
+                            console.print("   [green][OK] Setup successful![/green]")
                             if "output" in setup_result:
                                 console.print(
                                     f"   Output: {setup_result['output'][:200]}..."
                                 )
                         else:
                             console.print(
-                                f"   [red]❌ Setup failed:[/red] {setup_result['message']}"
+                                f"   [red][ERR] Setup failed:[/red] {setup_result['message']}"
                             )
                     elif not dry_run:
                         console.print(
@@ -3201,14 +3209,14 @@ def observe(
         console.print(f"   Cross-references: {len(results['cross_references'])}")
 
         if results["dockerfile_found"]:
-            console.print("   Dockerfile: ✓ Found")
+            console.print("   Dockerfile: + Found")
 
         console.print()
 
     except KeyboardInterrupt:
         console.print("\n\n[yellow]👋 Observation interrupted by user[/yellow]")
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -3247,7 +3255,7 @@ def discover(directory: str, output: Optional[str], open: bool):
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🤖 [bold cyan]AI Discovery Report[/bold cyan]")
@@ -3266,7 +3274,7 @@ def discover(directory: str, output: Optional[str], open: bool):
 
         if not manifest:
             console.print(
-                "[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]"
+                "[yellow]! No project manifest found. Run 'e2e manifest' first.[/yellow]"
             )
             sys.exit(1)
 
@@ -3280,7 +3288,7 @@ def discover(directory: str, output: Optional[str], open: bool):
                 project_root=target_path, manifest=manifest, output_dir=output_dir
             )
 
-        console.print("\n✅ [bold green]Discovery Report generated![/bold green]")
+        console.print("\n[OK] [bold green]Discovery Report generated![/bold green]")
         console.print(f"   📄 Location: {report_path}\n")
 
         console.print("[bold]What's in the report:[/bold]")
@@ -3303,7 +3311,7 @@ def discover(directory: str, output: Optional[str], open: bool):
                 console.print(f"   [dim]Open manually: {report_path}[/dim]")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -3357,7 +3365,7 @@ def security_test(
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🔒 [bold red]AI Security Fuzzing[/bold red]")
@@ -3378,7 +3386,7 @@ def security_test(
 
         if not manifest:
             console.print(
-                "[yellow]⚠ No project manifest found. Run 'e2e manifest' first.[/yellow]"
+                "[yellow]! No project manifest found. Run 'e2e manifest' first.[/yellow]"
             )
             sys.exit(1)
 
@@ -3387,7 +3395,7 @@ def security_test(
         if service:
             services_to_test = [s for s in services_to_test if s.name == service]
             if not services_to_test:
-                console.print(f"[red]❌ Service '{service}' not found[/red]")
+                console.print(f"[red][ERR] Service '{service}' not found[/red]")
                 sys.exit(1)
 
         all_sessions = []
@@ -3413,7 +3421,7 @@ def security_test(
 
             if session.vulnerabilities_found:
                 console.print(
-                    f"   [red]⚠ {len(session.vulnerabilities_found)} vulnerabilities found![/red]"
+                    f"   [red]! {len(session.vulnerabilities_found)} vulnerabilities found![/red]"
                 )
 
         # Generate combined report
@@ -3428,7 +3436,7 @@ def security_test(
 
             report_gen.save_report(str(output_path))
 
-            console.print(f"   ✓ Report saved: {output_path}\n")
+            console.print(f"   + Report saved: {output_path}\n")
 
             # Summary
             total_vulns = sum(len(s.vulnerabilities_found) for s in all_sessions)
@@ -3447,18 +3455,18 @@ def security_test(
 
             if total_vulns > 0:
                 console.print(
-                    f"\n   [red]⚠ {total_vulns} vulnerabilities require attention![/red]"
+                    f"\n   [red]! {total_vulns} vulnerabilities require attention![/red]"
                 )
                 console.print(f"   📄 See report: {output_path}")
             else:
-                console.print("\n   [green]✅ No vulnerabilities found![/green]")
+                console.print("\n   [green][OK] No vulnerabilities found![/green]")
 
             console.print()
 
     except KeyboardInterrupt:
         console.print("\n\n[yellow]👋 Security testing interrupted by user[/yellow]")
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -3512,7 +3520,7 @@ def regression(
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🤖 [bold cyan]AI Regression Agent[/bold cyan]")
@@ -3529,7 +3537,7 @@ def regression(
         impact = agent.run_analysis()
 
         if not impact.changed_files:
-            console.print("[yellow]⚠ No changes detected between references[/yellow]")
+            console.print("[yellow]! No changes detected between references[/yellow]")
             return
 
         # Display summary
@@ -3587,7 +3595,7 @@ def regression(
         with open(output_path, "w") as f:
             f.write(report)
 
-        console.print(f"   ✓ Report saved: {output_path}\n")
+        console.print(f"   + Report saved: {output_path}\n")
 
         # Run affected tests if requested
         if run_tests and impact.affected_services:
@@ -3607,11 +3615,11 @@ def regression(
         console.print(f"{'=' * 60}")
 
         if impact.risk_level in ["critical", "high"]:
-            console.print("\n   [red]⚠ High risk changes detected![/red]")
+            console.print("\n   [red]! High risk changes detected![/red]")
             console.print(f"   📄 Review full report: {output_path}")
         else:
             console.print(
-                f"\n   [green]✅ Analysis complete - {len(impact.affected_tests)} tests identified[/green]"
+                f"\n   [green][OK] Analysis complete - {len(impact.affected_tests)} tests identified[/green]"
             )
 
         if not run_tests and impact.affected_services:
@@ -3622,7 +3630,7 @@ def regression(
         console.print()
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -3658,7 +3666,7 @@ def mock_analyze(directory: str, output: str, format: str):
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🔍 [bold cyan]External API Analysis[/bold cyan]")
@@ -3672,7 +3680,7 @@ def mock_analyze(directory: str, output: str, format: str):
         detected_apis = analyzer.analyze_project()
 
         if not detected_apis:
-            console.print("[yellow]⚠ No external APIs detected[/yellow]")
+            console.print("[yellow]! No external APIs detected[/yellow]")
             console.print("   Your project might not have third-party integrations.\n")
             return
 
@@ -3692,7 +3700,7 @@ def mock_analyze(directory: str, output: str, format: str):
                     if len(dependency.base_url) > 50
                     else dependency.base_url,
                     str(len(dependency.detected_calls)),
-                    "✓" if dependency.auth_header_detected else "✗",
+                    "+" if dependency.auth_header_detected else "✗",
                     ", ".join(dependency.env_var_keys[:2])
                     + ("..." if len(dependency.env_var_keys) > 2 else ""),
                 )
@@ -3748,7 +3756,7 @@ def mock_analyze(directory: str, output: str, format: str):
             with open(output_path, "w") as f:
                 json.dump(output_data, f, indent=2)
 
-            console.print(f"[green]✅ Analysis saved to:[/green] {output_path}\n")
+            console.print(f"[green][OK] Analysis saved to:[/green] {output_path}\n")
 
         # Summary
         console.print(f"{'=' * 60}")
@@ -3766,7 +3774,7 @@ def mock_analyze(directory: str, output: str, format: str):
         console.print("   3. Run E2E tests with mocks enabled\n")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -3840,7 +3848,7 @@ def mock_generate(
                 file_path = generator.save_mock_server(
                     server, f"mock_{server.service_name}.py"
                 )
-                console.print(f"  [green]✓[/green] {server.service_name}: {file_path}")
+                console.print(f"  [green]+[/green] {server.service_name}: {file_path}")
 
                 if docker:
                     dockerfile = generator.generate_dockerfile(server)
@@ -3853,10 +3861,10 @@ def mock_generate(
                 compose = generator.generate_docker_compose(servers)
                 compose_path = output_path / "docker-compose.yml"
                 compose_path.write_text(compose)
-                console.print("\n  [green]✓[/green] docker-compose.yml")
+                console.print("\n  [green]+[/green] docker-compose.yml")
 
             console.print(
-                f"\n[bold green]✅ Generated {len(servers)} mock servers![/bold green]\n"
+                f"\n[bold green][OK] Generated {len(servers)} mock servers![/bold green]\n"
             )
 
         else:
@@ -3866,7 +3874,7 @@ def mock_generate(
             try:
                 server = generator.generate_mock_server(service, port=port)
             except ValueError as e:
-                console.print(f"[red]❌ Error:[/red] {e}")
+                console.print(f"[red][ERR] Error:[/red] {e}")
                 console.print("\nAvailable services:")
                 registry = ExternalServiceRegistry()
                 for svc in registry.list_services():
@@ -3874,16 +3882,16 @@ def mock_generate(
                 sys.exit(1)
 
             file_path = generator.save_mock_server(server)
-            console.print(f"  [green]✓[/green] Generated: {file_path}")
+            console.print(f"  [green]+[/green] Generated: {file_path}")
 
             if docker:
                 dockerfile = generator.generate_dockerfile(server)
                 dockerfile_path = output_path / f"Dockerfile.{service}"
                 dockerfile_path.write_text(dockerfile)
-                console.print(f"  [green]✓[/green] Generated: {dockerfile_path}")
+                console.print(f"  [green]+[/green] Generated: {dockerfile_path}")
 
             console.print(
-                "\n[bold green]✅ Mock server generated successfully![/bold green]"
+                "\n[bold green][OK] Mock server generated successfully![/bold green]"
             )
             console.print("\n[bold]To run the mock server:[/bold]")
             console.print(f"   cd {output_path}")
@@ -3892,7 +3900,7 @@ def mock_generate(
             console.print(f"   docker-compose up {service}\n")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -3956,14 +3964,14 @@ def mock_run(services: str, config: str, detach: bool, port: int):
                     f.stem.replace("mock_", "") for f in output_dir.glob("mock_*.py")
                 ]
             else:
-                console.print("[yellow]⚠ No mock servers found.[/yellow]")
+                console.print("[yellow]! No mock servers found.[/yellow]")
                 console.print(
                     "   Run [cyan]e2e mock-generate <service>[/cyan] first.\n"
                 )
                 sys.exit(1)
 
         if not service_list:
-            console.print("[yellow]⚠ No services to mock.[/yellow]\n")
+            console.print("[yellow]! No services to mock.[/yellow]\n")
             sys.exit(1)
 
         console.print(f"Starting {len(service_list)} mock server(s):\n")
@@ -3976,13 +3984,13 @@ def mock_run(services: str, config: str, detach: bool, port: int):
 
             if not mock_file.exists():
                 console.print(
-                    f"  [yellow]⚠[/yellow] {service}: Mock not found, generating..."
+                    f"  [yellow]![/yellow] {service}: Mock not found, generating..."
                 )
                 generator = MockServerGenerator(output_dir)
                 try:
                     server = generator.generate_mock_server(service, port=current_port)
                     generator.save_mock_server(server)
-                    console.print("     [green]✓[/green] Generated")
+                    console.print("     [green]+[/green] Generated")
                 except ValueError as e:
                     console.print(f"     [red]✗[/red] {e}")
                     continue
@@ -4024,7 +4032,7 @@ def mock_run(services: str, config: str, detach: bool, port: int):
 
         if detach:
             console.print(
-                "\n[bold green]✅ Mock servers running in background[/bold green]"
+                "\n[bold green][OK] Mock servers running in background[/bold green]"
             )
             console.print("   Check with: [cyan]ps aux | grep mock_[/cyan]\n")
 
@@ -4044,7 +4052,7 @@ def mock_run(services: str, config: str, detach: bool, port: int):
                 console.print()
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -4078,10 +4086,10 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
     contract_path = Path(contract_file)
 
     if not contract_path.exists():
-        console.print(f"[red]❌ Error:[/red] Contract file not found: {contract_path}")
+        console.print(f"[red][ERR] Error:[/red] Contract file not found: {contract_path}")
         sys.exit(1)
 
-    console.print("\n✅ [bold cyan]Contract Validation[/bold cyan]")
+    console.print("\n[OK] [bold cyan]Contract Validation[/bold cyan]")
     console.print(f"   File: {contract_path}\n")
 
     try:
@@ -4091,7 +4099,7 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
         results = validator.validate_contract_file(contract_path)
 
         if not results:
-            console.print("[yellow]⚠ No tests found in contract file[/yellow]\n")
+            console.print("[yellow]! No tests found in contract file[/yellow]\n")
             return
 
         # Display results
@@ -4100,7 +4108,7 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
 
         for test_name, result in results.items():
             if result.is_valid:
-                console.print(f"  [green]✓[/green] {test_name}")
+                console.print(f"  [green]+[/green] {test_name}")
                 total_valid += 1
             else:
                 console.print(f"  [red]✗[/red] {test_name}")
@@ -4130,18 +4138,18 @@ def mock_validate(contract_file: str, service: str, verbose: bool):
 
         if total_invalid == 0:
             console.print(
-                "\n   [bold green]✅ All contracts validated successfully![/bold green]\n"
+                "\n   [bold green][OK] All contracts validated successfully![/bold green]\n"
             )
         else:
             console.print(
-                f"\n   [bold yellow]⚠ {total_invalid} contract(s) "
+                f"\n   [bold yellow]! {total_invalid} contract(s) "
                 f"have validation issues[/bold yellow]\n"
             )
 
         sys.exit(0 if total_invalid == 0 else 1)
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -4242,7 +4250,7 @@ def perf_profile(
         report = profiler.generate_report()
         report_path = profiler.save_report(report)
 
-        console.print(f"\n[green]✓ Report saved:[/green] {report_path}")
+        console.print(f"\n[green]+ Report saved:[/green] {report_path}")
 
         # Compare with baseline if requested
         if compare_baseline:
@@ -4258,7 +4266,7 @@ def perf_profile(
 
                 if regressions:
                     console.print(
-                        f"\n[red]⚠ {len(regressions)} regression(s) detected![/red]"
+                        f"\n[red]! {len(regressions)} regression(s) detected![/red]"
                     )
 
                     # Generate smart alerts
@@ -4283,17 +4291,17 @@ def perf_profile(
                             for rec in alert.recommendations[:3]:
                                 console.print(f"  • {rec}")
                 else:
-                    console.print("\n[green]✓ No regressions detected[/green]")
+                    console.print("\n[green]+ No regressions detected[/green]")
             else:
                 console.print(
-                    "\n[yellow]⚠ No baseline found. Run with --set-baseline first.[/yellow]"
+                    "\n[yellow]! No baseline found. Run with --set-baseline first.[/yellow]"
                 )
 
         # Set baseline if requested
         if set_baseline:
             analyzer = ThresholdAnalyzer(performance_dir=Path(output))
             baseline_path = analyzer.set_baseline(report)
-            console.print(f"\n[green]✓ Baseline set:[/green] {baseline_path}")
+            console.print(f"\n[green]+ Baseline set:[/green] {baseline_path}")
 
         console.print()
 
@@ -4344,7 +4352,7 @@ def lint(project: str, service: str, fix: bool):
     services_path = project_path / "services"
 
     if not services_path.exists():
-        console.print("[red]❌ Error:[/red] services/ directory not found")
+        console.print("[red][ERR] Error:[/red] services/ directory not found")
         sys.exit(1)
 
     services_to_check = [service] if service else None
@@ -4367,13 +4375,13 @@ def lint(project: str, service: str, fix: bool):
             services_with_issues += 1
             for module_path, module_issues in issues.items():
                 module_name = Path(module_path).name
-                console.print(f"  [yellow]⚠[/yellow] {module_name}")
+                console.print(f"  [yellow]![/yellow] {module_name}")
                 for issue in module_issues:
                     total_issues += 1
                     console.print(f"      Line {issue['line']}: {issue['message']}")
                     console.print(f"      → {issue['suggestion']}")
         else:
-            console.print("  [green]✓[/green] No issues found")
+            console.print("  [green]+[/green] No issues found")
 
     console.print()
     if total_issues > 0:
@@ -4383,12 +4391,12 @@ def lint(project: str, service: str, fix: bool):
         console.print()
         console.print("[cyan]Note:[/cyan] Use absolute imports in tests:")
         console.print(
-            "  ✅ CORRECT: from services.auth_service.data_schema import RegisterRequest"
+            "  [OK] CORRECT: from services.auth_service.data_schema import RegisterRequest"
         )
-        console.print("  ❌ WRONG:   from ..data_schema import RegisterRequest")
+        console.print("  [ERR] WRONG:   from ..data_schema import RegisterRequest")
         sys.exit(1)
     else:
-        console.print("[green]✓ All tests passed validation![/green]")
+        console.print("[green]+ All tests passed validation![/green]")
 
 
 @cli.command()
@@ -4554,7 +4562,7 @@ def perf_report(
                     console.print("\n".join(lines))
 
             else:
-                console.print("[green]✓ No regressions detected[/green]")
+                console.print("[green]+ No regressions detected[/green]")
                 console.print(
                     "All endpoints are performing within expected thresholds."
                 )
@@ -4643,9 +4651,9 @@ def plan_strategy(
 
         # Display summary
         console.print(
-            f"[green]✓[/green] Strategy generated: [bold]{strategy.id}[/bold]"
+            f"[green]+[/green] Strategy generated: [bold]{strategy.id}[/bold]"
         )
-        console.print(f"[green]✓[/green] Saved to: {saved_path}")
+        console.print(f"[green]+[/green] Saved to: {saved_path}")
         console.print()
         console.print("[bold]Strategy Summary:[/bold]")
         console.print(f"  Total test cases: {len(strategy.test_cases)}")
@@ -4813,9 +4821,9 @@ def autonomous_run(
 
         # Overall status
         if execution.status.value == "passed":
-            console.print("[bold green]✓ All tests passed![/bold green]")
+            console.print("[bold green]+ All tests passed![/bold green]")
         elif execution.status.value == "healed":
-            console.print("[bold yellow]⚠ Some tests were auto-healed[/bold yellow]")
+            console.print("[bold yellow]! Some tests were auto-healed[/bold yellow]")
         else:
             console.print("[bold red]✗ Some tests failed[/bold red]")
 
@@ -4867,7 +4875,7 @@ def analyze_flaky(project: str, test_file: str):
         patterns = report.get("flakiness_patterns", [])
         if patterns:
             console.print(
-                f"[yellow]⚠ Found {len(patterns)} flakiness patterns:[/yellow]"
+                f"[yellow]! Found {len(patterns)} flakiness patterns:[/yellow]"
             )
             console.print()
 
@@ -4902,7 +4910,7 @@ def analyze_flaky(project: str, test_file: str):
                     console.print(f"  {i}. {rec}")
                 console.print()
         else:
-            console.print("[green]✓ No flakiness patterns detected[/green]")
+            console.print("[green]+ No flakiness patterns detected[/green]")
             console.print()
 
     except Exception as e:
@@ -5102,7 +5110,7 @@ def translate(project: str, description: str, service: str, language: str, outpu
     """
     from socialseed_e2e.nlp import Language, NLToCodePipeline, TranslationContext
 
-    console.print("\n🌐 [bold blue]Natural Language Translation[/bold blue]\n")
+    console.print("\nNET [bold blue]Natural Language Translation[/bold blue]\n")
 
     try:
         # Detect language if not specified
@@ -5135,7 +5143,7 @@ def translate(project: str, description: str, service: str, language: str, outpu
             return
 
         # Display results
-        console.print("[green]✓[/green] Translation successful!\n")
+        console.print("[green]+[/green] Translation successful!\n")
 
         # Show parsing info
         if result.parsed_test:
@@ -5159,7 +5167,7 @@ def translate(project: str, description: str, service: str, language: str, outpu
             console.print(f"  Confidence: {code.confidence:.2%}")
 
             if code.requires_review:
-                console.print("  [yellow]⚠ Requires manual review[/yellow]")
+                console.print("  [yellow]! Requires manual review[/yellow]")
             console.print()
 
             # Show code
@@ -5180,7 +5188,7 @@ def translate(project: str, description: str, service: str, language: str, outpu
             if output:
                 output_path = Path(output)
                 output_path.write_text(code.code)
-                console.print(f"[green]✓[/green] Code saved to: {output}")
+                console.print(f"[green]+[/green] Code saved to: {output}")
 
     except Exception as e:
         console.print(f"\n[red]Error:[/red] {e}")
@@ -5231,7 +5239,7 @@ def gherkin_translate(project: str, feature_file: str, output_dir: str):
         feature_text = Path(feature_file).read_text()
         feature = parser.parse(feature_text)
 
-        console.print(f"[green]✓[/green] Parsed feature: [bold]{feature.name}[/bold]")
+        console.print(f"[green]+[/green] Parsed feature: [bold]{feature.name}[/bold]")
         console.print(f"  Scenarios: {len(feature.scenarios)}")
         console.print()
 
@@ -5245,7 +5253,7 @@ def gherkin_translate(project: str, feature_file: str, output_dir: str):
             console.print(f"\n  Test {i}: {test.test_name}")
             console.print(f"  Confidence: {test.confidence:.2%}")
             if test.requires_review:
-                console.print("  [yellow]⚠ Requires review[/yellow]")
+                console.print("  [yellow]! Requires review[/yellow]")
 
             # Show code snippet
             code_lines = test.code.split("\n")[:10]
@@ -5264,7 +5272,7 @@ def gherkin_translate(project: str, feature_file: str, output_dir: str):
                 test_file = output_path / f"{test.test_name}.py"
                 test_file.write_text(test.code)
 
-            console.print(f"\n[green]✓[/green] Tests saved to: {output_dir}")
+            console.print(f"\n[green]+[/green] Tests saved to: {output_dir}")
 
     except Exception as e:
         console.print(f"\n[red]Error:[/red] {e}")
@@ -5360,7 +5368,7 @@ def shadow_capture(
 
         runner.start_capturing()
 
-        console.print("[bold green]✓ Capture started![/bold green]")
+        console.print("[bold green]+ Capture started![/bold green]")
         if duration:
             console.print(f"   Capturing for {duration} seconds...")
             import time
@@ -5380,7 +5388,7 @@ def shadow_capture(
         # Save captured session
         session.save(str(output_path))
 
-        console.print("\n[bold green]✓ Capture complete![/bold green]")
+        console.print("\n[bold green]+ Capture complete![/bold green]")
         console.print(f"   Requests captured: {len(session.interactions)}")
         console.print(f"   Saved to: {output_path}\n")
 
@@ -5400,7 +5408,7 @@ def shadow_capture(
             console.print(f"\n[bold]Unique Paths:[/bold] {len(paths)}")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -5445,7 +5453,7 @@ def shadow_generate(
     capture_path = Path(capture_file)
 
     if not capture_path.exists():
-        console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
+        console.print(f"[red][ERR] Error:[/red] Capture file not found: {capture_path}")
         sys.exit(1)
 
     console.print("\n🤖 [bold cyan]Shadow Runner - Test Generation[/bold cyan]")
@@ -5469,7 +5477,7 @@ def shadow_generate(
         # Load captured session
         console.print("[yellow]Loading capture file...[/yellow]")
         session = runner.load_capture(str(capture_path))
-        console.print(f"   ✓ Loaded {len(session.interactions)} interactions\n")
+        console.print(f"   + Loaded {len(session.interactions)} interactions\n")
 
         # Generate tests
         console.print("[yellow]Generating tests...[/yellow]")
@@ -5477,13 +5485,13 @@ def shadow_generate(
 
         if not generated_tests:
             console.print(
-                "[yellow]⚠ No tests could be generated from this capture[/yellow]"
+                "[yellow]! No tests could be generated from this capture[/yellow]"
             )
             return
 
         # Display results
         console.print(
-            f"\n[bold green]✓ Generated {len(generated_tests)} test(s):[/bold green]\n"
+            f"\n[bold green]+ Generated {len(generated_tests)} test(s):[/bold green]\n"
         )
 
         for test in generated_tests:
@@ -5511,7 +5519,7 @@ def shadow_generate(
         console.print("   3. Run tests: [cyan]e2e run --service {service}[/cyan]\n")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -5552,7 +5560,7 @@ def shadow_replay(
     capture_path = Path(capture_file)
 
     if not capture_path.exists():
-        console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
+        console.print(f"[red][ERR] Error:[/red] Capture file not found: {capture_path}")
         sys.exit(1)
 
     console.print("\n🔄 [bold cyan]Shadow Runner - Session Replay[/bold cyan]")
@@ -5596,16 +5604,16 @@ def shadow_replay(
         console.print("\n" + "=" * 50)
         console.print("[bold]Replay Results:[/bold]")
         console.print(f"   Total: {len(results)}")
-        console.print(f"   [green]✓ Success:[/green] {success_count}")
+        console.print(f"   [green]+ Success:[/green] {success_count}")
         if failed_count > 0:
             console.print(f"   [red]✗ Failed:[/red] {failed_count}")
         console.print()
 
         if failed_count > 0 and stop_on_error:
-            console.print("[yellow]⚠ Stopped on first error as requested[/yellow]\n")
+            console.print("[yellow]! Stopped on first error as requested[/yellow]\n")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -5635,7 +5643,7 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
     capture_path = Path(capture_file)
 
     if not capture_path.exists():
-        console.print(f"[red]❌ Error:[/red] Capture file not found: {capture_path}")
+        console.print(f"[red][ERR] Error:[/red] Capture file not found: {capture_path}")
         sys.exit(1)
 
     console.print("\n📊 [bold cyan]Shadow Runner - Traffic Analysis[/bold cyan]\n")
@@ -5703,13 +5711,13 @@ def shadow_analyze(capture_file: str, format: str, show_pii: bool):
                 console.print()
 
             if show_pii and analysis.get("pii_detected"):
-                console.print("[bold yellow]⚠ PII Detected in Traffic:[/bold yellow]")
+                console.print("[bold yellow]! PII Detected in Traffic:[/bold yellow]")
                 for pii in analysis["pii_detected"]:
                     console.print(f"   • {pii['type']}: {pii['count']} occurrences")
                 console.print()
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -5742,7 +5750,7 @@ def shadow_export_middleware(framework: str, output: Optional[str]):
             output_path = Path(output)
             output_path.write_text(middleware_code)
             console.print(
-                f"[bold green]✓ Middleware saved to:[/bold green] {output_path}\n"
+                f"[bold green]+ Middleware saved to:[/bold green] {output_path}\n"
             )
         else:
             console.print("[bold]Generated Middleware Code:[/bold]\n")
@@ -5761,7 +5769,7 @@ def shadow_export_middleware(framework: str, output: Optional[str]):
             console.print("      app.add_middleware(ShadowRunnerMiddleware)\n")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -5819,7 +5827,7 @@ def shadow_fuzz(
 
         campaign = runner.generate_fuzzing_campaign(capture_file, target_url, config)
 
-        console.print(f"[green]✓ Fuzzing campaign created:[/green] {campaign.name}")
+        console.print(f"[green]+ Fuzzing campaign created:[/green] {campaign.name}")
         console.print(f"   Campaign ID: {campaign.campaign_id}")
 
         if output:
@@ -5827,7 +5835,7 @@ def shadow_fuzz(
             console.print(f"   Report saved to: {output}")
 
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -5864,11 +5872,11 @@ def ai_feedback(storage_path: str, limit: int, analyze: bool):
     all_feedback = collector.load_all_feedback()
 
     if not all_feedback:
-        console.print("[yellow]⚠ No feedback collected yet[/yellow]")
+        console.print("[yellow]! No feedback collected yet[/yellow]")
         console.print("   Run some tests first: [cyan]e2e run[/cyan]")
         return
 
-    console.print(f"[green]✓[/green] Total feedback items: {len(all_feedback)}\n")
+    console.print(f"[green]+[/green] Total feedback items: {len(all_feedback)}\n")
 
     if analyze:
         # Show pattern analysis
@@ -5912,7 +5920,7 @@ def ai_feedback(storage_path: str, limit: int, analyze: bool):
         table.add_column("Status", style="white")
 
         for feedback in reversed(recent):
-            status_icon = "✓" if "success" in feedback.feedback_type.value else "✗"
+            status_icon = "+" if "success" in feedback.feedback_type.value else "✗"
             status_color = (
                 "green" if "success" in feedback.feedback_type.value else "red"
             )
@@ -5954,12 +5962,12 @@ def ai_train(storage_path: str, output: str):
     ]
 
     if not corrections:
-        console.print("[yellow]⚠ No user corrections found for training[/yellow]")
+        console.print("[yellow]! No user corrections found for training[/yellow]")
         console.print("   Corrections are collected when users fix test assertions")
         return
 
     console.print(
-        f"[green]✓[/green] Found {len(corrections)} corrections for training\n"
+        f"[green]+[/green] Found {len(corrections)} corrections for training\n"
     )
 
     # Prepare training data
@@ -5991,7 +5999,7 @@ def ai_train(storage_path: str, output: str):
     # Save model if output specified
     if output:
         trainer.export_model(output)
-        console.print(f"[green]✓[/green] Model saved to: {output}\n")
+        console.print(f"[green]+[/green] Model saved to: {output}\n")
 
     # Show learning progress
     progress = trainer.get_learning_progress()
@@ -6048,7 +6056,7 @@ def ai_adapt(strategy: str, test_name: str):
     all_feedback = collector.load_all_feedback()
 
     if not all_feedback:
-        console.print("[yellow]⚠ No feedback available for adaptation[/yellow]")
+        console.print("[yellow]! No feedback available for adaptation[/yellow]")
         return
 
     # Get failure patterns
@@ -6078,7 +6086,7 @@ def ai_adapt(strategy: str, test_name: str):
                 console.print("  • Consider splitting into smaller, more focused tests")
         else:
             console.print(
-                f"[green]✓[/green] Test '{test_name}' has no recorded failures"
+                f"[green]+[/green] Test '{test_name}' has no recorded failures"
             )
     else:
         # Show general adaptation metrics
@@ -6133,7 +6141,7 @@ def ai_optimize(service: str):
     service_feedback = [f for f in all_feedback if f.metadata.get("service") == service]
 
     if not service_feedback:
-        console.print("[yellow]⚠ No historical data for this service[/yellow]")
+        console.print("[yellow]! No historical data for this service[/yellow]")
         console.print("   Run tests first to collect execution data")
         return
 
@@ -6150,7 +6158,7 @@ def ai_optimize(service: str):
                 execution_history[feedback.test_name] = feedback.execution_time
 
     if not execution_history:
-        console.print("[yellow]⚠ No execution time data available[/yellow]")
+        console.print("[yellow]! No execution time data available[/yellow]")
         return
 
     # Get test names
@@ -6159,7 +6167,7 @@ def ai_optimize(service: str):
     # Optimize order
     optimized = trainer.optimize_test_order(test_names, execution_history)
 
-    console.print(f"[green]✓[/green] Analyzed {len(test_names)} tests\n")
+    console.print(f"[green]+[/green] Analyzed {len(test_names)} tests\n")
 
     table = Table(title="Optimized Test Execution Order")
     table.add_column("Order", style="cyan")
@@ -6272,7 +6280,7 @@ def install_template(template_id: str, service: str, name: str):
         result = marketplace.install_template(template_id, service, name)
 
         if result:
-            console.print("[green]✓[/green] Template installed successfully!")
+            console.print("[green]+[/green] Template installed successfully!")
             console.print(f"   Location: {result}")
         else:
             console.print("[red]✗[/red] Failed to install template")
@@ -6329,7 +6337,7 @@ def publish_template(
 
         # Publish
         if marketplace.publish_template(template):
-            console.print("[green]✓[/green] Template published successfully!")
+            console.print("[green]+[/green] Template published successfully!")
             console.print(f"   ID: {template.id}")
             console.print(f"   Name: {template.name}")
             console.print("   Status: Pending review")
@@ -6422,7 +6430,7 @@ def install_plugin(plugin_id: str):
 
         # Install
         if repo.install_plugin(plugin_id):
-            console.print("[green]✓[/green] Plugin installed successfully!")
+            console.print("[green]+[/green] Plugin installed successfully!")
         else:
             console.print("[red]✗[/red] Failed to install plugin")
 
@@ -6478,7 +6486,7 @@ def uninstall_plugin(plugin_name: str):
 
         if repo.uninstall_plugin(plugin_name):
             console.print(
-                f"[green]✓[/green] Plugin '{plugin_name}' uninstalled successfully!"
+                f"[green]+[/green] Plugin '{plugin_name}' uninstalled successfully!"
             )
         else:
             console.print(f"[red]✗[/red] Failed to uninstall plugin '{plugin_name}'")
@@ -6568,7 +6576,7 @@ def dashboard(port: int, host: str, no_browser: bool):
         launch_dashboard(port=port, open_browser=not no_browser)
 
     except ImportError as e:
-        console.print("\n[red]❌ Streamlit not found. Installing...[/red]")
+        console.print("\n[red][ERR] Streamlit not found. Installing...[/red]")
 
         # Try to install streamlit automatically
         import subprocess
@@ -6577,7 +6585,7 @@ def dashboard(port: int, host: str, no_browser: bool):
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "streamlit", "-q"]
             )
-            console.print("[green]✓ Streamlit installed successfully![/green]\n")
+            console.print("[green]+ Streamlit installed successfully![/green]\n")
 
             # Try to launch again
             from socialseed_e2e.dashboard.server import launch_dashboard
@@ -6590,19 +6598,19 @@ def dashboard(port: int, host: str, no_browser: bool):
             launch_dashboard(port=port, open_browser=not no_browser)
 
         except subprocess.CalledProcessError:
-            console.print("\n[red]❌ Failed to install streamlit.[/red]")
+            console.print("\n[red][ERR] Failed to install streamlit.[/red]")
             console.print("\n[yellow]📦 Please install manually:[/yellow]")
             console.print("   pip install streamlit")
             console.print()
             sys.exit(1)
         except ImportError as e2:
-            console.print(f"\n[red]❌ Error importing dashboard:[/red] {e2}")
+            console.print(f"\n[red][ERR] Error importing dashboard:[/red] {e2}")
             console.print("\n[yellow]📦 Please install manually:[/yellow]")
             console.print("   pip install streamlit")
             console.print()
             sys.exit(1)
     except Exception as e:
-        console.print(f"\n[red]❌ Unexpected error:[/red] {e}")
+        console.print(f"\n[red][ERR] Unexpected error:[/red] {e}")
         sys.exit(1)
 
 
@@ -6643,11 +6651,11 @@ def import_postman(file_path: str, output: str, service_name: str):
         result = importer.import_file(Path(file_path))
 
         if result.success:
-            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"[green]+[/green] {result.message}")
             console.print(f"   Generated {len(result.tests)} test files")
 
             if result.warnings:
-                console.print("\n[yellow]⚠ Warnings:[/yellow]")
+                console.print("\n[yellow]! Warnings:[/yellow]")
                 for warning in result.warnings:
                     console.print(f"   - {warning}")
         else:
@@ -6655,7 +6663,7 @@ def import_postman(file_path: str, output: str, service_name: str):
             sys.exit(1)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        console.print(f"\n[red][ERR] Import error:[/red] {e}")
         sys.exit(1)
 
 
@@ -6698,12 +6706,12 @@ def import_openapi(
         result = importer.import_file(Path(file_path))
 
         if result.success:
-            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"[green]+[/green] {result.message}")
             console.print(f"   Generated {len(result.tests)} test files")
             console.print(f"   Config file: {output}/openapi_config.yaml")
 
             if result.warnings:
-                console.print("\n[yellow]⚠ Warnings:[/yellow]")
+                console.print("\n[yellow]! Warnings:[/yellow]")
                 for warning in result.warnings:
                     console.print(f"   - {warning}")
         else:
@@ -6711,7 +6719,7 @@ def import_openapi(
             sys.exit(1)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        console.print(f"\n[red][ERR] Import error:[/red] {e}")
         sys.exit(1)
 
 
@@ -6742,14 +6750,14 @@ def import_curl(command: str, output: str, name: str):
         result = importer.import_command(command)
 
         if result.success:
-            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"[green]+[/green] {result.message}")
             console.print(f"   Generated test: {output}/{name}.py")
         else:
             console.print(f"[red]✗[/red] Import failed: {result.message}")
             sys.exit(1)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        console.print(f"\n[red][ERR] Import error:[/red] {e}")
         sys.exit(1)
 
 
@@ -6783,14 +6791,14 @@ def import_environment(file_path: str, output: str, service_name: str):
         result = importer.import_file(Path(file_path))
 
         if result.success:
-            console.print(f"[green]✓[/green] {result.message}")
+            console.print(f"[green]+[/green] {result.message}")
             console.print(f"   Config saved to: {output}/imported_config.yaml")
         else:
             console.print(f"[red]✗[/red] Import failed: {result.message}")
             sys.exit(1)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Import error:[/red] {e}")
+        console.print(f"\n[red][ERR] Import error:[/red] {e}")
         sys.exit(1)
 
 
@@ -6838,7 +6846,7 @@ def tui(config: str, service: str, yes: bool):
         tui_available = False
 
     if not tui_available:
-        console.print("\n[yellow]⚠️  TUI dependencies not installed.[/yellow]")
+        console.print("\n[yellow]!️  TUI dependencies not installed.[/yellow]")
         console.print(
             "[dim]The Terminal User Interface requires additional packages.[/dim]\n"
         )
@@ -6864,7 +6872,7 @@ def tui(config: str, service: str, yes: bool):
                     auto_install = True
                     break
                 elif user_input in ("n", "no"):
-                    console.print("\n[yellow]⚠️  Installation cancelled.[/yellow]")
+                    console.print("\n[yellow]!️  Installation cancelled.[/yellow]")
                     console.print(
                         "[dim]The TUI cannot run without these dependencies.[/dim]"
                     )
@@ -6873,13 +6881,13 @@ def tui(config: str, service: str, yes: bool):
                     sys.exit(0)
                 else:
                     console.print(
-                        "[red]❌ Invalid input. Please enter 'y' or 'n'.[/red]"
+                        "[red][ERR] Invalid input. Please enter 'y' or 'n'.[/red]"
                     )
 
         if auto_install:
             if check_and_install_extra("tui", auto_install=True):
                 console.print(
-                    "\n[green]✅ Dependencies installed successfully![/green]\n"
+                    "\n[green][OK] Dependencies installed successfully![/green]\n"
                 )
                 # Re-import after installation
                 try:
@@ -6888,11 +6896,11 @@ def tui(config: str, service: str, yes: bool):
                     tui_available = True
                 except ImportError:
                     console.print(
-                        "[red]❌ Failed to import TUI after installation. Please try again.[/red]"
+                        "[red][ERR] Failed to import TUI after installation. Please try again.[/red]"
                     )
                     sys.exit(1)
             else:
-                console.print("[red]❌ Failed to install dependencies.[/red]")
+                console.print("[red][ERR] Failed to install dependencies.[/red]")
                 console.print("[dim]You can install them manually with:[/dim]")
                 console.print("   pip install socialseed-e2e[tui]")
                 sys.exit(1)
@@ -6909,7 +6917,7 @@ def tui(config: str, service: str, yes: bool):
         app.run()
 
     except Exception as e:
-        console.print(f"\n[red]❌ Unexpected error:[/red] {e}")
+        console.print(f"\n[red][ERR] Unexpected error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7078,21 +7086,21 @@ def semantic_analyze(
             sys.exit(1)
         elif summary["total_drifts"] > 0:
             console.print(
-                "\n[yellow]⚠️  Semantic drifts detected - review recommended[/yellow]"
+                "\n[yellow]!️  Semantic drifts detected - review recommended[/yellow]"
             )
             sys.exit(0)
         else:
-            console.print("\n[green]✅ No semantic drift detected[/green]")
+            console.print("\n[green][OK] No semantic drift detected[/green]")
             sys.exit(0)
 
     except ImportError as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         console.print(
             "\n[yellow]Make sure the semantic analyzer is properly installed.[/yellow]"
         )
         sys.exit(1)
     except Exception as e:
-        console.print(f"\n[red]❌ Error:[/red] {e}")
+        console.print(f"\n[red][ERR] Error:[/red] {e}")
         import traceback
 
         console.print(traceback.format_exc())
@@ -7198,7 +7206,7 @@ def semantic_analyze_run(
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🔍 [bold cyan]Semantic Drift Analysis[/bold cyan]")
@@ -7248,15 +7256,15 @@ def semantic_analyze_run(
             sys.exit(1)
         elif report.detected_drifts:
             console.print(
-                "\n[bold yellow]⚠️  Drifts detected - review recommended[/bold yellow]"
+                "\n[bold yellow]!️  Drifts detected - review recommended[/bold yellow]"
             )
         else:
-            console.print("\n[bold green]✅ No semantic drift detected[/bold green]")
+            console.print("\n[bold green][OK] No semantic drift detected[/bold green]")
 
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7283,7 +7291,7 @@ def semantic_analyze_intents(directory: str, category: tuple, json_output: bool)
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n📚 [bold cyan]Extracting Intent Baselines[/bold cyan]")
@@ -7345,7 +7353,7 @@ def semantic_analyze_intents(directory: str, category: tuple, json_output: bool)
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7384,7 +7392,7 @@ def semantic_analyze_server(port: int, host: str):
     except KeyboardInterrupt:
         console.print("\n[yellow]👋 Server stopped by user[/yellow]")
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7457,7 +7465,7 @@ def red_team_assess(
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🎯 [bold red]Red Team Security Assessment[/bold red]")
@@ -7498,14 +7506,14 @@ def red_team_assess(
 
             if report.resilience_score.overall_score < 50:
                 console.print(
-                    "\n[bold red]⚠️  Critical vulnerabilities found![/bold red]"
+                    "\n[bold red]!️  Critical vulnerabilities found![/bold red]"
                 )
             elif report.resilience_score.overall_score < 75:
                 console.print(
-                    "\n[bold yellow]⚠️  Moderate security concerns[/bold yellow]"
+                    "\n[bold yellow]!️  Moderate security concerns[/bold yellow]"
                 )
             else:
-                console.print("\n[bold green]✅ Good security posture[/bold green]")
+                console.print("\n[bold green][OK] Good security posture[/bold green]")
 
             # Show recommendations
             if report.resilience_score.recommendations:
@@ -7516,7 +7524,7 @@ def red_team_assess(
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7544,7 +7552,7 @@ def red_team_guardrails(directory: str, json_output: bool):
     target_path = Path(directory).resolve()
 
     if not target_path.exists():
-        console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
+        console.print(f"[red][ERR] Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
     console.print("\n🔍 [bold cyan]Discovering Guardrails[/bold cyan]")
@@ -7606,7 +7614,7 @@ def red_team_guardrails(directory: str, json_output: bool):
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7669,7 +7677,7 @@ def red_team_payloads(attack_type: str):
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7703,7 +7711,7 @@ def red_team_logs(session: str, attack_type: str, winning: bool):
 
     from socialseed_e2e.agents.red_team_adversary import SecurityLogger
 
-    console.print("\n📋 [bold cyan]Red Team Logs[/bold cyan]\n")
+    console.print("\n- [bold cyan]Red Team Logs[/bold cyan]\n")
 
     try:
         logger = SecurityLogger()
@@ -7755,7 +7763,7 @@ def red_team_logs(session: str, attack_type: str, winning: bool):
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7824,7 +7832,7 @@ def telemetry_monitor(output: str, baseline: str, threshold: float, budget: floa
         manager = TelemetryManager(config)
         manager.start_session()
 
-        console.print("✅ Telemetry session started")
+        console.print("[OK] Telemetry session started")
         console.print(f"   Output directory: {output}")
         if baseline:
             console.print(f"   Baseline: {baseline}")
@@ -7858,7 +7866,7 @@ def telemetry_monitor(output: str, baseline: str, threshold: float, budget: floa
 
         if report.reasoning_loops:
             console.print(
-                f"\n[bold yellow]⚠️  {len(report.reasoning_loops)} reasoning loop(s) detected[/bold yellow]"
+                f"\n[bold yellow]!️  {len(report.reasoning_loops)} reasoning loop(s) detected[/bold yellow]"
             )
 
         if report.cost_regressions:
@@ -7875,7 +7883,7 @@ def telemetry_monitor(output: str, baseline: str, threshold: float, budget: floa
         console.print()
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7911,7 +7919,7 @@ def telemetry_baseline(output: str, reset: bool):
 
         if reset and detector.baseline_file.exists():
             detector.reset_baseline()
-            console.print(f"✅ Baseline reset: {output}")
+            console.print(f"[OK] Baseline reset: {output}")
         elif detector.baseline_file.exists():
             info = detector.get_baseline_info()
             if info:
@@ -7925,7 +7933,7 @@ def telemetry_baseline(output: str, reset: bool):
             console.print("   Run tests with telemetry to create a baseline")
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -7967,7 +7975,7 @@ def telemetry_report(report_file: str, format: str):
                     report_file = str(reports[0])
 
         if not report_file or not Path(report_file).exists():
-            console.print("[red]❌ Error:[/red] No report file found")
+            console.print("[red][ERR] Error:[/red] No report file found")
             console.print("   Run 'e2e telemetry monitor' first or specify a file")
             sys.exit(1)
 
@@ -7988,7 +7996,7 @@ def telemetry_report(report_file: str, format: str):
             console.print(markdown)
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
@@ -8052,7 +8060,7 @@ def telemetry_budget(
 
         if action == "create":
             if not name or not scope:
-                console.print("[red]❌ Error:[/red] --name and --scope are required")
+                console.print("[red][ERR] Error:[/red] --name and --scope are required")
                 sys.exit(1)
 
             budget = manager.create_budget(
@@ -8064,7 +8072,7 @@ def telemetry_budget(
                 on_budget_breach=on_breach,
             )
 
-            console.print(f"✅ Budget created: {budget.budget_id}")
+            console.print(f"[OK] Budget created: {budget.budget_id}")
             console.print(f"   Name: {name}")
             console.print(f"   Scope: {scope}:{scope_id or 'all'}")
             if max_cost:
@@ -8122,11 +8130,11 @@ def telemetry_budget(
                 console.print("ℹ️  No budgets defined")
             else:
                 for budget in budgets:
-                    status = "🟢 Active" if budget.is_active else "🔴 Inactive"
+                    status = "OK Active" if budget.is_active else "ERR Inactive"
                     console.print(f"{budget.budget_id}: {budget.name} ({status})")
 
     except Exception as e:
-        console.print(f"[red]❌ Error:[/red] {e}")
+        console.print(f"[red][ERR] Error:[/red] {e}")
         sys.exit(1)
 
 
