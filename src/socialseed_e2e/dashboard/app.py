@@ -86,6 +86,8 @@ if "selected_test" not in st.session_state:
     st.session_state.selected_test = None
 if "test_results" not in st.session_state:
     st.session_state.test_results = {}
+if "show_observability" not in st.session_state:
+    st.session_state.show_observability = False
 
 
 class DashboardState:
@@ -229,7 +231,12 @@ def render_test_explorer(tests: Dict):
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Quick Actions")
 
+    if st.sidebar.button("📈 AI Observability", use_container_width=True, type="primary"):
+        st.session_state.show_observability = not st.session_state.get("show_observability", False)
+        st.rerun()
+
     if st.sidebar.button("🚀 Run All Tests", use_container_width=True):
+        st.session_state.show_observability = False
         run_all_tests(tests)
 
     if st.sidebar.button("🔄 Refresh", use_container_width=True):
@@ -581,7 +588,14 @@ def main():
     # Sidebar - Test Explorer
     selected_test = render_test_explorer(tests)
 
-    # Main content area
+    if st.session_state.get("show_observability", False):
+        st.markdown("## 📈 SocialSeed Singularity - Network APM")
+        import streamlit.components.v1 as components
+        # Embedded full-width TradingView iframe hitting the internal 8181 daemon
+        components.iframe("http://localhost:8181", height=750, scrolling=True)
+        return
+
+    # Main content area para Test Execution E2E Classic
     col_main, col_sidebar = st.columns([3, 1])
 
     with col_main:

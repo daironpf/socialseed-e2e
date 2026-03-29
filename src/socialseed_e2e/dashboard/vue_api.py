@@ -280,6 +280,12 @@ FALLBACK_DASHBOARD_HTML = r"""
                 <button class="btn-sm secondary" onclick="openImportModal()">📥 Import</button>
             </div>
 
+            <div style="padding: 0 0.75rem 0.75rem 0.75rem;">
+                <button class="btn-sm" onclick="toggleObservability()" style="background:#3b82f6; width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; font-weight:bold;">
+                    <span>📈</span> AI Observability
+                </button>
+            </div>
+
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search tests..." onkeyup="filterTests()">
             </div>
@@ -382,6 +388,15 @@ FALLBACK_DASHBOARD_HTML = r"""
                 </div>
             </div>
 
+            <!-- Observability View -->
+            <div id="observabilityView" style="display:none; flex:1; flex-direction:column; background:var(--bg-primary);">
+                <div class="main-header">
+                    <div class="test-title">📈 AI Observability Engine (Real-time Network Traffic)</div>
+                    <button class="btn-sm secondary" onclick="toggleObservability()">✕ Close</button>
+                </div>
+                <iframe id="obsIframe" src="" style="flex:1; border:none; width:100%; height:100%;"></iframe>
+            </div>
+
             <div class="status-bar">
                 <div class="sync-status">
                     <span class="sync-dot"></span>
@@ -398,6 +413,26 @@ FALLBACK_DASHBOARD_HTML = r"""
         let selectedTest = null;
         let sandboxTests = {};
         let lastModified = {};
+        let showObs = false;
+
+        function toggleObservability() {
+            showObs = !showObs;
+            const testView = document.querySelector('.request-panel').parentElement;
+            const obsView = document.getElementById('observabilityView');
+            const iframe = document.getElementById('obsIframe');
+
+            if (showObs) {
+                // Obtenemos la URL actual del navegador para saber el host
+                const host = window.location.hostname;
+                iframe.src = `http://${host}:8181`;
+                testView.style.display = 'none';
+                obsView.style.display = 'flex';
+            } else {
+                testView.style.display = 'flex';
+                obsView.style.display = 'none';
+                iframe.src = '';
+            }
+        }
 
         async function loadData() {
             try {
@@ -1394,6 +1429,10 @@ async def get_tests() -> Dict[str, Any]:
     return {"services": list(services.values()), "tests": tests}
 
 
+async def send_log(message: str, level: str = "info"):
+    """Send a log message to all connected clients."""
+    await sio.emit("log", {"message": message, "level": level, "timestamp": datetime.now().isoformat()})
+
 @app.post("/api/tests/run")
 async def run_test(data: Dict[str, Any]) -> Dict[str, Any]:
     """Run a specific test."""
@@ -1404,9 +1443,11 @@ async def run_test(data: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="test_path is required")
 
     start_time = datetime.now()
+    await send_log(f"Test execution request received: {test_path}", "info")
 
     # Emit start event
     await sio.emit("test_start", {"test_path": test_path})
+    await send_log(f"Module discovery started for {test_path}", "info")
 
     try:
         # Import and run the test
@@ -1449,9 +1490,11 @@ async def run_test(data: Dict[str, Any]) -> Dict[str, Any]:
                 return self._json_data
 
         page = MockPage()
+        await send_log(f"Running test logic for {module_name}...", "info")
 
         # Run the test
         result = spec.run(page)
+        await send_log(f"Test logic completed for {module_name}", "success")
 
         end_time = datetime.now()
         duration = int((end_time - start_time).total_seconds() * 1000)
@@ -1492,6 +1535,7 @@ async def run_test(data: Dict[str, Any]) -> Dict[str, Any]:
         return {"result": test_result}
 
     except Exception as e:
+        await send_log(f"Error executing test: {str(e)}", "error")
         end_time = datetime.now()
         duration = int((end_time - start_time).total_seconds() * 1000)
 
@@ -2387,6 +2431,8 @@ def run_server(
 ) -> None:
     """Run the Vue dashboard server."""
     import uvicorn
+    import subprocess
+    import sys
 
     url = f"http://{host}:{port}"
 
@@ -2396,6 +2442,25 @@ def run_server(
     print(f"\n📍 Dashboard URL: {url}")
     print("\nPress Ctrl+C to stop")
     print("=" * 60)
+
+    # Start Observability (TradingView) FastAPI Subprocess
+    try:
+        obs_dir = Path(__file__).parent.parent / "observability" / "tradingview"
+        cmd_fastapi = [
+            sys.executable, "-m", "uvicorn", 
+            "socialseed_e2e.observability.tradingview.app:app",
+            "--port", "8181", 
+            "--host", "0.0.0.0"
+        ]
+        print(f"🔮 Igniting AI Observability Engine (CWD: {obs_dir})...")
+        subprocess.Popen(
+            cmd_fastapi,
+            cwd=str(obs_dir),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception as e:
+        print(f"⚠️ Warning: Could not start Observability Engine: {e}")
 
     if open_browser:
         import webbrowser

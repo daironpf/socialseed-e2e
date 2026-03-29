@@ -109,6 +109,8 @@ const route = useRoute()
 const testStore = useTestStore()
 const logStore = useLogStore()
 
+import { io } from 'socket.io-client'
+
 const sidebarCollapsed = ref(false)
 const logsExpanded = ref(true)
 const logFilter = ref('all')
@@ -144,38 +146,54 @@ const refreshData = async () => {
   isRefreshing.value = false
 }
 
-let ws = null
+let socket = null
 
-const connectWebSocket = () => {
-  ws = new WebSocket(`ws://${window.location.host}/ws`)
+const connectSocket = () => {
+  // En producción window.location.host, en dev podría ser diferente
+  socket = io(`http://${window.location.hostname}:8000`, {
+    path: '/ws'
+  })
   
-  ws.onopen = () => {
+  socket.on('connect', () => {
     isConnected.value = true
-    logStore.addLog('info', 'Connected to server')
-  }
+    logStore.addLog('info', 'Connected to SocialSeed Backend (Socket.IO)')
+  })
   
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data)
-    if (data.type === 'log') {
-      logStore.addLog(data.level, data.message)
-    } else if (data.type === 'test_result') {
-      testStore.addResult(data.result)
-    }
-  }
-  
-  ws.onclose = () => {
+  socket.on('disconnect', () => {
     isConnected.value = false
-    setTimeout(connectWebSocket, 3000)
-  }
+    logStore.addLog('error', 'Disconnected from server')
+  })
+
+  socket.on('log', (data) => {
+    logStore.addLog(data.level || 'info', data.message)
+  })
+
+  socket.on('test_start', (data) => {
+    logStore.addLog('info', `🚀 Starting test: ${data.test_path}`)
+  })
+
+  socket.on('test_result', (data) => {
+    const result = data.result
+    const statusIcon = result.status === 'passed' ? '✅' : '❌'
+    logStore.addLog(
+      result.status === 'passed' ? 'success' : 'error', 
+      `${statusIcon} Test ${result.test_name}: ${result.status.toUpperCase()} (${result.duration}ms)`
+    )
+    testStore.addResult(result)
+  })
+  
+  socket.on('connect_error', (error) => {
+    console.error('Socket.IO connection error:', error)
+  })
 }
 
 onMounted(() => {
   testStore.loadTests()
-  connectWebSocket()
+  connectSocket()
 })
 
 onUnmounted(() => {
-  if (ws) ws.close()
+  if (socket) socket.disconnect()
 })
 </script>
 

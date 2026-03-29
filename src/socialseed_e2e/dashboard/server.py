@@ -23,6 +23,7 @@ class DashboardServer:
         self.host = host
         self.app_path = Path(__file__).parent / "app.py"
         self.process: Optional[subprocess.Popen] = None
+        self.fastapi_process: Optional[subprocess.Popen] = None
 
     def start(self, open_browser: bool = True) -> None:
         """Start the dashboard server."""
@@ -61,6 +62,23 @@ class DashboardServer:
             url = f"http://{self.host}:{self.port}"
             webbrowser.open(url)
 
+        # Start Observability (TradingView) FastAPI Subprocess
+        try:
+            cmd_fastapi = [
+                sys.executable, "-m", "uvicorn", 
+                "socialseed_e2e.observability.tradingview.app:app",
+                "--port", "8181", 
+                "--host", "0.0.0.0"
+            ]
+            click.echo("🔮 Igniting Singularity AI Observability Engine (Port 8181)...")
+            self.fastapi_process = subprocess.Popen(
+                cmd_fastapi,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        except Exception as e:
+            click.echo(f"⚠️ Warning: Could not start Observability Engine: {e}")
+
         # Start Streamlit process
         try:
             self.process = subprocess.Popen(
@@ -88,7 +106,12 @@ class DashboardServer:
         if self.process:
             self.process.terminate()
             self.process.wait()
-            click.echo("✅ Dashboard stopped")
+            
+        if self.fastapi_process:
+            self.fastapi_process.terminate()
+            self.fastapi_process.wait()
+            
+        click.echo("✅ Dashboard and Observability Engine stopped")
 
     def is_running(self) -> bool:
         """Check if the dashboard is running."""
