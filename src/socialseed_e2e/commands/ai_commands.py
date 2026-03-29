@@ -22,15 +22,44 @@ class TestGenerator:
         output: str,
         service: Optional[str],
         strategy: str,
-        dry_run: bool,
-        verbose: bool,
+        use_manifest: bool = False,
+        dry_run: bool = False,
+        verbose: bool = False,
     ):
         self.directory = Path(directory).resolve()
         self.output = Path(output).resolve()
         self.service = service
         self.strategy = strategy
+        self.use_manifest = use_manifest
         self.dry_run = dry_run
         self.verbose = verbose
+
+    def _get_manifest_context(self) -> Optional[dict]:
+        """Get context from project manifest using RAG."""
+        from socialseed_e2e.project_manifest import RAGRetrievalEngine
+
+        if not self.service:
+            return None
+
+        project_root = self.directory
+        manifest_dir = project_root / ".e2e" / "manifests" / self.service
+
+        if not manifest_dir.exists():
+            console.print(
+                f"[yellow]⚠ Manifest not found:[/yellow] {manifest_dir}. "
+                "Run 'e2e manifest' first."
+            )
+            return None
+
+        try:
+            engine = RAGRetrievalEngine(manifest_dir)
+            task = f"generate {self.strategy} tests for {self.service}"
+            chunks = engine.retrieve_for_task(task, max_chunks=5)
+            return {"chunks": chunks, "service": self.service}
+        except Exception as e:
+            if self.verbose:
+                console.print(f"[yellow]⚠ RAG Error:[/yellow] {e}")
+            return None
 
     def generate(self):
         """Generate test suite."""
@@ -41,7 +70,17 @@ class TestGenerator:
         console.print(f"   Output: {self.output}")
         if self.strategy != "all":
             console.print(f"   Strategy: {self.strategy}")
+        if self.use_manifest:
+            console.print(f"   Using: Project Manifest (RAG)")
         console.print()
+
+        manifest_context = None
+        if self.use_manifest:
+            with console.status(
+                "[bold yellow]Retrieving manifest context...",
+                spinner="dots",
+            ) as status:
+                manifest_context = self._get_manifest_context()
 
         with console.status(
             "[bold yellow]Parsing database models...",
@@ -176,6 +215,11 @@ class GherkinTranslator:
     help="Test generation strategy",
 )
 @click.option(
+    "--use-manifest",
+    is_flag=True,
+    help="Use project manifest (RAG) for context-aware test generation",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Show what would be generated without creating files",
@@ -186,6 +230,7 @@ def get_generate_tests_command(
     output: str = "services",
     service: Optional[str] = None,
     strategy: str = "all",
+    use_manifest: bool = False,
     dry_run: bool = False,
     verbose: bool = False,
 ):
@@ -197,9 +242,13 @@ def get_generate_tests_command(
         console.print(f"[red]❌ Error:[/red] Directory not found: {target_path}")
         sys.exit(1)
 
+    if use_manifest and not service:
+        console.print("[yellow]⚠ Warning:[/yellow] --use-manifest requires --service. Using default manifest search.")
+        use_manifest = False
+
     try:
         generator = TestGenerator(
-            target_path, output_path, service, strategy, dry_run, verbose
+            target_path, output_path, service, strategy, use_manifest, dry_run, verbose
         )
         generator.generate()
     except Exception as e:
