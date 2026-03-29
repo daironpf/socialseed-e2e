@@ -202,6 +202,7 @@ class TechStackDetector:
             "typescript": [".ts"],
             "go": [".go"],
             "csharp": [".cs"],
+            "ruby": [".rb"],
         }
 
         all_extensions = []
