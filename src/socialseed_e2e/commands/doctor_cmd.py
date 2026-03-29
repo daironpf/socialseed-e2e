@@ -129,7 +129,44 @@ def doctor_command(verbose: bool, fix: bool) -> None:
     console.print("\n✅ [green]Everything is configured correctly![/green]\n")
 
     if fix:
-        console.print("[yellow]Note:[/yellow] --fix is not yet implemented")
+        console.print("\n🔧 [cyan]Attempting automatic fixes...[/cyan]")
+        
+        # 1. Install missing dependencies
+        missing_pkgs = []
+        for pkg in ["playwright", "pydantic", "click", "rich", "pyyaml"]:
+            try:
+                __import__(pkg)
+            except ImportError:
+                missing_pkgs.append(pkg)
+        
+        if missing_pkgs:
+            console.print(f"  📦 Installing missing: {', '.join(missing_pkgs)}")
+            import subprocess
+            subprocess.run([sys.executable, "-m", "pip", "install"] + missing_pkgs)
+            
+        # 2. Install Playwright browsers
+        try:
+            import playwright
+            console.print("  🌐 Installing Playwright browsers...")
+            subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"])
+        except Exception as e:
+            console.print(f"  ❌ Failed to install Playwright: {e}")
+            
+        # 3. Create missing directories
+        for d in ["services", "tests", ".e2e/reports"]:
+            path = Path.cwd() / d
+            if not path.exists():
+                path.mkdir(parents=True, exist_ok=True)
+                console.print(f"  📁 Created: {d}")
+                
+        # 4. Create missing config
+        config_path = Path.cwd() / "e2e.conf"
+        if not config_path.exists():
+            from socialseed_e2e.commands.init_cmd import InitManager
+            InitManager(Path.cwd())._create_e2e_conf()
+            console.print("  📝 Created default e2e.conf")
+
+        console.print("\n✨ [green]Fixes applied! Run 'e2e doctor' again to verify.[/green]")
 
 
 def get_command():

@@ -11,8 +11,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 
-from playwright.sync_api import APIRequestContext, APIResponse, Playwright
-
+from socialseed_e2e.core.circuit_breaker import CircuitBreaker, CircuitState
+from socialseed_e2e.core.context import GlobalContext, ServiceContext
 from socialseed_e2e.core.headers import DEFAULT_BROWSER_HEADERS, DEFAULT_JSON_HEADERS
 from socialseed_e2e.core.models import ServiceConfig
 
@@ -22,6 +22,23 @@ try:
 except ImportError:
     # Handle circular dependency if any
     pass
+
+# Granular exception classes
+class BasePageError(Exception):
+    """Enhanced exception with request context."""
+    def __init__(self, message: str, url: Optional[str] = None, method: Optional[str] = None, status: Optional[int] = None, response_text: Optional[str] = None, request_log: Optional[RequestLog] = None):
+        super().__init__(message)
+        self.url = url
+        self.method = method
+        self.status = status
+        self.response_text = response_text
+        self.request_log = request_log
+
+class ClientError(BasePageError): """4xx Errors"""
+class ServerError(BasePageError): """5xx Errors"""
+class NetworkError(BasePageError): """Network-level failures"""
+class RateLimitError(BasePageError): """429 Errors"""
+class CircuitOpenError(BasePageError): """Circuit Breaker is OPEN"""
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -44,6 +61,7 @@ class RetryConfig:
     max_backoff: float = 60.0
     retry_on: Optional[List[int]] = None
     retry_exceptions: Optional[List[Type[Exception]]] = None
+    retry_on_body_contains: Optional[List[str]] = None
 
     def __post_init__(self):
         """Initialize default retry configuration values."""
@@ -233,15 +251,8 @@ class BasePage:
         self.headers = self.default_headers  # Alias for easier access in tests
         self.health_endpoint = health_endpoint
 
-        # Initialize Playwright
-        if playwright:
-            self.playwright = playwright
-        else:
-            self.playwright_manager = __import__(
-                "playwright"
-            ).sync_api.sync_playwright()
-            self.playwright = self.playwright_manager.__enter__()
-
+        # Playwright will be initialized in setup()
+        self.playwright = playwright
         self.api_context: Optional[APIRequestContext] = None
 
         # Configuration
@@ -249,6 +260,12 @@ class BasePage:
         self.rate_limit_config = rate_limit_config or RateLimitConfig(enabled=False)
         self.enable_request_logging = enable_request_logging
         self.max_log_body_size = max_log_body_size
+        
+        # Service Context for state sharing (created or injected)
+        self.context = GlobalContext().get_service_context(base_url)
+        
+        # Circuit Breaker state (one per service instance)
+        self.circuit_breaker = CircuitBreaker()
 
         # Rate limiting state
         self._request_times: List[float] = []
@@ -267,12 +284,12 @@ class BasePage:
         logger.info(f"BasePage initialized for {self.base_url}")
 
     def set_metadata(self, key: str, value: Any) -> None:
-        """Set a metadata value for sharing state between tests."""
-        self.metadata[key] = value
+        """Set a metadata value for sharing state between tests (Legacy alias for context)."""
+        self.context.set(key, value)
 
     def get_metadata(self, key: str, default: Any = None) -> Any:
-        """Get a metadata value."""
-        return self.metadata.get(key, default)
+        """Get a metadata value (Legacy alias for context)."""
+        return self.context.get(key, default)
 
     # Assertion Integration
 
@@ -311,6 +328,13 @@ class BasePage:
         This method creates the Playwright APIRequestContext. It is called
         automatically before making requests if not already set up.
         """
+        if not self.playwright:
+            self.playwright_manager = __import__(
+                "playwright"
+            ).sync_api.sync_playwright()
+            self.playwright = self.playwright_manager.__enter__()
+            logger.debug("Playwright initialized lazily in setup()")
+
         if not self.api_context:
             assert self.playwright is not None
             self.api_context = self.playwright.request.new_context()
@@ -431,6 +455,16 @@ class BasePage:
         # Check if status code is in retry list
         if response and response.status in (self.retry_config.retry_on or []):
             return True
+            
+        # Check if response body contains specific strings
+        if response and self.retry_config.retry_on_body_contains:
+            try:
+                text = response.text()
+                for pattern in self.retry_config.retry_on_body_contains:
+                    if pattern in text:
+                        return True
+            except Exception:
+                pass
 
         return False
 
@@ -520,6 +554,14 @@ class BasePage:
         """
         self._ensure_setup()
         assert self.api_context is not None
+        
+        # Check Circuit Breaker
+        if not self.circuit_breaker.can_execute():
+            raise CircuitOpenError(
+                message=f"Circuit Breaker is OPEN for {self.base_url}. Service seems down.",
+                url=self.base_url
+            )
+            
         self._apply_rate_limit()
 
         full_url = f"{self.base_url}{endpoint}"
@@ -615,6 +657,7 @@ class BasePage:
 
                 # Success or non-retryable response
                 self._log_request(request_log)
+                self.circuit_breaker.record_success()
                 return last_response
 
             except Exception as e:
@@ -636,9 +679,10 @@ class BasePage:
                 # Log failure
                 request_log.error = str(e)
                 self._log_request(request_log)
+                self.circuit_breaker.record_failure(exception=e)
 
                 # Raise enhanced error
-                raise BasePageError(
+                raise NetworkError(
                     message=f"Request failed after {attempt + 1} attempt(s): {e}",
                     url=full_url,
                     method=method,

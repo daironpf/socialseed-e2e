@@ -11,8 +11,9 @@ Example:
     )
 """
 
-from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, AliasChoices, AliasGenerator
+from pydantic.alias_generators import to_camel
 
 
 # =============================================================================
