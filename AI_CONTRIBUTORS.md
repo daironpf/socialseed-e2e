@@ -86,6 +86,26 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ---
 
+### OpenCode minimax-m2.5-free (OpenCode)
+
+**Plataforma:** [OpenCode](https://opencode.ai)
+**Modelo:** minimax-m2.5-free
+**Rol:** Implementación de Features y Testing
+
+**Contribuciones Principales:**
+- 🎯 Completado el Roadmap de 5 Fases del proyecto
+- 🏗️ Fase 1: Sistema de migración de configuración, fixes de encoding UTF-8
+- 🔍 Fase 2: Ruby detection, comandos --use-manifest, --to-manifest, --sync-index
+- 🔬 Fase 3: Comparación semántica para shadow replay
+- 🛡️ Fase 4: Verificación de features existentes (FlowTestGenerator, LogicDrift, etc.)
+- 📊 Fase 5: Implementación completa del módulo de observabilidad (metrics, tracing, logging)
+- 🧪 39+ tests implementados/verificados
+
+**Sesiones Notables:**
+- [2026-03-29] Fix de 25 tests de observabilidad - implementación de TraceSpan, MetricsCollector, TelemetryManager, StructuredLogger
+
+---
+
 ## Historial de Contribuciones por Fecha
 
 ### Marzo 2026
