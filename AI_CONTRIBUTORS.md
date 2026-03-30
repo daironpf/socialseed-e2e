@@ -49,6 +49,30 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ---
 
+### OpenCode Documentation Agent
+
+**Plataforma:** [OpenCode](https://opencode.ai)  
+**Modelo Base:** nemotron-3-super-free  
+**Rol:** Mejora de documentación y guía para agentes IA  
+
+**Contribuciones Principales:**
+- 📖 Mejora significativa de `AGENT_GUIDE.md` con:
+  - Tarjeta de referencia rápida de las 5 reglas de oro
+  - Sección de errores letales específicos de agentes IA
+  - Flujo de trabajo recomendado con caso práctico end-to-end
+  - Guía para aprovechar capacidades de IA del framework (manifest, búsqueda semántica, generación autónoma de tests)
+  - Integración con otras guías del directorio .agent/
+  - Detección de anti-patrones para agentes IA
+  - Protocolo de verificación mejorado
+  - Workflows para resolución de issues específicos (timeouts, imports relativos)
+  - Mecanismo para que los agentes contribuyan con experiencias para mejorar el framework
+- 🗺️ Movimiento de todas las issues del roadmap (01-foundation a 05-observability-dashboard) a la carpeta de finalizados tras verificar su implementación en el códigobase
+
+**Sesiones Notables:**
+- [2026-03-30] Mejora integral de AGENT_GUIDE.md y actualización del roadmap de issues completadas
+
+---
+
 ### Claude (Anthropic)
 
 **Plataforma:** [OpenCode](https://opencode.ai) / API Directa

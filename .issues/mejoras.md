@@ -1,5 +1,15 @@
 # SocialSeed E2E - Issues y Mejoras Pendientes
 
+## 📋 Proceso para Marcar Issues como Finalizados
+
+Cuando un agente de IA complete la implementación de un issue:
+1. **Testear exhaustivamente** la implementación para asegurar que cumple con todos los requisitos
+2. **Preguntar** si el issue puede considerarse finalizado (esperando confirmación)
+3. **Si se confirma como finalizado**, mover el archivo de issue correspondiente desde su ubicación actual a `.issues/finalizados/`
+4. **Actualizar** el estado del issue en este archivo TODO.md a "Finalizado"
+
+---
+
 ## Estado del Framework
 
 **Versión funcional**: 23 de febrero 2026 (commit 110792f)
@@ -10,7 +20,7 @@
 ## Issues Críticos (Alta Prioridad)
 
 ### [ISSUE-001] Documentación .agent/ insuficiente para agentes IA
-**Estado**: ✅ CORREGIDO
+**Estado**: Finalizado
 **Descripción**: El README.md en .agent/ solo tenía 4 comandos básicos, insuficiente para que un agente IA trabaje sin explorar el código fuente.
 **Solución**: Ampliado con ejemplos de código, patrones comunes, estructura completa del proyecto.
 

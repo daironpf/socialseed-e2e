@@ -6,6 +6,14 @@ Este documento lista TODOS los issues a implementar para que cada archivo del di
 
 **Meta**: Agentes IA leen 1 archivo y saben TODO lo que necesitan del proyecto.
 
+## 📋 Proceso para Marcar Issues como Finalizados
+
+Cuando un agente de IA complete la implementación de un issue:
+1. **Testear exhaustivamente** la implementación para asegurar que cumple con todos los requisitos
+2. **Preguntar** si el issue puede considerarse finalizado (esperando confirmación)
+3. **Si se confirma como finalizado**, mover el archivo de issue correspondiente desde su ubicación actual a `.issues/finalizados/`
+4. **Actualizar** el estado del issue en este archivo TODO.md a "Finalizado"
+
 ---
 
 ## 📁 1. ARCHITECTURE.md
@@ -14,23 +22,27 @@ Este documento lista TODOS los issues a implementar para que cada archivo del di
 
 ```
 ISSUE-A1: Detectar automáticamente la arquitectura del sistema
+Estado: Pendiente
 - Detectar: monolito, microservicios, serverless
 - Detectar: patrones (MVC, hexagonal, clean architecture)
 - Output: Diagrama en ASCII o Mermaid
 
 ISSUE-A2: Detectar tecnologías del proyecto
+Estado: Pendiente
 - Frontend: React, Vue, Angular, etc.
 - Backend: Spring, Express, Django, FastAPI, etc.
 - Database: PostgreSQL, MongoDB, Redis, etc.
 - Message queues: Kafka, RabbitMQ, etc.
 
 ISSUE-A3: Generar diagrama de componentes
+Estado: Pendiente
 - Lista de servicios
 - Conexiones entre servicios
 - Bases de datos usadas
 - APIs externas
 
 ISSUE-A4: Detectar dependencias entre servicios
+Estado: Pendiente
 - Qué servicio llama a cuál
 - Orden de inicialización
 - Health checks entre servicios
@@ -78,23 +90,27 @@ graph TD
 
 ```
 ISSUE-E1: Extraer todos los endpoints REST automáticamente
+Estado: Pendiente
 - Leer código fuente (cualquier lenguaje)
 - Detectar: @RestController, @RequestMapping, @GetMapping, etc.
 - Detectar: FastAPI @app.get, @router.get
 - Detectar: Express router.get, router.post
 
 ISSUE-E2: Detectar parámetros de cada endpoint
+Estado: Pendiente
 - Path params: /users/{id}
 - Query params: /users?page=1&limit=10
 - Headers requeridos
 - Body requerido
 
 ISSUE-E3: Generar ejemplos de request/response
+Estado: Pendiente
 - Ejecutar endpoint (si hay datos de prueba)
 - Generar JSON example
 - Documentar status codes
 
 ISSUE-E4: Detectar autenticación requerida
+Estado: Pendiente
 - @PreAuthorize, @Secured
 - JWT, OAuth, API Keys
 - Detectar token endpoint
@@ -178,21 +194,25 @@ Authorization: Bearer {token}
 
 ```
 ISSUE-W1: Detectar eventos WebSocket del servidor
+Estado: Pendiente
 - Buscar: @OnMessage, @SocketIO.on, socket.on
 - Listar eventos emitodos
 - Listar eventos recibidos
 
 ISSUE-W2: Documentar formato de mensajes
+Estado: Pendiente
 - Estructura JSON de cada evento
 - Tipos de datos
 - Campos requeridos/opcionales
 
 ISSUE-W3: Detectar rooms/channels
+Estado: Pendiente
 - Salas públicas y privadas
 - Suscripciones
 - Permisos
 
 ISSUE-W4: Generar código de ejemplo de conexión
+Estado: Pendiente
 - Cliente WebSocket básico
 - Suscripción a eventos
 - Manejo de errores
@@ -286,21 +306,25 @@ Unirse a una sala.
 
 ```
 ISSUE-G1: Extraer definiciones protobuf
+Estado: Pendiente
 - Buscar archivos .proto
 - Parsear servicios y métodos
 - Detectar request/response types
 
 ISSUE-G2: Detectar streaming
+Estado: Pendiente
 - Client streaming
 - Server streaming
 - Bidirectional streaming
 
 ISSUE-G3: Generar código cliente
+Estado: Pendiente
 - Stub para Python
 - Stub para otros lenguajes
 - Ejemplos de llamada
 
 ISSUE-G4: Documentar autenticación gRPC
+Estado: Pendiente
 - TLS/SSL
 - JWT en metadata
 - OAuth2
@@ -375,20 +399,24 @@ message GetUserRequest {
 
 ```
 ISSUE-D1: Extraer todos los DTOs/Models
+Estado: Pendiente
 - Detectar: Java classes, Python Pydantic, TypeScript interfaces
 - Extraer campos con tipos
 - Detectar validaciones (@NotNull, @Min, regex, etc.)
 
 ISSUE-D2: Detectar enums
+Estado: Pendiente
 - Valores posibles
 - Descripciones
 
 ISSUE-D3: Detectar relaciones entre entidades
+Estado: Pendiente
 - One-to-One
 - One-to-Many
 - Many-to-Many
 
 ISSUE-D4: Generar schemas en diferentes formatos
+Estado: Pendiente
 - JSON Schema
 - OpenAPI
 - TypeScript interfaces
@@ -439,22 +467,26 @@ ISSUE-D4: Generar schemas en diferentes formatos
 
 ```
 ISSUE-AF1: Documentar flujo de registro
+Estado: Pendiente
 - Pasos completos
 - Validaciones
 - Email verification
 - Response esperado
 
 ISSUE-AF2: Documentar flujo de login
+Estado: Pendiente
 - Credenciales
 - Tokens recibidos
 - Refresh token
 
 ISSUE-AF3: Documentar flujo de password reset
+Estado: Pendiente
 - Solicitar reset
 - Email con token
 - Nueva contraseña
 
 ISSUE-AF4: Documentar flujo de OAuth
+Estado: Pendiente
 - Proveedores (Google, GitHub, etc.)
 - URLs de redirect
 - Scopes
@@ -538,17 +570,20 @@ ISSUE-AF4: Documentar flujo de OAuth
 
 ```
 ISSUE-EC1: Recopilar todos los códigos de error
+Estado: Pendiente
 - Del código fuente
 - De la documentación
 - De respuestas conocidas
 
 ISSUE-EC2: Clasificar errores
+Estado: Pendiente
 - Errores de cliente (4xx)
 - Errores de servidor (5xx)
 - Errores de autenticación
 - Errores de validación
 
 ISSUE-EC3: Proporcionar soluciones
+Estado: Pendiente
 - Causa común
 - Cómo resolver
 - Ejemplo de request correcto
@@ -601,18 +636,21 @@ ISSUE-EC3: Proporcionar soluciones
 
 ```
 ISSUE-TP1: Definir patrones de test por tipo de endpoint
+Estado: Pendiente
 - CRUD básico
 - Autenticación
 - Búsqueda/filtro
 - Paginación
 
 ISSUE-TP2: Proporcionar templates por escenario
+Estado: Pendiente
 - Happy path
 - Casos límite
 - Errores
 - Concurrencia
 
 ISSUE-TP3: Generar tests automáticamente
+Estado: Pendiente
 - Ejecutar e2e generate-tests
 - Basado en endpoints detectados
 - Cubrir casos comunes
@@ -699,14 +737,17 @@ def test_authenticated_endpoint():
 
 ```
 ISSUE-CR1: Detectar operaciones CRUD del sistema
+Estado: Pendiente
 - Qué entidades tienen CRUD
 - Endpoints relacionados
 
 ISSUE-CR2: Generar templates reutilizables
+Estado: Pendiente
 - Template por operación
 - Con aserciones incluidas
 
 ISSUE-CR3: Documentar casos especiales
+Estado: Pendiente
 - Soft delete
 - Logical delete
 - Timestamps automáticos
@@ -781,22 +822,26 @@ assert resp.status == 204
 
 ```
 ISSUE-ST1: Tests de inyección
+Estado: Pendiente
 - SQL Injection
 - XSS
 - NoSQL Injection
 - Command Injection
 
 ISSUE-ST2: Tests de autenticación
+Estado: Pendiente
 - Broken authentication
 - Session management
 - Password policy
 
 ISSUE-ST3: Tests de autorización
+Estado: Pendiente
 - IDOR (Insecure Direct Object References)
 - Privilege escalation
 - Path traversal
 
 ISSUE-ST4: Tests de datos sensibles
+Estado: Pendiente
 - Exposed credentials
 - Sensitive data in URL
 - Missing encryption
