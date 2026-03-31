@@ -187,6 +187,53 @@ Implementación de dos features pendientes del roadmap:
 **Decisiones Importantes:**
 1. Templates incluyen patrones específicos por framework (JWT para Spring, CSRF para Django, Cookies para Express)
 2. Fallback a templates genéricos si el framework específico no tiene template
+
+---
+
+#### 2026-03-31 - Scanners Completos para Documentación .agent
+**Agente:** minimax-m2.5-free (OpenCode)
+**Tipo:** Feature / Documentation Generators
+**Impacto:** Alto
+
+**Descripción:**
+Implementación de 14 módulos de scanner pendientes en todo.md para generar documentación completa para agentes IA:
+- Architecture Scanner (A1-A4)
+- WebSocket Events Scanner (W1-W4)
+- gRPC Services Scanner (G1-G4)
+- Security Tests Generator (ST1-ST4)
+- Integration Tests Generator (IT1-IT3)
+- Performance Tests Generator (PT1-PT3)
+- Mock External API Detector (ME1-ME3)
+- Database Schema Scanner (DB1-DB3)
+- Environment Scanner (ENV1-ENV3)
+- CI/CD Pipeline Scanner (CI1-CI3)
+- Dependencies Scanner (DEP1-DEP3)
+- Health Checks Scanner (HC1-HC3)
+- Rate Limits Detector (RL1-RL3)
+- Changelog Generator (CL1-CL3)
+
+**Archivos Creados:**
+- `scanner/architecture_scanner.py` - Detecta tipo de arquitectura, tecnologías, servicios
+- `scanner/websocket_scanner.py` - Extrae eventos WebSocket, rooms, código de conexión
+- `scanner/grpc_scanner.py` - Parsea archivos .proto, detecta servicios y métodos
+- `scanner/security_tests_generator.py` - Genera tests SQL injection, XSS, IDOR
+- `scanner/integration_tests_generator.py` - Genera tests de workflow
+- `scanner/performance_tests_generator.py` - Genera tests de carga, estrés, spike
+- `scanner/mock_external_detector.py` - Detecta APIs externas y genera mocks
+- `scanner/database_schema_scanner.py` - Extrae tablas, relaciones, índices
+- `scanner/environment_scanner.py` - Detecta vars de entorno por ambiente
+- `scanner/cicd_pipeline_scanner.py` - Detecta pipelines de CI/CD
+- `scanner/dependencies_scanner.py` - Lista dependencias del proyecto
+- `scanner/health_checks_scanner.py` - Detecta endpoints de health y K8s probes
+- `scanner/rate_limits_detector.py` - Detecta rate limits
+- `scanner/changelog_generator.py` - Genera changelog desde git commits
+
+**Decisiones Importantes:**
+1. Todos los scanners exponen funciones `generate_*_doc()` que producen archivos .agent
+2. Actualizado `__init__.py` para exportar todos los scanners y generadores
+3. Total de 14 módulos implementados con ~3100 líneas de código
+
+---
 3. Actualizado AI_CONTRIBUTORS.md con la contribución
 
 ---
