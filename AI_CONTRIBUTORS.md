@@ -61,6 +61,7 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 - [2026-03-31] Implementación de EPIC-013: Real-time AI Alerting & Notification Engine (AlertRuleEngine para umbrales, AIAlertAnalyzer para root cause analysis, NotificationManager con soporte nativo para Slack, Teams, Discord y webhooks genéricos)
 - [2026-03-31] Implementación de EPIC-014: Database State Snapshot & Sandbox for Replays (DatabaseSnapshotManager para capturar estado de BD, SandboxEnvironment para entornos aislados, DatabaseReplayCoordinator que vincula snapshots con Time-Machine IDs)
 - [2026-03-31] Implementación de EPIC-015: AI Performance Anomaly Detection (PerformanceMetricsCollector para收集 latencias p95/p99, AnomalyDetector con detección de desviación estándar, alertas de degradación en dashboard)
+- [2026-03-31] Implementación de EPIC-016: Traffic Replay Speed & Playback Controls (TrafficReplayEngine con controles Play/Pause/Rw/Fw/Speed, soporte para speeds 0.25x a 8x, callback para assertions durante replay)
 
 ---
 
