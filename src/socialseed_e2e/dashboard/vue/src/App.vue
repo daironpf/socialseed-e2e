@@ -32,6 +32,14 @@
           <span class="nav-icon">⚙️</span>
           <span class="nav-text" v-if="!sidebarCollapsed">Settings</span>
         </router-link>
+        <router-link to="/live-traffic" class="nav-item" :class="{ active: $route.path === '/live-traffic' }">
+          <span class="nav-icon">🌐</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Live Traffic</span>
+        </router-link>
+        <router-link to="/manual-tester" class="nav-item" :class="{ active: $route.path === '/manual-tester' }">
+          <span class="nav-icon">QA</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Manual Tester</span>
+        </router-link>
       </nav>
 
       <div class="sidebar-footer" v-if="!sidebarCollapsed">
