@@ -59,6 +59,7 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 - [2026-03-31] Implementación de EPIC-011: Chaos Engineering Traffic Correlation (ChaosEventRegistry, ChaosTrafficCorrelator para vincular inyecciones de caos con tráfico, integración con TradingView charts para mostrar marcadores de caos, análisis de IA para indicar si errores fueron causados por experimentos de caos)
 - [2026-03-31] Implementación de EPIC-012: Staging/Prod Remote Cluster Synchronization (ClusterManager con soporte PostgreSQL/Redis para almacenamiento remoto, ClusterSelector en Settings del dashboard, WebSocket /ws/cluster para gestión de clusters, conexiones TLS/mTLS)
 - [2026-03-31] Implementación de EPIC-013: Real-time AI Alerting & Notification Engine (AlertRuleEngine para umbrales, AIAlertAnalyzer para root cause analysis, NotificationManager con soporte nativo para Slack, Teams, Discord y webhooks genéricos)
+- [2026-03-31] Implementación de EPIC-014: Database State Snapshot & Sandbox for Replays (DatabaseSnapshotManager para capturar estado de BD, SandboxEnvironment para entornos aislados, DatabaseReplayCoordinator que vincula snapshots con Time-Machine IDs)
 
 ---
 

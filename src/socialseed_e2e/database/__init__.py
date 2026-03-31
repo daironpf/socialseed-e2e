@@ -14,6 +14,14 @@ from socialseed_e2e.database.performance import QueryPerformanceAnalyzer
 
 from .integrity.integrity_tester import IntegrityTester
 from .migrations.migration_tester import MigrationTester
+from .replay_sandbox import (
+    DatabaseReplayCoordinator,
+    DatabaseSnapshot,
+    DatabaseSnapshotManager,
+    SandboxConfig,
+    SandboxEnvironment,
+    get_replay_coordinator,
+)
 
 # New Issue #017 components
 from .models import (
@@ -49,4 +57,11 @@ __all__ = [
     "QueryAnalyzer",
     "TransactionTester",
     "MigrationTester",
+    # EPIC-014 components
+    "DatabaseSnapshot",
+    "DatabaseSnapshotManager",
+    "SandboxConfig",
+    "SandboxEnvironment",
+    "DatabaseReplayCoordinator",
+    "get_replay_coordinator",
 ]
