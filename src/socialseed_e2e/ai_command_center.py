@@ -73,6 +73,8 @@ class AICommandAgent:
             return await self._debug_request(request)
         elif intent == "explain":
             return await self._explain(request)
+        elif intent == "chaos_correlation":
+            return await self._analyze_chaos_correlation(request)
         else:
             return await self._general_query(request)
     
@@ -90,6 +92,8 @@ class AICommandAgent:
             return "debug"
         if any(x in prompt_lower for x in ['explain', 'explica', 'what is']):
             return "explain"
+        if any(x in prompt_lower for x in ['chaos', 'induced', 'caused by', 'experiment']):
+            return "chaos_correlation"
         
         return "general"
     
@@ -183,6 +187,40 @@ class AICommandAgent:
             commands=[f"e2e time-machine info {incident_id}" if incident_id else ""],
             data={"incident_id": incident_id}
         )
+    
+    async def _analyze_chaos_correlation(self, request: AgentRequest) -> AgentResponse:
+        """Analyze chaos events and their correlation with traffic errors.
+        
+        EPIC-011-T03: AI has context to respond about chaos-induced errors.
+        """
+        from socialseed_e2e.chaos import get_correlator
+        
+        correlator = get_correlator()
+        all_events = correlator.registry.get_all_events()
+        
+        if not all_events:
+            content = "## Chaos Correlation Analysis\n\n"
+            content += "No chaos experiments have been recorded yet.\n"
+            content += "Run `e2e chaos network --target <service>` to start a chaos experiment."
+            
+            return AgentResponse(content=content, commands=[])
+        
+        content = "## Chaos Correlation Analysis\n\n"
+        content += f"**Total Chaos Events:** {len(all_events)}\n\n"
+        
+        for event in all_events[-5:]:
+            content += f"### {event['event_id']}\n"
+            content += f"- **Type:** {event['chaos_type']}\n"
+            content += f"- **Target:** {event['target_service']}\n"
+            content += f"- **Status:** {event['status']}\n"
+            content += f"- **Affected Requests:** {event.get('affected_requests', 0)}\n"
+            content += f"- **Failed Requests:** {event.get('failed_requests', 0)}\n"
+            
+            if event.get('results'):
+                content += f"- **Results:** {json.dumps(event['results'], indent=4)}\n"
+            content += "\n"
+        
+        return AgentResponse(content=content, commands=[])
     
     async def _explain(self, request: AgentRequest) -> AgentResponse:
         """Explain something to the user."""

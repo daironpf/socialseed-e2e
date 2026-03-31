@@ -4,6 +4,13 @@ Provides tools to inject failures, latency, and resource constraints
 to test system resilience.
 """
 
+from .event_correlator import (
+    ChaosTrafficCorrelator,
+    ChaosEventMarker,
+    ChaosEventRegistry,
+    ChaosType,
+    get_correlator,
+)
 from .gameday.gameday_orchestrator import GameDayOrchestrator
 from .models import (
     ChaosExperiment,
@@ -42,4 +49,8 @@ __all__ = [
     "ResourceChaosInjector",
     "GameDayOrchestrator",
     "RecoveryValidator",
+    "ChaosTrafficCorrelator",
+    "ChaosEventMarker",
+    "ChaosEventRegistry",
+    "get_correlator",
 ]

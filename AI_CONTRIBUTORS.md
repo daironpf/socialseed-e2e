@@ -56,6 +56,7 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 - [2026-03-31] Implementación de EPIC-008: Data Anonymization & Security Filter (pii_masking existente, nuevo CLI commands pii config/test/status)
 - [2026-03-31] Implementación de EPIC-009: Real-Time Flakiness Detection & Self-Healing (FlakinessDashboard.vue con matriz de flakiness y auto-healing)
 - [2026-03-31] Implementación de EPIC-010: Microservices Dependency Graph Map (DependencyGraphAnalyzer, TopologyGraph.vue con visualización D3-style SVG, WebSocket /ws/topology)
+- [2026-03-31] Implementación de EPIC-011: Chaos Engineering Traffic Correlation (ChaosEventRegistry, ChaosTrafficCorrelator para vincular inyecciones de caos con tráfico, integración con TradingView charts para mostrar marcadores de caos, análisis de IA para indicar si errores fueron causados por experimentos de caos)
 
 ---
 

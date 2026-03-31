@@ -35,6 +35,16 @@ class ErrorCluster:
     severity: str  # "critical", "warning"
 
 
+@dataclass
+class ChaosEventMarker:
+    """Marker for chaos events on the chart."""
+    timestamp: datetime
+    chaos_type: str
+    target_service: str
+    event_id: str
+    is_start: bool = True
+
+
 class TrafficChartAnalyzer:
     """Analyze traffic for chart visualization with error detection."""
     
@@ -214,6 +224,52 @@ class TrafficChartAnalyzer:
             "max_latency_ms": max(all_latencies) if all_latencies else 0,
             "timeframe_seconds": self._timeframe_seconds,
         }
+    
+    def get_chaos_markers(
+        self,
+        chaos_events: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Get chaos event markers for chart visualization.
+        
+        EPIC-011-T02: Paint 'Chaos Flags' on the TradingView-style chart.
+        """
+        markers = []
+        
+        for event in chaos_events:
+            start_time_str = event.get("start_time")
+            end_time_str = event.get("end_time")
+            
+            if start_time_str:
+                try:
+                    start_time = datetime.fromisoformat(start_time_str.replace("Z", "+00:00"))
+                    markers.append({
+                        "time": int(start_time.timestamp()),
+                        "type": "chaos_start",
+                        "chaos_type": event.get("chaos_type", "unknown"),
+                        "target": event.get("target_service", "unknown"),
+                        "event_id": event.get("event_id", ""),
+                        "color": "#f59e0b",
+                        "label": f"CHAOS: {event.get('chaos_type', '')}",
+                    })
+                except Exception:
+                    pass
+            
+            if end_time_str:
+                try:
+                    end_time = datetime.fromisoformat(end_time_str.replace("Z", "+00:00"))
+                    markers.append({
+                        "time": int(end_time.timestamp()),
+                        "type": "chaos_end",
+                        "chaos_type": event.get("chaos_type", "unknown"),
+                        "target": event.get("target_service", "unknown"),
+                        "event_id": event.get("event_id", ""),
+                        "color": "#22c55e",
+                        "label": f"END: {event.get('chaos_type', '')}",
+                    })
+                except Exception:
+                    pass
+        
+        return markers
 
 
 class ChartDataAPI:
