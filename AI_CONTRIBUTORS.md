@@ -69,6 +69,7 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 - [2026-03-31] Implementación de EPIC-021: API Evolution & Auto-Contract Versioning (SemanticDiffEngine para comparar responses, ContractAutoUpdater para actualizar contratos automáticamente, BreakingChangeAlert para notificar cambios breaking)
 - [2026-03-31] Implementación de EPIC-022: Predictive Kubernetes Auto-Scaling Recommender (KubernetesRecommender para analizar métricas CPU/mem/latency, generación de HPA YAMLs, Docker Compose override con resources limits)
 - [2026-03-31] Implementación de EPIC-023: Voice/NLP Command Interface (VoiceInterface con NLPParser para mapping voz-a-comandos, CommandExecutor para ejecución, integración con Web Speech API y TTS)
+- [2026-03-31] Implementación de EPIC-024: Semantic User Journey Mapping (JourneyMapper para analizar tráfico HTTP y detectar pantallas, generación de Playwright UI test drafts, sequence diagram en formato Mermaid)
 
 ---
 
