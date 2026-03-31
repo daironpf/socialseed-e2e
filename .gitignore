@@ -242,7 +242,8 @@ e2e_reports/
 security/
 
 # Issues to resolve
-.issues/
+# .issues/  # Temporarily disabled to track new issues
+!.issues/todo/
 
 # Test services generated during development
 services/
