@@ -73,9 +73,13 @@ class PluginManager:
     """Manages community plugins (Single Responsibility)."""
 
     def __init__(self):
+        from socialseed_e2e.plugin import get_plugin_manager
+        
+        self.core_manager = get_plugin_manager()
         self.plugins = [
             {"name": "slack-notifier", "version": "1.2.0", "author": "community"},
             {"name": "jira-integration", "version": "2.0.0", "author": "community"},
+            {"name": "custom-interceptor", "version": "1.0.0", "author": "community", "description": "Custom HTTP interceptor for specialized protocols"},
         ]
 
     def list(self) -> None:
@@ -93,11 +97,26 @@ class PluginManager:
             )
 
         console.print(table)
+        
+        loaded = self.core_manager.list_plugins()
+        if loaded:
+            console.print("\n[yellow]Loaded Plugins:[/yellow]")
+            for p in loaded:
+                console.print(f"  • {p['name']} (v{p['version']})")
 
     def install(self, plugin_name: str) -> None:
         """Install a plugin."""
         console.print(f"\n[cyan]Installing plugin:[/cyan] {plugin_name}\n")
+        
+        plugin_path = self.core_manager.plugin_dir / f"{plugin_name}.py"
+        if plugin_path.exists():
+            loaded = self.core_manager.load_from_file(plugin_path)
+            if loaded:
+                console.print(f"[green]✓[/green] Plugin '{plugin_name}' loaded from file!")
+                return
+        
         console.print(f"[green]✓[/green] Plugin '{plugin_name}' installed!")
+        console.print(f"   Run 'e2e plugin list' to see loaded plugins")
 
     def publish(self, name: str, description: str) -> None:
         """Publish a plugin/template."""
