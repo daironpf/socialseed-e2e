@@ -8187,6 +8187,11 @@ def _register_modular_commands():
         ("tui", "tui_cmd", "get_tui_command"),
         # Discovery
         ("observe", "observe_cmd", "get_observe_command"),
+        # Scanner
+        ("scanner", "scanner_cmd", "get_scanner_commands"),
+        ("sniffer", "sniffer_cmd", "get_sniffer_commands"),
+        ("traffic-test", "traffic_test_cmd", "get_traffic_test_commands"),
+        ("time-machine", "time_machine_cmd", "get_time_machine_commands"),
         # Config
         ("set", "set_cmd", "get_set_group"),
     ]

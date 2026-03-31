@@ -46,8 +46,14 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 **Sesiones Notables:**
 - [2025-01-29] Diseño inicial de la arquitectura del framework
 - [2025-01-30] Revisión y mejora de la estructura de módulos
+- [2026-03-31] Implementación de EPIC-001: Discovery & Traffic Generator Bot (scanner package con endpoint_scanner, schema_scanner, traffic_generator, traffic_scheduler)
+- [2026-03-31] Implementación de EPIC-002: Network Interceptor Container con tráfico isolation y storage (TrafficIndex con Redis/SQLite, IsolatedTrafficSniffer)
+- [2026-03-31] Implementación de EPIC-003: Auto-test Generator based on Traffic (TrafficFlowAnalyzer, FlowToCommandMapper, ModularTestGenerator, TestIntegrator)
+- [2026-03-31] Implementación de EPIC-004: Time-Machine Debugging (ErrorListener con triggers para 4xx/5xx, ErrorReplay para re-ejecutar requests fallidos)
 
 ---
+
+### OpenCode Build Agent (Continuación 2026)
 
 ### OpenCode Documentation Agent
 

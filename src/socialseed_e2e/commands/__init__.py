@@ -232,6 +232,7 @@ def discover_commands() -> List[str]:
         "perf-profile",
         "perf-report",
         "security-test",
+        "scanner",
     ]
 
     for cmd in known_commands:
