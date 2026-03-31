@@ -292,6 +292,42 @@ from socialseed_e2e.core.traceability import (
     trace_http_request,
 )
 
+# Scanner - Project analysis for AI agents
+from socialseed_e2e.scanner import (
+    ArchitectureScanner,
+    WebSocketScanner,
+    GrpcScanner,
+    SecurityTestGenerator,
+    IntegrationTestGenerator,
+    PerformanceTestGenerator,
+    ExternalAPIDetector,
+    DatabaseSchemaScanner,
+    EnvironmentScanner,
+    CICDPipelineScanner,
+    DependenciesScanner,
+    HealthCheckScanner,
+    RateLimitDetector,
+    ChangelogGenerator,
+)
+
+# Scanner - Generate documentation
+from socialseed_e2e.scanner import (
+    generate_architecture_doc,
+    generate_websocket_doc,
+    generate_grpc_doc,
+    generate_security_tests_doc,
+    generate_integration_tests_doc,
+    generate_performance_tests_doc,
+    generate_mock_external_doc,
+    generate_database_schema_doc,
+    generate_environment_doc,
+    generate_cicd_pipeline_doc,
+    generate_dependencies_doc,
+    generate_health_checks_doc,
+    generate_rate_limits_doc,
+    generate_changelog_doc,
+)
+
 __all__ = [
     # Version
     "__version__",
@@ -482,4 +518,34 @@ __all__ = [
     # TUI
     "TuiApp",
     "TUI_AVAILABLE",
+    # Scanner - Project analysis
+    "ArchitectureScanner",
+    "WebSocketScanner",
+    "GrpcScanner",
+    "SecurityTestGenerator",
+    "IntegrationTestGenerator",
+    "PerformanceTestGenerator",
+    "ExternalAPIDetector",
+    "DatabaseSchemaScanner",
+    "EnvironmentScanner",
+    "CICDPipelineScanner",
+    "DependenciesScanner",
+    "HealthCheckScanner",
+    "RateLimitDetector",
+    "ChangelogGenerator",
+    # Scanner - Documentation generators
+    "generate_architecture_doc",
+    "generate_websocket_doc",
+    "generate_grpc_doc",
+    "generate_security_tests_doc",
+    "generate_integration_tests_doc",
+    "generate_performance_tests_doc",
+    "generate_mock_external_doc",
+    "generate_database_schema_doc",
+    "generate_environment_doc",
+    "generate_cicd_pipeline_doc",
+    "generate_dependencies_doc",
+    "generate_health_checks_doc",
+    "generate_rate_limits_doc",
+    "generate_changelog_doc",
 ]
