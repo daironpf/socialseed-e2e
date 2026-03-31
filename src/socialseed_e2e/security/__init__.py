@@ -35,6 +35,17 @@ from .pii_detector import (
     SecurityMiddleware,
     SeverityLevel,
 )
+from .fuzzing_agent import (
+    CVEEntry,
+    CVEFeedConnector,
+    FuzzPayload,
+    PayloadGenerator,
+    SecurityFuzzingAgent,
+    Severity,
+    VulnerabilityFinding,
+    VulnerabilityType,
+    get_security_agent,
+)
 
 __all__ = [
     "SecurityVulnerability",
@@ -60,4 +71,13 @@ __all__ = [
     "SecurityComplianceReport",
     "SecurityMiddleware",
     "SeverityLevel",
+    # EPIC-020: Zero-day fuzzing
+    "CVEEntry",
+    "CVEFeedConnector",
+    "FuzzPayload",
+    "PayloadGenerator",
+    "SecurityFuzzingAgent",
+    "VulnerabilityFinding",
+    "VulnerabilityType",
+    "get_security_agent",
 ]
