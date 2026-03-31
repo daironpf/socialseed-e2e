@@ -40,6 +40,18 @@
           <span class="nav-icon">QA</span>
           <span class="nav-text" v-if="!sidebarCollapsed">Manual Tester</span>
         </router-link>
+        <router-link to="/ai-command" class="nav-item" :class="{ active: $route.path === '/ai-command' }">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">AI Command</span>
+        </router-link>
+        <router-link to="/flakiness" class="nav-item" :class="{ active: $route.path === '/flakiness' }">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Flakiness</span>
+        </router-link>
+        <router-link to="/topology" class="nav-item" :class="{ active: $route.path === '/topology' }">
+          <span class="nav-icon">🔗</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Topology</span>
+        </router-link>
       </nav>
 
       <div class="sidebar-footer" v-if="!sidebarCollapsed">

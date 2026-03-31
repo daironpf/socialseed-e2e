@@ -23,6 +23,7 @@ class MessageType(str):
     TRAFFIC = "traffic"
     TEST_RESULT = "test_result"
     TEST_PROGRESS = "test_progress"
+    TOPOLOGY = "topology"
     ERROR = "error"
     INFO = "info"
     HEARTBEAT = "heartbeat"
@@ -214,6 +215,36 @@ async def websocket_tests(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             # Handle test control messages
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+
+@websocket_router.websocket("/ws/topology")
+async def websocket_topology(websocket: WebSocket):
+    """WebSocket endpoint for topology graph updates."""
+    from socialseed_e2e.dependency_graph import get_analyzer
+    
+    manager = get_manager()
+    await manager.connect(websocket)
+    
+    analyzer = get_analyzer()
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            
+            try:
+                msg = json.loads(data)
+                if msg.get("type") == "get_topology":
+                    topology = analyzer.get_topology()
+                    await websocket.send_json({
+                        "type": MessageType.TOPOLOGY,
+                        "data": topology,
+                        "timestamp": datetime.now().isoformat()
+                    })
+            except json.JSONDecodeError:
+                pass
             
     except WebSocketDisconnect:
         manager.disconnect(websocket)

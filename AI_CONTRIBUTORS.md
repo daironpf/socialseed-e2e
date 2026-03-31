@@ -52,6 +52,10 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 - [2026-03-31] Implementación de EPIC-004: Time-Machine Debugging (ErrorListener con triggers para 4xx/5xx, ErrorReplay para re-ejecutar requests fallidos)
 - [2026-03-31] Implementación de EPIC-005: Vue/Tailwind Real-Time Dashboard (WebSocket bridge, LiveTraffic view, ManualTester view)
 - [2026-03-31] Implementación de EPIC-006: TradingView API Traffic Charts (TrafficChartAnalyzer con detección de errores 500, clusters de errores, time range slider)
+- [2026-03-31] Implementación de EPIC-007: AI Prompt Command Center (AICommandCenter.vue, ai_command_center.py, Chat UI con ejecución de comandos)
+- [2026-03-31] Implementación de EPIC-008: Data Anonymization & Security Filter (pii_masking existente, nuevo CLI commands pii config/test/status)
+- [2026-03-31] Implementación de EPIC-009: Real-Time Flakiness Detection & Self-Healing (FlakinessDashboard.vue con matriz de flakiness y auto-healing)
+- [2026-03-31] Implementación de EPIC-010: Microservices Dependency Graph Map (DependencyGraphAnalyzer, TopologyGraph.vue con visualización D3-style SVG, WebSocket /ws/topology)
 
 ---
 
