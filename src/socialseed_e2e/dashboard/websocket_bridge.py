@@ -24,6 +24,7 @@ class MessageType(str):
     TEST_RESULT = "test_result"
     TEST_PROGRESS = "test_progress"
     TOPOLOGY = "topology"
+    CLUSTER_UPDATE = "cluster_update"
     ERROR = "error"
     INFO = "info"
     HEARTBEAT = "heartbeat"
@@ -243,6 +244,55 @@ async def websocket_topology(websocket: WebSocket):
                         "data": topology,
                         "timestamp": datetime.now().isoformat()
                     })
+            except json.JSONDecodeError:
+                pass
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+
+@websocket_router.websocket("/ws/cluster")
+async def websocket_cluster(websocket: WebSocket):
+    """WebSocket endpoint for cluster management.
+    
+    EPIC-012-T02: Encrypted connections between remote interceptors and dashboard.
+    """
+    from socialseed_e2e.cluster import get_cluster_manager
+    
+    manager = get_manager()
+    await manager.connect(websocket)
+    
+    cluster_manager = get_cluster_manager()
+    
+    try:
+        await websocket.send_json({
+            "type": MessageType.CLUSTER_UPDATE,
+            "data": cluster_manager.list_clusters(),
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        while True:
+            data = await websocket.receive_text()
+            
+            try:
+                msg = json.loads(data)
+                msg_type = msg.get("type")
+                
+                if msg_type == "switch_cluster":
+                    cluster_name = msg.get("cluster")
+                    success = cluster_manager.set_active_cluster(cluster_name)
+                    await websocket.send_json({
+                        "type": MessageType.CLUSTER_UPDATE,
+                        "data": {"success": success, "active": cluster_name},
+                        "timestamp": datetime.now().isoformat()
+                    })
+                elif msg_type == "get_clusters":
+                    await websocket.send_json({
+                        "type": MessageType.CLUSTER_UPDATE,
+                        "data": cluster_manager.list_clusters(),
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    
             except json.JSONDecodeError:
                 pass
             

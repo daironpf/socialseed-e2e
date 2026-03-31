@@ -160,6 +160,36 @@
       </div>
 
       <div class="settings-section">
+        <h3>Cluster (EPIC-012)</h3>
+        <div class="setting-item">
+          <label class="setting-label">
+            <span>Active Cluster</span>
+            <select v-model="settings.activeCluster" class="setting-select">
+              <option value="local">Local</option>
+              <option value="staging">Staging</option>
+              <option value="production">Production</option>
+            </select>
+          </label>
+          <span class="setting-hint">Select cluster environment for traffic monitoring</span>
+        </div>
+        
+        <div class="cluster-info" v-if="clusterInfo[settings.activeCluster]">
+          <div class="cluster-detail">
+            <span class="label">API Endpoint:</span>
+            <span class="value">{{ clusterInfo[settings.activeCluster].api_endpoint }}</span>
+          </div>
+          <div class="cluster-detail">
+            <span class="label">Type:</span>
+            <span class="value">{{ clusterInfo[settings.activeCluster].type }}</span>
+          </div>
+          <div class="cluster-detail">
+            <span class="label">Storage:</span>
+            <span class="value">{{ clusterInfo[settings.activeCluster].storage }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <h3>Data Management</h3>
         <div class="button-group">
           <button class="action-btn export" @click="exportData">
@@ -213,8 +243,15 @@ const defaultSettings = {
   baseUrl: 'http://localhost:8080',
   apiKey: '',
   darkMode: false,
-  themeColor: '#3b82f6'
+  themeColor: '#3b82f6',
+  activeCluster: 'local'
 }
+
+const clusterInfo = ref({
+  local: { api_endpoint: 'http://localhost:8000', type: 'local', storage: 'in_memory' },
+  staging: { api_endpoint: 'https://api-staging.socialseed.io', type: 'staging', storage: 'postgresql' },
+  production: { api_endpoint: 'https://api.socialseed.io', type: 'production', storage: 'postgresql' }
+})
 
 const settings = reactive({ ...defaultSettings })
 
@@ -437,5 +474,43 @@ const resetSettings = () => {
 
 .save-btn:hover {
   background: #2563eb;
+}
+
+.setting-select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: white;
+  cursor: pointer;
+}
+
+.setting-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.cluster-info {
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cluster-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.cluster-detail .label {
+  color: #6b7280;
+}
+
+.cluster-detail .value {
+  font-weight: 500;
+  color: #374151;
 }
 </style>
