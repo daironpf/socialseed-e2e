@@ -1,0 +1,119 @@
+"""Service page for ${service_name} - Django style.
+
+This template includes Django-specific patterns like CSRF tokens,
+Django REST Framework endpoints, and proper authentication handling.
+"""
+
+from typing import Optional, Dict, Any, List
+from playwright.sync_api import APIResponse
+
+from socialseed_e2e.core.base_page import BasePage
+
+from .data_schema import (
+    ENDPOINTS,
+    ${class_name}DTO,
+    ${class_name}CreateSerializer,
+    ${class_name}UpdateSerializer,
+)
+
+
+class ${class_name}Page(BasePage):
+    """Service page for ${service_name} using Django patterns.
+
+    Includes Django REST Framework endpoints, CSRF handling,
+    and standard Django response formats.
+    """
+
+    def __init__(self, base_url: str, **kwargs):
+        """Initialize the service page."""
+        super().__init__(base_url=base_url, **kwargs)
+
+        self.current_entity: Optional[dict] = None
+        self.access_token: Optional[str] = None
+        self.entity_id: Optional[str] = None
+        self.csrf_token: Optional[str] = None
+
+    def _get_headers(self, extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Get request headers with Django authentication."""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        if self.access_token:
+            headers["Authorization"] = f"Token {self.access_token}"
+        if self.csrf_token:
+            headers["X-CSRFToken"] = self.csrf_token
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
+
+    def get_csrf_token(self) -> APIResponse:
+        """Get CSRF token for Django POST requests.
+        
+        Django requires CSRF token for POST/PUT/DELETE requests.
+        """
+        response = self.get("/api/csrf/")
+        if response.ok:
+            self.csrf_token = response.headers.get("X-CSRFToken")
+        return response
+
+    def authenticate(self, username: str, password: str) -> APIResponse:
+        """Authenticate using Django Session + CSRF.
+        
+        Returns token for subsequent requests.
+        """
+        self.get_csrf_token()
+        data = {"username": username, "password": password}
+        response = self.post("/api/auth/login/", data=data)
+        if response.ok:
+            self.access_token = response.json().get("token")
+        return response
+
+    def list_entities(self, page: int = 1) -> APIResponse:
+        """List all entities with pagination.
+        
+        Django REST Framework uses page query param.
+        """
+        params = {"page": page}
+        return self.get(ENDPOINTS["list"], params=params)
+
+    def get_entity(self, entity_id: str) -> APIResponse:
+        """Get entity by ID."""
+        path = ENDPOINTS["get"].format(id=entity_id)
+        return self.get(path)
+
+    def create_entity(self, data: ${class_name}CreateSerializer) -> APIResponse:
+        """Create a new entity with CSRF protection."""
+        return self.post(
+            ENDPOINTS["create"],
+            data=data.model_dump(by_alias=True)
+        )
+
+    def update_entity(self, entity_id: str, data: ${class_name}UpdateSerializer) -> APIResponse:
+        """Update an existing entity."""
+        path = ENDPOINTS["update"].format(id=entity_id)
+        return self.put(
+            path,
+            data=data.model_dump(by_alias=True, exclude_unset=True)
+        )
+
+    def partial_update(self, entity_id: str, data: ${class_name}UpdateSerializer) -> APIResponse:
+        """Partial update using PATCH."""
+        path = ENDPOINTS["update"].format(id=entity_id)
+        return self.patch(
+            path,
+            data=data.model_dump(by_alias=True, exclude_unset=True)
+        )
+
+    def delete_entity(self, entity_id: str) -> APIResponse:
+        """Delete an entity."""
+        path = ENDPOINTS["delete"].format(id=entity_id)
+        return self.delete(path)
+
+    def set_token(self, token: str) -> None:
+        """Set Django Token authentication."""
+        self.access_token = token
+
+    def is_authenticated(self) -> bool:
+        """Check if authenticated."""
+        return self.access_token is not None

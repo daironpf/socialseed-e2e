@@ -1,0 +1,93 @@
+"""Data schema and DTOs for ${service_name} - Express/Node.js style.
+
+This template includes Express-specific patterns like snake_case vs camelCase
+handling, common middleware patterns, and JavaScript-compatible types.
+"""
+
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel, Field, ConfigDict
+
+
+ENDPOINTS = {
+    "list": "/api/${endpoint_prefix}",
+    "create": "/api/${endpoint_prefix}",
+    "get": "/api/${endpoint_prefix}/:id",
+    "update": "/api/${endpoint_prefix}/:id",
+    "delete": "/api/${endpoint_prefix}/:id",
+}
+
+
+class ${class_name}DTO(BaseModel):
+    """Data Transfer Object for ${service_name} - Express style.
+    
+    Express/Node.js backends typically use camelCase or snake_case.
+    This template supports both naming conventions.
+    """
+    
+    model_config = {"populate_by_name": True}
+    
+    id: Optional[str] = Field(None, description="Unique identifier (MongoDB ObjectId as string)")
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+    created_at: Optional[str] = Field(None, description="Creation timestamp")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+
+
+class ${class_name}CreateDTO(BaseModel):
+    """Request body for creating ${service_name} entities."""
+    
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}UpdateDTO(BaseModel):
+    """Request body for updating ${service_name} entities.
+    
+    Express/PATCH requests can use partial updates.
+    """
+    
+    name: Optional[str] = Field(None, description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}ListResponse(BaseModel):
+    """Paginated list response from Express middleware."""
+    
+    data: List[${class_name}DTO] = Field(default_factory=list)
+    meta: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ErrorResponse(BaseModel):
+    """Express error handling middleware response."""
+    
+    success: bool = Field(default=False)
+    message: str
+    error: Optional[Any] = None
+    stack: Optional[str] = None
+
+
+class SuccessResponse(BaseModel):
+    """Standard Express success response."""
+    
+    success: bool = Field(default=True)
+    data: Optional[Any] = None
+    message: Optional[str] = None
+
+
+TEST_ENTITY = {
+    "name": "Test Entity",
+    "description": "A test entity for E2E testing"
+}
+
+
+VALIDATION_PATTERNS = {
+    "objectid": r'^[0-9a-fA-F]{24}$',
+    "iso_timestamp": r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$',
+}
+
+
+DEFAULTS = {
+    "page_size": 10,
+    "timeout": 5000,
+    "max_retries": 3,
+}

@@ -1,0 +1,111 @@
+"""Service page for ${service_name} - Spring Boot style.
+
+This template includes Spring Boot-specific patterns like JWT authentication,
+Actuator endpoints, and proper error handling.
+"""
+
+from typing import Optional, Dict, Any, List
+from playwright.sync_api import APIResponse
+
+from socialseed_e2e.core.base_page import BasePage
+
+from .data_schema import (
+    ENDPOINTS,
+    ${class_name}DTO,
+    ${class_name}CreateRequest,
+    ${class_name}UpdateRequest,
+)
+
+
+class ${class_name}Page(BasePage):
+    """Service page for ${service_name} using Spring Boot patterns.
+
+    Includes JWT handling, proper error response parsing,
+    and standard Spring Boot actuator endpoints.
+    """
+
+    def __init__(self, base_url: str, **kwargs):
+        """Initialize the service page."""
+        super().__init__(base_url=base_url, **kwargs)
+
+        self.current_entity: Optional[dict] = None
+        self.access_token: Optional[str] = None
+        self.entity_id: Optional[str] = None
+        self.jwt_token: Optional[str] = None
+
+    def _get_headers(self, extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Get request headers with JWT authentication."""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        # Prefer JWT token over Bearer
+        token = self.jwt_token or self.access_token
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
+
+    def health_check(self) -> APIResponse:
+        """Spring Boot Actuator health endpoint."""
+        return self.get("/actuator/health")
+
+    def info(self) -> APIResponse:
+        """Spring Boot Actuator info endpoint."""
+        return self.get("/actuator/info")
+
+    def metrics(self, metric_name: Optional[str] = None) -> APIResponse:
+        """Spring Boot Actuator metrics."""
+        if metric_name:
+            return self.get(f"/actuator/metrics/{metric_name}")
+        return self.get("/actuator/metrics")
+
+    def list_entities(self, page: int = 0, size: int = 20) -> APIResponse:
+        """List all entities with Spring Data Page pagination.
+        
+        Spring Boot uses 0-based pagination by default.
+        """
+        params = {"page": page, "size": size}
+        return self.get(ENDPOINTS["list"], params=params)
+
+    def get_entity(self, entity_id: str) -> APIResponse:
+        """Get entity by ID."""
+        path = ENDPOINTS["get"].format(id=entity_id)
+        return self.get(path)
+
+    def create_entity(self, data: ${class_name}CreateRequest) -> APIResponse:
+        """Create a new entity using Spring MVC pattern."""
+        return self.post(
+            ENDPOINTS["create"],
+            data=data.model_dump(by_alias=True)
+        )
+
+    def update_entity(self, entity_id: str, data: ${class_name}UpdateRequest) -> APIResponse:
+        """Update an existing entity using PUT."""
+        path = ENDPOINTS["update"].format(id=entity_id)
+        return self.put(
+            path,
+            data=data.model_dump(by_alias=True, exclude_unset=True)
+        )
+
+    def patch_entity(self, entity_id: str, data: ${class_name}UpdateRequest) -> APIResponse:
+        """Partial update using PATCH."""
+        path = ENDPOINTS["update"].format(id=entity_id)
+        return self.patch(
+            path,
+            data=data.model_dump(by_alias=True, exclude_unset=True)
+        )
+
+    def delete_entity(self, entity_id: str) -> APIResponse:
+        """Delete an entity."""
+        path = ENDPOINTS["delete"].format(id=entity_id)
+        return self.delete(path)
+
+    def set_jwt_token(self, token: str) -> None:
+        """Set JWT token for authentication."""
+        self.jwt_token = token
+
+    def is_authenticated(self) -> bool:
+        """Check if authenticated with JWT."""
+        return self.jwt_token is not None or self.access_token is not None

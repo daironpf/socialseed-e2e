@@ -1,0 +1,87 @@
+"""Data schema and DTOs for ${service_name} - FastAPI style.
+
+This template includes FastAPI-specific patterns like response models,
+dependencies, and Pydantic v2 features.
+"""
+
+from typing import Optional, List, Any, Dict
+from datetime import datetime
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
+from pydantic.alias_generators import to_camel
+
+
+ENDPOINTS = {
+    "list": "/${endpoint_prefix}",
+    "create": "/${endpoint_prefix}",
+    "get": "/${endpoint_prefix}/{id}",
+    "update": "/${endpoint_prefix}/{id}",
+    "delete": "/${endpoint_prefix}/{id}",
+}
+
+
+class ${class_name}Base(BaseModel):
+    """Base model with common fields."""
+    
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}DTO(BaseModel):
+    """Response model for ${service_name} entities."""
+    
+    model_config = {"populate_by_name": True, "from_attributes": True}
+    
+    id: str = Field(..., description="Unique identifier")
+    name: str = Field(..., description="Entity name")
+    description: Optional[str] = Field(None, description="Entity description")
+    created_at: datetime = Field(None, alias="createdAt", description="Creation timestamp")
+    updated_at: datetime = Field(None, alias="updatedAt", description="Last update timestamp")
+
+
+class ${class_name}CreateDTO(BaseModel):
+    """Request model for creating ${service_name} entities."""
+    
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}UpdateDTO(BaseModel):
+    """Request model for updating ${service_name} entities."""
+    
+    name: Optional[str] = Field(None, description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}ListResponse(BaseModel):
+    """Paginated list response model."""
+    
+    items: List[${class_name}DTO] = Field(default_factory=list)
+    total: int = Field(0, ge=0)
+    page: int = Field(1, ge=1)
+    page_size: int = Field(10, ge=1, le=100)
+
+
+class ApiResponse(BaseModel):
+    """Standard API response wrapper."""
+    
+    status: str = Field(default="success")
+    message: Optional[str] = None
+    data: Optional[Any] = None
+
+
+TEST_ENTITY = {
+    "name": "Test Entity",
+    "description": "A test entity for E2E testing"
+}
+
+
+VALIDATION_PATTERNS = {
+    "uuid": r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+}
+
+
+DEFAULTS = {
+    "page_size": 10,
+    "timeout": 5000,
+    "max_retries": 3,
+}

@@ -1,0 +1,113 @@
+"""Data schema and DTOs for ${service_name} - Spring Boot style.
+
+This template includes Spring Boot-specific patterns like camelCase naming,
+JPA annotations reference, and Java-compatible DTOs.
+"""
+
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices
+from pydantic.alias_generators import to_camel
+
+
+ENDPOINTS = {
+    "list": "/api/${endpoint_prefix}",
+    "create": "/api/${endpoint_prefix}",
+    "get": "/api/${endpoint_prefix}/{id}",
+    "update": "/api/${endpoint_prefix}/{id}",
+    "delete": "/api/${endpoint_prefix}/{id}",
+}
+
+
+class ${class_name}DTO(BaseModel):
+    """Data Transfer Object for ${service_name} - Spring Boot style.
+    
+    IMPORTANT: Uses camelCase (Java style) for all field names.
+    Uses alias for serialization compatibility.
+    """
+    
+    model_config = {"populate_by_name": True}
+    
+    id: Optional[str] = Field(None, description="Unique identifier (Java Long as String)")
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+    createdAt: Optional[str] = Field(None, description="Creation timestamp")
+    updatedAt: Optional[str] = Field(None, description="Last update timestamp")
+    
+    # Alias for snake_case access
+    created_at: Optional[str] = Field(None, validation_alias=AliasChoices('createdAt', 'created_at'))
+    updated_at: Optional[str] = Field(None, validation_alias=AliasChoices('updatedAt', 'updated_at'))
+
+
+class ${class_name}CreateRequest(BaseModel):
+    """Request body for creating ${service_name} entities.
+    
+    Spring Boot controllers use @RequestBody annotations.
+    """
+    
+    model_config = {"populate_by_name": True}
+    
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}UpdateRequest(BaseModel):
+    """Request body for updating ${service_name} entities."""
+    
+    model_config = {"populate_by_name": True}
+    
+    name: Optional[str] = Field(None, description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}Response(BaseModel):
+    """Standard Spring Boot response wrapper."""
+    
+    model_config = {"populate_by_name": True}
+    
+    content: Optional[${class_name}DTO] = None
+    empty: bool = False
+
+
+class ${class_name}PageResponse(BaseModel):
+    """Spring Data Page response wrapper."""
+    
+    model_config = {"populate_by_name": True}
+    
+    content: List[${class_name}DTO] = Field(default_factory=list)
+    totalElements: int = Field(0, description="Total number of elements")
+    totalPages: int = Field(0, description="Total number of pages")
+    size: int = Field(0, description="Page size")
+    number: int = Field(0, description="Current page number")
+    first: bool = Field(True, description="Is first page")
+    last: bool = Field(True, description="Is last page")
+
+
+class ApiErrorResponse(BaseModel):
+    """Spring Boot error response."""
+    
+    model_config = {"populate_by_name": True}
+    
+    timestamp: str
+    status: int
+    error: str
+    message: Optional[str] = None
+    path: Optional[str] = None
+
+
+TEST_ENTITY = {
+    "name": "Test Entity",
+    "description": "A test entity for E2E testing"
+}
+
+
+VALIDATION_PATTERNS = {
+    "uuid": r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    "iso_timestamp": r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$',
+}
+
+
+DEFAULTS = {
+    "page_size": 20,
+    "timeout": 10000,
+    "max_retries": 3,
+}

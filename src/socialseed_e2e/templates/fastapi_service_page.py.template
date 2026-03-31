@@ -1,0 +1,93 @@
+"""Service page for ${service_name} - FastAPI style.
+
+This template includes FastAPI-specific patterns like dependency injection,
+async operations, and response model handling.
+"""
+
+from typing import Optional, Dict, Any, List
+from datetime import datetime
+from playwright.sync_api import APIResponse
+
+from socialseed_e2e.core.base_page import BasePage
+
+from .data_schema import (
+    ENDPOINTS,
+    ${class_name}DTO,
+    ${class_name}CreateDTO,
+    ${class_name}UpdateDTO,
+)
+
+
+class ${class_name}Page(BasePage):
+    """Service page for ${service_name} using FastAPI patterns.
+
+    Manages shared state between test modules.
+    """
+
+    def __init__(self, base_url: str, **kwargs):
+        """Initialize the service page."""
+        super().__init__(base_url=base_url, **kwargs)
+
+        self.current_entity: Optional[dict] = None
+        self.access_token: Optional[str] = None
+        self.entity_id: Optional[str] = None
+
+    def _get_headers(self, extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Get request headers with optional authentication."""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
+
+    def list_entities(self, page: int = 1, page_size: int = 10) -> APIResponse:
+        """List all entities with pagination.
+        
+        FastAPI supports query parameters for pagination.
+        """
+        params = {"page": page, "page_size": page_size}
+        return self.get(ENDPOINTS["list"], params=params)
+
+    def get_entity(self, entity_id: str) -> APIResponse:
+        """Get entity by ID."""
+        path = ENDPOINTS["get"].format(id=entity_id)
+        return self.get(path)
+
+    def create_entity(self, data: ${class_name}CreateDTO) -> APIResponse:
+        """Create a new entity.
+        
+        Uses Pydantic model_dump for serialization.
+        """
+        return self.post(
+            ENDPOINTS["create"],
+            data=data.model_dump(by_alias=True)
+        )
+
+    def update_entity(self, entity_id: str, data: ${class_name}UpdateDTO) -> APIResponse:
+        """Update an existing entity."""
+        path = ENDPOINTS["update"].format(id=entity_id)
+        return self.put(
+            path,
+            data=data.model_dump(by_alias=True, exclude_unset=True)
+        )
+
+    def delete_entity(self, entity_id: str) -> APIResponse:
+        """Delete an entity."""
+        path = ENDPOINTS["delete"].format(id=entity_id)
+        return self.delete(path)
+
+    def search_entities(self, q: str, limit: int = 10) -> APIResponse:
+        """Search entities using FastAPI's search endpoint.
+        
+        Many FastAPI services include /search or ?q= query parameter.
+        """
+        params = {"q": q, "limit": limit}
+        return self.get(f"/{ENDPOINTS['list'].lstrip('/')}/search", params=params)
+
+    def is_authenticated(self) -> bool:
+        """Check if authenticated."""
+        return self.access_token is not None

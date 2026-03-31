@@ -14,12 +14,20 @@ from socialseed_e2e.utils import TemplateEngine, to_class_name, to_snake_case
 
 console = Console()
 
+SUPPORTED_FRAMEWORKS = {
+    "fastapi": "FastAPI (Python)",
+    "spring-boot": "Spring Boot (Java)",
+    "express": "Express (Node.js)",
+    "django": "Django (Python)",
+}
+
 
 class ServiceCreator:
     """Handles the creation of new services (Single Responsibility)."""
 
-    def __init__(self, force: bool = False):
+    def __init__(self, force: bool = False, framework: str = "generic"):
         self.force = force
+        self.framework = framework
 
     def create(self, name: str, base_url: str, health_endpoint: str) -> None:
         """Create a new service with scaffolding."""
@@ -76,11 +84,22 @@ class ServiceCreator:
             "class_name": class_name,
             "snake_case_name": snake_name,
             "endpoint_prefix": "entities",
+            "framework": self.framework,
         }
+
+        # Determine template based on framework
+        service_template = f"{self.framework}_service_page.py.template"
+        schema_template = f"{self.framework}_data_schema.py.template"
+        
+        # Fallback to generic templates if framework-specific not found
+        if not self._template_exists(engine, service_template):
+            service_template = "service_page.py.template"
+        if not self._template_exists(engine, schema_template):
+            schema_template = "data_schema.py.template"
 
         # Service page
         engine.render_to_file(
-            "service_page.py.template",
+            service_template,
             template_vars,
             str(service_path / f"{snake_name}_page.py"),
             overwrite=False,
@@ -100,12 +119,17 @@ class ServiceCreator:
 
         # Data schema
         engine.render_to_file(
-            "data_schema.py.template",
+            schema_template,
             template_vars,
             str(service_path / "data_schema.py"),
             overwrite=False,
         )
         console.print(f"  [green]+[/green] Created: services/{name}/data_schema.py")
+
+    def _template_exists(self, engine: TemplateEngine, template: str) -> bool:
+        """Check if a template exists."""
+        template_path = Path(__file__).parent.parent / "templates" / template
+        return template_path.exists()
 
     def _update_config(self, name: str, base_url: str, health_endpoint: str) -> None:
         """Update e2e.conf with new service."""
@@ -157,7 +181,14 @@ class ServiceCreatorValidator:
 @click.option(
     "--force", "-f", is_flag=True, help="Overwrite existing files without prompting"
 )
-def new_service_cmd(name: str, base_url: str, health_endpoint: str, force: bool):
+@click.option(
+    "--framework",
+    "-w",
+    type=click.Choice(list(SUPPORTED_FRAMEWORKS.keys())),
+    default="generic",
+    help=f"Framework to use (choices: {', '.join(SUPPORTED_FRAMEWORKS.keys())})",
+)
+def new_service_cmd(name: str, base_url: str, health_endpoint: str, force: bool, framework: str):
     """Create a new service with scaffolding.
 
     Creates the complete directory structure and template files for a new
@@ -168,13 +199,18 @@ def new_service_cmd(name: str, base_url: str, health_endpoint: str, force: bool)
         e2e new-service payment-service --base-url http://localhost:8081
         e2e new-service auth-service --base-url http://localhost:8080 --health-endpoint /actuator/health
         e2e new-service auth-service --force                         # Overwrite without prompting
+        e2e new-service users-api --framework fastapi                # Create FastAPI service template
+        e2e new-service users-api --framework spring-boot             # Create Spring Boot service template
     """
     console.print(f"\n>> [bold cyan]Creating service:[/bold cyan] {name}\n")
+
+    if framework != "generic":
+        console.print(f"  Using framework: [cyan]{framework}[/cyan] ({SUPPORTED_FRAMEWORKS[framework]})")
 
     if not ServiceCreatorValidator.validate_project():
         sys.exit(1)
 
-    creator = ServiceCreator(force=force)
+    creator = ServiceCreator(force=force, framework=framework)
     creator.create(name, base_url, health_endpoint)
 
     console.print(

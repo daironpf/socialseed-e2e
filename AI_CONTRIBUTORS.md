@@ -161,6 +161,36 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ### Marzo 2026
 
+#### 2026-03-31 - ISSUE-004 & ISSUE-005: Port Detection & Framework Templates
+**Agente:** minimax-m2.5-free (OpenCode)
+**Tipo:** Feature / CLI Enhancement
+**Impacto:** Alto
+
+**Descripción:**
+Implementación de dos features pendientes del roadmap:
+- **ISSUE-004**: Mejora del comando `e2e observe` con detección automática de puertos y Docker containers, flag `--auto-config` para generar e2e.conf
+- **ISSUE-005**: Sistema de templates específicos por framework en `e2e new-service` con flag `--framework` (fastapi, spring-boot, express, django)
+
+**Archivos Creados/Modificados:**
+- `src/socialseed_e2e/scanner/port_detector.py` - Nuevo módulo de detección de puertos
+- `src/socialseed_e2e/commands/observe_cmd.py` - Actualizado con flags --docker y --auto-config
+- `src/socialseed_e2e/commands/new_service_cmd.py` - Actualizado con flag --framework
+- `src/socialseed_e2e/templates/fastapi_data_schema.py.template` - Template FastAPI
+- `src/socialseed_e2e/templates/fastapi_service_page.py.template` - Template FastAPI
+- `src/socialseed_e2e/templates/spring-boot_data_schema.py.template` - Template Spring Boot
+- `src/socialseed_e2e/templates/spring-boot_service_page.py.template` - Template Spring Boot
+- `src/socialseed_e2e/templates/express_data_schema.py.template` - Template Express
+- `src/socialseed_e2e/templates/express_service_page.py.template` - Template Express
+- `src/socialseed_e2e/templates/django_data_schema.py.template` - Template Django
+- `src/socialseed_e2e/templates/django_service_page.py.template` - Template Django
+
+**Decisiones Importantes:**
+1. Templates incluyen patrones específicos por framework (JWT para Spring, CSRF para Django, Cookies para Express)
+2. Fallback a templates genéricos si el framework específico no tiene template
+3. Actualizado AI_CONTRIBUTORS.md con la contribución
+
+---
+
 #### 2026-03-24 - Visión Arquitectónica Definitiva "Singularity API Observability" (25 Epics)
 **Agente:** Antigravity (Google DeepMind)
 **Tipo:** Arquitectura / Visión Sci-Fi
@@ -689,7 +719,7 @@ Las contribuciones de agentes de IA a este proyecto están cubiertas bajo la mis
 
 ---
 
-**Última actualización:** 2026-02-19
+**Última actualización:** 2026-03-31
 **Mantenedor:** Dairon Pérez (@daironpf)
 **Contacto:** Para agregar contribuciones de IA, crear un PR actualizando este archivo.
 

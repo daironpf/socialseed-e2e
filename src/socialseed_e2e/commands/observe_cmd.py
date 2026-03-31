@@ -5,6 +5,7 @@ This module provides the observe command using POO and SOLID principles.
 
 import socket
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List, Optional
 
 import click
@@ -113,31 +114,92 @@ class ServiceDiscoverer:
 @click.command()
 @click.option("--host", default="localhost", help="Host to scan")
 @click.option("--ports", default="8000-9000", help="Port range to scan (e.g., 8000-9000)")
-@click.option("--docker", is_flag=True, help="Scan common Docker ports")
-def observe_cmd(host: str, ports: str, docker: bool):
+@click.option("--docker", is_flag=True, help="Scan Docker containers")
+@click.option("--auto-config", is_flag=True, help="Automatically generate e2e.conf")
+def observe_cmd(host: str, ports: str, docker: bool, auto_config: bool):
     """Auto-detect services and ports in the network.
-
+    
     Scans the specified port range to detect running services.
-
+    
     Examples:
         e2e observe                           # Scan default range
         e2e observe --host 192.168.1.1     # Scan specific host
         e2e observe --ports 3000-4000      # Custom port range
-        e2e observe --docker                 # Scan Docker ports
+        e2e observe --docker                 # Scan Docker containers
+        e2e observe --auto-config            # Generate e2e.conf automatically
     """
     console.print("\n🔍 [bold cyan]Service Discovery[/bold cyan]\n")
-
-    # Parse port range
+    
+    from socialseed_e2e.scanner.port_detector import PortScanner, ServiceConfigGenerator
+    
+    detector = PortScanner()
+    generator = ServiceConfigGenerator()
+    
     if docker:
-        start_port, end_port = 7000, 9100
-    elif "-" in ports:
+        console.print("🐳 Detecting Docker containers...")
+        docker_services = detector.detect_docker_services()
+        
+        if docker_services:
+            table = Table(title="Docker Services")
+            table.add_column("Name", style="cyan")
+            table.add_column("Port", style="green")
+            table.add_column("Container ID", style="yellow")
+            
+            for s in docker_services:
+                table.add_row(s.name, str(s.port), s.container_id[:12] if s.container_id else "N/A")
+            
+            console.print(table)
+        else:
+            console.print("[yellow]No Docker containers found.[/yellow]")
+    
+    # Parse port range
+    if "-" in ports:
         start_port, end_port = map(int, ports.split("-"))
     else:
         start_port, end_port = 8000, 9000
-
-    discoverer = ServiceDiscoverer(host)
-    results = discoverer.discover(start_port, end_port)
-    discoverer.display_results(results)
+    
+    console.print(f"\n🔍 Scanning {host}:{start_port}-{end_port}...")
+    
+    services = detector.scan_ports(start_port, end_port, [host])
+    
+    if not services:
+        console.print("[yellow]No services found.[/yellow]")
+        return
+    
+    # Check health endpoints
+    for service in services:
+        detector.check_health(service)
+    
+    table = Table(title="Discovered Services")
+    table.add_column("Port", style="cyan")
+    table.add_column("Service", style="green")
+    table.add_column("Health", style="yellow")
+    table.add_column("Response", style="magenta")
+    
+    for s in services:
+        health = "✓" if s.health_endpoint else "✗"
+        response = f"{s.response_time_ms:.0f}ms" if s.response_time_ms > 0 else "-"
+        table.add_row(str(s.port), s.name, health, response)
+    
+    console.print(table)
+    console.print(f"\n[green]Found {len(services)} service(s).[/green]")
+    
+    # Auto-config generation
+    if auto_config:
+        console.print("\n⚙️  Generating e2e.conf...")
+        config = generator.generate_config(services)
+        
+        import json
+        config_json = {
+            "version": "1.0",
+            "generated_at": datetime.now().isoformat(),
+            "services": config,
+        }
+        
+        with open("e2e.conf", "w") as f:
+            json.dump(config_json, f, indent=2)
+        
+        console.print("[green]✓ Configuration saved to e2e.conf[/green]")
 
 
 def get_observe_command():

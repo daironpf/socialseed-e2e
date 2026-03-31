@@ -1,0 +1,91 @@
+"""Data schema and DTOs for ${service_name} - Django style.
+
+This template includes Django-specific patterns like Django REST Framework
+(DRF) serializers, ModelViewSet endpoints, and proper snake_case naming.
+"""
+
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import validator
+
+
+ENDPOINTS = {
+    "list": "/api/${endpoint_prefix}/",
+    "create": "/api/${endpoint_prefix}/",
+    "get": "/api/${endpoint_prefix}/{id}/",
+    "update": "/api/${endpoint_prefix}/{id}/",
+    "delete": "/api/${endpoint_prefix}/{id}/",
+}
+
+
+class ${class_name}DTO(BaseModel):
+    """Data Transfer Object for ${service_name} - Django DRF style.
+    
+    Django models use snake_case by default. This template uses
+    Django REST Framework serializer conventions.
+    """
+    
+    model_config = {"populate_by_name": True}
+    
+    id: Optional[int] = Field(None, description="Primary key (Django AutoField)")
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+    created_at: Optional[str] = Field(None, description="Creation timestamp (auto_now_add)")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp (auto_now)")
+    
+    @field_validator('created_at', 'updated_at')
+    @classmethod
+    def parse_datetime(cls, v):
+        if v and isinstance(v, str):
+            return v
+        return v
+
+
+class ${class_name}CreateSerializer(BaseModel):
+    """Django REST Framework serializer for creating ${service_name}."""
+    
+    name: str = Field(..., description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}UpdateSerializer(BaseModel):
+    """Django REST Framework serializer for updating ${service_name}."""
+    
+    name: Optional[str] = Field(None, description="Entity name", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="Entity description", max_length=500)
+
+
+class ${class_name}ListSerializer(BaseModel):
+    """Django REST Framework paginated response."""
+    
+    count: int = Field(..., description="Total number of results")
+    next: Optional[str] = Field(None, description="URL to next page")
+    previous: Optional[str] = Field(None, description="URL to previous page")
+    results: List[${class_name}DTO] = Field(default_factory=list)
+
+
+class DjangoErrorResponse(BaseModel):
+    """Django REST Framework error response."""
+    
+    detail: Optional[str] = None
+    message: Optional[str] = None
+    errors: Optional[Dict[str, List[str]]] = None
+
+
+TEST_ENTITY = {
+    "name": "Test Entity",
+    "description": "A test entity for E2E testing"
+}
+
+
+VALIDATION_PATTERNS = {
+    "uuid": r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    "iso_timestamp": r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$',
+}
+
+
+DEFAULTS = {
+    "page_size": 10,
+    "timeout": 5000,
+    "max_retries": 3,
+}
