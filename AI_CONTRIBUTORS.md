@@ -66,6 +66,7 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 - [2026-03-31] Implementación de EPIC-018: Autonomous Source Code Auto-Fixing (AutoFixOrchestrator para análisis de stack traces y generación de parches, GitIntegration para crear branches y commits, PRCreator con soporte para GitHub/GitLab/Bitbucket)
 - [2026-03-31] Implementación de EPIC-019: Global Swarm Intelligence (SwarmOrchestrator para orchestrar testing distribuido, ServerlessAdapter para AWS Lambda/GCP Functions, métricas geo-latencia para world map visualization)
 - [2026-03-31] Implementación de EPIC-020: Zero-Day Vulnerability Predictive Fuzzing (SecurityFuzzingAgent con RAG, CVEFeedConnector para alimentar MITRE CVEs, PayloadGenerator para mutaciones de JWT/SQLi/XSS/IDOR, generación de reportes en Markdown)
+- [2026-03-31] Implementación de EPIC-021: API Evolution & Auto-Contract Versioning (SemanticDiffEngine para comparar responses, ContractAutoUpdater para actualizar contratos automáticamente, BreakingChangeAlert para notificar cambios breaking)
 
 ---
 
