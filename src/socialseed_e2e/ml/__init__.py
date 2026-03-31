@@ -9,6 +9,17 @@ This module provides machine learning capabilities for:
 
 from socialseed_e2e.ml.flakiness_detector import FlakinessDetector
 from socialseed_e2e.ml.impact_analyzer import ImpactAnalyzer
+from socialseed_e2e.ml.performance_anomaly import (
+    Anomaly,
+    AnomalyDetector,
+    AnomalySeverity,
+    AnomalyStatus,
+    AnomalyType,
+    PerformanceAnomalyManager,
+    PerformanceBaseline,
+    PerformanceMetricsCollector,
+    get_anomaly_manager,
+)
 from socialseed_e2e.ml.models import (
     ChangeType,
     CodeChange,
@@ -34,10 +45,16 @@ __all__ = [
     "ImpactAnalyzer",
     "FlakinessDetector",
     "TestSelector",
+    "PerformanceAnomalyManager",
+    "PerformanceMetricsCollector",
+    "AnomalyDetector",
     # Enums
     "ChangeType",
     "FileType",
     "TestPriority",
+    "AnomalyType",
+    "AnomalySeverity",
+    "AnomalyStatus",
     # Models
     "CodeChange",
     "CoverageGap",
@@ -52,4 +69,6 @@ __all__ = [
     "TestMetrics",
     "TestPrediction",
     "TestSelectionResult",
+    "PerformanceBaseline",
+    "Anomaly",
 ]
