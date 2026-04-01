@@ -22,17 +22,21 @@ class TestCreator:
 
     def create(self, name: str, service: str, description: str) -> None:
         """Create a new test module."""
-        service_path = Path("services") / service
+        # Extract just the service name from the path
+        service_name = Path(service).name
+        # Extract just the test name from the path
+        test_name = Path(name).name
+        service_path = Path("services") / service_name
         modules_path = service_path / "modules"
 
         self._validate_service_exists(service_path)
         self._ensure_modules_dir(modules_path)
 
-        test_filename = self._generate_test_filename(modules_path, name)
+        test_filename = self._generate_test_filename(modules_path, test_name)
         test_path = modules_path / test_filename
 
         self._check_overwrite(test_path)
-        self._create_test_file(test_path, service, name, description)
+        self._create_test_file(test_path, service_name, test_name, description)
 
     def _validate_service_exists(self, service_path: Path) -> None:
         """Validate that the service exists."""
