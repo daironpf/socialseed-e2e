@@ -269,7 +269,7 @@ general:
 
 services: {}
 """
-        config_path.write_text(config_content)
+        config_path.write_text(config_content, encoding="utf-8")
         console.print("  [green]✓[/green] Created: e2e.conf")
 
     def _create_gitignore(self) -> None:
@@ -280,7 +280,7 @@ services: {}
             console.print("  [yellow]![/yellow] Already exists: .gitignore")
             return
 
-        gitignore_path.write_text(self.DEFAULT_IGNORE)
+        gitignore_path.write_text(self.DEFAULT_IGNORE, encoding="utf-8")
         console.print("  [green]✓[/green] Created: .gitignore")
 
     def _create_requirements(self) -> None:
@@ -291,7 +291,7 @@ services: {}
             console.print("  [yellow]![/yellow] Already exists: requirements.txt")
             return
 
-        req_path.write_text(self.DEFAULT_REQUIREMENTS)
+        req_path.write_text(self.DEFAULT_REQUIREMENTS, encoding="utf-8")
         console.print("  [green]✓[/green] Created: requirements.txt")
 
     def _create_agent_docs(self, source_path: str | None = None) -> None:
@@ -308,7 +308,7 @@ services: {}
 
         readme_path = agent_dir / "README.md"
         if not readme_path.exists() or self.force:
-            readme_path.write_text(self.AGENT_DOCS)
+            readme_path.write_text(self.AGENT_DOCS, encoding="utf-8")
             console.print("  [green]✓[/green] Created: .agent/README.md")
 
         # Auto-scan source code if provided
@@ -341,31 +341,31 @@ services: {}
             # Generate ENDPOINTS.md
             endpoints_md = generate_endpoints_doc(source_path)
             endpoints_path = agent_dir / "ENDPOINTS.md"
-            endpoints_path.write_text(endpoints_md)
+            endpoints_path.write_text(endpoints_md, encoding="utf-8")
             console.print(f"  [green]✓[/green] Created: .agent/ENDPOINTS.md")
 
             # Generate DATA_SCHEMAS.md
             schemas_md = generate_schemas_doc(source_path)
             schemas_path = agent_dir / "DATA_SCHEMAS.md"
-            schemas_path.write_text(schemas_md)
+            schemas_path.write_text(schemas_md, encoding="utf-8")
             console.print(f"  [green]✓[/green] Created: .agent/DATA_SCHEMAS.md")
 
             # Generate ERROR_CODES.md
             error_md = generate_error_codes_doc(source_path)
             error_path = agent_dir / "ERROR_CODES.md"
-            error_path.write_text(error_md)
+            error_path.write_text(error_md, encoding="utf-8")
             console.print(f"  [green]✓[/green] Created: .agent/ERROR_CODES.md")
 
             # Generate AUTH_FLOWS.md
             auth_md = generate_auth_flows(endpoints, schemas)
             auth_path = agent_dir / "AUTH_FLOWS.md"
-            auth_path.write_text(auth_md)
+            auth_path.write_text(auth_md, encoding="utf-8")
             console.print(f"  [green]✓[/green] Created: .agent/AUTH_FLOWS.md")
 
             # Generate TEST_PATTERNS.md
             patterns_md = generate_test_patterns(endpoints, schemas)
             patterns_path = agent_dir / "TEST_PATTERNS.md"
-            patterns_path.write_text(patterns_md)
+            patterns_path.write_text(patterns_md, encoding="utf-8")
             console.print(f"  [green]✓[/green] Created: .agent/TEST_PATTERNS.md")
 
             console.print("\n[green][OK] Source code documentation generated![/green]\n")

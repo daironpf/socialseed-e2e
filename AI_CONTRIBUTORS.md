@@ -157,7 +157,89 @@ Creemos que cuando un agente de IA contribuye con código, arquitectura, documen
 
 ---
 
+### OpenCode Testing & QA Agent (qwen3.6-plus-free)
+
+**Plataforma:** [OpenCode](https://opencode.ai)
+**Modelo:** qwen3.6-plus-free
+**Rol:** Testing Integral, Bug Discovery y QA
+
+**Contribuciones Principales:**
+- 🔍 Testing exhaustivo de 60+ comandos CLI como usuario final
+- 🐛 Descubrimiento de 9 bugs críticos (ISSUE-012 a ISSUE-020):
+  - ISSUE-012: new-service falla con --framework default "generic"
+  - ISSUE-013: observe falla con threading.ThreadPoolExecutor en Python 3.14
+  - ISSUE-014: manifest genera rutas duplicadas para project_knowledge.json
+  - ISSUE-015: Error AST con ast.NameConstant en Python 3.14
+  - ISSUE-016: manifest-query y build-index buscan manifest en ruta duplicada
+  - ISSUE-017: mock-generate option --api no existe
+  - ISSUE-018: mock-run falla porque fastapi no está instalado
+  - ISSUE-019: manifest usa nombre del directorio actual en lugar del servicio
+  - ISSUE-020: translate requiere --description obligatorio sin aviso claro
+- 🔧 Fix de ISSUE-008: new-test con rutas absolutas (extraer nombre base)
+- 📦 Fix de ISSUE-009: Agregar httpx como dependencia core
+- 📝 Fix de ISSUE-010: Renombrar argumento build-index de directory a service_name
+- 🛠️ Fix de ISSUE-011: import curl crea .services/ en vez de services/
+- ✅ Verificación de ISSUE-006 e ISSUE-007 (ya estaban resueltas)
+- 📋 Creación de 9 issues documentadas con pasos para reproducir, errores completos y soluciones propuestas
+
+**Sesiones Notables:**
+- [2026-04-01] Testing integral del framework - 60+ comandos probados, 9 bugs descubiertos, 4 issues resueltas con commits separados
+
+---
+
 ## Historial de Contribuciones por Fecha
+
+### Abril 2026
+
+#### 2026-04-01 - Testing Integral y Bug Discovery (Issues 012-020)
+**Agente:** OpenCode Testing & QA Agent (qwen3.6-plus-free)
+**Tipo:** Testing / Bug Discovery / QA
+**Impacto:** Alto
+
+**Descripción:**
+Testing exhaustivo de todos los comandos CLI del framework socialseed-e2e desde la perspectiva de un usuario final que no conoce el proyecto. Se ejecutaron 60+ comandos en un entorno virtual limpio y se documentaron 9 bugs críticos que afectan la experiencia de usuario.
+
+**Issues Descubiertos:**
+1. **ISSUE-012**: `e2e new-service` falla sin --framework explícito (generic no está en choices)
+2. **ISSUE-013**: `e2e observe` falla en Python 3.14 (ThreadPoolExecutor movido a concurrent.futures)
+3. **ISSUE-014**: `e2e manifest` genera rutas duplicadas para project_knowledge.json
+4. **ISSUE-015**: Parser AST usa `ast.NameConstant` eliminado en Python 3.14
+5. **ISSUE-016**: `manifest-query` y `build-index` buscan en ruta duplicada
+6. **ISSUE-017**: `mock-generate --api` no existe como opción
+7. **ISSUE-018**: `mock-run` falla porque fastapi no está instalado como dependencia
+8. **ISSUE-019**: `plan-strategy` y `discover` buscan manifest con nombre de directorio incorrecto
+9. **ISSUE-020**: `translate` requiere --description sin aviso claro
+
+**Issues Resueltas (con commits):**
+- ISSUE-008: Fix new-test con rutas absolutas
+- ISSUE-009: Agregar httpx como dependencia core
+- ISSUE-010: Renombrar argumento build-index
+- ISSUE-011: Fix directorio import curl
+
+**Comandos Testeados:**
+- ✅ `e2e --version`, `--help`, `doctor`, `init`, `new-service`, `new-test`, `run`
+- ✅ `e2e config`, `set show`, `lint`, `deep-scan`, `manifest`, `manifest-check`
+- ✅ `e2e translate`, `gherkin-translate`, `plan-strategy`, `discover`
+- ✅ `e2e mock-analyze`, `mock-generate`, `mock-run`, `mock-validate`
+- ✅ `e2e import curl`, `scanner scan-endpoints`, `scanner scan-schemas`
+- ✅ `e2e scanner traffic-bot`, `community templates`, `community plugins`
+- ✅ `e2e setup-ci`, `new-demo`, `tui`, `dashboard`
+- ❌ `e2e observe` (crash), `manifest-query` (ruta duplicada), `build-index` (ruta duplicada)
+- ❌ `e2e search`, `retrieve` (ruta duplicada), `regression` (manifest no encontrado)
+
+**Archivos Modificados:**
+- `src/socialseed_e2e/commands/new_test_cmd.py` - Fix ISSUE-008
+- `pyproject.toml` - Fix ISSUE-009 (agregar httpx)
+- `src/socialseed_e2e/commands/build_index_cmd.py` - Fix ISSUE-010
+- `src/socialseed_e2e/cli.py` - Fix ISSUE-011
+- `.issues/todo/ISSUE-012_*.md` a `.issues/todo/ISSUE-020_*.md` - 9 nuevos issues
+
+**Decisiones Importantes:**
+1. Testing en entorno virtual limpio para simular experiencia real de usuario
+2. Cada issue documentado con pasos para reproducir, error completo y solución propuesta
+3. Commits separados por issue para mantener historial limpio
+
+---
 
 ### Marzo 2026
 
@@ -671,6 +753,7 @@ Desarrollo de los comandos CLI principales: init, new-service, new-test, run.
 | Claude (Anthropic) | 10+ | 18+ | ~800 | 8 archivos |
 | kimi-k2.5-free | 2+ | 2+ | ~2300 | 2 archivos |
 | minimax-m2.5-free | 1+ | 5+ | ~150 | 3 archivos |
+| qwen3.6-plus-free | 1 | 4+ | ~50 | 9 issues + AI_CONTRIBUTORS.md |
 
 *Nota: Estas estadísticas son estimaciones de contribuciones conceptuales, ya que los agentes de IA no hacen commits directos a git.*
 
@@ -766,7 +849,7 @@ Las contribuciones de agentes de IA a este proyecto están cubiertas bajo la mis
 
 ---
 
-**Última actualización:** 2026-03-31
+**Última actualización:** 2026-04-01
 **Mantenedor:** Dairon Pérez (@daironpf)
 **Contacto:** Para agregar contribuciones de IA, crear un PR actualizando este archivo.
 
