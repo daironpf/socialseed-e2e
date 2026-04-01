@@ -5068,6 +5068,7 @@ def healing_stats(project: str):
 
 
 @cli.command()
+@click.argument("description", required=False)
 @click.option(
     "--project",
     "-p",
@@ -5078,7 +5079,8 @@ def healing_stats(project: str):
 @click.option(
     "--description",
     "-d",
-    required=True,
+    "description_opt",
+    default=None,
     help="Natural language test description",
 )
 @click.option(
@@ -5098,16 +5100,23 @@ def healing_stats(project: str):
     help="Output file path",
     type=click.Path(),
 )
-def translate(project: str, description: str, service: str, language: str, output: str):
+def translate(project: str, description: str, description_opt: str, service: str, language: str, output: str):
     """Translate natural language to test code.
 
     Converts plain English or other natural language descriptions
     into executable test code.
 
     Examples:
-        e2e translate --description "Verify user can login with valid credentials"
+        e2e translate "Verify user can login with valid credentials"
         e2e translate --description "Comprobar que el usuario puede iniciar sesión" --language es
     """
+    # Use positional description if provided, otherwise use --description option
+    desc = description or description_opt
+    if not desc:
+        console.print("[red][ERR] Error:[/red] Description is required")
+        console.print("Usage: e2e translate <description>")
+        console.print("   or: e2e translate --description <text>")
+        sys.exit(1)
     from socialseed_e2e.nlp import Language, NLToCodePipeline, TranslationContext
 
     console.print("\nNET [bold blue]Natural Language Translation[/bold blue]\n")
@@ -5134,7 +5143,7 @@ def translate(project: str, description: str, service: str, language: str, outpu
         )
 
         # Translate
-        result = pipeline.translate(description, context, lang)
+        result = pipeline.translate(desc, context, lang)
 
         if not result.success:
             console.print("[red]Translation failed:[/red]")
