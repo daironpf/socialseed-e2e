@@ -2356,7 +2356,7 @@ def manifest_query(directory: str, format: str):
     try:
         from socialseed_e2e.project_manifest import ManifestAPI
 
-        api = ManifestAPI(target_path)
+        api = ManifestAPI(project_root, service_name=service_name)
 
         if format == "json":
             output = api.export_summary(format="json")

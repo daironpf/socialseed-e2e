@@ -68,10 +68,19 @@ class BuildIndexService:
         Raises:
             RuntimeError: If build fails
         """
+        import json
         from socialseed_e2e.project_manifest import ManifestVectorStore
+        from socialseed_e2e.project_manifest.models import ProjectKnowledge
 
-        store = ManifestVectorStore(manifest_dir)
-        store.build_index()
+        # Load manifest directly from the known path
+        manifest_path = manifest_dir / "project_knowledge.json"
+        content = manifest_path.read_text(encoding="utf-8")
+        data = json.loads(content)
+        manifest = ProjectKnowledge.model_validate(data)
+
+        # Use project_root (not manifest_dir) so index_dir resolves correctly
+        store = ManifestVectorStore(self.project_root)
+        store.build_index(manifest)
 
         self.index_dir = store.index_dir
 
@@ -158,7 +167,7 @@ class BuildIndexCommand:
             # Display header
             self.presenter.display_header(service_name)
 
-            # Build index
+            # Build index - pass manifest directory (parent of project_knowledge.json)
             manifest_dir = manifest_path.parent
             self.service.build_index(manifest_dir)
 

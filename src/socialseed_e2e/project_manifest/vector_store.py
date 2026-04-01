@@ -54,6 +54,7 @@ class ManifestVectorStore:
         project_root: Union[str, Path],
         embedding_model: Optional[str] = None,
         index_dir: Optional[Path] = None,
+        service_name: Optional[str] = None,
     ):
         """Initialize the vector store.
 
@@ -61,10 +62,12 @@ class ManifestVectorStore:
             project_root: Root directory of the project
             embedding_model: Name of the sentence-transformers model to use
             index_dir: Directory to store index files (default: project_root/.e2e)
+            service_name: Optional service name for manifest resolution
         """
         self.project_root = Path(project_root).resolve()
         self.index_dir = index_dir or (self.project_root / ".e2e")
         self.embedding_model_name = embedding_model or "all-MiniLM-L6-v2"
+        self.service_name = service_name
 
         # Index files
         self.index_path = self.index_dir / self.INDEX_FILENAME
@@ -174,7 +177,7 @@ class ManifestVectorStore:
         if manifest is None:
             from socialseed_e2e.project_manifest.api import ManifestAPI
 
-            api = ManifestAPI(self.project_root)
+            api = ManifestAPI(self.project_root, service_name=self.service_name)
             manifest = api.manifest
 
         self._manifest = manifest
@@ -363,7 +366,7 @@ class ManifestVectorStore:
         if self._manifest is None:
             from socialseed_e2e.project_manifest.api import ManifestAPI
 
-            api = ManifestAPI(self.project_root)
+            api = ManifestAPI(self.project_root, service_name=self.service_name)
             self._manifest = api.manifest
 
         # Parse ID

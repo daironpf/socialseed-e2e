@@ -60,8 +60,7 @@ class SearchService:
         """Initialize the vector store."""
         from socialseed_e2e.project_manifest import ManifestVectorStore
 
-        manifest_dir = self.project_root / ".e2e" / "manifests" / self.service
-        self.store = ManifestVectorStore(manifest_dir)
+        self.store = ManifestVectorStore(self.project_root, service_name=self.service)
 
     def search(
         self, query: str, top_k: int = 5, item_type: Optional[str] = None

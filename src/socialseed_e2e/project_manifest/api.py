@@ -38,25 +38,27 @@ class ManifestAPI:
     """
 
     def __init__(
-        self, project_root: Union[str, Path], manifest_path: Optional[Path] = None
+        self, project_root: Union[str, Path], manifest_path: Optional[Path] = None,
+        service_name: Optional[str] = None,
     ):
         """Initialize the Manifest API.
 
         Args:
             project_root: Root directory of the project
             manifest_path: Optional custom path to manifest file
+            service_name: Optional service name (uses project_root.name if not provided)
         """
 
         self.project_root = Path(project_root).resolve()
 
         # Unified manifest location: <project_root>/.e2e/manifests/<service_name>/project_knowledge.json
         if manifest_path is None:
-            service_name = self.project_root.name
+            svc_name = service_name or self.project_root.name
             manifest_path = (
                 self.project_root
                 / ".e2e"
                 / "manifests"
-                / service_name
+                / svc_name
                 / "project_knowledge.json"
             )
 

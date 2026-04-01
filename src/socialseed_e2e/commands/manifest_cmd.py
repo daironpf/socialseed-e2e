@@ -68,14 +68,8 @@ class ManifestQueryAgent:
 
         from socialseed_e2e.project_manifest import ManifestAPI
 
-        manifest_path = (
-            P.cwd()
-            / ".e2e"
-            / "manifests"
-            / self.service_name
-            / "project_knowledge.json"
-        )
-        api = ManifestAPI(manifest_path)
+        project_root = _resolve_project_root()
+        api = ManifestAPI(project_root, service_name=self.service_name)
         api._load_manifest()
         return api
 
@@ -111,19 +105,20 @@ class VectorIndexBuilder:
 
         from socialseed_e2e.project_manifest import ManifestVectorStore
 
-        if self.service_name:
-            manifest_path = (
-                P.cwd()
-                / ".e2e"
-                / "manifests"
-                / self.service_name
-                / "project_knowledge.json"
-            )
-            store = ManifestVectorStore(manifest_path)
-        else:
-            store = ManifestVectorStore(P.cwd())
+        project_root = _resolve_project_root()
+        store = ManifestVectorStore(project_root)
 
-        store.build_index()
+        # Load manifest with correct service name
+        if self.service_name:
+            import json
+            from socialseed_e2e.project_manifest.models import ProjectKnowledge
+            manifest_path = project_root / ".e2e" / "manifests" / self.service_name / "project_knowledge.json"
+            content = manifest_path.read_text(encoding="utf-8")
+            data = json.loads(content)
+            manifest = ProjectKnowledge.model_validate(data)
+            store.build_index(manifest)
+        else:
+            store.build_index()
         return store
 
 
@@ -142,14 +137,8 @@ class SemanticSearchAgent:
         from socialseed_e2e.project_manifest import ManifestVectorStore
 
         if self.service_name:
-            manifest_path = (
-                P.cwd()
-                / ".e2e"
-                / "manifests"
-                / self.service_name
-                / "project_knowledge.json"
-            )
-            store = ManifestVectorStore(manifest_path)
+            project_root = _resolve_project_root()
+            store = ManifestVectorStore(project_root)
         else:
             store = ManifestVectorStore(P.cwd())
 
@@ -173,18 +162,24 @@ class RetrievalAgent:
         from socialseed_e2e.project_manifest import RAGRetrievalEngine
 
         if self.service_name:
-            manifest_path = (
-                P.cwd()
-                / ".e2e"
-                / "manifests"
-                / self.service_name
-                / "project_knowledge.json"
-            )
-            engine = RAGRetrievalEngine(manifest_path)
+            project_root = _resolve_project_root()
+            engine = RAGRetrievalEngine(project_root)
         else:
             engine = RAGRetrievalEngine(P.cwd())
 
         return engine.retrieve_for_task(self.task, max_chunks=self.max_chunks)
+
+
+def _resolve_project_root():
+    """Resolve the project root by finding e2e.conf."""
+    from pathlib import Path as P
+
+    p = P.cwd()
+    for _ in range(5):
+        if (p / "e2e.conf").exists():
+            return p
+        p = p.parent
+    return P.cwd()
 
 
 @click.command()
