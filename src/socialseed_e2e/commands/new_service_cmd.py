@@ -15,6 +15,7 @@ from socialseed_e2e.utils import TemplateEngine, to_class_name, to_snake_case
 console = Console()
 
 SUPPORTED_FRAMEWORKS = {
+    "generic": "Generic (Language-agnostic)",
     "fastapi": "FastAPI (Python)",
     "spring-boot": "Spring Boot (Java)",
     "express": "Express (Node.js)",
@@ -31,13 +32,15 @@ class ServiceCreator:
 
     def create(self, name: str, base_url: str, health_endpoint: str) -> None:
         """Create a new service with scaffolding."""
-        service_path = Path("services") / name
+        # Extract just the service name from the path
+        service_name = Path(name).name
+        service_path = Path("services") / service_name
         modules_path = service_path / "modules"
 
         self._create_directories(service_path, modules_path)
-        self._create_init_files(service_path, modules_path, name)
-        self._create_template_files(service_path, name)
-        self._update_config(name, base_url, health_endpoint)
+        self._create_init_files(service_path, modules_path, service_name)
+        self._create_template_files(service_path, service_name)
+        self._update_config(service_name, base_url, health_endpoint)
 
     def _create_directories(self, service_path: Path, modules_path: Path) -> None:
         """Create service directories."""
