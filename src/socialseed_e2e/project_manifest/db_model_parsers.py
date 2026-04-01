@@ -395,7 +395,7 @@ class SQLAlchemyParser(BaseDBParser):
         """Extract boolean value from AST node."""
         if isinstance(node, ast.Constant):
             return bool(node.value)
-        elif isinstance(node, ast.NameConstant):
+        elif hasattr(ast, 'NameConstant') and isinstance(node, ast.NameConstant):
             return bool(node.value)
         return False
 
@@ -419,7 +419,7 @@ class SQLAlchemyParser(BaseDBParser):
         """Extract value from AST node."""
         if isinstance(node, ast.Constant):
             return node.value
-        elif isinstance(node, ast.NameConstant):
+        elif hasattr(ast, 'NameConstant') and isinstance(node, ast.NameConstant):
             return node.value
         elif isinstance(node, ast.Name):
             return node.id

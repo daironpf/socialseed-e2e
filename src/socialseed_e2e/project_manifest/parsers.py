@@ -370,7 +370,7 @@ class PythonParser(BaseParser):
         """Extract default value from AST node."""
         if isinstance(value, ast.Constant):
             return value.value
-        elif isinstance(value, ast.NameConstant):
+        elif hasattr(ast, 'NameConstant') and isinstance(value, ast.NameConstant):
             return value.value
         elif isinstance(value, ast.Name):
             return value.id
