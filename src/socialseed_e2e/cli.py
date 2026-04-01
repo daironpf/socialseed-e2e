@@ -6646,7 +6646,7 @@ def import_cmd():
 @click.option(
     "--output",
     "-o",
-    default="./services/imported",
+    default="services/imported",
     help="Output directory for generated files",
 )
 @click.option(
@@ -6749,7 +6749,7 @@ def import_openapi(
 @click.option(
     "--output",
     "-o",
-    default="./services/imported",
+    default="services/imported",
     help="Output directory for generated files",
 )
 @click.option("--name", "-n", default="curl_import", help="Test name")
@@ -8192,6 +8192,7 @@ def _register_modular_commands():
         ("sniffer", "sniffer_cmd", "get_sniffer_commands"),
         ("traffic-test", "traffic_test_cmd", "get_traffic_test_commands"),
         ("time-machine", "time_machine_cmd", "get_time_machine_commands"),
+        ("pii", "pii_cmd", "get_pii_commands"),
         # Config
         ("set", "set_cmd", "get_set_group"),
     ]
