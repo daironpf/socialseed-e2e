@@ -7,6 +7,7 @@ import json
 import socket
 import subprocess
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
@@ -77,7 +78,7 @@ class PortScanner:
                 pass
             return None
         
-        with threading.ThreadPoolExecutor(max_workers=50) as executor:
+        with ThreadPoolExecutor(max_workers=50) as executor:
             futures = []
             for host in hosts:
                 for port in range(start_port, end_port + 1):
