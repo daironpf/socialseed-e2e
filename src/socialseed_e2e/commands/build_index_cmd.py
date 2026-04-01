@@ -184,8 +184,8 @@ class BuildIndexCommand:
 
 # CLI command definition
 @click.command(name="build-index")
-@click.argument("directory", default=".", required=False)
-def build_index_command(directory: str) -> None:
+@click.argument("service_name", default=".", required=False)
+def build_index_command(service_name: str) -> None:
     """Build vector index for semantic search.
 
     Creates embeddings for all endpoints, DTOs, and services
@@ -196,7 +196,7 @@ def build_index_command(directory: str) -> None:
         e2e build-index user-service         # Build index for user service
     """
     command = BuildIndexCommand()
-    exit_code = command.execute(directory)
+    exit_code = command.execute(service_name)
     sys.exit(exit_code)
 
 
